@@ -1323,6 +1323,29 @@ function renderTeamBoard(team){
    영업 ↔ 설계 이관 워크플로우 (타당성·가계약·실측·실계약)
    ============================================================ */
 let DEALS = [
+  {id:'D-1031', site:'가온뜰 노지형', cap:34.83, type:'노지', rep:'김영수', stage:'handover_design', rejectReason:'',
+    proposal:{
+      quote:[
+        ['1. 태양광 모듈','EA','54','11,493,900','국산2등급'],
+        ['2. 태양광 인버터','EA','1','3,500,000','36kW'],
+        ['3. 태양광 계량기함','EA','1','4,200,000','옥외형'],
+        ['4. 태양광 구조물 제작','kW','34.83','3,595,666',''],
+        ['5. 태양광 구조물 시공','kW','34.83','3,595,666','장비대포함'],
+        ['6. 태양광 전기공사','kW','34.83','4,045,124',''],
+        ['7. 전기설계 및 감리용역비','kW','34.83','337,094',''],
+        ['8. 구조계산 용역비','식','1','1,000,000',''],
+        ['9. 사용전검사 수수료','식','1','159,281',''],
+        ['10. 인허가(대관업무) 비용','식','1','500,000',''],
+        ['11. 일반관리비 및 이윤','식','1','661,770',''],
+      ],
+      total:'33,000,000', totalNote:'백만절사·VAT별도',
+      spec:{ cap:'34.83 kW', qty:'54 매', module:'국산2등급 / 현대 645W', inverter:'36kW / 1 대', install:'한판형 / 모듈각도 13° / 입사각 25°' },
+      maint:[['안전관리대행비','120','10/월'],['보험료','12','공제조합(소멸성)'],['전기료','18','1.5/월'],['통신료(MRT)','12','1/월']],
+      maintTotal:'162',
+      note:'국산2등급 현대 645Wp × 54매 = 34.83kW 설치 · 한전 선로 연계비 약 390만원 및 제세공과금 별도 · 토목비·VAT 별도',
+      econ:{ sell:'8,000,000', net20:'5,000,000', payback:'7 년', loan:'26,400,000', own:'6,600,000', loanNote:'정책자금 5년거치 10년상환 · 이율 2.5% (총사업비의 80% 대출 · 20% 자부담)' },
+      layout:'노지형 · 모듈각 13° · 입사각 25° · 54EA 자동배치',
+    }},
   {id:'D-1024', site:'금빛리 축사지붕', cap:750,  type:'지붕', rep:'박서준', stage:'handover_design', rejectReason:''},
   {id:'D-1025', site:'새터들 노지형',   cap:1100, type:'노지', rep:'김영수', stage:'feasibility',      rejectReason:''},
   {id:'D-1030', site:'신평 노지형',     cap:700,  type:'노지', rep:'박서준', stage:'feasibility',      rejectReason:''},
@@ -1336,7 +1359,7 @@ const WF_STAGES = {
   's-supplement':['rejected'], 's-precontract':['approved'], 's-realcontract':['survey_done'],
 };
 function wfCount(key){ const st=WF_STAGES[key]||[]; return DEALS.filter(d=>st.includes(d.stage)).length; }
-let spawnSeq = 0, dealSeq = 1031;
+let spawnSeq = 0, dealSeq = 1032;
 
 /* ============================================================
    저장·공유 계층 — 키 없으면 로컬(localStorage), 키 있으면 Supabase 실시간 공유
@@ -1487,6 +1510,71 @@ function quoteFull(d){
   </div>`;
 }
 
+// 영업 이관 자료 — 발전사업 제안서(견적서 전체·사양·유지관리비·수익성·배치도)
+function handoverProposal(d){
+  const p=d.proposal; if(!p) return quoteFull(d);
+  const TH='padding:7px 10px;font-size:11px;font-weight:700;color:var(--ink-2);background:var(--surface-2);border-bottom:1px solid var(--border)';
+  const TD='padding:7px 10px;font-size:12.5px;border-bottom:1px solid var(--border)';
+  const NUM='font-variant-numeric:tabular-nums';
+  const qrows=p.quote.map(q=>`<tr>
+      <td style="${TD};text-align:left">${esc(q[0])}</td>
+      <td style="${TD};text-align:center;color:var(--ink-2)">${esc(q[1])}</td>
+      <td style="${TD};text-align:center;color:var(--ink-2)">${esc(q[2])}</td>
+      <td style="${TD};text-align:right;${NUM}">${esc(q[3])}</td>
+      <td style="${TD};text-align:left;color:var(--muted);font-size:11px">${esc(q[4]||'')}</td></tr>`).join('');
+  const quoteTbl=`<div class="table-scroll"><table style="width:100%;border-collapse:collapse">
+    <thead><tr>
+      <th style="${TH};text-align:left">공종명</th><th style="${TH};text-align:center">단위</th><th style="${TH};text-align:center">수량</th>
+      <th style="${TH};text-align:right">금액(원)</th><th style="${TH};text-align:left">비고</th></tr></thead>
+    <tbody>${qrows}
+      <tr><td style="${TD};text-align:left;font-weight:800;background:var(--surface-2)">합 계</td>
+        <td style="${TD};background:var(--surface-2)"></td><td style="${TD};background:var(--surface-2)"></td>
+        <td style="${TD};text-align:right;font-weight:800;${NUM};background:var(--surface-2)">${esc(p.total)}</td>
+        <td style="${TD};text-align:left;color:var(--muted);background:var(--surface-2)">${esc(p.totalNote)}</td></tr>
+    </tbody></table></div>`;
+  const srow=(k,v)=>`<div class="quote-row"><span>${k}</span><span class="qv">${esc(v)}</span></div>`;
+  const specBlk=`<div class="quote" style="margin-top:6px">
+    ${srow('기준용량', p.spec.cap+' · '+p.spec.qty)}
+    ${srow('모듈', p.spec.module)}
+    ${srow('인버터', p.spec.inverter)}
+    ${srow('설치형태', p.spec.install)}
+  </div>`;
+  const mrows=p.maint.map(m=>`<tr>
+      <td style="${TD};text-align:left">${esc(m[0])}</td>
+      <td style="${TD};text-align:right;${NUM}">${esc(m[1])}</td>
+      <td style="${TD};text-align:left;color:var(--muted)">${esc(m[2])}</td></tr>`).join('');
+  const maintTbl=`<div class="table-scroll"><table style="width:100%;border-collapse:collapse">
+    <thead><tr><th style="${TH};text-align:left">항목</th><th style="${TH};text-align:right">만원/년</th><th style="${TH};text-align:left">비고</th></tr></thead>
+    <tbody>${mrows}
+      <tr><td style="${TD};text-align:left;font-weight:800;background:var(--surface-2)">합 계</td>
+        <td style="${TD};text-align:right;font-weight:800;${NUM};background:var(--surface-2)">${esc(p.maintTotal)}</td>
+        <td style="${TD};background:var(--surface-2)"></td></tr>
+    </tbody></table></div>`;
+  const econ=`<div class="stat-grid">
+    <div class="stat"><div class="s-l">전력판매 수익</div><div class="s-v">${esc(p.econ.sell)}<small>원/년</small></div></div>
+    <div class="stat"><div class="s-l">20년 장기계약 순수익</div><div class="s-v">${esc(p.econ.net20)}<small>원/년</small></div></div>
+    <div class="stat"><div class="s-l">투자금 회수기간</div><div class="s-v" style="color:var(--accent-ink)">${esc(p.econ.payback)}</div></div>
+    <div class="stat"><div class="s-l">정책자금 대출 (80%)</div><div class="s-v">${esc(p.econ.loan)}<small>원</small></div></div>
+    <div class="stat"><div class="s-l">자부담금 (20%)</div><div class="s-v">${esc(p.econ.own)}<small>원</small></div></div>
+  </div>
+  <div class="note" style="margin-top:8px">${esc(p.econ.loanNote)}</div>`;
+  const layout=`<div class="mini-layout" style="height:150px"><div class="mini-cap">${esc(d.site)} · ${esc(p.layout)}</div></div>`;
+  return `<div style="margin-top:14px">
+    <div class="section-title" style="font-size:12px;margin:0 0 8px">이관 자료 · 발전사업 제안서(영업 제공) — 견적서</div>
+    ${quoteTbl}
+    <div class="section-title" style="font-size:12px;margin:16px 0 6px">제품사양 · 설치형태</div>
+    ${specBlk}
+    <div class="section-title" style="font-size:12px;margin:16px 0 6px">유지관리비 <span style="font-weight:500;color:var(--muted)">(단위: 만원)</span></div>
+    ${maintTbl}
+    <div class="quote" style="margin-top:8px"><div class="quote-row total"><span>총 공사비 (VAT 별도)</span><span class="qv">₩ ${esc(p.total)}</span></div></div>
+    <div class="note" style="margin-top:8px">${esc(p.note)}</div>
+    <div class="section-title" style="font-size:12px;margin:16px 0 6px">수익성 검토</div>
+    ${econ}
+    <div class="section-title" style="font-size:12px;margin:16px 0 6px">현장 배치도</div>
+    ${layout}
+  </div>`;
+}
+
 // 신규 현장 접수 (설계) — 영업 이관 자료: 견적서 전체 + 배치도
 function renderIntake(){
   const cards = DEALS.filter(d=>d.stage==='handover_design').map(d=>`
@@ -1496,13 +1584,13 @@ function renderIntake(){
           <div class="lr-s" style="margin-top:4px">${d.id} · 영업 ${esc(d.rep)} 이관</div></div>
         <span class="pill prog"><span class="pd"></span>신규 접수</span>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 190px;gap:14px;margin-top:14px;align-items:start">
+      ${d.proposal ? handoverProposal(d) : `<div style="display:grid;grid-template-columns:1fr 190px;gap:14px;margin-top:14px;align-items:start">
         <div>
           <div class="section-title" style="font-size:12px;margin:0 0 8px">이관 자료 · 고객 제공 견적서(전체)</div>
           ${quoteFull(d)}
         </div>
         <div><div class="section-title" style="font-size:12px;margin:0 0 8px">배치도</div>${miniLayout(d.cap)}</div>
-      </div>
+      </div>`}
       <div class="wf-actions">
         <button class="btn ghost sm">📄 견적서 전체 열기</button>
         <button class="btn primary sm" onclick="wfAction('${d.id}','feasibility','타당성검토 대기열에 추가됨')">타당성검토 시작 →</button>
