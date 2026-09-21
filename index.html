@@ -686,7 +686,7 @@ button{font-family:inherit;cursor:pointer}
             <div class="card-head">
               <div>
                 <h2>현장 파이프라인</h2>
-                <span class="ch-sub" id="pipeSub">전체 8개 현장 · 인허가 9단계 + 시공 8단계</span>
+                <span class="ch-sub" id="pipeSub">전체 8개 현장 · 인허가 7 · 시공 6 · 준공 5단계</span>
               </div>
               <button class="btn ghost sm">전체 보기 →</button>
             </div>
@@ -1017,9 +1017,9 @@ button{font-family:inherit;cursor:pointer}
             <h3 class="section-title"><svg class="st-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>연계 확인 (시공·영업)</h3>
             <div class="card pad">
               <div style="font-size:12.5px;color:var(--ink-2);line-height:1.6;margin-bottom:12px">행정 단계가 다른 팀과 맞물리는 항목입니다.</div>
-              <div class="safety-item" style="padding:11px 0"><div class="si-ic" style="background:var(--prog-bg);color:var(--prog-ink)">🔌</div><div class="si-b"><div class="si-t">인입협의 (시공)</div><div class="si-s">두물머리 · 한전 협의 진행중</div></div><span class="pill prog"><span class="pd"></span>진행</span></div>
+              <div class="safety-item" style="padding:11px 0"><div class="si-ic" style="background:var(--prog-bg);color:var(--prog-ink)">🔌</div><div class="si-b"><div class="si-t">한전수급계약 (행정·한전)</div><div class="si-s">두물머리 · 수급계약 협의중</div></div><span class="pill prog"><span class="pd"></span>진행</span></div>
               <div class="safety-item" style="padding:11px 0"><div class="si-ic" style="background:var(--accent-soft);color:var(--accent)">💰</div><div class="si-b"><div class="si-t">선로비 납부 (사업주/영업 확인)</div><div class="si-s">오봉 · 납부 확인 대기</div></div><span class="pill wait"><span class="pd"></span>대기</span></div>
-              <div class="safety-item" style="padding:11px 0;border-bottom:none"><div class="si-ic" style="background:var(--risk-bg);color:var(--risk-ink)">🏗️</div><div class="si-b"><div class="si-t">비산먼지·특정공사 (토목 현장)</div><div class="si-s">대명들 노지 · 신고 예정</div></div><span class="pill wait"><span class="pd"></span>대기</span></div>
+              <div class="safety-item" style="padding:11px 0;border-bottom:none"><div class="si-ic" style="background:var(--brand-soft,var(--surface-3));color:var(--brand)">📋</div><div class="si-b"><div class="si-t">공사계획신고 → 시공 이관</div><div class="si-s">대명들 노지 · 착수 예정</div></div><span class="pill wait"><span class="pd"></span>대기</span></div>
             </div>
           </div>
         </div>
@@ -1239,7 +1239,7 @@ function renderPipeline(){
   }).join('');
   document.getElementById('pipeBody').innerHTML = body ||
     `<tr><td colspan="6" style="padding:34px;text-align:center;color:var(--muted)">해당 조건의 현장이 없습니다.</td></tr>`;
-  const suffix = ovFilter==='all' ? '인허가 9단계 + 시공 8단계 (A~H)' : `${FILTER_LABEL[ovFilter]} 필터`;
+  const suffix = ovFilter==='all' ? '인허가 7 · 시공 6 · 준공 5단계' : `${FILTER_LABEL[ovFilter]} 필터`;
   document.getElementById('pipeSub').textContent = `${sites.length}개 현장 · ${suffix}`;
 }
 
@@ -1311,8 +1311,8 @@ const HEADER_NAME = {
   struct_inst:'구조물설치', module_inst:'모듈설치', electric:'전기', pre_inspect:'사용전검사',
   kepco:'한전수급', completion:'준공검사', commercial:'상업운전', facility:'설비확인',
 };
-const TEAM_DESC = {'행정':'발전허가·개발행위·PPA·선로비·비산먼지·공사계획·준공·개시·설비확인',
-  '시공':'인입협의·토목~휀스(A~H)·사용전검사', '설계':'구조검토'};
+const TEAM_DESC = {'행정':'신규접수·발전허가·개발행위·PPA·선로비·공사계획·한전수급계약·준공·상업운전·설비확인',
+  '시공':'신규접수·기초~전기공사·사용전검사', '설계':'구조검토'};
 function renderTeamBoard(team){
   const cols = STAGES.map((s,i)=>({...s,i})).filter(s=>s.team===team);
   const head = cols.map(st=>`<th style="text-align:center;min-width:78px">${st.code?st.code+' ':''}${esc(HEADER_NAME[st.key]||st.name)}</th>`).join('');
@@ -1790,8 +1790,8 @@ const RELEASES = [
   {date:'2026-09-18', team:'설계', kind:'변경', title:'신규 접수 견적서에 모듈·인버터 세부사양 표시', body:'모듈 제조사·모델·셀타입·출력, 인버터 정격·방식·수량을 유형(노지/지붕/수상)별로 표시.', author:'개발'},
   {date:'2026-09-18', team:'설계', kind:'추가', title:'영업↔설계 이관 워크플로우 · 현장 실측', body:'신규 접수·타당성검토(부지·선로·제약) 승인/반려, 반려사유 입력. 실측 스케줄(설계1·시공1)+관리자 승인+결과 보고서(사진·현장상황).', author:'개발'},
   {date:'2026-09-18', team:'영업', kind:'추가', title:'계약·이관(보완접수·가계약·실계약)', body:'설계 승인/반려에 연동되는 보완접수·가계약서·실계약서.', author:'개발'},
-  {date:'2026-09-18', team:'행정', kind:'추가', title:'인허가 현황판 · 9단계 업무 배치', body:'발전허가·개발행위·PPA·선로비·비산먼지·공사계획·준공·사업개시·설비확인을 세부메뉴로. 각 업무에서 “완료 →”로 단계 진행.', author:'개발'},
-  {date:'2026-09-18', team:'시공', kind:'추가', title:'시공 현황판 · A~H + 인입협의·사용전검사', body:'현장×시공단계 매트릭스, 현장소장 업로드, 안전 자동발송. 각 단계에서 “완료 →”로 진행.', author:'개발'},
+  {date:'2026-09-18', team:'행정', kind:'추가', title:'인허가 현황판 · 행정 업무 배치', body:'발전사업허가·개발행위허가·PPA·선로비·공사계획신고·한전수급계약·준공검사·상업운전·설비확인을 세부메뉴로. 각 업무에서 “완료 →”로 단계 진행.', author:'개발'},
+  {date:'2026-09-18', team:'시공', kind:'추가', title:'시공 현황판 · 기초~전기공사·사용전검사', body:'현장×시공단계 매트릭스, 현장소장 업로드, 안전 자동발송. 각 단계에서 “완료 →”로 진행.', author:'개발'},
   {date:'2026-09-17', team:'공통', kind:'변경', title:'상단 중앙 팀탭 + 좌측 세부메뉴로 개편 · 배색 리뉴얼', body:'팀탭을 상단 중앙으로, 클릭 시 좌측에 그 팀 세부업무. 딥 페트롤+브라스 배색으로 리디자인, 상단탭 확대.', author:'개발'},
   {date:'2026-09-17', team:'공통', kind:'추가', title:'대시보드 초안 생성', body:'종합현황판·영업·설계·시공·행정 5개 영역, 현장 20단계 파이프라인, 현장 상세 드로어.', author:'개발'},
 ];
@@ -1882,7 +1882,7 @@ function openDrawer(id){
   STAGES.forEach((st,i)=>{
     const s = stageStatus(site,i);
     if(st.phase!==lastPhase){
-      tl += `<div class="phase-div">${st.phase==='인허가'?'인허가 · 사전':st.phase==='시공'?'시공 (A~H)':'준공 · 개시'}</div>`;
+      tl += `<div class="phase-div">${st.phase==='인허가'?'인허가 · 사전':st.phase==='시공'?'시공':'준공 · 개시'}</div>`;
       lastPhase = st.phase;
     }
     const glyph = {done:'✓',active:'◐',wait:'',risk:'!',na:'—'}[s];
@@ -2179,7 +2179,7 @@ function sendSafety(){ toast('현장 5곳 소장에게 오늘 안전수칙 문�
 const HANDOVER_TASKS = [
   {team:'행정', color:'var(--brand)', t:'발전사업허가 · 개발행위허가 접수', s:'인허가 행정 큐에 등록'},
   {team:'설계', color:'#7e6bb0', t:'구조검토 요청 접수', s:'배치·부지 정보 자동 첨부'},
-  {team:'시공', color:'var(--prog)', t:'인입협의 · 시공 준비 접수', s:'구조검토 완료 후 착수'},
+  {team:'시공', color:'var(--prog)', t:'신규 현장 접수 · 시공 준비', s:'공사계획신고 완료 후 착수'},
 ];
 function openHandover(){
   const box = document.getElementById('handoverTasks');
