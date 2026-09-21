@@ -531,6 +531,10 @@ button{font-family:inherit;cursor:pointer}
 .modal{background:var(--surface);border-radius:var(--r-xl);width:560px;max-width:100%;box-shadow:var(--shadow-lg);border:1px solid var(--border);
   transform:scale(.96);transition:.2s;overflow:hidden}
 .modal-scrim.open .modal{transform:none}
+.modal.wide{width:840px}
+.modal .modal-close{position:absolute;top:14px;right:14px}
+.modal-scrim .modal{position:relative}
+.modal-body.scroll{max-height:76vh;overflow:auto}
 .modal-head{padding:20px 22px 8px}
 .modal-head h3{margin:0;font-size:18px;font-weight:800;letter-spacing:-.3px}
 .modal-head p{margin:6px 0 0;color:var(--ink-2);font-size:13px}
@@ -1047,6 +1051,19 @@ button{font-family:inherit;cursor:pointer}
     <div class="timeline" id="drTimeline"></div>
   </div>
 </aside>
+
+<!-- 제안서 보기 모달 (영업 이관 자료 재열람) -->
+<div class="modal-scrim" id="proposalScrim" onclick="if(event.target===this)closeProposal()">
+  <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="proposalTitle">
+    <button class="dr-close modal-close" onclick="closeProposal()" aria-label="닫기">✕</button>
+    <div class="modal-head" style="padding-right:52px">
+      <h3 id="proposalTitle">발전사업 제안서</h3>
+      <p id="proposalSub">영업 이관 자료</p>
+    </div>
+    <div class="modal-body scroll" id="proposalBody"></div>
+    <div style="padding:12px 22px 18px;text-align:right"><button class="btn ghost sm" onclick="closeProposal()">닫기</button></div>
+  </div>
+</div>
 
 <!-- ============ 이관 모달 ============ -->
 <div class="modal-scrim" id="handoverScrim">
@@ -1575,6 +1592,20 @@ function handoverProposal(d){
   </div>`;
 }
 
+// 제안서 보기 모달 — 어느 단계에서든 그 현장의 영업 이관 제안서(견적서 전체)를 다시 연다
+function openProposal(id){
+  const d = DEALS.find(x=>x.id===id); if(!d) return;
+  document.getElementById('proposalTitle').textContent = d.site + ' · ' + d.cap.toLocaleString() + 'kW 제안서';
+  document.getElementById('proposalSub').textContent = d.id + ' · 영업 ' + d.rep + ' 이관 · 고객 제공 견적서(전체)';
+  document.getElementById('proposalBody').innerHTML = d.proposal ? handoverProposal(d)
+    : `<div class="section-title" style="font-size:12px;margin:0 0 8px">이관 자료 · 고객 제공 견적서(전체)</div>${quoteFull(d)}
+       <div class="section-title" style="font-size:12px;margin:16px 0 8px">배치도</div>${miniLayout(d.cap)}`;
+  document.getElementById('proposalScrim').classList.add('open');
+}
+function closeProposal(){ document.getElementById('proposalScrim').classList.remove('open'); }
+// 카드에 붙이는 '제안서 보기' 버튼 (모든 딜 — 제안서 있으면 전체, 없으면 견적 요약)
+function proposalBtn(d, label){ return `<button class="btn ghost sm" onclick="openProposal('${d.id}')">📄 ${label||'제안서 보기'}</button>`; }
+
 // 신규 현장 접수 (설계) — 영업 이관 자료: 견적서 전체 + 배치도
 function renderIntake(){
   const cards = DEALS.filter(d=>d.stage==='handover_design').map(d=>`
@@ -1592,7 +1623,7 @@ function renderIntake(){
         <div><div class="section-title" style="font-size:12px;margin:0 0 8px">배치도</div>${miniLayout(d.cap)}</div>
       </div>`}
       <div class="wf-actions">
-        <button class="btn ghost sm">📄 견적서 전체 열기</button>
+        <button class="btn ghost sm" onclick="openProposal('${d.id}')">📄 견적서 전체 열기</button>
         <button class="btn primary sm" onclick="wfAction('${d.id}','feasibility','타당성검토 대기열에 추가됨')">타당성검토 시작 →</button>
       </div>
     </div>`).join('');
@@ -1621,6 +1652,7 @@ function renderFeasibility(){
         <div style="font-size:11.5px;font-weight:700;color:var(--ink-2);margin-bottom:6px">반려 사유 (반려 시 입력)</div>
         <textarea id="reason-${d.id}" class="ta" placeholder="예: 개발행위 이격거리 미달 / 계통 여유 부족 / 재해위험구역 등"></textarea>
         <div class="wf-actions">
+          ${proposalBtn(d)}
           <button class="btn danger sm" onclick="wfReject('${d.id}')">반려 (영업 리턴)</button>
           <button class="btn ok sm" onclick="wfAction('${d.id}','approved','타당성 승인 — 영업팀에 알림 전송 · 가계약 진행')">승인 →</button>
         </div>
@@ -1640,6 +1672,7 @@ function renderSupplement(){
       </div>
       <div class="tl-note" style="margin-top:12px">⚠ 설계팀 반려사유: ${esc(d.rejectReason||'-')}</div>
       <div class="wf-actions">
+        ${proposalBtn(d)}
         <button class="btn ghost sm">고객 협의 메모</button>
         <button class="btn primary sm" onclick="wfAction('${d.id}','handover_design','보완 완료 — 설계팀에 재이관')">보완 완료 · 설계 재이관 →</button>
       </div>
@@ -1656,6 +1689,7 @@ function renderPreContract(){
       </div>
       ${contractDoc('가 계 약 서', [['계약 구분','가계약 (예약)'],['현 장 명',d.site],['사 업 주','○○○ (가상)'],['설비용량',d.cap.toLocaleString()+' kW ('+d.type+')'],['예상 사업비',won(dealBudget(d.cap))+' (VAT 별도)'],['가계약금',won(dealBudget(d.cap)*0.02)+' (2%)'],['특약','타당성 승인 조건부 · 실측 후 본계약 전환'],['작성일','2026-09-18']])}
       <div class="wf-actions">
+        ${proposalBtn(d)}
         <button class="btn ghost sm">가계약서 PDF</button>
         <button class="btn primary sm" onclick="wfAction('${d.id}','survey_handover','가계약 완료 — 설계팀 실측으로 이관')">가계약 완료 처리 →</button>
       </div>
@@ -1692,7 +1726,7 @@ function renderSurvey(){
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
         <div><div style="font-size:15px;font-weight:800">${esc(d.site)} · ${d.cap.toLocaleString()}kW <span class="type-chip">${d.type}</span></div>
           <div class="lr-s" style="margin-top:4px">${d.id} · 가계약 완료 · 영업 ${esc(d.rep)}</div></div>
-        <span class="pill ${pill[0]}"><span class="pd"></span>${pill[1]}</span>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${proposalBtn(d)}<span class="pill ${pill[0]}"><span class="pd"></span>${pill[1]}</span></div>
       </div>${body}
     </div>`;
   }).join('');
@@ -1708,6 +1742,7 @@ function renderRealContract(){
       </div>
       ${contractDoc('공 사 도 급 계 약 서 (본계약)', [['계약 구분','본계약 (실계약)'],['현 장 명',d.site],['사 업 주','○○○ (가상)'],['설비용량',d.cap.toLocaleString()+' kW ('+d.type+') · 실측 반영'],['총 공사대금',won(dealBudget(d.cap))+' (VAT 별도)'],['계약금 / 잔금','10% 계약 시 / 90% 기성·준공'],['공사기간','착공일로부터 약 4개월'],['작성일','2026-09-18']])}
       <div class="wf-actions">
+        ${proposalBtn(d)}
         <button class="btn ghost sm">실계약서 PDF</button>
         <button class="btn primary sm" onclick="wfAction('${d.id}','done','실계약 완료 — 공무팀 착수(발전허가·개발행위)')">실계약 완료 처리 ✓</button>
       </div>
