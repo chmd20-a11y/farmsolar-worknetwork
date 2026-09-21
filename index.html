@@ -542,6 +542,7 @@ button{font-family:inherit;cursor:pointer}
 .feas-verdict.ok{background:var(--ok-bg);color:var(--ok-ink);border-color:var(--ok)}
 .feas-verdict.warn{background:rgba(189,138,46,.13);color:var(--brand);border-color:var(--brand)}
 .feas-verdict.bad{background:var(--risk-bg);color:var(--risk-ink);border-color:var(--risk)}
+.feas-verdict.na{background:var(--surface-2);color:var(--ink-2)}
 .feas-list{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface)}
 .feas-row{display:flex;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);align-items:flex-start}
 .feas-row:last-child{border-bottom:none}
@@ -1635,6 +1636,10 @@ function renderIntake(){
         </div>
         <div><div class="section-title" style="font-size:12px;margin:0 0 8px">배치도</div>${miniLayout(d.cap)}</div>
       </div>`}
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px">
+        <span class="lr-s" style="flex:none;font-weight:700">지번</span>
+        <input class="tinput" id="jibun-${d.id}" style="flex:1;min-width:200px" value="${esc(d.jibun||'')}" placeholder="영업 이관 지번 입력 (예: 경기도 파주시 문발동 66)">
+      </div>
       <div class="wf-actions">
         <button class="btn ghost sm" onclick="openProposal('${d.id}')">📄 견적서 전체 열기</button>
         <button class="btn primary sm" onclick="startFeasibility('${d.id}')">타당성검토 시작 →</button>
@@ -1705,11 +1710,12 @@ function parcelOf(d){
             : Math.round((0.3 + ((h>>4)%12)/10)*10)/10;
   return {jibun, jimok, zone, names, restrict, slope, river, gridFree, gridName, gridDist};
 }
-function diagnoseFeasibility(d){
-  const p = parcelOf(d);
-  const rows = [];
-  const push=(lvl,t,dd)=>rows.push({lvl, t, d:dd});
-  if(d.type==='수상'){ push('ok','지목: 유지(저수지 수면)','수상 태양광 적합 수면'); }
+// 진단행 빌더 — 정규화 부지속성 p(실측/추정 공통) → 진단행+종합판정. real=true면 '실시간' 라벨.
+function buildRows(p, type, real){
+  const rows=[]; const push=(lvl,t,dd)=>rows.push({lvl,t,d:dd});
+  // 지목
+  if(type==='수상'){ push('ok','지목: '+(p.jimok||'유지'),'수상 태양광 적합 수면'); }
+  else if(!p.jimok){ push('na','지목 확인 필요','필지 자동취득 실패'); }
   else {
     let jL='ok',jD='전용허가 부담 적음';
     if(/천|구거|제방|유지|도로|철도|수도/.test(p.jimok)){ jL='bad'; jD='공작물 설치 제약 지목'; }
@@ -1717,57 +1723,211 @@ function diagnoseFeasibility(d){
     else if(/전|답|과|목/.test(p.jimok)){ jL='warn'; jD='농지전용허가 필요'; }
     push(jL,'지목: '+p.jimok, jD);
   }
-  if(d.type==='수상'){ push('na','경사도','수면 — 경사 해당없음'); }
+  // 경사도
+  if(type==='수상'){ push('na','경사도','수면 — 경사 해당없음'); }
+  else if(p.slope==null){ push('na','경사도 확인 필요','표고 조회 실패 — 국토환경성평가지도 확인'); }
   else {
-    const s=p.slope, sL = s<5?'ok':(s<15?'warn':'bad');
-    const lab = s<5?'완경사 (설치 양호)':(s<15?'중경사 (정지·구조 검토)':'급경사 (설치 어려움)');
-    push(sL, `경사도 약 ${s}° · ${lab}`, 'SRTM 30m 참고 · 정밀은 국토환경성평가지도');
+    const s=+p.slope, sL=s<5?'ok':(s<15?'warn':'bad');
+    const lab=s<5?'완경사 (설치 양호)':(s<15?'중경사 (정지·구조 검토)':'급경사 (설치 어려움)');
+    push(sL,`경사도 약 ${s.toFixed(1)}° · ${lab}`, (p.elev!=null?`표고 ${Math.round(p.elev)}m · `:'')+'SRTM 30m 참고');
   }
-  let zL='warn',zD='개발행위허가 검토';
-  if(/계획관리/.test(p.zone)){ zL='ok'; zD='태양광 양호'; }
-  else if(/자연녹지|생산관리|보전관리|생산녹지/.test(p.zone)){ zL='warn'; zD='조건부(개발행위허가)'; }
-  else if(/농림|보전/.test(p.zone)){ zL='warn'; zD='농지·보전 규제 검토'; }
-  push(zL, '용도지역: '+p.zone, zD);
-  if(d.type!=='수상'){ push(p.river?'bad':'ok', '하천 저촉/인접', p.river? '인접 하천 저촉 가능 — 이격 확인' : '인접 하천 없음'); }
-  push('na', '이격거리 (주거 ≤200m 기준)', '2026 기준: 주거 200m 이내·도로 이격 폐지 · 지자체 조례 확인');
-  const sj = judgeSolarZones(p.names);
-  if(sj.lvl!=='na'){ push(sj.lvl, '☀️ 태양광 규제 판정: '+sj.label, (sj.hits.length? sj.hits.map(x=>x.why).join(' · ') : '특이 규제 없음')+' · 지자체 조례·개별 심의로 최종 확정'); }
-  const gL = p.gridFree>=10?'ok':(p.gridFree>=1?'warn':'bad');
-  push(gL, `계통 여유: ${p.gridName} · ${p.gridFree}MW`, `약 ${p.gridDist}km · ${gL==='ok'?'연계 여유 충분':gL==='warn'?'여유 보통 — 경합 확인':'여유 부족 — 증설·대기 가능성'}`);
-  const lvls = rows.map(r=>r.lvl);
-  const worst = lvls.includes('bad')?'bad':(lvls.includes('warn')?'warn':'ok');
-  const verdict = worst==='ok'?'설치 가능':(worst==='warn'?'조건부 가능':'설치 제한');
-  const badge = worst==='ok'?'🟢':(worst==='warn'?'🟡':'🔴');
-  return {verdict, worst, badge, parcel:p, rows};
+  // 용도지역
+  if(!p.zone){ push('na','용도지역 조회 불가','토지이음에서 지번 조회'); }
+  else {
+    let zL='warn',zD='개발행위허가 검토';
+    if(/계획관리/.test(p.zone)){ zL='ok'; zD='태양광 양호'; }
+    else if(/자연녹지|생산관리|보전관리|생산녹지/.test(p.zone)){ zL='warn'; zD='조건부(개발행위허가)'; }
+    else if(/농림|보전/.test(p.zone)){ zL='warn'; zD='농지·보전 규제 검토'; }
+    else if(/주거|상업|공업/.test(p.zone)){ zL='bad'; zD='도시지역 — 태양광 제약'; }
+    push(zL,'용도지역: '+p.zone, zD);
+  }
+  // 하천 (값 있을 때만)
+  if(p.river!=null && type!=='수상'){ push(p.river?'bad':'ok','하천 저촉/인접', p.river?'인접 하천 저촉 가능 — 이격 확인':'인접 하천 없음'); }
+  // 이격거리(정보)
+  push('na','이격거리 (주거 ≤200m 기준)','2026 기준: 주거 200m 이내·도로 이격 폐지 · 지자체 조례 확인');
+  // ☀️ 태양광 규제 판정
+  const sj=judgeSolarZones(p.names||[]);
+  if(sj.lvl!=='na'){ push(sj.lvl,'☀️ 태양광 규제 판정: '+sj.label, (sj.hits.length?sj.hits.map(x=>x.why).join(' · '):'특이 규제 없음')+' · 지자체 조례·개별 심의로 최종 확정'); }
+  // 계통 여유
+  if(p.gridFree==null){ push('na','계통 여유 조회 불가', p.gridName||'인근 변전소 미확인'); }
+  else {
+    const g=+p.gridFree, gL=g>=10?'ok':(g>=1?'warn':'bad');
+    push(gL,`계통 여유: ${p.gridName||'인근 변전소'} · ${g.toFixed(1)}MW`, `${p.gridEmd?p.gridEmd+' 담당 · ':(p.gridDist?'약 '+p.gridDist+'km · ':'')}${gL==='ok'?'연계 여유 충분':gL==='warn'?'여유 보통 — 경합 확인':'여유 부족 — 증설·대기 가능성'}`);
+  }
+  const lvls=rows.map(r=>r.lvl);
+  let worst,verdict,badge;
+  if(lvls.includes('bad')){ worst='bad'; verdict='설치 제한'; badge='🔴'; }
+  else if(lvls.includes('warn')){ worst='warn'; verdict='조건부 가능'; badge='🟡'; }
+  else if(lvls.includes('ok')){ worst='ok'; verdict='설치 가능'; badge='🟢'; }
+  else { worst='na'; verdict='판정 불가 (데이터 부족)'; badge='⚪'; }
+  return {verdict, worst, badge, parcel:p, rows, mode: real?'실시간':'추정'};
 }
+function diagnoseSim(d){ return buildRows(parcelOf(d), d.type, false); }
+
+/* ---- 실시간 API (Vercel 동일오리진 프록시 /req·/ned·/dem·/kepco · 로컬은 localStorage fsnet_proxy) ---- */
+function _apiBase(){ try{ return (localStorage.getItem('fsnet_proxy')||'').replace(/\/+$/,''); }catch(e){ return ''; } }
+async function apiGeocode(jibun){
+  const P=_apiBase();
+  for(const type of ['parcel','road']){
+    const url=`${P}/req/address?service=address&request=getcoord&version=2.0&crs=epsg:4326&address=${encodeURIComponent(jibun)}&refine=true&simple=false&format=json&type=${type}`;
+    let j; try{ j=await fetch(url).then(r=>r.json()); }catch(e){ throw new Error('proxy'); }
+    if(j&&j.response){
+      if(j.response.status==='OK'&&j.response.result&&j.response.result.point) return {lng:+j.response.result.point.x, lat:+j.response.result.point.y};
+      if(j.response.error&&j.response.error.code==='INVALID_KEY') throw new Error('key');
+    }
+  }
+  return null;
+}
+async function apiParcel(lng,lat){
+  const P=_apiBase(), dom=encodeURIComponent(location.hostname||'localhost');
+  const url=`${P}/req/data?service=data&request=GetFeature&data=LP_PA_CBND_BUBUN&domain=${dom}&format=json&crs=EPSG:4326&geometry=false&attribute=true&size=1&geomFilter=${encodeURIComponent('POINT('+lng+' '+lat+')')}`;
+  const j=await fetch(url).then(r=>r.json());
+  const fc=j&&j.response&&j.response.result&&j.response.result.featureCollection;
+  const f=(fc&&fc.features&&fc.features.length)?fc.features[0]:null; if(!f) return null;
+  const pr=f.properties||{}; const jimok=((pr.jibun||'').match(/[가-힣]+$/)||[''])[0];
+  return {pnu:pr.pnu||'', jibun:pr.jibun||'', addr:pr.addr||'', jimok};
+}
+async function apiZone(lat,lng){
+  const P=_apiBase(), wkt='POINT('+lng+' '+lat+')', names=[];
+  for(const layer of ['LT_C_UQ111','LT_C_UQ112','LT_C_UQ113']){
+    try{ const url=`${P}/req/data?service=data&request=GetFeature&data=${layer}&domain=${encodeURIComponent(location.hostname||'localhost')}&format=json&crs=EPSG:4326&geometry=false&attribute=true&size=3&geomFilter=${encodeURIComponent(wkt)}`;
+      const j=await fetch(url).then(r=>r.json());
+      const fs=(j&&j.response&&j.response.result&&j.response.result.featureCollection&&j.response.result.featureCollection.features)||[];
+      if(fs.length&&fs[0].properties.uname) names.push(fs[0].properties.uname);
+    }catch(e){}
+  }
+  return names.find(n=>/(관리지역|녹지지역|주거지역|상업지역|공업지역|농림지역|자연환경보전지역)/.test(n))||names[0]||null;
+}
+async function apiSlope(lng,lat){
+  const P=_apiBase();
+  const dLat=40/111000, dLng=40/(111320*Math.cos(lat*Math.PI/180)), pts=[];
+  for(let i=-1;i<=1;i++)for(let k=-1;k<=1;k++)pts.push((lat+i*dLat).toFixed(6)+','+(lng+k*dLng).toFixed(6));
+  const j=await fetch(`${P}/dem/v1/srtm30m?locations=${encodeURIComponent(pts.join('|'))}`).then(r=>r.json());
+  if(!j||j.status!=='OK'||!j.results||j.results.some(r=>r.elevation==null)) return null;
+  const e=j.results.map(r=>r.elevation), at=(i,k)=>e[(i+1)*3+(k+1)];
+  const dzdy=(at(1,0)-at(-1,0))/80, dzdx=(at(0,1)-at(0,-1))/80;
+  return { slope: Math.atan(Math.hypot(dzdx,dzdy))*180/Math.PI, elev: at(0,0) };
+}
+async function apiLandUse(pnu){
+  if(!pnu) return [];
+  const P=_apiBase();
+  try{ const j=await fetch(`${P}/ned/data/getLandUseAttr?pnu=${encodeURIComponent(pnu)}&format=json&numOfRows=200&pageNo=1`).then(r=>r.json());
+    let fields=(j&&j.landUses&&j.landUses.field)||[]; if(fields&&!Array.isArray(fields)) fields=[fields];
+    return [...new Set(fields.map(f=>f&&f.prposAreaDstrcCodeNm).filter(Boolean))];
+  }catch(e){ return []; }
+}
+let _KCODES=null;
+async function loadKCodes(){ if(_KCODES) return _KCODES; try{ _KCODES=await fetch('kepco_codes.json',{cache:'force-cache'}).then(r=>r.json()); }catch(e){ _KCODES=null; } return _KCODES; }
+const _METRO_ALIAS={'강원도':'강원특별자치도','전라북도':'전북특별자치도','전북':'전북특별자치도'};
+async function apiReverse(lat,lng){
+  const P=_apiBase();
+  const j=await fetch(`${P}/req/address?service=address&request=getAddress&version=2.0&crs=epsg:4326&point=${lng},${lat}&format=json&type=both`).then(r=>r.json());
+  const rs=(j&&j.response&&j.response.result)||[]; const pick=rs.find(x=>x.type==='parcel')||rs[0]; if(!pick) return null;
+  const s=pick.structure||{}; const gu=(s.level3&&s.level3!==s.level2)?s.level3:'';
+  return {sido:s.level1||'', sigungu:(s.level2||'')+(gu?(' '+gu):''), sigungu2:s.level2||'', emd:s.level4A||s.level4L||s.level3||''};
+}
+function _resolveKepco(K,sido,sigungu,sigungu2){
+  if(!K) return null; const norm=x=>String(x||'').replace(/\s/g,'');
+  const byNm=nm=>{const t=norm(nm);return K.city.filter(c=>norm(c.nm)===t);};
+  let cands=byNm(sigungu); if(!cands.length) cands=byNm(sigungu2); if(!cands.length) return null;
+  const sidoN=norm(_METRO_ALIAS[sido]||sido); const mnm=code=>{const m=K.metro.find(x=>x.code===code);return m?norm(m.nm):'';};
+  const pick=cands.find(c=>{const mn=mnm(c.metro);return mn===sidoN||mn.includes(sidoN)||sidoN.includes(mn);})||cands[0];
+  return {metroCd:pick.metro, cityCd:pick.code};
+}
+async function apiGridLive(lat,lng){
+  const P=_apiBase(), K=await loadKCodes();
+  const rev=await apiReverse(lat,lng); if(!rev||!rev.emd||!K) return null;
+  const code=_resolveKepco(K,rev.sido,rev.sigungu,rev.sigungu2); if(!code) return null;
+  const call=async ld=>{ try{ const r=await fetch(`${P}/kepco/dispersedGeneration.do?metroCd=${code.metroCd}&cityCd=${code.cityCd}&addrLidong=${encodeURIComponent(ld)}`); const j=await r.json(); return (j&&j.data)||[]; }catch(e){ return []; } };
+  let rows=await call(rev.emd);
+  if(!rows.length){ const alt=rev.emd.endsWith('읍')?rev.emd.slice(0,-1)+'면':rev.emd.endsWith('면')?rev.emd.slice(0,-1)+'읍':null; if(alt) rows=await call(alt); }
+  if(!rows.length) return {emd:rev.emd, name:null, free:null};
+  const byCd={}; for(const r of rows){ const cd=r.substCd; (byCd[cd]=byCd[cd]||{substNm:r.substNm,dls:[]}).dls.push({nm:r.dlNm, free:Math.min(+r.vol1||0,+r.vol2||0,+r.vol3||0)/1000}); }
+  const groups=Object.values(byCd).map(g=>{ g.dls.sort((a,b)=>b.free-a.free); g.maxFree=g.dls.length?g.dls[0].free:0; return g; }).sort((a,b)=>b.maxFree-a.maxFree);
+  const best=groups[0];
+  return {emd:rev.emd, name:(best.substNm||'')+' 변전소', free:best.maxFree};
+}
+// 지번 → 실시간 정규화 부지속성(실패 시 throw 'proxy'/'key')
+async function fetchRealDiagnosis(jibun){
+  const pt=await apiGeocode(jibun);
+  if(!pt) return {error:'주소를 찾지 못했습니다 — 지번/도로명을 확인하세요.'};
+  let parcel=null,zone=null,slope=null,grid=null,names=[];
+  try{ parcel=await apiParcel(pt.lng,pt.lat); }catch(e){}
+  try{ zone=await apiZone(pt.lat,pt.lng); }catch(e){}
+  try{ slope=await apiSlope(pt.lng,pt.lat); }catch(e){}
+  try{ if(parcel&&parcel.pnu) names=await apiLandUse(parcel.pnu); }catch(e){}
+  try{ grid=await apiGridLive(pt.lat,pt.lng); }catch(e){}
+  return {p:{
+    jibun:(parcel&&(parcel.addr||parcel.jibun))||jibun,
+    jimok:(parcel&&parcel.jimok)||null, zone, names, river:null,
+    slope: slope?slope.slope:null, elev: slope?slope.elev:null,
+    gridFree: grid?grid.free:null, gridName: grid?grid.name:null, gridEmd: grid?grid.emd:null,
+    lat:pt.lat, lng:pt.lng, pnu:(parcel&&parcel.pnu)||''
+  }};
+}
+// 진단 실행: 실시간 우선 → 프록시/키 미연결 시 추정 폴백(라벨)
+async function runDiagnosis(d){
+  const jibun=(d.jibun||'').trim();
+  d.feas={pending:true, jibun}; refreshActive();
+  if(jibun) toast('설치 가능성 진단 중… '+jibun);
+  let res;
+  try{
+    if(!jibun) throw new Error('nojibun');
+    const r=await fetchRealDiagnosis(jibun);
+    if(r.error){ res={error:r.error, jibun}; }
+    else { res=buildRows(r.p, d.type, true); res.jibun=r.p.jibun||jibun; }
+  }catch(e){
+    res=buildRows(parcelOf(d), d.type, false); res.jibun=jibun||res.parcel.jibun;
+    res.fallback = e.message==='key' ? 'VWorld 인증키 오류 — 키/도메인 등록 확인 (지금은 추정치)'
+                 : e.message==='nojibun' ? '지번 미입력 — 예시 추정치 표시'
+                 : '실시간 미연결 — Vercel 배포·키 설정 후 실시간 전환 (지금은 추정치)';
+  }
+  d.feas=res; persistDeal(d); refreshActive();
+}
+function runDiagnosisById(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; const inp=document.getElementById('jibun-'+id); if(inp) d.jibun=inp.value.trim(); runDiagnosis(d); }
 function feasRowHTML(r){
   const c = r.lvl==='ok'?'var(--ok)':r.lvl==='warn'?'var(--brand)':r.lvl==='bad'?'var(--risk)':'var(--muted)';
   return `<div class="feas-row"><span class="feas-dot" style="background:${c}"></span><div><div class="fr-t">${esc(r.t)}</div><div class="fr-d">${esc(r.d)}</div></div></div>`;
 }
-// 신규접수 '타당성검토 시작' → 지번 설치 가능성 자동 진단 후 타당성검토로 이동
-function startFeasibility(id){
+// 신규접수 '타당성검토 시작' → 지번 설치 가능성 실시간 진단 후 타당성검토로 이동
+async function startFeasibility(id){
   const d = DEALS.find(x=>x.id===id); if(!d) return;
-  d.stage = 'feasibility';
-  d.feas = diagnoseFeasibility(d);
-  toast(`설치 가능성 진단: ${d.site} → ${d.feas.badge} ${d.feas.verdict}`);
-  persistDeal(d);
-  refreshActive();
+  const inp=document.getElementById('jibun-'+id); if(inp) d.jibun=inp.value.trim();
+  d.stage='feasibility';
+  await runDiagnosis(d);
 }
 
-// 타당성검토 (설계) — 지번 설치 가능성 자동 진단(PLOT 이식) + 승인·반려
+// 타당성검토 (설계) — 지번 실시간 설치 가능성 진단(국토부·한전 API) + 승인·반려
 function renderFeasibility(){
   const cards = DEALS.filter(d=>d.stage==='feasibility').map(d=>{
-    const f = d.feas || diagnoseFeasibility(d);
+    const f = d.feas || {};
+    const jibunVal = esc(f.jibun!=null ? f.jibun : (d.jibun||''));
+    let panel;
+    if(f.pending){
+      panel = `<div class="feas-verdict warn"><span class="fv-b">⏳</span>설치 가능성 진단 중…<span class="fv-s">${esc(f.jibun||'')}</span></div>`;
+    } else if(f.error){
+      panel = `<div class="feas-verdict bad"><span class="fv-b">⚠️</span>진단 실패<span class="fv-s">${esc(f.error)}</span></div>`;
+    } else if(f.rows){
+      const modeTag = f.mode==='실시간' ? '🛰 국토부·한전 실시간' : '📊 추정치';
+      const fbNote = f.fallback ? `<div class="note" style="margin:6px 0 10px;color:var(--brand)">ⓘ ${esc(f.fallback)}</div>` : '';
+      panel = `<div class="feas-verdict ${f.worst}"><span class="fv-b">${f.badge}</span>${f.verdict}<span class="fv-s">${modeTag} · 최종은 검토자 확인</span></div>${fbNote}
+        <div class="feas-list">${f.rows.map(feasRowHTML).join('')}</div>`;
+    } else {
+      panel = `<div class="note" style="margin:8px 0 10px">지번을 입력하고 <b>🔍 진단 실행</b>을 누르면 설치 가능성이 판정됩니다.</div>`;
+    }
     return `
     <div class="card pad" style="margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
         <div><div style="font-size:15px;font-weight:800">${esc(d.site)} · ${d.cap.toLocaleString()}kW <span class="type-chip">${d.type}</span></div>
-          <div class="lr-s" style="margin-top:4px">${d.id} · 영업 ${esc(d.rep)} · 지번 ${esc(f.parcel.jibun)}</div></div>
+          <div class="lr-s" style="margin-top:4px">${d.id} · 영업 ${esc(d.rep)} 이관</div></div>
         <span class="pill prog"><span class="pd"></span>검토중</span>
       </div>
-      <div class="section-title" style="font-size:12px;margin:14px 0 6px">📋 설치 가능성 진단 — 지번 자동 판정</div>
-      <div class="feas-verdict ${f.worst}"><span class="fv-b">${f.badge}</span>${f.verdict}<span class="fv-s">${d.type} · 자동 판정(참고) · 최종은 검토자 확인</span></div>
-      <div class="feas-list">${f.rows.map(feasRowHTML).join('')}</div>
+      <div class="section-title" style="font-size:12px;margin:14px 0 6px">📋 설치 가능성 진단 — 지번 입력 → 실시간 판정</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+        <input class="tinput" id="jibun-${d.id}" style="flex:1;min-width:220px" value="${jibunVal}" placeholder="지번/도로명 (예: 경기도 파주시 문발동 66)" onkeydown="if(event.key==='Enter')runDiagnosisById('${d.id}')">
+        <button class="btn primary sm" onclick="runDiagnosisById('${d.id}')">🔍 진단 실행</button>
+      </div>
+      ${panel}
       <div style="margin-top:14px">
         <div style="font-size:11.5px;font-weight:700;color:var(--ink-2);margin-bottom:6px">반려 사유 (반려 시 입력)</div>
         <textarea id="reason-${d.id}" class="ta" placeholder="예: 개발행위 이격거리 미달 / 계통 여유 부족 / 재해위험구역 등"></textarea>
@@ -1779,7 +1939,7 @@ function renderFeasibility(){
       </div>
     </div>`;
   }).join('');
-  return wfHead('타당성검토','신규 접수 시 지번의 <b>설치 가능성</b>을 자동 진단합니다. 지목·경사·용도지역·규제·계통 여유를 종합해 가능/조건부/제한을 판정 — 검토 후 승인 또는 반려하세요.') + (cards || emptyMsg('검토 대기 중인 현장이 없습니다.'));
+  return wfHead('타당성검토','지번의 <b>설치 가능성</b>을 실시간(국토부·한전 API) 진단합니다. 지목·경사·용도지역·규제·계통 여유 종합 → 가능/조건부/제한. 검토 후 승인/반려.') + (cards || emptyMsg('검토 대기 중인 현장이 없습니다.'));
 }
 
 // 보완 접수 (영업) — 반려된 건 리턴 도착
@@ -1906,6 +2066,10 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-09-21', team:'설계', kind:'추가', title:'타당성검토 · 설치 가능성 실시간 진단(국토부·한전 API) + 지번 입력', body:'신규접수·타당성검토에 지번을 입력하면 지목·경사·용도지역·☀️태양광 규제판정·계통 여유를 실시간 조회해 가능/조건부/제한을 자동 판정. 독립 프록시 구조(Vercel)로 구축 — 배포·키 설정 후 실시간 전환, 그 전까지는 추정치로 표시.', author:'개발'},
+  {date:'2026-09-21', team:'공통', kind:'변경', title:'업무 프로세스를 파주지사 실제 흐름(18단계)으로 정합 + 탭 순서 변경', body:'핸드오프 행정→설계(구조검토)→행정→시공→행정. 한전수급계약·상업운전·자재입고확인 추가, 인입협의·비산먼지·토목·발주·휀스·사업개시 정리. 상단 탭 순서: 종합현황판·영업·설계·행정·시공.', author:'개발'},
+  {date:'2026-09-21', team:'설계', kind:'추가', title:'영업 이관 “발전사업 제안서(견적서 전체)” 신규접수 도착 + 제안서 보기', body:'견적 11공종·제품사양·유지관리비·수익성·배치도가 설계 신규접수 이관자료로 도착. “📄 제안서 보기”로 타당성·실측·계약 단계에서도 언제든 재열람.', author:'개발'},
+  {date:'2026-09-21', team:'영업', kind:'삭제', title:'영업 메뉴 “교통·접근성” 제거', body:'요청에 따라 영업 세부업무에서 교통·접근성 항목 삭제. 부지찾기·타당성검토·모듈 가배치·견적서·계약이관은 유지.', author:'개발'},
   {date:'2026-09-18', team:'공통', kind:'추가', title:'릴리즈노트 기능 추가 · 필드테스트용 공유서버(Supabase 간편모드) 연동 준비', body:'상단에 릴리즈노트 탭 신설(팀별 필터). 설계·시공·행정을 여러 기기에서 공유하는 필드테스트 준비(로그인=이름·팀 선택). 영업은 계속 가상.', author:'개발'},
   {date:'2026-09-18', team:'공통', kind:'추가', title:'전체 라이프사이클 연결 + 브라우저 저장', body:'“영업 자료 수신(가상)” → 설계 접수·타당성·실측 → 계약 → 실계약 완료 시 시공·행정 20단계 자동 착수 → 각 업무 “완료 →”로 준공·설비확인까지. 새로고침해도 유지, “데모 초기화” 제공.', author:'개발'},
   {date:'2026-09-18', team:'설계', kind:'변경', title:'신규 접수 견적서에 모듈·인버터 세부사양 표시', body:'모듈 제조사·모델·셀타입·출력, 인버터 정격·방식·수량을 유형(노지/지붕/수상)별로 표시.', author:'개발'},

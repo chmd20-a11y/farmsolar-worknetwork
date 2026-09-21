@@ -1,0 +1,11 @@
+{
+  "rewrites": [
+    { "source": "/req/:path*", "destination": "/api/proxy?__path=:path*" },
+    { "source": "/ned/:path*", "destination": "/api/proxy?__npath=:path*" },
+    { "source": "/dem/:path*", "destination": "/api/proxy?__dpath=:path*" },
+    { "source": "/kepco/:path*", "destination": "/api/proxy?__kpath=:path*" }
+  ],
+  "headers": [
+    { "source": "/index.html", "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }] }
+  ]
+}
