@@ -535,6 +535,19 @@ button{font-family:inherit;cursor:pointer}
 .modal .modal-close{position:absolute;top:14px;right:14px}
 .modal-scrim .modal{position:relative}
 .modal-body.scroll{max-height:76vh;overflow:auto}
+/* 설치 가능성 진단(타당성검토) */
+.feas-verdict{display:flex;align-items:center;gap:11px;padding:12px 15px;border-radius:12px;font-weight:800;font-size:15px;margin:2px 0 12px;border:1px solid var(--border)}
+.feas-verdict .fv-b{font-size:20px;line-height:1}
+.feas-verdict .fv-s{font-weight:600;font-size:12px;color:var(--ink-2);margin-left:auto}
+.feas-verdict.ok{background:var(--ok-bg);color:var(--ok-ink);border-color:var(--ok)}
+.feas-verdict.warn{background:rgba(189,138,46,.13);color:var(--brand);border-color:var(--brand)}
+.feas-verdict.bad{background:var(--risk-bg);color:var(--risk-ink);border-color:var(--risk)}
+.feas-list{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface)}
+.feas-row{display:flex;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);align-items:flex-start}
+.feas-row:last-child{border-bottom:none}
+.feas-dot{width:9px;height:9px;border-radius:50%;margin-top:5px;flex:none}
+.feas-row .fr-t{font-size:13px;font-weight:700;color:var(--ink)}
+.feas-row .fr-d{font-size:11.5px;color:var(--ink-2);margin-top:2px;line-height:1.5}
 .modal-head{padding:20px 22px 8px}
 .modal-head h3{margin:0;font-size:18px;font-weight:800;letter-spacing:-.3px}
 .modal-head p{margin:6px 0 0;color:var(--ink-2);font-size:13px}
@@ -1624,7 +1637,7 @@ function renderIntake(){
       </div>`}
       <div class="wf-actions">
         <button class="btn ghost sm" onclick="openProposal('${d.id}')">📄 견적서 전체 열기</button>
-        <button class="btn primary sm" onclick="wfAction('${d.id}','feasibility','타당성검토 대기열에 추가됨')">타당성검토 시작 →</button>
+        <button class="btn primary sm" onclick="startFeasibility('${d.id}')">타당성검토 시작 →</button>
       </div>
     </div>`).join('');
   const header = `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px;flex-wrap:wrap">
@@ -1634,21 +1647,128 @@ function renderIntake(){
   return header + (cards || emptyMsg('접수된 신규 현장이 없습니다. 우측 상단 "영업 자료 수신"으로 시뮬레이션할 수 있습니다.'));
 }
 
-// 타당성검토 (설계) — 부지/선로/제약조건 + 승인·반려
+/* ============================================================
+   설치 가능성 진단 — PLOT '설치 가능성 진단' 규칙엔진 이식
+   (외부 API 미사용 · 딜ID로 시드 고정한 결정적 가상 판정 · 실제 지번/좌표 아님)
+   ============================================================ */
+const SOLAR_RULES = [
+  {re:/개발제한구역/, eff:'bad', why:'개발제한구역(그린벨트)'},
+  {re:/농업진흥구역|진흥지역/, eff:'bad', why:'농업진흥구역(농지전용 매우 제한)'},
+  {re:/자연환경보전지역/, eff:'bad', why:'자연환경보전지역'},
+  {re:/문화재|매장문화재/, eff:'bad', why:'문화재 보호구역'},
+  {re:/상수원보호구역/, eff:'bad', why:'상수원보호구역'},
+  {re:/하천구역|홍수관리구역/, eff:'bad', why:'하천·홍수관리구역'},
+  {re:/주거지역|상업지역|공업지역/, eff:'bad', why:'도시 주거·상업·공업지역(지상 태양광 제약)'},
+  {re:/보전산지|보전임지/, eff:'warn', why:'보전산지(산지전용허가)'},
+  {re:/자연녹지지역|생산녹지지역|보전녹지지역/, eff:'warn', why:'녹지지역(개발행위허가)'},
+  {re:/보전관리지역|생산관리지역/, eff:'warn', why:'관리지역(개발행위허가)'},
+  {re:/군사기지|군사시설\s?보호|제한보호구역/, eff:'warn', why:'군사시설 보호구역(군 협의)'},
+  {re:/성장관리계획구역/, eff:'warn', why:'성장관리계획구역(기준 준수)'},
+  {re:/가축사육제한구역/, eff:'warn', why:'가축사육제한구역'},
+];
+function judgeSolarZones(names){
+  if(!names || !names.length) return {lvl:'na', label:'용도 정보 없음', hits:[]};
+  const hits=[], seen=new Set(); let hasBad=false, hasWarn=false;
+  SOLAR_RULES.forEach(rule=>{ const m=names.find(n=>rule.re.test(n)); if(m && !seen.has(rule.why)){ seen.add(rule.why); hits.push(rule); if(rule.eff==='bad')hasBad=true; else hasWarn=true; } });
+  const plan = names.some(n=>/계획관리지역/.test(n));
+  const lvl = hasBad?'bad':(hasWarn?'warn':(plan?'ok':'warn'));
+  const label = lvl==='bad'?'설치 제한 가능성 높음' : lvl==='warn'?'조건부 가능 (허가·심의)' : lvl==='ok'?'설치 양호 (계획관리지역)' : '확인 필요';
+  return {lvl, label, hits, plan};
+}
+function hashStr(s){ let h=2166136261>>>0; for(let i=0;i<s.length;i++){ h=(h^s.charCodeAt(i))>>>0; h=(h*16777619)>>>0; } return h>>>0; }
+const _FEAS_RI = ['새울','도담','너울','한별','가람','미르','시온'];
+function parcelOf(d){
+  const h = hashStr(d.id);
+  const pk = (arr,salt)=> arr[(h+salt*7)%arr.length];
+  const gridName = pk(['문산','파주','금촌','적성','법원'],4)+'변전소';
+  const gridDist = Math.round((1 + ((h>>2)%90)/10) * 10)/10;
+  const jibun = `가상 ${pk(_FEAS_RI,5)}리 ${100+(h%700)}-${1+(h%28)}`;
+  // 가온뜰(대표 딜)은 이상적 부지 → 🟢 설치 가능
+  if(d.id==='D-1031'){
+    return {jibun, jimok:'잡종지', zone:'계획관리지역', names:['계획관리지역'], restrict:[], slope:3, river:false, gridFree:18.5, gridName, gridDist};
+  }
+  const g = h % 10;                 // 등급 시드: 0~2 우수 / 3~6 양호 / 7~9 제약
+  const good = g<=2, poor = g>=7;
+  const zone = good ? '계획관리지역'
+    : !poor ? ['자연녹지지역','생산관리지역','계획관리지역'][(h>>3)%3]
+            : ['농림지역','보전관리지역','생산녹지지역'][(h>>3)%3];
+  const restrict = poor ? [['개발제한구역'],['농업진흥구역'],['군사기지 및 군사시설 보호구역']][(h>>5)%3]
+    : (!good && ((h>>6)&1)) ? ['가축사육제한구역'] : [];
+  const names = [zone, ...restrict];
+  const jimok = d.type==='수상' ? '유지'
+    : d.type==='지붕' ? (good?'대':['공장용지','창고용지'][(h>>2)%2])
+    : good ? '잡종지' : (!poor ? ['전','답','목장용지'][(h>>2)%3] : ['임야','전','답'][(h>>2)%3]);
+  const slope = d.type==='수상' ? 0 : good ? (2+(h%3)) : (!poor ? (6+(h%8)) : (15+(h%8)));
+  const river = poor && ((h>>7)&1)===0;
+  const gridFree = good ? Math.round((12 + ((h>>4)%180)/10)*10)/10
+    : !poor ? Math.round((1.5 + ((h>>4)%80)/10)*10)/10
+            : Math.round((0.3 + ((h>>4)%12)/10)*10)/10;
+  return {jibun, jimok, zone, names, restrict, slope, river, gridFree, gridName, gridDist};
+}
+function diagnoseFeasibility(d){
+  const p = parcelOf(d);
+  const rows = [];
+  const push=(lvl,t,dd)=>rows.push({lvl, t, d:dd});
+  if(d.type==='수상'){ push('ok','지목: 유지(저수지 수면)','수상 태양광 적합 수면'); }
+  else {
+    let jL='ok',jD='전용허가 부담 적음';
+    if(/천|구거|제방|유지|도로|철도|수도/.test(p.jimok)){ jL='bad'; jD='공작물 설치 제약 지목'; }
+    else if(/임/.test(p.jimok)){ jL='warn'; jD='산지전용허가·경사도 검토'; }
+    else if(/전|답|과|목/.test(p.jimok)){ jL='warn'; jD='농지전용허가 필요'; }
+    push(jL,'지목: '+p.jimok, jD);
+  }
+  if(d.type==='수상'){ push('na','경사도','수면 — 경사 해당없음'); }
+  else {
+    const s=p.slope, sL = s<5?'ok':(s<15?'warn':'bad');
+    const lab = s<5?'완경사 (설치 양호)':(s<15?'중경사 (정지·구조 검토)':'급경사 (설치 어려움)');
+    push(sL, `경사도 약 ${s}° · ${lab}`, 'SRTM 30m 참고 · 정밀은 국토환경성평가지도');
+  }
+  let zL='warn',zD='개발행위허가 검토';
+  if(/계획관리/.test(p.zone)){ zL='ok'; zD='태양광 양호'; }
+  else if(/자연녹지|생산관리|보전관리|생산녹지/.test(p.zone)){ zL='warn'; zD='조건부(개발행위허가)'; }
+  else if(/농림|보전/.test(p.zone)){ zL='warn'; zD='농지·보전 규제 검토'; }
+  push(zL, '용도지역: '+p.zone, zD);
+  if(d.type!=='수상'){ push(p.river?'bad':'ok', '하천 저촉/인접', p.river? '인접 하천 저촉 가능 — 이격 확인' : '인접 하천 없음'); }
+  push('na', '이격거리 (주거 ≤200m 기준)', '2026 기준: 주거 200m 이내·도로 이격 폐지 · 지자체 조례 확인');
+  const sj = judgeSolarZones(p.names);
+  if(sj.lvl!=='na'){ push(sj.lvl, '☀️ 태양광 규제 판정: '+sj.label, (sj.hits.length? sj.hits.map(x=>x.why).join(' · ') : '특이 규제 없음')+' · 지자체 조례·개별 심의로 최종 확정'); }
+  const gL = p.gridFree>=10?'ok':(p.gridFree>=1?'warn':'bad');
+  push(gL, `계통 여유: ${p.gridName} · ${p.gridFree}MW`, `약 ${p.gridDist}km · ${gL==='ok'?'연계 여유 충분':gL==='warn'?'여유 보통 — 경합 확인':'여유 부족 — 증설·대기 가능성'}`);
+  const lvls = rows.map(r=>r.lvl);
+  const worst = lvls.includes('bad')?'bad':(lvls.includes('warn')?'warn':'ok');
+  const verdict = worst==='ok'?'설치 가능':(worst==='warn'?'조건부 가능':'설치 제한');
+  const badge = worst==='ok'?'🟢':(worst==='warn'?'🟡':'🔴');
+  return {verdict, worst, badge, parcel:p, rows};
+}
+function feasRowHTML(r){
+  const c = r.lvl==='ok'?'var(--ok)':r.lvl==='warn'?'var(--brand)':r.lvl==='bad'?'var(--risk)':'var(--muted)';
+  return `<div class="feas-row"><span class="feas-dot" style="background:${c}"></span><div><div class="fr-t">${esc(r.t)}</div><div class="fr-d">${esc(r.d)}</div></div></div>`;
+}
+// 신규접수 '타당성검토 시작' → 지번 설치 가능성 자동 진단 후 타당성검토로 이동
+function startFeasibility(id){
+  const d = DEALS.find(x=>x.id===id); if(!d) return;
+  d.stage = 'feasibility';
+  d.feas = diagnoseFeasibility(d);
+  toast(`설치 가능성 진단: ${d.site} → ${d.feas.badge} ${d.feas.verdict}`);
+  persistDeal(d);
+  refreshActive();
+}
+
+// 타당성검토 (설계) — 지번 설치 가능성 자동 진단(PLOT 이식) + 승인·반려
 function renderFeasibility(){
-  const chk=(t,s,cls,lab)=>`<tr><td class="chk-name"><span class="step-ic ${cls}">${cls==='done'?'✓':'◐'}</span>${t}</td><td>${s}</td><td><span class="pill ${cls==='done'?'done':'prog'}"><span class="pd"></span>${lab}</span></td></tr>`;
-  const cards = DEALS.filter(d=>d.stage==='feasibility').map(d=>`
-    <div class="card" style="margin-bottom:14px">
-      <div class="card-head"><div><h2>${esc(d.site)} · ${d.cap.toLocaleString()}kW</h2><span class="ch-sub">${d.id} · 영업 ${esc(d.rep)}</span></div><span class="pill prog"><span class="pd"></span>검토중</span></div>
-      <div class="table-scroll"><table class="chk-table">
-        <thead><tr><th>검토 항목</th><th>확인 내용</th><th>결과</th></tr></thead>
-        <tbody>
-          ${chk('부지 조건','지목·경사도·면적·진입로','done','적합')}
-          ${chk('선로(계통) 여유','인근 변전소·배전선로 여유·연계거리','done','여유 확인')}
-          ${chk('제약 조건','이격거리·용도지역 규제·재해위험','active','검토중')}
-        </tbody>
-      </table></div>
-      <div style="padding:14px 18px">
+  const cards = DEALS.filter(d=>d.stage==='feasibility').map(d=>{
+    const f = d.feas || diagnoseFeasibility(d);
+    return `
+    <div class="card pad" style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div><div style="font-size:15px;font-weight:800">${esc(d.site)} · ${d.cap.toLocaleString()}kW <span class="type-chip">${d.type}</span></div>
+          <div class="lr-s" style="margin-top:4px">${d.id} · 영업 ${esc(d.rep)} · 지번 ${esc(f.parcel.jibun)}</div></div>
+        <span class="pill prog"><span class="pd"></span>검토중</span>
+      </div>
+      <div class="section-title" style="font-size:12px;margin:14px 0 6px">📋 설치 가능성 진단 — 지번 자동 판정</div>
+      <div class="feas-verdict ${f.worst}"><span class="fv-b">${f.badge}</span>${f.verdict}<span class="fv-s">${d.type} · 자동 판정(참고) · 최종은 검토자 확인</span></div>
+      <div class="feas-list">${f.rows.map(feasRowHTML).join('')}</div>
+      <div style="margin-top:14px">
         <div style="font-size:11.5px;font-weight:700;color:var(--ink-2);margin-bottom:6px">반려 사유 (반려 시 입력)</div>
         <textarea id="reason-${d.id}" class="ta" placeholder="예: 개발행위 이격거리 미달 / 계통 여유 부족 / 재해위험구역 등"></textarea>
         <div class="wf-actions">
@@ -1657,8 +1777,9 @@ function renderFeasibility(){
           <button class="btn ok sm" onclick="wfAction('${d.id}','approved','타당성 승인 — 영업팀에 알림 전송 · 가계약 진행')">승인 →</button>
         </div>
       </div>
-    </div>`).join('');
-  return wfHead('타당성검토','부지·선로·제약조건을 검토한 뒤 승인 또는 반려합니다. 반려 시 사유와 함께 영업팀 보완접수로 리턴됩니다.') + (cards || emptyMsg('검토 대기 중인 현장이 없습니다.'));
+    </div>`;
+  }).join('');
+  return wfHead('타당성검토','신규 접수 시 지번의 <b>설치 가능성</b>을 자동 진단합니다. 지목·경사·용도지역·규제·계통 여유를 종합해 가능/조건부/제한을 판정 — 검토 후 승인 또는 반려하세요.') + (cards || emptyMsg('검토 대기 중인 현장이 없습니다.'));
 }
 
 // 보완 접수 (영업) — 반려된 건 리턴 도착
