@@ -1754,6 +1754,8 @@ function buildRows(p, type, real){
     const g=+p.gridFree, gL=g>=10?'ok':(g>=1?'warn':'bad');
     push(gL,`계통 여유: ${p.gridName||'인근 변전소'} · ${g.toFixed(1)}MW`, `${p.gridEmd?p.gridEmd+' 담당 · ':(p.gridDist?'약 '+p.gridDist+'km · ':'')}${gL==='ok'?'연계 여유 충분':gL==='warn'?'여유 보통 — 경합 확인':'여유 부족 — 증설·대기 가능성'}`);
   }
+  // ☎ 한전 선로확인 담당 연락처 (주소지 기준, 미해당 시 대표번호)
+  if(p.gridTel){ rows.push({lvl:'na', t:'☎ 한전 선로확인 담당', d:(p.gridOffice||'한전')+(p.gridOffice&&p.gridOffice!=='한전 고객센터(대표)'?' 지사':''), tel:p.gridTel}); }
   const lvls=rows.map(r=>r.lvl);
   let worst,verdict,badge;
   if(lvls.includes('bad')){ worst='bad'; verdict='설치 제한'; badge='🔴'; }
@@ -1834,18 +1836,48 @@ function _resolveKepco(K,sido,sigungu,sigungu2){
   const pick=cands.find(c=>{const mn=mnm(c.metro);return mn===sidoN||mn.includes(sidoN)||sidoN.includes(mn);})||cands[0];
   return {metroCd:pick.metro, cityCd:pick.code};
 }
+/* ---- 지역별 한전 담당자 연락처(선로확인) — 시군구 기준, 없으면 대표번호 123 ---- */
+const KEPCO_TEL = {
+  '경기북부':{가평:'031-580-9276',고양:'031-920-4273',구리:'031-560-3282',남양주:'031-570-9263',동두천:'031-860-8272',양평:'031-770-1276',연천:'031-839-3278',파주:'031-940-2273',포천:'031-539-0217'},
+  '경기남부':{광명:'02-2680-3238',광주:'031-760-5276',동용인:'031-330-2236',서수원:'031-228-9236',서용인:'031-8065-7233',서평택:'031-8054-6237',성남:'031-750-3237',안산:'031-412-6233',안성:'031-670-2237',안양:'031-450-2232',여주:'031-880-2242',오산:'031-370-2237',이천:'031-630-7237',평택:'031-650-4363',하남:'031-790-2235',화성:'031-369-1236'},
+  '광주전남':{강진:'061-430-2233',고흥:'061-830-1279',곡성:'061-360-1238',광산:'062-940-3232',광양:'061-798-4234',구례:'061-780-1236',나주:'061-330-2235',담양:'061-380-0238',목포:'061-270-2245',무안:'061-450-0231',보성:'061-850-2234',서광주:'062-360-6246',순천:'061-750-2234',신안:'061-260-6231',여수:'061-650-2236',영광:'061-350-2233',영암:'061-470-3232',완도:'061-550-0236',장성:'061-390-6238',장흥:'061-860-2232',진도:'061-540-2233',함평:'061-320-0231',해남:'061-530-2239',화순:'061-370-0235'},
+  '전북':{고창:'063-560-3276',군산:'063-440-2286',김제:'063-540-2238',남원:'063-620-2275',남전주:'063-249-5282',무주:'063-320-6274',부안:'063-580-2291',순창:'063-650-3279',익산:'063-839-4327',임실:'063-640-5273',장수:'063-350-3287',정읍:'063-530-2273',진안:'063-430-3276'},
+  '충북':{단양:'043-420-2274',동청주:'043-230-8275',보은:'043-540-2283',영동:'043-740-2272',옥천:'043-730-0276',음성:'043-870-3282',제천:'043-640-2388',증평괴산:'043-835-2273',진천:'043-539-2272',충주:'043-840-4274'},
+  '대전충남':{공주:'041-850-2248',금산:'041-750-3233',논산:'041-746-2234',당진:'041-350-2289',대덕유성:'042-333-0232',보령:'041-930-7232',부여:'041-830-1233',서대전:'042-608-2249',서산:'041-660-8236',서천:'041-955-2232',세종:'044-861-4238',아산:'041-539-3248',예산:'041-330-3233',천안:'041-560-2334',청양:'041-940-1234',태안:'041-671-1232',홍성:'041-630-2237'},
+  '대구':{경산:'053-810-4232',경주:'054-740-2234',고령:'054-950-2236',김천:'054-429-5234',남대구:'053-630-2242',동대구:'053-757-2334',북포항:'054-260-4238',서대구:'053-550-2233',성주:'054-930-2231',영덕:'054-730-3226',영천:'054-330-2233',울릉:'054-790-2272',청도:'054-370-4236',칠곡:'054-970-3234',포항:'054-271-7234'},
+  '경북':{구미:'054-450-2234',군위:'054-380-2271',문경:'054-550-2282',봉화:'054-679-2272',상주:'054-530-2233',영양:'054-680-4272',영주:'054-630-2276',예천:'054-650-2273',울진:'054-780-3279',의성:'054-830-2245',청송:'054-870-4278'},
+  '부산울산':{기장:'051-720-3231',김해:'055-330-2236',남부산:'051-740-1234',동래:'051-520-2233',동울산:'052-219-8218',북부산:'051-309-2234',서부산:'051-250-9232',서울산:'052-255-4233',양산:'055-380-3236',영도:'051-410-2234',울산:'052-270-3237',중부산:'051-240-3233'},
+  '경남':{거제:'055-630-2233',거창:'055-940-2239',고성:'055-670-3236',남해:'055-860-2241',마산:'055-290-2232',밀양:'055-350-2276',사천:'055-830-3232',산청:'055-970-4237',의령:'055-570-3232',진주:'055-750-3244',진해:'055-540-2273',창녕:'055-530-3225',통영:'055-640-2237',하동:'055-880-5232',함안:'055-580-4237',함양:'055-960-2234',합천:'055-930-2239'},
+  '강원':{강릉:'033-650-1275',동해:'033-530-6277',삼척:'033-570-2283',속초:'033-639-4276',고성:'033-680-1238',양구:'033-480-1273',양양:'033-670-1276',영월:'033-370-4272',원주:'033-741-4274',인제:'033-460-1272',정선:'033-560-3276',철원:'033-450-1276',태백:'033-550-4284',평창:'033-330-4274',홍천:'033-430-3387',화천:'033-440-1274',횡성:'033-340-4273'},
+  '제주':{제주:'064-740-3445',서귀포:'064-730-2273'},
+};
+const _SIDO_REG=[['경기',['경기북부','경기남부']],['서울',['경기남부']],['인천',['경기남부']],['강원',['강원']],['충청북',['충북']],['충북',['충북']],['대전',['대전충남']],['세종',['대전충남']],['충청남',['대전충남']],['충남',['대전충남']],['전라북',['전북']],['전북',['전북']],['광주',['광주전남']],['전라남',['광주전남']],['전남',['광주전남']],['대구',['대구']],['경상북',['대구','경북']],['경북',['대구','경북']],['부산',['부산울산']],['울산',['부산울산']],['경상남',['경남']],['경남',['경남']],['제주',['제주']]];
+function _regionsFor(sido){ const s=String(sido||''); for(const [k,rs] of _SIDO_REG){ if(s.startsWith(k)||s.includes(k)) return rs; } return null; }
+// 시도·시군구 → 한전 담당 연락처 (미해당 시 대표번호 123)
+function kepcoContact(sido, sigungu2){
+  const regs=_regionsFor(sido);
+  const base=String(sigungu2||'').replace(/특별자치[시도]/g,'').replace(/특별시|광역시/g,'').replace(/[시군구]$/,'').trim();
+  if(regs && base){
+    for(const reg of regs){ const m=KEPCO_TEL[reg]; if(m&&m[base]) return {office:base, tel:m[base]}; }
+    for(const reg of regs){ const m=KEPCO_TEL[reg]; if(!m) continue; for(const [k,v] of Object.entries(m)){ if(k.includes(base)||base.includes(k)) return {office:k, tel:v}; } }
+  }
+  return {office:'한전 고객센터(대표)', tel:'123'};
+}
 async function apiGridLive(lat,lng){
   const P=_apiBase(), K=await loadKCodes();
-  const rev=await apiReverse(lat,lng); if(!rev||!rev.emd||!K) return null;
-  const code=_resolveKepco(K,rev.sido,rev.sigungu,rev.sigungu2); if(!code) return null;
+  const rev=await apiReverse(lat,lng); if(!rev) return null;
+  const c=kepcoContact(rev.sido, rev.sigungu2);
+  const base={emd:rev.emd||'', name:null, free:null, tel:c.tel, office:c.office};
+  if(!rev.emd || !K) return base;
+  const code=_resolveKepco(K,rev.sido,rev.sigungu,rev.sigungu2); if(!code) return base;
   const call=async ld=>{ try{ const r=await fetch(`${P}/kepco/dispersedGeneration.do?metroCd=${code.metroCd}&cityCd=${code.cityCd}&addrLidong=${encodeURIComponent(ld)}`); const j=await r.json(); return (j&&j.data)||[]; }catch(e){ return []; } };
   let rows=await call(rev.emd);
   if(!rows.length){ const alt=rev.emd.endsWith('읍')?rev.emd.slice(0,-1)+'면':rev.emd.endsWith('면')?rev.emd.slice(0,-1)+'읍':null; if(alt) rows=await call(alt); }
-  if(!rows.length) return {emd:rev.emd, name:null, free:null};
+  if(!rows.length) return base;
   const byCd={}; for(const r of rows){ const cd=r.substCd; (byCd[cd]=byCd[cd]||{substNm:r.substNm,dls:[]}).dls.push({nm:r.dlNm, free:Math.min(+r.vol1||0,+r.vol2||0,+r.vol3||0)/1000}); }
   const groups=Object.values(byCd).map(g=>{ g.dls.sort((a,b)=>b.free-a.free); g.maxFree=g.dls.length?g.dls[0].free:0; return g; }).sort((a,b)=>b.maxFree-a.maxFree);
   const best=groups[0];
-  return {emd:rev.emd, name:(best.substNm||'')+' 변전소', free:best.maxFree};
+  return {...base, name:(best.substNm||'')+' 변전소', free:best.maxFree};
 }
 // 지번 → 실시간 정규화 부지속성(실패 시 throw 'proxy'/'key')
 async function fetchRealDiagnosis(jibun){
@@ -1862,6 +1894,7 @@ async function fetchRealDiagnosis(jibun){
     jimok:(parcel&&parcel.jimok)||null, zone, names, river:null,
     slope: slope?slope.slope:null, elev: slope?slope.elev:null,
     gridFree: grid?grid.free:null, gridName: grid?grid.name:null, gridEmd: grid?grid.emd:null,
+    gridTel: grid?grid.tel:null, gridOffice: grid?grid.office:null,
     lat:pt.lat, lng:pt.lng, pnu:(parcel&&parcel.pnu)||''
   }};
 }
@@ -1887,7 +1920,8 @@ async function runDiagnosis(d){
 function runDiagnosisById(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; const inp=document.getElementById('jibun-'+id); if(inp) d.jibun=inp.value.trim(); runDiagnosis(d); }
 function feasRowHTML(r){
   const c = r.lvl==='ok'?'var(--ok)':r.lvl==='warn'?'var(--brand)':r.lvl==='bad'?'var(--risk)':'var(--muted)';
-  return `<div class="feas-row"><span class="feas-dot" style="background:${c}"></span><div><div class="fr-t">${esc(r.t)}</div><div class="fr-d">${esc(r.d)}</div></div></div>`;
+  const dd = r.tel ? `${esc(r.d)} · <a href="tel:${esc(String(r.tel).replace(/[^0-9]/g,''))}" style="color:var(--accent-ink);font-weight:800;text-decoration:none">${esc(r.tel)}</a>` : esc(r.d);
+  return `<div class="feas-row"><span class="feas-dot" style="background:${c}"></span><div><div class="fr-t">${esc(r.t)}</div><div class="fr-d">${dd}</div></div></div>`;
 }
 // 신규접수 '타당성검토 시작' → 지번 설치 가능성 실시간 진단 후 타당성검토로 이동
 async function startFeasibility(id){
