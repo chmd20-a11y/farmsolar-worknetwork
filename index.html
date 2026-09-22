@@ -2001,16 +2001,34 @@ const _SMS_KO=/[^\x00-\x7f]/;
 function euckrBytes(s){ let n=0; for(const ch of String(s)) n+=_SMS_KO.test(ch)?2:1; return n; }
 function smsType(t){ return euckrBytes(t)>90?'LMS':'SMS'; }
 function validPhone(s){ const n=String(s||'').replace(/[^0-9]/g,''); return n.length>=9 && n.length<=11 && n[0]==='0'; }
-function gaMsg(d, owner){
-  return `[해피솔라] ${owner||'사업주'}님, ${d.site} 태양광 발전사업 가계약이 정상 접수되었습니다.\n담당 ${d.rep}가 현장 실측 일정 등 다음 절차를 안내드리겠습니다.\n문의 062-575-4745`;
-}
+const GA_TPL_KEY='fsnet_ga_tpl';
+const GA_TPL_DEFAULT='[해피솔라] #{이름}님, #{현장} 태양광 발전사업 가계약이 정상 접수되었습니다.\n담당 #{담당}가 현장 실측 일정 등 다음 절차를 안내드리겠습니다.\n문의 062-575-4745';
+function gaTpl(){ try{ return localStorage.getItem(GA_TPL_KEY)||GA_TPL_DEFAULT; }catch(e){ return GA_TPL_DEFAULT; } }
+function gaSetTpl(s){ try{ localStorage.setItem(GA_TPL_KEY, s); }catch(e){} }
+function gaRender(tpl, d, owner){ return String(tpl).split('#{이름}').join(owner||'사업주').split('#{현장}').join(d.site).split('#{담당}').join(d.rep); }
+function gaMsg(d, owner){ return gaRender(gaTpl(), d, owner); }
 function _simSms(msg){ return new Promise(r=>setTimeout(()=>r({ok:true,code:'9',codeText:'성공(시뮬)',type:smsType(msg)}),300)); }
+// 사업주명 변경 → 메시지 textarea 재생성(#{이름} 치환)
 function updateGaPreview(id){
   const d=DEALS.find(x=>x.id===id); if(!d) return;
   const owner=(document.getElementById('gaOwner-'+id)?.value||'').trim();
-  const msg=gaMsg(d, owner);
-  const pv=document.getElementById('gaPrev-'+id); if(pv) pv.textContent=msg;
+  const ta=document.getElementById('gaMsg-'+id); if(ta) ta.value=gaRender(gaTpl(), d, owner);
+  gaMetaUpd(id);
+}
+// 메시지 편집 → 바이트/유형 갱신
+function gaMetaUpd(id){
+  const ta=document.getElementById('gaMsg-'+id); const msg=ta?ta.value:'';
   const mt=document.getElementById('gaMeta-'+id); if(mt) mt.textContent=`유형 ${smsType(msg)} · ${euckrBytes(msg)}byte · 맨 앞 [Web발신] 자동`;
+}
+function gaResetMsg(id){ updateGaPreview(id); toast('기본 문구로 되돌렸습니다'); }
+// 현재 문구를 기본 안내문구로 저장(사업주명·현장·담당 → placeholder 역치환)
+function gaSaveTpl(id){
+  const d=DEALS.find(x=>x.id===id); if(!d) return;
+  const owner=(document.getElementById('gaOwner-'+id)?.value||'').trim();
+  let s=(document.getElementById('gaMsg-'+id)?.value||'');
+  if(owner) s=s.split(owner).join('#{이름}');
+  s=s.split(d.site).join('#{현장}').split(d.rep).join('#{담당}');
+  gaSetTpl(s); toast('기본 안내문구로 저장했습니다 (다음 발송부터 적용)');
 }
 async function sendGaSms(id){
   const d=DEALS.find(x=>x.id===id); if(!d) return;
@@ -2018,7 +2036,8 @@ async function sendGaSms(id){
   const phone=(document.getElementById('gaPhone-'+id)?.value||'').trim();
   const test=!!(document.getElementById('gaTest-'+id)&&document.getElementById('gaTest-'+id).checked);
   if(!validPhone(phone)){ toast('사업주 휴대폰 번호를 정확히 입력하세요'); return; }
-  const msg=gaMsg(d, owner);
+  const msg=((document.getElementById('gaMsg-'+id)&&document.getElementById('gaMsg-'+id).value)||gaMsg(d,owner)).trim();
+  if(!msg){ toast('안내 문구를 입력하세요'); return; }
   const btn=document.getElementById('gaSendBtn-'+id); if(btn){ btn.disabled=true; btn.textContent='발송 중…'; }
   let res, simmed=test;
   if(test){ res=await _simSms(msg); }
@@ -2059,10 +2078,14 @@ function renderPreContract(){
           <div class="tfield"><label>사업주명</label><input class="tinput" id="gaOwner-${d.id}" value="${esc(owner0)}" placeholder="예: 홍길동" oninput="updateGaPreview('${d.id}')"></div>
           <div class="tfield"><label>사업주 휴대폰</label><input class="tinput" id="gaPhone-${d.id}" value="${esc(phone0)}" placeholder="010-0000-0000"></div>
         </div>
-        <div style="font-size:11.5px;color:var(--ink-2);margin:12px 0 5px">발신번호 062-575-4745 (해피솔라 경영지원팀) · 안내문자 미리보기</div>
-        <div id="gaPrev-${d.id}" class="doc-paper" style="white-space:pre-wrap;font-size:12.5px;line-height:1.6">${esc(preview)}</div>
+        <div style="font-size:11.5px;color:var(--ink-2);margin:12px 0 5px">발신번호 062-575-4745 (해피솔라 경영지원팀) · 안내문자 <b>편집 가능</b> (<code>#{이름}</code> 은 발송 시 사업주명으로 치환)</div>
+        <textarea class="ta" id="gaMsg-${d.id}" style="min-height:96px;font-size:12.5px;line-height:1.6" oninput="gaMetaUpd('${d.id}')">${esc(preview)}</textarea>
         <div class="note" id="gaMeta-${d.id}" style="margin-top:6px">유형 ${smsType(preview)} · ${euckrBytes(preview)}byte · 맨 앞 [Web발신] 자동</div>
-        <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;margin-top:10px;color:var(--ink-2)"><input type="checkbox" id="gaTest-${d.id}" checked> 테스트 모드(실제 발송 안 함)</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:9px">
+          <button class="btn ghost sm" onclick="gaResetMsg('${d.id}')">🔄 기본문구</button>
+          <button class="btn ghost sm" onclick="gaSaveTpl('${d.id}')">💾 기본문구로 저장</button>
+          <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;margin-left:auto;color:var(--ink-2)"><input type="checkbox" id="gaTest-${d.id}" checked> 테스트 모드(실제 발송 안 함)</label>
+        </div>
       </div>
       <div class="wf-actions">
         ${proposalBtn(d)}
