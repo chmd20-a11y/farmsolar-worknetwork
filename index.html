@@ -1996,20 +1996,86 @@ function renderSupplement(){
 }
 
 // 가계약 (영업) — 승인 알림 + 가계약서 임의 양식
+/* ---- 가계약 안내문자 (문자나라 중계기 재사용 · /api/sms 서버리스, 미설정 시 시뮬) ---- */
+const _SMS_KO=/[^\x00-\x7f]/;
+function euckrBytes(s){ let n=0; for(const ch of String(s)) n+=_SMS_KO.test(ch)?2:1; return n; }
+function smsType(t){ return euckrBytes(t)>90?'LMS':'SMS'; }
+function validPhone(s){ const n=String(s||'').replace(/[^0-9]/g,''); return n.length>=9 && n.length<=11 && n[0]==='0'; }
+function gaMsg(d, owner){
+  return `[해피솔라] ${owner||'사업주'}님, ${d.site} 태양광 발전사업 가계약이 정상 접수되었습니다.\n담당 ${d.rep}가 현장 실측 일정 등 다음 절차를 안내드리겠습니다.\n문의 062-575-4745`;
+}
+function _simSms(msg){ return new Promise(r=>setTimeout(()=>r({ok:true,code:'9',codeText:'성공(시뮬)',type:smsType(msg)}),300)); }
+function updateGaPreview(id){
+  const d=DEALS.find(x=>x.id===id); if(!d) return;
+  const owner=(document.getElementById('gaOwner-'+id)?.value||'').trim();
+  const msg=gaMsg(d, owner);
+  const pv=document.getElementById('gaPrev-'+id); if(pv) pv.textContent=msg;
+  const mt=document.getElementById('gaMeta-'+id); if(mt) mt.textContent=`유형 ${smsType(msg)} · ${euckrBytes(msg)}byte · 맨 앞 [Web발신] 자동`;
+}
+async function sendGaSms(id){
+  const d=DEALS.find(x=>x.id===id); if(!d) return;
+  const owner=(document.getElementById('gaOwner-'+id)?.value||'').trim();
+  const phone=(document.getElementById('gaPhone-'+id)?.value||'').trim();
+  const test=!!(document.getElementById('gaTest-'+id)&&document.getElementById('gaTest-'+id).checked);
+  if(!validPhone(phone)){ toast('사업주 휴대폰 번호를 정확히 입력하세요'); return; }
+  const msg=gaMsg(d, owner);
+  const btn=document.getElementById('gaSendBtn-'+id); if(btn){ btn.disabled=true; btn.textContent='발송 중…'; }
+  let res, simmed=test;
+  if(test){ res=await _simSms(msg); }
+  else {
+    try{
+      const r=await fetch('/api/sms',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({receiver:phone.replace(/[^0-9]/g,''), message:msg, receiver_name:owner||'사업주'})});
+      if(r.status===503||r.status===404){ res=await _simSms(msg); simmed=true; }
+      else { const j=await r.json().catch(()=>({})); res = r.ok ? j : {ok:false,error:j.error||('서버오류 '+r.status)}; }
+    }catch(e){ res={ok:false,error:'발송서버 연결 실패'}; }
+  }
+  const ok = res && (res.ok || String(res.code)==='9');
+  if(ok){
+    d.gaSms={sent:true, receiver:phone, owner:owner||'사업주', type:res.type||smsType(msg), sim:simmed, code:res.code||'9'};
+    toast('가계약 안내문자 발송 완료'+(simmed?' (시뮬)':'')+' → '+phone);
+    persistDeal(d);
+  } else {
+    if(btn){ btn.disabled=false; btn.textContent='📩 안내문자 발송'; }
+    toast('문자 발송 실패: '+(res.error||res.codeText||'오류'));
+  }
+  refreshActive();
+}
 function renderPreContract(){
-  const cards = DEALS.filter(d=>d.stage==='approved').map(d=>`
+  const cards = DEALS.filter(d=>d.stage==='approved').map(d=>{
+    const sent = !!(d.gaSms && d.gaSms.sent);
+    const owner0 = (d.gaSms&&d.gaSms.owner)||'';
+    const phone0 = (d.gaSms&&d.gaSms.receiver)||'';
+    const preview = gaMsg(d, owner0);
+    return `
     <div class="card pad" style="margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
         <span class="pill prog"><span class="pd"></span>🔔 설계 타당성 승인 도착</span><span class="lr-s">${d.id} · 영업 ${esc(d.rep)}</span>
       </div>
-      ${contractDoc('가 계 약 서', [['계약 구분','가계약 (예약)'],['현 장 명',d.site],['사 업 주','○○○ (가상)'],['설비용량',d.cap.toLocaleString()+' kW ('+d.type+')'],['예상 사업비',won(dealBudget(d.cap))+' (VAT 별도)'],['가계약금',won(dealBudget(d.cap)*0.02)+' (2%)'],['특약','타당성 승인 조건부 · 실측 후 본계약 전환'],['작성일','2026-09-18']])}
+      ${contractDoc('가 계 약 서', [['계약 구분','가계약 (예약)'],['현 장 명',d.site],['설비용량',d.cap.toLocaleString()+' kW ('+d.type+')'],['예상 사업비',won(dealBudget(d.cap))+' (VAT 별도)'],['가계약금',won(dealBudget(d.cap)*0.02)+' (2%)'],['특약','타당성 승인 조건부 · 실측 후 본계약 전환'],['진행 방식','사업주 안내문자 발송 (별도 계약서 미작성)']])}
+      <div class="section-title" style="font-size:12px;margin:16px 0 8px">📩 사업주 가계약 안내문자 <span style="font-weight:500;color:var(--muted)">— 발송해야 완료 처리 활성화</span></div>
+      <div class="feas-list" style="padding:13px 15px">
+        <div class="field-row">
+          <div class="tfield"><label>사업주명</label><input class="tinput" id="gaOwner-${d.id}" value="${esc(owner0)}" placeholder="예: 홍길동" oninput="updateGaPreview('${d.id}')"></div>
+          <div class="tfield"><label>사업주 휴대폰</label><input class="tinput" id="gaPhone-${d.id}" value="${esc(phone0)}" placeholder="010-0000-0000"></div>
+        </div>
+        <div style="font-size:11.5px;color:var(--ink-2);margin:12px 0 5px">발신번호 062-575-4745 (해피솔라 경영지원팀) · 안내문자 미리보기</div>
+        <div id="gaPrev-${d.id}" class="doc-paper" style="white-space:pre-wrap;font-size:12.5px;line-height:1.6">${esc(preview)}</div>
+        <div class="note" id="gaMeta-${d.id}" style="margin-top:6px">유형 ${smsType(preview)} · ${euckrBytes(preview)}byte · 맨 앞 [Web발신] 자동</div>
+        <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;margin-top:10px;color:var(--ink-2)"><input type="checkbox" id="gaTest-${d.id}" checked> 테스트 모드(실제 발송 안 함)</label>
+      </div>
       <div class="wf-actions">
         ${proposalBtn(d)}
-        <button class="btn ghost sm">가계약서 PDF</button>
-        <button class="btn primary sm" onclick="wfAction('${d.id}','survey_handover','가계약 완료 — 설계팀 실측으로 이관')">가계약 완료 처리 →</button>
+        ${sent
+          ? `<span class="pill done"><span class="pd"></span>✅ 안내문자 발송됨 · ${esc(d.gaSms.receiver)}${d.gaSms.sim?' (시뮬)':''}</span>`
+          : `<button class="btn dark sm" id="gaSendBtn-${d.id}" onclick="sendGaSms('${d.id}')">📩 안내문자 발송</button>`}
+        ${sent
+          ? `<button class="btn primary sm" onclick="wfAction('${d.id}','survey_handover','가계약 완료 — 설계팀 실측으로 이관')">가계약 완료 처리 →</button>`
+          : `<button class="btn primary sm" disabled style="opacity:.45;cursor:not-allowed" title="사업주 안내문자 발송 후 활성화">가계약 완료 처리 →</button>`}
       </div>
-    </div>`).join('');
-  return wfHead('가계약','설계 타당성 승인이 온 현장입니다. 가계약서 작성 후 완료 처리하면 설계팀 실측으로 넘어갑니다.') + (cards || emptyMsg('가계약 대상 현장이 없습니다.'));
+    </div>`;
+  }).join('');
+  return wfHead('가계약','설계 타당성 승인이 온 현장입니다. <b>사업주에게 가계약 안내문자를 발송</b>하면 완료 처리가 활성화되고, 완료 시 설계팀 실측으로 넘어갑니다.') + (cards || emptyMsg('가계약 대상 현장이 없습니다.'));
 }
 
 // 현장 실측 (설계) — 스케줄+관리자승인+결과보고서
@@ -2100,6 +2166,9 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-09-22', team:'영업', kind:'추가', title:'가계약 · 사업주 안내문자 발송 → 발송해야 “완료 처리” 활성화', body:'가계약 화면에서 사업주에게 가계약 접수 안내문자(문자나라 연동)를 발송해야 “가계약 완료 처리” 버튼이 활성화됩니다. 별도 계약서 미작성. 기본 테스트 모드(실제 발송 안 함) — 실발송은 발송서버 설정 후.', author:'개발'},
+  {date:'2026-09-22', team:'설계', kind:'추가', title:'타당성검토 계통 여유에 한전 선로확인 담당 연락처', body:'부지 주소지 시군구 기준으로 한전 담당 전화(선로확인)를 자동 표기, 미해당 지역은 대표번호 123. 번호 클릭 시 바로 전화.', author:'개발'},
+  {date:'2026-09-22', team:'공통', kind:'변경', title:'설치 가능성 진단 실시간 전환(국토부·한전 API) · Vercel 배포', body:'지번 진단이 시뮬레이션 → 실시간 데이터로 전환. 서버 프록시(Vercel)로 API 키 보호. 라이브 주소: farmsolar-worknetwork.vercel.app', author:'개발'},
   {date:'2026-09-21', team:'설계', kind:'추가', title:'타당성검토 · 설치 가능성 실시간 진단(국토부·한전 API) + 지번 입력', body:'신규접수·타당성검토에 지번을 입력하면 지목·경사·용도지역·☀️태양광 규제판정·계통 여유를 실시간 조회해 가능/조건부/제한을 자동 판정. 독립 프록시 구조(Vercel)로 구축 — 배포·키 설정 후 실시간 전환, 그 전까지는 추정치로 표시.', author:'개발'},
   {date:'2026-09-21', team:'공통', kind:'변경', title:'업무 프로세스를 파주지사 실제 흐름(18단계)으로 정합 + 탭 순서 변경', body:'핸드오프 행정→설계(구조검토)→행정→시공→행정. 한전수급계약·상업운전·자재입고확인 추가, 인입협의·비산먼지·토목·발주·휀스·사업개시 정리. 상단 탭 순서: 종합현황판·영업·설계·행정·시공.', author:'개발'},
   {date:'2026-09-21', team:'설계', kind:'추가', title:'영업 이관 “발전사업 제안서(견적서 전체)” 신규접수 도착 + 제안서 보기', body:'견적 11공종·제품사양·유지관리비·수익성·배치도가 설계 신규접수 이관자료로 도착. “📄 제안서 보기”로 타당성·실측·계약 단계에서도 언제든 재열람.', author:'개발'},
