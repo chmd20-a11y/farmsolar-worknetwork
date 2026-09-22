@@ -1920,7 +1920,7 @@ async function runDiagnosis(d){
 function runDiagnosisById(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; const inp=document.getElementById('jibun-'+id); if(inp) d.jibun=inp.value.trim(); runDiagnosis(d); }
 function feasRowHTML(r){
   const c = r.lvl==='ok'?'var(--ok)':r.lvl==='warn'?'var(--brand)':r.lvl==='bad'?'var(--risk)':'var(--muted)';
-  const dd = r.tel ? `${esc(r.d)} · <a href="tel:${esc(String(r.tel).replace(/[^0-9]/g,''))}" style="color:var(--accent-ink);font-weight:800;text-decoration:none">${esc(r.tel)}</a>` : esc(r.d);
+  const dd = r.tel ? `${esc(r.d)} · <a href="tel:${esc(String(r.tel).replace(/[^0-9]/g,''))}" style="color:var(--prog-ink);font-weight:800;text-decoration:underline">${esc(r.tel)}</a>` : esc(r.d);
   return `<div class="feas-row"><span class="feas-dot" style="background:${c}"></span><div><div class="fr-t">${esc(r.t)}</div><div class="fr-d">${dd}</div></div></div>`;
 }
 // 신규접수 '타당성검토 시작' → 지번 설치 가능성 실시간 진단 후 타당성검토로 이동
