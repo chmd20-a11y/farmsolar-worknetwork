@@ -2034,21 +2034,17 @@ async function sendGaSms(id){
   const d=DEALS.find(x=>x.id===id); if(!d) return;
   const owner=(document.getElementById('gaOwner-'+id)?.value||'').trim();
   const phone=(document.getElementById('gaPhone-'+id)?.value||'').trim();
-  const test=!!(document.getElementById('gaTest-'+id)&&document.getElementById('gaTest-'+id).checked);
   if(!validPhone(phone)){ toast('사업주 휴대폰 번호를 정확히 입력하세요'); return; }
   const msg=((document.getElementById('gaMsg-'+id)&&document.getElementById('gaMsg-'+id).value)||gaMsg(d,owner)).trim();
   if(!msg){ toast('안내 문구를 입력하세요'); return; }
   const btn=document.getElementById('gaSendBtn-'+id); if(btn){ btn.disabled=true; btn.textContent='발송 중…'; }
-  let res, simmed=test;
-  if(test){ res=await _simSms(msg); }
-  else {
-    try{
-      const r=await fetch('/api/sms',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({receiver:phone.replace(/[^0-9]/g,''), message:msg, receiver_name:owner||'사업주'})});
-      if(r.status===503||r.status===404){ res=await _simSms(msg); simmed=true; }
-      else { const j=await r.json().catch(()=>({})); res = r.ok ? j : {ok:false,error:j.error||('서버오류 '+r.status)}; }
-    }catch(e){ res={ok:false,error:'발송서버 연결 실패'}; }
-  }
+  let res, simmed=false;
+  try{
+    const r=await fetch('/api/sms',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({receiver:phone.replace(/[^0-9]/g,''), message:msg, receiver_name:owner||'사업주'})});
+    if(r.status===503||r.status===404){ res=await _simSms(msg); simmed=true; }
+    else { const j=await r.json().catch(()=>({})); res = r.ok ? j : {ok:false,error:j.error||('서버오류 '+r.status)}; }
+  }catch(e){ res={ok:false,error:'발송서버 연결 실패'}; }
   const ok = res && (res.ok || String(res.code)==='9');
   if(ok){
     d.gaSms={sent:true, receiver:phone, owner:owner||'사업주', type:res.type||smsType(msg), sim:simmed, code:res.code||'9'};
@@ -2084,7 +2080,6 @@ function renderPreContract(){
         <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:9px">
           <button class="btn ghost sm" onclick="gaResetMsg('${d.id}')">🔄 기본문구</button>
           <button class="btn ghost sm" onclick="gaSaveTpl('${d.id}')">💾 기본문구로 저장</button>
-          <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;margin-left:auto;color:var(--ink-2)"><input type="checkbox" id="gaTest-${d.id}" checked> 테스트 모드(실제 발송 안 함)</label>
         </div>
       </div>
       <div class="wf-actions">
