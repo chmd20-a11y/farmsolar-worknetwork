@@ -596,6 +596,45 @@ button{font-family:inherit;cursor:pointer}
 @media (prefers-reduced-motion:reduce){
   *{animation-duration:.001ms !important;transition-duration:.05ms !important}
 }
+/* ---------- 원가표 편집 UI (시인성) ---------- */
+.cs-sec{margin-bottom:12px}
+.cs-hd{display:flex;align-items:center;gap:8px;margin-bottom:13px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.cs-hd .cs-ic{width:16px;height:16px;color:var(--accent);flex:none}
+.cs-hd h4{font-size:13.5px;font-weight:800;margin:0;letter-spacing:-.2px}
+.cs-unit{margin-left:auto;font-size:10.5px;font-weight:700;color:var(--accent-ink);background:color-mix(in srgb,var(--accent) 16%,transparent);padding:2px 9px;border-radius:20px;white-space:nowrap}
+.cs-sub{font-size:11.5px;font-weight:700;color:var(--muted);margin:16px 0 7px}
+.cs-sub:first-child{margin-top:0}
+.cs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px 14px}
+.cs-f label{display:block;font-size:11px;font-weight:600;color:var(--ink-2);margin-bottom:5px}
+.cs-inp{width:100%;text-align:right;font-variant-numeric:tabular-nums;padding:7px 9px;font-size:12.5px}
+.cs-tbl{width:100%;border-collapse:collapse}
+.cs-tbl th{font-size:10.5px;font-weight:700;color:var(--muted);text-align:right;padding:5px 8px;border-bottom:1px solid var(--border)}
+.cs-tbl th:first-child{text-align:left}
+.cs-tbl td{padding:4px 6px;border-bottom:1px solid var(--border)}
+.cs-tbl tr:last-child td{border-bottom:0}
+.cs-tbl td:first-child{font-size:12px;color:var(--ink-2);white-space:nowrap;font-weight:600}
+.cs-tbl td.num{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px}
+.cs-tbl tbody tr:nth-child(even){background:color-mix(in srgb,var(--surface-2) 55%,transparent)}
+.cs-tbl .cs-inp{padding:5px 7px;font-size:12px}
+.cs-savebar{display:flex;gap:8px;flex:none}
+.cs-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:10px}
+.cs-tile{border:1px solid var(--border);border-radius:10px;padding:10px 11px;background:color-mix(in srgb,var(--surface-2) 45%,transparent)}
+.cs-tile .t-name{font-size:11.5px;font-weight:700;color:var(--ink);line-height:1.35}
+.cs-tile .t-spec{font-size:10.5px;color:var(--muted);margin-top:2px}
+.cs-tile .t-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+.cs-tile .t-lbl{font-size:10.5px;color:var(--muted);white-space:nowrap}
+.cs-tile .t-row .cs-inp{flex:1;min-width:0}
+.cst-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:14px}
+.cst-kpi{border:1px solid var(--border);border-radius:12px;padding:12px 14px;background:var(--surface);box-shadow:var(--shadow-sm)}
+.cst-kpi .k-l{font-size:10.5px;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:5px}
+.cst-kpi .k-v{font-size:17px;font-weight:800;margin-top:7px;letter-spacing:-.3px;line-height:1.2}
+.cst-kpi .k-v small{font-size:11.5px;font-weight:700;color:var(--muted)}
+.cst-kpi .k-sub{font-size:10.5px;color:var(--muted);margin-top:3px}
+.cst-kpi .k-split{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.cst-tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin:16px 0 16px;flex-wrap:wrap;overflow-x:auto}
+.cst-tabbtn{appearance:none;background:transparent;border:0;border-bottom:2px solid transparent;padding:9px 15px;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer;margin-bottom:-1px;white-space:nowrap}
+.cst-tabbtn:hover{color:var(--ink-2)}
+.cst-tabbtn.active{color:var(--ink);border-bottom-color:var(--accent)}
 </style>
 
 <!-- ============ 간편 로그인 (필드테스트: 이름·팀 선택) ============ -->
@@ -2730,87 +2769,86 @@ function renderCostPresets(){
     ${COST_PRESETS.length?`<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">${chips}</div>`:''}
   </div>`;
 }
+let _costTab = 'material';
+function costTab(name){
+  _costTab = name;
+  document.querySelectorAll('#sub-s-costsheet .cst-tabbtn').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  document.querySelectorAll('#sub-s-costsheet .cst-panel').forEach(p=>p.style.display = (p.dataset.tab===name ? '' : 'none'));
+}
 function renderCostSheet(){
   const P = COST_PRESET;
-  const TH='padding:6px 8px;font-size:11px;font-weight:700;color:var(--ink-2);background:var(--surface-2);border-bottom:1px solid var(--border)';
-  const TD='padding:5px 8px;font-size:12.5px;border-bottom:1px solid var(--border)';
-  const NUM='font-variant-numeric:tabular-nums';
-  const tbl=(head,body)=>`<div class="table-scroll" style="margin-bottom:16px"><table style="width:100%;border-collapse:collapse">${head}<tbody>${body}</tbody></table></div>`;
-  const sect=t=>`<div class="section-title" style="font-size:12px;margin:6px 0 6px">${t}</div>`;
-  // 기본
-  const basic = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px">
-    <div>${_lbl('모듈 마크업 (원/W)')}${_cxInp('moduleMarkupW',P.moduleMarkupW)}</div>
-    <div>${_lbl('인버터 마크업 (원/대)')}${_cxInp('inverterMarkupEach',P.inverterMarkupEach)}</div>
-    <div>${_lbl('일반관리비율 (%)')}${_cxInp('managementRate',P.managementRate,{pct:1})}</div>
+  const wn = n => Math.round(n).toLocaleString();
+  const ci=(path,val,opts)=>{ opts=opts||{}; const v=opts.pct?(val*100):val; return `<input class="tinput cs-inp" data-cx="${path}"${opts.pct?' data-pct="1"':''} value="${v}" inputmode="decimal">`; };
+  const sub=t=>`<div class="cs-sub">${t}</div>`;
+  const field=(lbl,inp)=>`<div class="cs-f"><label>${lbl}</label>${inp}</div>`;
+  const scroll=t=>`<div class="table-scroll">${t}</div>`;
+  const tile=(name,unitLabel,input,spec)=>`<div class="cs-tile"><div class="t-name">${esc(name)}</div>${spec?`<div class="t-spec">${spec}</div>`:''}<div class="t-row"><span class="t-lbl">${unitLabel}</span>${input}</div></div>`;
+  const tiles=inner=>`<div class="cs-tiles">${inner}</div>`;
+  // ── 콘텐츠 조각 ──
+  const basicGrid = `<div class="cs-grid">
+    ${field('모듈 마크업 (원/W)', ci('moduleMarkupW',P.moduleMarkupW))}
+    ${field('인버터 마크업 (원/대)', ci('inverterMarkupEach',P.inverterMarkupEach))}
+    ${field('일반관리비율 (%)', ci('managementRate',P.managementRate,{pct:1}))}
   </div>`;
-  // 모듈 (원가/W 편집)
-  const modRows = Object.entries(P.modules).map(([k,m])=>`<tr>
-    <td style="${TD};text-align:left">${esc(m.name)}</td>
-    <td style="${TD};text-align:right;${NUM}">${m.w}</td>
-    <td style="${TD};width:120px">${_cxInp('modules.'+k+'.priceW', m.priceW)}</td></tr>`).join('');
-  const modTbl = tbl(`<thead><tr><th style="${TH};text-align:left">모듈</th><th style="${TH};text-align:right">출력(W)</th><th style="${TH};text-align:right">원가(₩/W)</th></tr></thead>`, modRows);
-  // 인버터
-  const invRows = Object.entries(P.inverters).map(([k,v])=>`<tr>
-    <td style="${TD};text-align:left">${esc(v.name)}</td>
-    <td style="${TD};text-align:right;${NUM}">${v.kw}</td>
-    <td style="${TD};width:140px">${_cxInp('inverters.'+k+'.price', v.price)}</td></tr>`).join('');
-  const invTbl = tbl(`<thead><tr><th style="${TH};text-align:left">인버터</th><th style="${TH};text-align:right">용량(kW)</th><th style="${TH};text-align:right">원가(₩)</th></tr></thead>`, invRows);
-  // 계량기함
-  const mbRows = P.meterBoxesQuote.map((m,i)=>`<tr>
-    <td style="${TD};text-align:left">${esc(m.label)}</td>
-    <td style="${TD};text-align:right;${NUM}">${m.maxKW===9999?'~1000':'~'+m.maxKW}</td>
-    <td style="${TD};width:150px">${_cxInp('meterBoxesQuote.'+i+'.price', m.price)}</td></tr>`).join('');
-  const mbTbl = tbl(`<thead><tr><th style="${TH};text-align:left">계량기함</th><th style="${TH};text-align:right">용량구간(kW)</th><th style="${TH};text-align:right">견적(₩)</th></tr></thead>`, mbRows);
-  // 시공 tier (부지 × 용량) — 만원/kW · 편집
-  const tierHead = `<thead><tr><th style="${TH};text-align:left">부지 · 항목</th>${P.constructionTier.tiers.map(t=>`<th style="${TH};text-align:right">~${t}</th>`).join('')}</tr></thead>`;
+  const modTiles = tiles(Object.entries(P.modules).map(([k,m])=>tile(m.name,'원가 원/W',ci('modules.'+k+'.priceW', m.priceW))).join(''));
+  const invTiles = tiles(Object.entries(P.inverters).map(([k,v])=>tile(v.name,'원가 원',ci('inverters.'+k+'.price', v.price))).join(''));
+  const mbTiles = tiles(P.meterBoxesQuote.map((m,i)=>tile(m.label,'견적 원',ci('meterBoxesQuote.'+i+'.price', m.price),'구간 ~'+(m.maxKW===9999?'1000':m.maxKW)+'kW')).join(''));
+  const capHdr = P.constructionTier.tiers.map(t=>`<th>~${t}</th>`).join('');
   const tierBody = ['노지','지붕','수상'].map(type=>{
     const r=P.constructionTier[type];
-    const line=(lbl,rowKey,arr)=>`<tr><td style="${TD};text-align:left;white-space:nowrap">${type}·${lbl}</td>${arr.map((v,i)=>`<td style="${TD};min-width:56px">${_cxInp('constructionTier.'+type+'.'+rowKey+'.'+i, v)}</td>`).join('')}</tr>`;
+    const line=(lbl,rowKey,arr)=>`<tr><td>${type}·${lbl}</td>${arr.map((v,i)=>`<td style="min-width:60px">${ci('constructionTier.'+type+'.'+rowKey+'.'+i, v)}</td>`).join('')}</tr>`;
     return line('제작','structMake',r.structMake)+line('시공','structInstall',r.structInstall)+line('전기','electric',r.electric);
   }).join('');
-  const tierTbl = tbl(tierHead, tierBody);
-  // 판매단가 (부지 × tier) — 원/kW · 편집
-  const spHead = `<thead><tr><th style="${TH};text-align:left">부지</th>${P.constructionTier.tiers.map(t=>`<th style="${TH};text-align:right">~${t}</th>`).join('')}</tr></thead>`;
-  const spBody = ['노지','지붕','수상'].map(type=>`<tr><td style="${TD};text-align:left">${type}</td>${P.kwSalesPrice[type].map((v,i)=>`<td style="${TD};min-width:78px">${_cxInp('kwSalesPrice.'+type+'.'+i, v)}</td>`).join('')}</tr>`).join('');
-  const spTbl = tbl(spHead, spBody);
-  // 고정비
+  const tierTbl = `<table class="cs-tbl"><thead><tr><th>부지 · 항목</th>${capHdr}</tr></thead><tbody>${tierBody}</tbody></table>`;
+  const spBody = ['노지','지붕','수상'].map(type=>`<tr><td>${type}</td>${P.kwSalesPrice[type].map((v,i)=>`<td style="min-width:82px">${ci('kwSalesPrice.'+type+'.'+i, v)}</td>`).join('')}</tr>`).join('');
+  const spTbl = `<table class="cs-tbl"><thead><tr><th>부지</th>${capHdr}</tr></thead><tbody>${spBody}</tbody></table>`;
   const f=P.fixed;
   const fixItems=[
     ['인허가 (100kW 미만)','permitSmall'],['인허가 (100~500kW)','permitMed'],['인허가 (500kW+)','permitLarge'],
     ['구조검토 base','structCheckBase'],['구조계산 base','structCalcBase'],
     ['기술지도 (시공비 1~2억)','techGuideMed'],['기술지도 (2억+)','techGuideLarge'],
-    ['설계감리 (₩/kW)','designBase'],['안전진단 (300kW+)','safetyDiag300'],['안전진단 (500kW+)','safetyDiag500'],
+    ['설계감리 (원/kW)','designBase'],['안전진단 (300kW+)','safetyDiag300'],['안전진단 (500kW+)','safetyDiag500'],
     ['사다리 (지붕형)','ladderPerSite'],
   ];
-  const fixGrid = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:16px">${fixItems.map(([lbl,key])=>`<div>${_lbl(lbl)}${_cxInp('fixed.'+key, f[key])}</div>`).join('')}</div>`;
-  // 가정값
-  const asmGrid = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:8px">
-    <div>${_lbl('발전시간 (h/일)')}${_cxInp('assump.hours',ASSUMP.hours)}</div>
-    <div>${_lbl('적용단가 노지 (원/kWh)')}${_cxInp('assump.applyNoji',ASSUMP.applyNoji)}</div>
-    <div>${_lbl('적용단가 지붕')}${_cxInp('assump.applyRoof',ASSUMP.applyRoof)}</div>
-    <div>${_lbl('적용단가 수상')}${_cxInp('assump.applySusang',ASSUMP.applySusang)}</div>
-    <div>${_lbl('이율 (%)')}${_cxInp('assump.rate',ASSUMP.rate)}</div>
-    <div>${_lbl('거치 (년)')}${_cxInp('assump.defer',ASSUMP.defer)}</div>
-    <div>${_lbl('상환 (년)')}${_cxInp('assump.repay',ASSUMP.repay)}</div>
-    <div>${_lbl('대출비율 (%)')}${_cxInp('assump.loanpct',ASSUMP.loanpct)}</div>
+  const fixGrid = `<div class="cs-grid">${fixItems.map(([lbl,key])=>field(lbl, ci('fixed.'+key, f[key]))).join('')}</div>`;
+  const asmGrid = `<div class="cs-grid">
+    ${field('발전시간 (h/일)', ci('assump.hours',ASSUMP.hours))}
+    ${field('적용단가 노지 (원/kWh)', ci('assump.applyNoji',ASSUMP.applyNoji))}
+    ${field('적용단가 지붕 (원/kWh)', ci('assump.applyRoof',ASSUMP.applyRoof))}
+    ${field('적용단가 수상 (원/kWh)', ci('assump.applySusang',ASSUMP.applySusang))}
+    ${field('이율 (%)', ci('assump.rate',ASSUMP.rate))}
+    ${field('거치 (년)', ci('assump.defer',ASSUMP.defer))}
+    ${field('상환 (년)', ci('assump.repay',ASSUMP.repay))}
+    ${field('대출비율 (%)', ci('assump.loanpct',ASSUMP.loanpct))}
   </div>`;
+  // ── 상단 KPI 요약 ──
+  const kpi=(label,value,subx)=>`<div class="cst-kpi"><div class="k-l">${label}</div><div class="k-v">${value}</div>${subx?`<div class="k-sub">${subx}</div>`:''}</div>`;
+  const kMod = P.modules.korea_hyundai ? P.modules.korea_hyundai.priceW : 0;
+  const kCn  = P.modules.china_aiko ? P.modules.china_aiko.priceW : 0;
+  const kpiRow = `<div class="cst-kpis">
+    ${kpi('☀️ 모듈 원가 (원/W)', `<span class="k-split"><span>국산 <b>₩${wn(kMod)}</b></span><span style="color:var(--muted)">·</span><span>중국산 <b>₩${wn(kCn)}</b></span></span>`, '견적 = 원가 + 마크업 '+P.moduleMarkupW+'원/W')}
+    ${kpi('⚡ 적용단가 (SMP+REC)', `₩${wn(ASSUMP.applyNoji)}<small>/kWh</small>`, '노지 기준 · 20년 장기계약')}
+    ${kpi('📊 일반관리비율', `${(P.managementRate*100)}<small>%</small>`, '판매가 대비 이윤')}
+    ${kpi('💰 정책자금', `${ASSUMP.loanpct}<small>% 대출</small>`, `이율 ${ASSUMP.rate}% · ${ASSUMP.defer}년거치 ${ASSUMP.repay}년상환`)}
+  </div>`;
+  // ── 탭 + 패널 ──
+  const TABS=[['material','자재 단가'],['constr','시공·판매 단가'],['fixed','인허가·검사·고정비'],['assump','발전·금융 가정값']];
+  const tabBar = `<div class="cst-tabs">${TABS.map(([k,t])=>`<button class="cst-tabbtn ${_costTab===k?'active':''}" data-tab="${k}" onclick="costTab('${k}')">${t}</button>`).join('')}</div>`;
+  const panel=(name,inner)=>`<div class="cst-panel" data-tab="${name}"${_costTab===name?'':' style="display:none"'}><div class="card pad">${inner}</div></div>`;
+  const panels =
+      panel('material', sub('기본 마크업 · 관리비율')+basicGrid + sub('모듈 · 원/W')+modTiles + sub('인버터 · 원/대')+invTiles + sub('계량기함 · 원')+mbTiles)
+    + panel('constr', sub('시공 tier · 만원/kW')+scroll(tierTbl) + sub('kW당 판매단가 · 원/kW')+scroll(spTbl))
+    + panel('fixed', sub('고정비 · 인허가·설계·검사 (원)')+fixGrid)
+    + panel('assump', sub('발전 · 금융 가정값')+asmGrid);
   const header = `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px;flex-wrap:wrap">
-    <div><h3 class="section-title" style="margin:0">원가표 <span style="font-weight:500;color:var(--muted);font-size:12px">· 견적 자동산출 기준단가 (편집 가능)</span></h3>
-      <div class="note" style="margin-top:5px">값을 바꾸고 <b>저장</b>하면 이후 모든 견적에 반영됩니다. 자주 쓰는 단가 세트는 프리셋으로 저장하세요. 일부 값은 잠정치이며 실계약 견적 전 확정이 필요합니다.</div></div>
-    <div style="display:flex;gap:8px;flex:none">
+    <div><h3 class="section-title" style="margin:0">원가표 <span style="font-weight:500;color:var(--muted);font-size:12px">· 견적 기준단가 (편집 가능)</span></h3>
+      <div class="note" style="margin-top:5px">값을 바꾸고 <b>저장</b>하면 이후 모든 견적에 반영됩니다. 자주 쓰는 세트는 프리셋으로 저장하세요.</div></div>
+    <div class="cs-savebar">
       <button class="btn primary sm" onclick="saveCostEditor()">💾 저장</button>
       <button class="btn ghost sm" onclick="resetCostEditor()">기본값 복원</button>
     </div>
   </div>`;
-  return header + renderCostPresets()
-    + sect('기본 마크업·관리비율') + basic
-    + sect('모듈 원가 (원/W)') + modTbl
-    + sect('인버터 원가 (원)') + invTbl
-    + sect('계량기함 견적 (원)') + mbTbl
-    + sect('시공 tier (만원/kW)') + tierTbl
-    + sect('kW당 판매단가 (원/kW)') + spTbl
-    + sect('고정비 · 인허가·설계·검사 (원)') + fixGrid
-    + sect('발전·금융 가정값') + asmGrid;
+  return header + kpiRow + renderCostPresets() + tabBar + panels;
 }
 function renderDynamicSub(sub){
   if(sub==='s-quote'){ const el=document.getElementById('sub-s-quote'); if(el){ el.innerHTML=renderSalesQuote(); initQuoteEditor(); } }
