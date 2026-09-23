@@ -602,7 +602,7 @@ button{font-family:inherit;cursor:pointer}
 .cs-hd .cs-ic{width:16px;height:16px;color:var(--accent);flex:none}
 .cs-hd h4{font-size:13.5px;font-weight:800;margin:0;letter-spacing:-.2px}
 .cs-unit{margin-left:auto;font-size:10.5px;font-weight:700;color:var(--accent-ink);background:color-mix(in srgb,var(--accent) 16%,transparent);padding:2px 9px;border-radius:20px;white-space:nowrap}
-.cs-sub{font-size:11.5px;font-weight:700;color:var(--muted);margin:16px 0 7px}
+.cs-sub{font-size:12px;font-weight:800;color:var(--ink-2);margin:16px 0 8px;display:flex;align-items:center;gap:6px}
 .cs-sub:first-child{margin-top:0}
 .cs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px 14px}
 .cs-f label{display:block;font-size:11px;font-weight:600;color:var(--ink-2);margin-bottom:5px}
@@ -625,9 +625,9 @@ button{font-family:inherit;cursor:pointer}
 .cs-tile .t-lbl{font-size:10.5px;color:var(--muted);white-space:nowrap}
 .cs-tile .t-row .cs-inp{flex:1;min-width:0}
 .cst-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:14px}
-.cst-kpi{border:1px solid var(--border);border-radius:12px;padding:12px 14px;background:var(--surface);box-shadow:var(--shadow-sm)}
-.cst-kpi .k-l{font-size:10.5px;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:5px}
-.cst-kpi .k-v{font-size:17px;font-weight:800;margin-top:7px;letter-spacing:-.3px;line-height:1.2}
+.cst-kpi{border:1px solid var(--border);border-left:3px solid var(--kc,var(--accent));border-radius:12px;padding:12px 14px 12px 15px;background:color-mix(in srgb,var(--kc,var(--accent)) 8%,var(--surface));box-shadow:var(--shadow-sm)}
+.cst-kpi .k-l{font-size:10.5px;color:var(--kc,var(--muted));font-weight:800;display:flex;align-items:center;gap:5px}
+.cst-kpi .k-v{font-size:17px;font-weight:800;margin-top:7px;letter-spacing:-.3px;line-height:1.2;color:var(--kc,var(--ink))}
 .cst-kpi .k-v small{font-size:11.5px;font-weight:700;color:var(--muted)}
 .cst-kpi .k-sub{font-size:10.5px;color:var(--muted);margin-top:3px}
 .cst-kpi .k-split{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
@@ -797,7 +797,6 @@ button{font-family:inherit;cursor:pointer}
       <section class="view" id="view-sales">
         <div class="page-head">
           <div><h1>영업 워크스페이스</h1><p>부지 발굴 → 타당성 검토 → 모듈 가배치 → 견적 → <b>공무팀 이관</b>까지 한 흐름으로.</p></div>
-          <div class="ph-actions"><button class="btn dark sm">＋ 신규 리드</button></div>
         </div>
 
         <!-- 영업현황 -->
@@ -2846,24 +2845,24 @@ function renderCostSheet(){
   ];
   const asmTiles = tiles(asmItems.map(([nm,u,path,val])=>tile(nm,u,ci(path,val))).join(''));
   // ── 상단 KPI 요약 ──
-  const kpi=(label,value,subx)=>`<div class="cst-kpi"><div class="k-l">${label}</div><div class="k-v">${value}</div>${subx?`<div class="k-sub">${subx}</div>`:''}</div>`;
+  const kpi=(label,value,subx,tone)=>`<div class="cst-kpi" style="--kc:${tone}"><div class="k-l">${label}</div><div class="k-v">${value}</div>${subx?`<div class="k-sub">${subx}</div>`:''}</div>`;
   const kMod = P.modules.korea_hyundai ? P.modules.korea_hyundai.priceW : 0;
   const kCn  = P.modules.china_aiko ? P.modules.china_aiko.priceW : 0;
   const kpiRow = `<div class="cst-kpis">
-    ${kpi('☀️ 모듈 원가 (원/W)', `<span class="k-split"><span>국산 <b>₩${wn(kMod)}</b></span><span style="color:var(--muted)">·</span><span>중국산 <b>₩${wn(kCn)}</b></span></span>`, '견적 = 원가 + 마크업 '+P.moduleMarkupW+'원/W')}
-    ${kpi('⚡ 적용단가 (SMP+REC)', `₩${wn(ASSUMP.applyNoji)}<small>/kWh</small>`, '노지 기준 · 20년 장기계약')}
-    ${kpi('📊 일반관리비율', `${(P.managementRate*100)}<small>%</small>`, '판매가 대비 이윤')}
-    ${kpi('💰 정책자금', `${ASSUMP.loanpct}<small>% 대출</small>`, `이율 ${ASSUMP.rate}% · ${ASSUMP.defer}년거치 ${ASSUMP.repay}년상환`)}
+    ${kpi('☀️ 모듈 원가 (원/W)', `<span class="k-split"><span>국산 <b>₩${wn(kMod)}</b></span><span style="color:var(--muted)">·</span><span>중국산 <b>₩${wn(kCn)}</b></span></span>`, '견적 = 원가 + 마크업 '+P.moduleMarkupW+'원/W', '#5b86c4')}
+    ${kpi('⚡ 적용단가 (SMP+REC)', `₩${wn(ASSUMP.applyNoji)}<small>/kWh</small>`, '노지 기준 · 20년 장기계약', '#c9902f')}
+    ${kpi('📊 일반관리비율', `${(P.managementRate*100)}<small>%</small>`, '판매가 대비 이윤', '#5b9e6f')}
+    ${kpi('💰 정책자금', `${ASSUMP.loanpct}<small>% 대출</small>`, `이율 ${ASSUMP.rate}% · ${ASSUMP.defer}년거치 ${ASSUMP.repay}년상환`, '#8b7bc4')}
   </div>`;
   // ── 탭 + 패널 ──
   const TABS=[['material','자재 단가'],['constr','시공·판매 단가'],['fixed','인허가·검사·고정비'],['assump','발전·금융 가정값']];
   const tabBar = `<div class="cst-tabs">${TABS.map(([k,t])=>`<button class="cst-tabbtn ${_costTab===k?'active':''}" data-tab="${k}" onclick="costTab('${k}')">${t}</button>`).join('')}</div>`;
   const panel=(name,inner)=>`<div class="cst-panel" data-tab="${name}"${_costTab===name?'':' style="display:none"'}><div class="card pad">${inner}</div></div>`;
   const panels =
-      panel('material', sub('기본 마크업 · 관리비율')+basicGrid + sub('모듈 · 원/W')+modTiles + sub('인버터 · 원/대')+invTiles + sub('계량기함 · 원')+mbTiles)
-    + panel('constr', sub('시공 tier · 만원/kW')+scroll(tierTbl) + sub('kW당 판매단가 · 원/kW')+scroll(spTbl))
-    + panel('fixed', sub('고정비 · 인허가·설계·검사 (원)')+fixTiles)
-    + panel('assump', sub('발전 · 금융 가정값')+asmTiles);
+      panel('material', sub('⚙️ 기본 마크업 · 관리비율')+basicGrid + sub('☀️ 모듈 · 원/W')+modTiles + sub('⚡ 인버터 · 원/대')+invTiles + sub('🔌 계량기함 · 원')+mbTiles)
+    + panel('constr', sub('🏗️ 시공 tier · 만원/kW')+scroll(tierTbl) + sub('💰 kW당 판매단가 · 원/kW')+scroll(spTbl))
+    + panel('fixed', sub('📋 고정비 · 인허가·설계·검사 (원)')+fixTiles)
+    + panel('assump', sub('📈 발전 · 금융 가정값')+asmTiles);
   const header = `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px;flex-wrap:wrap">
     <div><h3 class="section-title" style="margin:0">원가표 <span style="font-weight:500;color:var(--muted);font-size:12px">· 견적 기준단가 (편집 가능)</span></h3>
       <div class="note" style="margin-top:5px">값을 바꾸고 <b>저장</b>하면 이후 모든 견적에 반영됩니다. 자주 쓰는 세트는 프리셋으로 저장하세요.</div></div>
