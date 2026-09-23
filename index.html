@@ -2833,17 +2833,18 @@ function renderCostSheet(){
     ['설계감리 (원/kW)','designBase'],['안전진단 (300kW+)','safetyDiag300'],['안전진단 (500kW+)','safetyDiag500'],
     ['사다리 (지붕형)','ladderPerSite'],
   ];
-  const fixGrid = `<div class="cs-grid">${fixItems.map(([lbl,key])=>field(lbl, ci('fixed.'+key, f[key]))).join('')}</div>`;
-  const asmGrid = `<div class="cs-grid">
-    ${field('발전시간 (h/일)', ci('assump.hours',ASSUMP.hours))}
-    ${field('적용단가 노지 (원/kWh)', ci('assump.applyNoji',ASSUMP.applyNoji))}
-    ${field('적용단가 지붕 (원/kWh)', ci('assump.applyRoof',ASSUMP.applyRoof))}
-    ${field('적용단가 수상 (원/kWh)', ci('assump.applySusang',ASSUMP.applySusang))}
-    ${field('이율 (%)', ci('assump.rate',ASSUMP.rate))}
-    ${field('거치 (년)', ci('assump.defer',ASSUMP.defer))}
-    ${field('상환 (년)', ci('assump.repay',ASSUMP.repay))}
-    ${field('대출비율 (%)', ci('assump.loanpct',ASSUMP.loanpct))}
-  </div>`;
+  const fixTiles = tiles(fixItems.map(([lbl,key])=>tile(lbl,'원',ci('fixed.'+key, f[key]))).join(''));
+  const asmItems=[
+    ['발전시간','h/일','assump.hours',ASSUMP.hours],
+    ['적용단가 노지','원/kWh','assump.applyNoji',ASSUMP.applyNoji],
+    ['적용단가 지붕','원/kWh','assump.applyRoof',ASSUMP.applyRoof],
+    ['적용단가 수상','원/kWh','assump.applySusang',ASSUMP.applySusang],
+    ['이율','%','assump.rate',ASSUMP.rate],
+    ['거치','년','assump.defer',ASSUMP.defer],
+    ['상환','년','assump.repay',ASSUMP.repay],
+    ['대출비율','%','assump.loanpct',ASSUMP.loanpct],
+  ];
+  const asmTiles = tiles(asmItems.map(([nm,u,path,val])=>tile(nm,u,ci(path,val))).join(''));
   // ── 상단 KPI 요약 ──
   const kpi=(label,value,subx)=>`<div class="cst-kpi"><div class="k-l">${label}</div><div class="k-v">${value}</div>${subx?`<div class="k-sub">${subx}</div>`:''}</div>`;
   const kMod = P.modules.korea_hyundai ? P.modules.korea_hyundai.priceW : 0;
@@ -2861,8 +2862,8 @@ function renderCostSheet(){
   const panels =
       panel('material', sub('기본 마크업 · 관리비율')+basicGrid + sub('모듈 · 원/W')+modTiles + sub('인버터 · 원/대')+invTiles + sub('계량기함 · 원')+mbTiles)
     + panel('constr', sub('시공 tier · 만원/kW')+scroll(tierTbl) + sub('kW당 판매단가 · 원/kW')+scroll(spTbl))
-    + panel('fixed', sub('고정비 · 인허가·설계·검사 (원)')+fixGrid)
-    + panel('assump', sub('발전 · 금융 가정값')+asmGrid);
+    + panel('fixed', sub('고정비 · 인허가·설계·검사 (원)')+fixTiles)
+    + panel('assump', sub('발전 · 금융 가정값')+asmTiles);
   const header = `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px;flex-wrap:wrap">
     <div><h3 class="section-title" style="margin:0">원가표 <span style="font-weight:500;color:var(--muted);font-size:12px">· 견적 기준단가 (편집 가능)</span></h3>
       <div class="note" style="margin-top:5px">값을 바꾸고 <b>저장</b>하면 이후 모든 견적에 반영됩니다. 자주 쓰는 세트는 프리셋으로 저장하세요.</div></div>
