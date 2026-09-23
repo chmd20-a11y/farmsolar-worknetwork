@@ -635,6 +635,12 @@ button{font-family:inherit;cursor:pointer}
 .cst-tabbtn{appearance:none;background:transparent;border:0;border-bottom:2px solid transparent;padding:9px 15px;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer;margin-bottom:-1px;white-space:nowrap}
 .cst-tabbtn:hover{color:var(--ink-2)}
 .cst-tabbtn.active{color:var(--ink);border-bottom-color:var(--accent)}
+.cs-tbl-grp td.cs-typ{background:var(--surface-2);border-right:2px solid var(--border);font-weight:800;color:var(--ink);font-size:12.5px;vertical-align:middle;text-align:left;white-space:nowrap;min-width:66px;box-shadow:inset 4px 0 0 var(--tc,var(--accent))}
+.cs-tbl-grp td.cs-typ .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--tc,var(--accent));margin-right:7px;vertical-align:middle}
+.cs-tbl-grp td.cs-itm{background:var(--surface-2);border-right:1px solid var(--border);color:var(--ink-2);font-weight:600;font-size:11.5px;white-space:nowrap}
+.cs-tbl-grp th.cs-railh{background:var(--surface-2);border-right:1px solid var(--border);color:var(--ink-2);font-weight:700}
+.cs-tbl-grp tbody tr:nth-child(even){background:transparent}
+.cs-tbl-grp .cs-grp-end > td{border-bottom:2px solid var(--border)}
 </style>
 
 <!-- ============ 간편 로그인 (필드테스트: 이름·팀 선택) ============ -->
@@ -2793,15 +2799,20 @@ function renderCostSheet(){
   const modTiles = tiles(Object.entries(P.modules).map(([k,m])=>tile(m.name,'원가 원/W',ci('modules.'+k+'.priceW', m.priceW))).join(''));
   const invTiles = tiles(Object.entries(P.inverters).map(([k,v])=>tile(v.name,'원가 원',ci('inverters.'+k+'.price', v.price))).join(''));
   const mbTiles = tiles(P.meterBoxesQuote.map((m,i)=>tile(m.label,'견적 원',ci('meterBoxesQuote.'+i+'.price', m.price),'구간 ~'+(m.maxKW===9999?'1000':m.maxKW)+'kW')).join(''));
+  const TYPE_C = {'노지':'#6f9e5b','지붕':'#5b86c4','수상':'#3fa9a0'};
   const capHdr = P.constructionTier.tiers.map(t=>`<th>~${t}</th>`).join('');
   const tierBody = ['노지','지붕','수상'].map(type=>{
     const r=P.constructionTier[type];
-    const line=(lbl,rowKey,arr)=>`<tr><td>${type}·${lbl}</td>${arr.map((v,i)=>`<td style="min-width:60px">${ci('constructionTier.'+type+'.'+rowKey+'.'+i, v)}</td>`).join('')}</tr>`;
-    return line('제작','structMake',r.structMake)+line('시공','structInstall',r.structInstall)+line('전기','electric',r.electric);
+    const items=[['제작','structMake'],['시공','structInstall'],['전기','electric']];
+    return items.map(([lbl,rowKey],ri)=>{
+      const typeCell = ri===0 ? `<td class="cs-typ" rowspan="3" style="--tc:${TYPE_C[type]}"><span class="dot"></span>${type}</td>` : '';
+      const cells = r[rowKey].map((v,i)=>`<td style="min-width:60px">${ci('constructionTier.'+type+'.'+rowKey+'.'+i, v)}</td>`).join('');
+      return `<tr${ri===2?' class="cs-grp-end"':''}>${typeCell}<td class="cs-itm">${lbl}</td>${cells}</tr>`;
+    }).join('');
   }).join('');
-  const tierTbl = `<table class="cs-tbl"><thead><tr><th>부지 · 항목</th>${capHdr}</tr></thead><tbody>${tierBody}</tbody></table>`;
-  const spBody = ['노지','지붕','수상'].map(type=>`<tr><td>${type}</td>${P.kwSalesPrice[type].map((v,i)=>`<td style="min-width:82px">${ci('kwSalesPrice.'+type+'.'+i, v)}</td>`).join('')}</tr>`).join('');
-  const spTbl = `<table class="cs-tbl"><thead><tr><th>부지</th>${capHdr}</tr></thead><tbody>${spBody}</tbody></table>`;
+  const tierTbl = `<table class="cs-tbl cs-tbl-grp"><thead><tr><th class="cs-railh" colspan="2">부지 · 항목</th>${capHdr}</tr></thead><tbody>${tierBody}</tbody></table>`;
+  const spBody = ['노지','지붕','수상'].map(type=>`<tr class="cs-grp-end"><td class="cs-typ" style="--tc:${TYPE_C[type]}"><span class="dot"></span>${type}</td>${P.kwSalesPrice[type].map((v,i)=>`<td style="min-width:82px">${ci('kwSalesPrice.'+type+'.'+i, v)}</td>`).join('')}</tr>`).join('');
+  const spTbl = `<table class="cs-tbl cs-tbl-grp"><thead><tr><th class="cs-railh">부지</th>${capHdr}</tr></thead><tbody>${spBody}</tbody></table>`;
   const f=P.fixed;
   const fixItems=[
     ['인허가 (100kW 미만)','permitSmall'],['인허가 (100~500kW)','permitMed'],['인허가 (500kW+)','permitLarge'],
