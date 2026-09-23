@@ -2775,6 +2775,17 @@ function renderCostPresets(){
     ${COST_PRESETS.length?`<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">${chips}</div>`:''}
   </div>`;
 }
+// 입력 중 천단위 콤마 자동 삽입 (원가표 편집칸) — 저장 시 collectCostEditor가 콤마 제거
+function cxFmtLive(inp){
+  const start=inp.selectionStart, len0=inp.value.length;
+  const raw=String(inp.value).replace(/[^0-9.]/g,'');
+  if(raw===''){ inp.value=''; return; }
+  const p=raw.split('.');
+  const intp=p[0].replace(/^0+(?=\d)/,'');
+  const g=intp===''?'':Number(intp).toLocaleString('en-US');
+  inp.value = p.length>1 ? g+'.'+p.slice(1).join('') : g;
+  try{ const d=inp.value.length-len0; inp.setSelectionRange(Math.max(0,start+d), Math.max(0,start+d)); }catch(e){}
+}
 let _costTab = 'material';
 function costTab(name){
   _costTab = name;
@@ -2784,7 +2795,8 @@ function costTab(name){
 function renderCostSheet(){
   const P = COST_PRESET;
   const wn = n => Math.round(n).toLocaleString();
-  const ci=(path,val,opts)=>{ opts=opts||{}; const v=opts.pct?(val*100):val; return `<input class="tinput cs-inp" data-cx="${path}"${opts.pct?' data-pct="1"':''} value="${v}" inputmode="decimal">`; };
+  const fmtNum=v=>{ const p=String(v).split('.'); const i=Number(p[0]); const g=isNaN(i)?p[0]:i.toLocaleString('en-US'); return p.length>1?g+'.'+p[1]:g; };
+  const ci=(path,val,opts)=>{ opts=opts||{}; const v=opts.pct?(val*100):val; return `<input class="tinput cs-inp" data-cx="${path}"${opts.pct?' data-pct="1"':''} value="${fmtNum(v)}" inputmode="decimal" oninput="cxFmtLive(this)">`; };
   const sub=t=>`<div class="cs-sub">${t}</div>`;
   const field=(lbl,inp)=>`<div class="cs-f"><label>${lbl}</label>${inp}</div>`;
   const scroll=t=>`<div class="table-scroll">${t}</div>`;
