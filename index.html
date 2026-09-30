@@ -374,6 +374,31 @@ button{font-family:inherit;cursor:pointer}
 .doc-line .dl-v{padding:10px 12px;font-size:13px;flex:1;font-weight:600}
 .wf-photo{height:86px;border-radius:9px;display:grid;place-items:center;color:rgba(255,255,255,.82);font-size:11px;font-weight:700;background:linear-gradient(145deg,#2a3f4a,#1b2a32)}
 
+/* 부서장 결재 게이트 */
+.appr-box{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;padding:11px 12px;border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:10px;background:color-mix(in srgb,var(--accent) 7%,var(--surface-2))}
+.appr-box .appr-cm{flex:1;min-width:200px;border-color:var(--border-strong)}
+.appr-btns{display:flex;gap:7px}
+.appr-wait{margin-top:12px;padding:9px 12px;border-radius:9px;font-size:12px;font-weight:700;color:var(--wait-ink2);background:var(--wait-bg);border:1px dashed var(--border-strong)}
+.appr-meta{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:6px}
+.appr-meta b{color:var(--ink-2)}
+/* 결재함 */
+.ap-row{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border:1px solid var(--border);border-radius:12px;background:var(--surface);margin-bottom:11px}
+.ap-row .ap-gate{flex:none;font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px;background:color-mix(in srgb,var(--accent) 14%,var(--surface-2));color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 30%,var(--border));white-space:nowrap}
+.ap-row .ap-main{flex:1;min-width:0}
+.ap-row .ap-t{font-size:14px;font-weight:800}
+.ap-row .ap-ctx{font-size:12px;color:var(--ink-2);margin-top:3px}
+.ap-row .ap-req{font-size:11px;color:var(--muted);margin-top:3px}
+.ap-row .ap-act{flex:none;display:flex;flex-direction:column;gap:7px;align-items:flex-end;max-width:320px}
+/* 관리자 · 회원/권한 */
+.mng-list{display:flex;flex-direction:column;gap:8px}
+.mng-row{display:grid;grid-template-columns:1fr 118px 92px 34px;gap:8px;align-items:center}
+.mng-row .mng-rank{padding:9px 10px}
+.mng-badge{font-size:11px;font-weight:800;text-align:center;padding:5px 6px;border-radius:7px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border)}
+.mng-badge.on{color:var(--ok-ink);background:var(--ok-bg);border-color:color-mix(in srgb,var(--ok) 35%,var(--border))}
+.mng-del{border:1px solid var(--border);background:var(--surface-2);color:var(--muted);border-radius:8px;height:36px;cursor:pointer;font-size:13px}
+.mng-del:hover{color:var(--risk-ink);background:var(--risk-bg);border-color:color-mix(in srgb,var(--risk) 35%,var(--border))}
+@media(max-width:560px){.mng-row{grid-template-columns:1fr 100px 34px}.mng-row .mng-badge{display:none}}
+
 /* 릴리즈노트 */
 .badge-chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;padding:3px 10px;border-radius:20px;background:var(--accent-soft);color:var(--accent)}
 .rel-list{display:flex;flex-direction:column}
@@ -398,7 +423,7 @@ button{font-family:inherit;cursor:pointer}
 .login-box h2{font-size:18px;font-weight:800;margin:0;letter-spacing:-.3px}
 .login-box .lb-sub{font-size:12px;color:var(--muted);margin:2px 0 18px}
 .login-box label{font-size:12px;font-weight:700;color:var(--ink-2);display:block;margin:14px 0 6px}
-.team-pick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.team-pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(62px,1fr));gap:8px}
 .team-pick button{border:1px solid var(--border-strong);background:var(--surface-2);border-radius:10px;padding:11px 0;font-weight:700;font-size:13px;color:var(--ink-2);transition:.12s}
 .team-pick button:hover{background:var(--surface-3);color:var(--ink)}
 .team-pick button.active{background:var(--accent);border-color:transparent;color:var(--accent-ink)}
@@ -659,6 +684,7 @@ button{font-family:inherit;cursor:pointer}
     <input id="loginName" class="tinput" placeholder="이름 입력 (선택)" autocomplete="off" />
     <label>소속 팀</label>
     <div class="team-pick" id="teamPick">
+      <button data-team="영업">영업</button>
       <button data-team="설계">설계</button>
       <button data-team="시공">시공</button>
       <button data-team="행정">행정</button>
@@ -666,6 +692,27 @@ button{font-family:inherit;cursor:pointer}
     </div>
     <button class="btn primary" id="loginGo">시작하기 →</button>
     <div class="login-mode" id="loginMode"></div>
+  </div>
+</div>
+
+<!-- 관리자 인증 모달 (팀장님 전용 · 기기별 암호) -->
+<div class="login-scrim" id="adminScrim">
+  <div class="login-box">
+    <div class="login-brand"><div class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#3d2f08" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+    </div><div><h2 id="adminGateTitle">관리자 인증</h2></div></div>
+    <div class="lb-sub" id="adminGateMsg">관리자 암호를 입력하세요.</div>
+    <label>관리자 암호</label>
+    <input id="adminGateInput" class="tinput" type="password" placeholder="암호" autocomplete="off" />
+    <div id="adminGateInput2Wrap" style="display:none">
+      <label style="margin-top:10px">암호 확인</label>
+      <input id="adminGateInput2" class="tinput" type="password" placeholder="한 번 더 입력" autocomplete="off" />
+    </div>
+    <div id="adminGateErr" class="note" style="color:var(--risk-ink);min-height:16px;margin-top:8px"></div>
+    <div style="display:flex;gap:8px;margin-top:6px">
+      <button class="btn ghost" style="flex:1;justify-content:center" onclick="closeAdminGate()">취소</button>
+      <button class="btn primary" style="flex:1;justify-content:center" id="adminGateGo">확인 →</button>
+    </div>
   </div>
 </div>
 
@@ -688,6 +735,8 @@ button{font-family:inherit;cursor:pointer}
       <button class="maintab" data-tab="design"><svg class="mt-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>설계</button>
       <button class="maintab" data-tab="admin"><svg class="mt-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6l1 3h3v14H5V6h3z"/><path d="M9 12l2 2 4-4"/></svg>행정<span class="mt-badge" id="badge-admin"></span></button>
       <button class="maintab" data-tab="construction"><svg class="mt-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>시공<span class="mt-badge" id="badge-construction"></span></button>
+      <button class="maintab" data-tab="approvals"><svg class="mt-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>결재<span class="mt-badge count" id="badge-approvals" style="background:var(--accent);color:var(--accent-ink)"></span></button>
+      <button class="maintab" data-tab="manage" style="display:none" aria-hidden="true"></button>
       <button class="maintab" data-tab="releases"><svg class="mt-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l18-5v12L3 15z"/><path d="M11.6 16.8a3 3 0 01-5.8-1.6"/></svg>릴리즈노트</button>
     </nav>
 
@@ -724,6 +773,9 @@ button{font-family:inherit;cursor:pointer}
             <div class="su-name" id="sideUserName">전체 관리자</div>
             <div class="su-role" id="sideUserRole">그룹 통합 뷰</div>
           </div>
+          <button class="su-logout" id="btnAdmin" type="button" title="관리자 · 회원/권한 관리" aria-label="관리자" style="display:none" onclick="tryOpenAdmin()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
           <button class="su-logout" id="btnLogout" type="button" title="로그아웃" aria-label="로그아웃">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           </button>
@@ -1063,6 +1115,23 @@ button{font-family:inherit;cursor:pointer}
       </section>
 
       <!-- ==================== 릴리즈노트 ==================== -->
+      <!-- ==================== 관리자 · 회원/권한 (팀장님 전용) ==================== -->
+      <section class="view" id="view-manage">
+        <div class="page-head">
+          <div><h1>관리자 · 회원/권한 관리</h1><p>팀별 회원과 직급을 지정합니다. <b>부서장</b>으로 지정된 사람이 그 팀의 결재권을 가집니다. 변경은 모든 기기에 공유됩니다.</p></div>
+          <div class="ph-actions"><button class="btn ghost sm" onclick="switchTab('overview')">← 나가기</button></div>
+        </div>
+        <div class="subview" id="sub-mng"></div>
+      </section>
+
+      <!-- ==================== 결재함 ==================== -->
+      <section class="view" id="view-approvals">
+        <div class="page-head">
+          <div><h1>결재함</h1><p>부서장 결재가 필요한 전 팀 요청이 한 곳에 모입니다. 승인해야 다음 단계가 진행됩니다.</p></div>
+        </div>
+        <div class="subview active" id="sub-ap-list"></div>
+      </section>
+
       <section class="view" id="view-releases">
         <div class="page-head">
           <div><h1>릴리즈노트</h1><p>개발하면서 추가·변경·삭제된 기능과 바로 확인할 공지입니다. 좌측에서 팀별로 볼 수 있습니다.</p></div>
@@ -1404,7 +1473,9 @@ let DEALS = [
   {id:'D-1030', site:'신평 노지형',     cap:700,  type:'노지', rep:'박서준', stage:'feasibility',      rejectReason:''},
   {id:'D-1026', site:'양지리 공장지붕', cap:520,  type:'지붕', rep:'박서준', stage:'rejected',         rejectReason:'개발행위 이격거리 미달 — 인접 주거지 100m 이내. 부지 경계 재검토 필요.'},
   {id:'D-1027', site:'봉산 노지형',     cap:1350, type:'노지', rep:'김영수', stage:'approved',         rejectReason:''},
-  {id:'D-1028', site:'대곡 저수지 수상', cap:900, type:'수상', rep:'박서준', stage:'survey_handover',   rejectReason:''},
+  {id:'D-1028', site:'대곡 저수지 수상', cap:900, type:'수상', rep:'박서준', stage:'survey_sched',   rejectReason:'',
+    survey:{ pic:'이도현', date:'2026-09-24 10:00', designer:'이도현', builder:'최현우' },
+    approvals:{ survey_schedule:{ status:'pending', requestedBy:'설계팀 이도현', requestedAt:'2026-09-23 17:40', approver:'', decidedAt:'', comment:'' } } },
   {id:'D-1029', site:'하리 노지형',     cap:990,  type:'노지', rep:'김영수', stage:'survey_done',       rejectReason:''},
 ];
 const WF_STAGES = {
@@ -1413,6 +1484,39 @@ const WF_STAGES = {
 };
 function wfCount(key){ const st=WF_STAGES[key]||[]; return DEALS.filter(d=>st.includes(d.stage)).length; }
 let spawnSeq = 0, dealSeq = 1032;
+
+/* ============================================================
+   회원·권한(ORG) — 팀별 회원 명단 + 직급(부서장=결재권). 실무 사용: 여러 기기 공유.
+   부서장 지정/직급 변경은 관리자 페이지에서 → Supabase 예약행(__settings__)로 동기화.
+   ============================================================ */
+const RANKS = ['실무자','팀장','부서장'];
+const ORG_DEFAULT = {
+  '설계': [ {name:'장현우', rank:'부서장'}, {name:'이도현', rank:'실무자'} ],
+  '시공': [ {name:'최현우', rank:'부서장'}, {name:'김태양', rank:'실무자'} ],
+  '행정': [ {name:'한지원', rank:'부서장'}, {name:'정민아', rank:'실무자'} ],
+  '영업': [ {name:'김영수', rank:'부서장'}, {name:'박서준', rank:'실무자'} ],
+};
+let ORG = JSON.parse(JSON.stringify(ORG_DEFAULT));
+function orgTeams(){ return Object.keys(ORG); }
+function teamHeads(team){ return (ORG[team]||[]).filter(m=>m.rank==='부서장').map(m=>m.name); }
+function isTeamHead(team, name){ return !!name && teamHeads(team).includes(name); }
+// 관리자(전결) = 관리자 팀으로 로그인. 관리자 페이지 편집은 별도 암호 필요(adminUnlocked).
+function isOwner(){ return !!(currentUser && currentUser.team==='관리자'); }
+function adminUnlocked(){ try{ return sessionStorage.getItem('fsnet_admin_ok')==='1'; }catch(e){ return false; } }
+// 관리자 암호(기기별 저장 — 공유 안 함, 보안). 해시만 보관. '' = 미설정(최초 설정 필요).
+function _adminHash(s){ let h=5381; for(let i=0;i<s.length;i++){ h=((h<<5)+h)+s.charCodeAt(i); h|=0; } return String(h>>>0); }
+function getAdminCodeHash(){ try{ return localStorage.getItem('fsnet_admincode')||''; }catch(e){ return ''; } }
+function setAdminCode(plain){ try{ localStorage.setItem('fsnet_admincode', _adminHash(String(plain))); }catch(e){} }
+function checkAdminCode(plain){ const st=getAdminCodeHash(); return st!=='' && _adminHash(String(plain))===st; }
+// ORG 로드/저장 (로컬 + Supabase 동기화)
+const SETTINGS_ID = '__settings__';
+function isReservedId(id){ return typeof id==='string' && id.indexOf('__')===0; }
+function applyOrg(o){ if(o && typeof o==='object' && !Array.isArray(o)) ORG = o; }
+function loadOrgLocal(){ try{ const s=JSON.parse(localStorage.getItem('fsnet_org')||'null'); if(s) applyOrg(s); }catch(e){} }
+async function saveOrg(){
+  try{ localStorage.setItem('fsnet_org', JSON.stringify(ORG)); }catch(e){}
+  if(SB){ try{ await SB.from('fsnet_deals').upsert({id:SETTINGS_ID, data:{org:ORG}}); }catch(e){ toast('권한 공유 저장 실패 — 로컬 보관'); } }
+}
 
 /* ============================================================
    저장·공유 계층 — 키 없으면 로컬(localStorage), 키 있으면 Supabase 실시간 공유
@@ -1442,8 +1546,15 @@ async function loadShared(){
       const dq = await SB.from('fsnet_deals').select('*');
       const sq = await SB.from('fsnet_sites').select('*');
       if(dq.error || sq.error) throw (dq.error || sq.error);
-      if(dq.data && dq.data.length) DEALS = dq.data.map(r=>r.data);
-      else await Promise.all(DEALS.map(d=>SB.from('fsnet_deals').upsert({id:d.id, data:d})));
+      if(dq.data && dq.data.length){
+        const st = dq.data.find(r=>r.id===SETTINGS_ID);
+        if(st && st.data && st.data.org) applyOrg(st.data.org);   // 공유된 회원·권한 반영
+        const dealRows = dq.data.filter(r=>!isReservedId(r.id));
+        if(dealRows.length) DEALS = dealRows.map(r=>r.data);
+        else await Promise.all(DEALS.map(d=>SB.from('fsnet_deals').upsert({id:d.id, data:d})));
+        if(!st) await SB.from('fsnet_deals').upsert({id:SETTINGS_ID, data:{org:ORG}});   // 최초 설정행 생성
+      }
+      else { await Promise.all(DEALS.map(d=>SB.from('fsnet_deals').upsert({id:d.id, data:d}))); await SB.from('fsnet_deals').upsert({id:SETTINGS_ID, data:{org:ORG}}); }
       if(sq.data && sq.data.length) SITES = sq.data.map(r=>r.data);
       else await Promise.all(SITES.map(s=>SB.from('fsnet_sites').upsert({id:s.id, data:s})));
       cacheLocal(); return true;
@@ -1455,7 +1566,11 @@ function subscribeRT(){
   if(!SB) return;
   try{
     SB.channel('fsnet')
-      .on('postgres_changes', {event:'*', schema:'public', table:'fsnet_deals'}, p=>applyRemote(DEALS, p))
+      .on('postgres_changes', {event:'*', schema:'public', table:'fsnet_deals'}, p=>{
+        const id=(p.new&&p.new.id)||(p.old&&p.old.id);
+        if(isReservedId(id)){ if(p.new&&p.new.data&&p.new.data.org){ applyOrg(p.new.data.org); refreshActive(); refreshTabBadges(); } return; }
+        applyRemote(DEALS, p);
+      })
       .on('postgres_changes', {event:'*', schema:'public', table:'fsnet_sites'}, p=>applyRemote(SITES, p))
       .subscribe();
   }catch(e){}
@@ -1469,7 +1584,7 @@ function applyRemote(arr, p){
 }
 async function resetDemo(){
   try{ localStorage.removeItem(LS_KEY); localStorage.removeItem('fsnet_user'); }catch(e){}
-  if(SB){ try{ await SB.from('fsnet_deals').delete().neq('id','__none__'); await SB.from('fsnet_sites').delete().neq('id','__none__'); }catch(e){} }
+  if(SB){ try{ await SB.from('fsnet_deals').delete().neq('id',SETTINGS_ID); await SB.from('fsnet_sites').delete().neq('id','__none__'); }catch(e){} }  // 회원·권한(__settings__)은 보존
   location.reload();
 }
 
@@ -1516,7 +1631,7 @@ function refreshActive(){
   const tab = currentTab();
   const cur = document.querySelector('#ssNav .ss-item.active');
   let key = null;
-  if(cur){ for(const k of ['sub','board','wf','stage','key']){ if(cur.dataset[k]!==undefined){ key={k,v:cur.dataset[k]}; break; } } }
+  if(cur){ for(const k of ['sub','board','wf','stage','rel','appr','mng','key']){ if(cur.dataset[k]!==undefined){ key={k,v:cur.dataset[k]}; break; } } }
   buildSubMenu(tab);
   let btn = key ? document.querySelector(`#ssNav .ss-item[data-${key.k}="${key.v}"]`) : null;
   if(!btn) btn = document.querySelector('#ssNav .ss-item');
@@ -2426,31 +2541,282 @@ function renderPreContract(){
   return wfHead('가계약','설계 타당성 승인이 온 현장입니다. <b>사업주에게 가계약 안내문자를 발송</b>하면 완료 처리가 활성화되고, 완료 시 설계팀 실측으로 넘어갑니다.') + (cards || emptyMsg('가계약 대상 현장이 없습니다.'));
 }
 
-// 현장 실측 (설계) — 스케줄+관리자승인+결과보고서
+/* ============================================================
+   부서장 결재 게이트 (공통) — 승인이 필요한 모든 단계를 데이터 1개로.
+   탭이 늘어도 APPROVAL_GATES에 항목만 추가하면 결재함이 자동 수집.
+   역할연동: 전체 관리자=전결 / 해당 팀 부서장만 승인·반려 / 실무자는 열람.
+   ============================================================ */
+const APPROVAL_GATES = {
+  survey_schedule: {
+    label:'실측 일정', team:'설계', tab:'design', wf:'d-survey',
+    // 결재함에서 한 줄 맥락으로 보여줄 내용
+    ctx: d => `🗓 ${(d.survey&&d.survey.date)||'-'} · 설계 ${(d.survey&&d.survey.designer)||'-'} + 시공 ${(d.survey&&d.survey.builder)||'-'}`,
+  },
+  // 향후: feasibility_approve, groundbreak_approve … 여기에 추가만 하면 됨
+};
+function nowStr(){ const d=new Date(), p=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; }
+// 로그인한 사람 표기 (결재 요청자·화면용)
+function userLabel(){ return currentUser ? `${currentUser.team} ${currentUser.name}` : '미로그인'; }
+function roleDisplayName(){
+  if(!currentUser) return '미로그인';
+  if(isOwner()) return `관리자 ${currentUser.name}`;
+  return `${currentUser.name} · ${currentUser.team} ${isTeamHead(currentUser.team, currentUser.name)?'부서장':'실무자'}`;
+}
+function approverLabel(){
+  if(!currentUser) return '관리자';
+  return isOwner() ? `${currentUser.name} (관리자)` : `${currentUser.name} (${currentUser.team} 부서장)`;
+}
+// 결재권: 로그인한 사람이 그 팀 부서장인가 (관리자 로그인 = 전결)
+function isDeptHead(team){ if(isOwner()) return true; return !!(currentUser && currentUser.team===team && isTeamHead(team, currentUser.name)); }
+// 실무자(결재권 없음): 로그인했으나 관리자도 아니고 본인 팀 부서장도 아님
+function isStaff(){ return !!(currentUser && !isOwner() && !isTeamHead(currentUser.team, currentUser.name)); }
+// 결재 요청 (실무자 → 대기). 반려됐던 게 재요청되면 pending으로 리셋.
+function requestApproval(d, gateKey){
+  d.approvals = d.approvals || {};
+  d.approvals[gateKey] = { status:'pending', requestedBy:userLabel(), requestedAt:nowStr(), approver:'', decidedAt:'', comment:'' };
+}
+function getApproval(d, gateKey){ return (d.approvals && d.approvals[gateKey]) || null; }
+// 결재 처리 (부서장). decision: 'approved' | 'rejected'
+function decideApproval(id, gateKey, decision){
+  const d = DEALS.find(x=>x.id===id); if(!d) return;
+  const g = APPROVAL_GATES[gateKey]; if(!g) return;
+  if(!isDeptHead(g.team)){ toast(`결재 권한이 없습니다 — ${g.team} 부서장 또는 관리자 계정으로 로그인해야 합니다`); return; }
+  const a = getApproval(d, gateKey); if(!a || a.status!=='pending') return;
+  const cm = (document.getElementById('apcm-'+id+'-'+gateKey)||{}).value || '';
+  a.approver = approverLabel(); a.decidedAt = nowStr(); a.comment = cm.trim();
+  a.status = decision;
+  // 게이트별 다음 단계 처리 (실측 일정)
+  if(gateKey==='survey_schedule'){
+    d.stage = decision==='approved' ? 'survey_progress' : 'survey_handover';
+  }
+  toast(decision==='approved' ? '부서장 승인 — 다음 단계 진행' : '부서장 반려 — 실무자에게 반송');
+  persistDeal(d); refreshActive(); refreshTabBadges();
+}
+// 대기중인 전 탭 게이트 수집 [{d, key, gate, appr}]
+function pendingGates(){
+  const out=[];
+  DEALS.forEach(d=>{ if(!d.approvals) return;
+    Object.keys(APPROVAL_GATES).forEach(k=>{ const a=d.approvals[k];
+      if(a && a.status==='pending') out.push({d, key:k, gate:APPROVAL_GATES[k], appr:a}); });
+  });
+  return out;
+}
+// 내 결재(현재 역할이 처리 가능한) 대기 건수 — 상단 뱃지용
+function myPendingCount(){ return pendingGates().filter(g=>isDeptHead(g.gate.team)).length; }
+// 결재 상태 뱃지(카드 인라인 공용)
+function approvalPill(a){
+  if(!a) return '';
+  if(a.status==='pending')  return `<span class="pill wait"><span class="pd"></span>부서장 승인 대기</span>`;
+  if(a.status==='approved') return `<span class="pill done"><span class="pd"></span>승인됨</span>`;
+  return `<span class="pill risk"><span class="pd"></span>반려됨</span>`;
+}
+// 결재 액션 UI(카드 인라인 + 결재함 공용). 부서장=버튼, 실무자=열람.
+function approvalActions(d, gateKey){
+  const g=APPROVAL_GATES[gateKey], a=getApproval(d,gateKey);
+  if(!a || a.status!=='pending') return '';
+  if(!isDeptHead(g.team)){
+    return `<div class="appr-wait">🔒 ${esc(g.team)} 부서장 승인 대기중 — 열람만 가능</div>`;
+  }
+  return `<div class="appr-box">
+    <input class="tinput appr-cm" id="apcm-${d.id}-${gateKey}" placeholder="결재 의견(선택) — 반려 시 사유 입력">
+    <div class="appr-btns">
+      <button class="btn ok sm" onclick="decideApproval('${d.id}','${gateKey}','approved')">승인 ✓</button>
+      <button class="btn danger sm" onclick="decideApproval('${d.id}','${gateKey}','rejected')">반려 ✗</button>
+    </div></div>`;
+}
+
+// 결재함으로 온 건을 원 업무 탭으로 이동
+function gotoGate(tab, wf){
+  switchTab(tab);
+  const b = document.querySelector(`#ssNav .ss-item[data-wf="${wf}"]`);
+  if(b) activateItem(tab, b);
+}
+// 결재함 렌더 — kind: 'pending'(대기) | 'history'(처리 이력)
+function renderApprovals(kind){
+  const teamTag = t => `<span class="type-chip">${esc(t)}팀</span>`;
+  if(kind==='history'){
+    const rows=[];
+    DEALS.forEach(d=>{ if(!d.approvals) return;
+      Object.keys(APPROVAL_GATES).forEach(k=>{ const a=d.approvals[k]; if(!a||a.status==='pending') return;
+        const g=APPROVAL_GATES[k];
+        rows.push({d,g,a,k});
+      });
+    });
+    rows.sort((x,y)=> (y.a.decidedAt||'').localeCompare(x.a.decidedAt||''));
+    const list = rows.map(({d,g,a})=>`
+      <div class="ap-row">
+        <span class="ap-gate">${esc(g.label)}</span>
+        <div class="ap-main">
+          <div class="ap-t">${esc(d.site)} · ${d.cap.toLocaleString()}kW <span class="type-chip">${d.type}</span> ${teamTag(g.team)}</div>
+          <div class="ap-ctx">${g.ctx(d)}</div>
+          <div class="ap-req">요청 ${esc(a.requestedBy)} · ${esc(a.requestedAt)}${a.comment?` · 의견 “${esc(a.comment)}”`:''}</div>
+        </div>
+        <div class="ap-act">${approvalPill(a)}<div class="appr-meta">${esc(a.approver)} · ${esc(a.decidedAt)}</div></div>
+      </div>`).join('');
+    return wfHead('처리 이력','부서장이 승인·반려한 결재 기록입니다.') + (list || emptyMsg('처리된 결재가 없습니다.'));
+  }
+  // pending
+  const gs = pendingGates();
+  const mine = gs.filter(g=>isDeptHead(g.gate.team)).length;
+  const info = isStaff()
+    ? `<div class="appr-wait" style="margin:0 0 14px">🔒 실무자 계정은 결재 열람만 가능합니다. 승인하려면 상단 <b>역할 전환</b>에서 부서장(전체 관리자·설계·시공·행정)으로 바꾸세요.</div>`
+    : `<div class="card" style="margin-bottom:14px"><div class="card-body" style="padding:12px 16px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+        <span style="font-size:12.5px;color:var(--ink-2)"><b style="color:var(--wait-ink2)">내 결재 대기 ${mine}</b> · 전체 대기 ${gs.length}</span>
+        <span class="type-chip">현재 역할: ${esc(roleDisplayName())}</span></div></div>`;
+  const list = gs.map(({d,gate,appr,key})=>`
+      <div class="ap-row">
+        <span class="ap-gate">${esc(gate.label)}</span>
+        <div class="ap-main">
+          <div class="ap-t">${esc(d.site)} · ${d.cap.toLocaleString()}kW <span class="type-chip">${d.type}</span> ${teamTag(gate.team)}</div>
+          <div class="ap-ctx">${gate.ctx(d)}</div>
+          <div class="ap-req">요청 ${esc(appr.requestedBy)} · ${esc(appr.requestedAt)} · <a href="javascript:void(0)" onclick="gotoGate('${gate.tab}','${gate.wf}')" style="color:var(--accent);font-weight:700">해당 업무 열기 →</a></div>
+        </div>
+        <div class="ap-act">${approvalActions(d,key) || approvalPill(appr)}</div>
+      </div>`).join('');
+  return wfHead('결재 대기','부서장 결재가 필요한 전 팀 요청입니다. 승인해야 다음 단계가 진행됩니다.') + info + (list || emptyMsg('대기 중인 결재가 없습니다.'));
+}
+
+/* ============================================================
+   관리자 · 회원/권한 관리 (팀장님 전용) — ORG 편집 + 관리자 암호
+   ============================================================ */
+function tryOpenAdmin(){
+  if(!isOwner()){ toast('관리자 계정(로그인 시 팀=관리자 선택)만 접근할 수 있습니다'); return; }
+  if(adminUnlocked()){ enterManage(); return; }
+  openAdminGate();
+}
+function enterManage(){ switchTab('manage'); }
+let _adminGateMode='enter';
+function openAdminGate(){
+  _adminGateMode = getAdminCodeHash()==='' ? 'set' : 'enter';
+  const set = _adminGateMode==='set';
+  document.getElementById('adminGateTitle').textContent = set ? '관리자 암호 설정' : '관리자 인증';
+  document.getElementById('adminGateMsg').textContent = set
+    ? '이 기기에서 처음입니다. 관리자 페이지를 보호할 암호를 정하세요. (이 기기에만 저장 · 공유 안 함)'
+    : '관리자 페이지 접근 암호를 입력하세요.';
+  document.getElementById('adminGateInput2Wrap').style.display = set ? '' : 'none';
+  const i1=document.getElementById('adminGateInput'), i2=document.getElementById('adminGateInput2');
+  if(i1) i1.value=''; if(i2) i2.value='';
+  document.getElementById('adminGateErr').textContent='';
+  document.getElementById('adminScrim').classList.add('open');
+  setTimeout(()=>{ if(i1) i1.focus(); }, 60);
+}
+function closeAdminGate(){ document.getElementById('adminScrim').classList.remove('open'); }
+function adminGateSubmit(){
+  const err=document.getElementById('adminGateErr');
+  const v=(document.getElementById('adminGateInput')||{}).value||'';
+  if(_adminGateMode==='set'){
+    const v2=(document.getElementById('adminGateInput2')||{}).value||'';
+    if(v.length<4){ err.textContent='암호는 4자 이상으로 설정하세요.'; return; }
+    if(v!==v2){ err.textContent='두 암호가 일치하지 않습니다.'; return; }
+    setAdminCode(v);
+    try{ sessionStorage.setItem('fsnet_admin_ok','1'); }catch(e){}
+    closeAdminGate(); toast('관리자 암호가 설정되었습니다'); enterManage();
+  } else {
+    if(checkAdminCode(v)){ try{ sessionStorage.setItem('fsnet_admin_ok','1'); }catch(e){} closeAdminGate(); enterManage(); }
+    else { err.textContent='암호가 올바르지 않습니다.'; }
+  }
+}
+// 회원·권한 편집
+function renderManageRoster(){
+  const cards = orgTeams().map(team=>{
+    const members=ORG[team]||[];
+    const heads=teamHeads(team);
+    const warn = heads.length===0 ? `<div class="appr-wait" style="margin:8px 0 0">⚠ 부서장(결재권자) 미지정 — 이 팀의 결재가 진행되지 않습니다.</div>` : '';
+    const rows=members.map((m,i)=>`
+      <div class="mng-row">
+        <input class="tinput" value="${esc(m.name)}" oninput="mngSetName('${team}',${i},this.value)" placeholder="이름">
+        <select class="tinput mng-rank" onchange="mngSetRank('${team}',${i},this.value)">
+          ${RANKS.map(r=>`<option value="${r}"${m.rank===r?' selected':''}>${r}</option>`).join('')}
+        </select>
+        <span class="mng-badge ${m.rank==='부서장'?'on':''}">${m.rank==='부서장'?'✓ 결재권':'—'}</span>
+        <button class="mng-del" onclick="mngDel('${team}',${i})" title="삭제">✕</button>
+      </div>`).join('');
+    return `<div class="card pad" style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <div style="font-size:15px;font-weight:800">${esc(team)}팀 <span class="lr-s">· 부서장 ${heads.length?esc(heads.join(', ')):'미지정'}</span></div>
+        <button class="btn ghost sm" onclick="mngAdd('${team}')">＋ 회원 추가</button>
+      </div>${warn}
+      <div class="mng-list" style="margin-top:10px">${rows||'<div class="lr-s" style="padding:6px 2px">회원이 없습니다. “회원 추가”를 누르세요.</div>'}</div>
+    </div>`;
+  }).join('');
+  return wfHead('회원·권한','팀별 회원과 직급을 지정하세요. <b>직급을 “부서장”으로</b> 하면 그 사람이 해당 팀의 결재권을 갖습니다. 저장하면 모든 기기·팀원에게 반영됩니다.')
+    + cards
+    + `<div class="wf-actions"><button class="btn primary" onclick="mngSave()">💾 저장 · 모든 기기 반영</button></div>`;
+}
+function reRenderManage(){ const el=document.getElementById('sub-mng'); if(el) el.innerHTML=renderManageRoster(); }
+function mngSetName(team,i,v){ if(ORG[team]&&ORG[team][i]) ORG[team][i].name=v; }
+function mngSetRank(team,i,v){ if(ORG[team]&&ORG[team][i]){ ORG[team][i].rank=v; reRenderManage(); } }
+function mngAdd(team){ ORG[team]=ORG[team]||[]; ORG[team].push({name:'',rank:'실무자'}); reRenderManage(); }
+function mngDel(team,i){ if(ORG[team]) ORG[team].splice(i,1); reRenderManage(); }
+function mngSave(){
+  orgTeams().forEach(t=>{ ORG[t]=(ORG[t]||[]).map(m=>({name:(m.name||'').trim(), rank:m.rank})).filter(m=>m.name); });
+  saveOrg(); reRenderManage(); refreshTabBadges();
+  toast('회원·권한 저장 — 모든 기기에 반영됩니다');
+}
+// 관리자 암호 변경
+function renderManageSecurity(){
+  const setYet = getAdminCodeHash()==='';
+  return wfHead('관리자 암호','관리자 페이지 접근을 보호하는 암호입니다. <b>이 기기에만 저장</b>되며 공유되지 않습니다.')
+  + `<div class="card pad" style="margin-bottom:14px">
+      <div class="appr-meta" style="font-size:12.5px;margin-bottom:12px">현재 상태: <b>${setYet?'미설정 — 최초 접근 시 설정':'설정됨'}</b></div>
+      <div class="field-row">
+        <div class="tfield"><label>새 암호 (4자 이상)</label><input class="tinput" type="password" id="mngPw1" placeholder="새 암호"></div>
+        <div class="tfield"><label>새 암호 확인</label><input class="tinput" type="password" id="mngPw2" placeholder="한 번 더"></div>
+      </div>
+      <div id="mngPwErr" class="note" style="min-height:16px;margin-top:8px"></div>
+      <div class="wf-actions"><button class="btn primary sm" onclick="mngChangePw()">${setYet?'암호 설정':'암호 변경'}</button></div>
+    </div>
+    <div class="appr-wait" style="margin:0">ℹ️ 이 프로그램은 비밀번호 없는 간편 로그인이라, 이 암호는 <b>일반 접근 차단용(신뢰 기반)</b>입니다. 완전한 계정 보안은 추후 로그인 고도화가 필요합니다.</div>`;
+}
+function mngChangePw(){
+  const e=document.getElementById('mngPwErr');
+  const a=(document.getElementById('mngPw1')||{}).value||'', b=(document.getElementById('mngPw2')||{}).value||'';
+  e.style.color='var(--risk-ink)';
+  if(a.length<4){ e.textContent='암호는 4자 이상으로 설정하세요.'; return; }
+  if(a!==b){ e.textContent='두 암호가 일치하지 않습니다.'; return; }
+  setAdminCode(a);
+  try{ sessionStorage.setItem('fsnet_admin_ok','1'); }catch(err){}
+  e.style.color='var(--ok-ink)'; e.textContent='✓ 저장되었습니다.';
+  toast('관리자 암호가 변경되었습니다');
+}
+
+// 현장 실측 (설계) — 스케줄+부서장 결재+결과보고서
 function renderSurvey(){
   const cards = DEALS.filter(d=>['survey_handover','survey_sched','survey_progress'].includes(d.stage)).map(d=>{
-    let body='';
+    let body='', pill;
+    const a = getApproval(d,'survey_schedule');
     if(d.stage==='survey_handover'){
-      body=`<div class="section-title" style="font-size:12px;margin:14px 0 8px">실측 스케줄 등록 (설계팀원 1 · 시공팀원 1)</div>
+      // 이전 반려가 있으면 사유 표시 후 일정 재조정
+      const rej = (a && a.status==='rejected')
+        ? `<div class="tl-note" style="margin-top:12px">↩︎ 부서장 반려 · ${esc(a.approver)} (${esc(a.decidedAt)})${a.comment?` — “${esc(a.comment)}”`:''} · 일정 재조정 후 재요청하세요</div>` : '';
+      body=`${rej}<div class="section-title" style="font-size:12px;margin:14px 0 8px">실측 담당 배정 (담당자 + 설계팀원 1 · 시공팀원 1)</div>
         <div class="field-row">
+          <div class="tfield"><label>담당자 (PIC)</label><input class="tinput" value="이도현" id="sp-${d.id}"></div>
           <div class="tfield"><label>실측 일시</label><input class="tinput" value="2026-09-24 10:00" id="sd-${d.id}"></div>
+        </div>
+        <div class="field-row" style="margin-top:10px">
           <div class="tfield"><label>설계팀원</label><input class="tinput" value="이도현" id="sg-${d.id}"></div>
           <div class="tfield"><label>시공팀원</label><input class="tinput" value="최현우" id="sc-${d.id}"></div>
         </div>
-        <div class="wf-actions"><button class="btn primary sm" onclick="wfSchedule('${d.id}')">스케줄 등록 · 관리자 승인요청</button></div>`;
+        <div class="wf-actions"><button class="btn primary sm" onclick="wfSchedule('${d.id}')">스케줄 등록 · 부서장 결재요청</button></div>`;
+      pill=['wait','실측 대기'];
     } else if(d.stage==='survey_sched'){
-      body=`<div class="tl-note" style="margin-top:12px;color:var(--prog-ink);background:var(--prog-bg)">🗓 ${esc(d.survey&&d.survey.date||'')} · 설계 ${esc(d.survey&&d.survey.designer||'')} + 시공 ${esc(d.survey&&d.survey.builder||'')} — 관리자 승인 대기</div>
-        <div class="wf-actions"><button class="btn ok sm" onclick="wfAction('${d.id}','survey_progress','실측 스케줄 승인 — 실측 진행')">관리자 승인 ✓</button></div>`;
+      body=`<div class="tl-note" style="margin-top:12px;color:var(--prog-ink);background:var(--prog-bg)">${APPROVAL_GATES.survey_schedule.ctx(d)} · 담당 ${esc((d.survey&&d.survey.pic)||'-')} — 부서장 승인 대기</div>
+        <div class="appr-meta">요청 ${esc(a&&a.requestedBy||'')} · ${esc(a&&a.requestedAt||'')}</div>
+        ${approvalActions(d,'survey_schedule')}`;
+      pill=['wait','승인 대기'];
     } else {
-      body=`<div class="tl-note" style="margin-top:12px;color:var(--ok-ink);background:var(--ok-bg)">✓ 승인됨 · ${esc(d.survey&&d.survey.date||'')} · 설계 ${esc(d.survey&&d.survey.designer||'')} + 시공 ${esc(d.survey&&d.survey.builder||'')}</div>
+      body=`<div class="tl-note" style="margin-top:12px;color:var(--ok-ink);background:var(--ok-bg)">✓ 부서장 승인 · ${esc(a&&a.approver||'')} (${esc(a&&a.decidedAt||'')})${a&&a.comment?` — “${esc(a.comment)}”`:''}</div>
+        <div class="tl-note" style="margin-top:8px;color:var(--prog-ink);background:var(--prog-bg)">${APPROVAL_GATES.survey_schedule.ctx(d)} · 담당 ${esc((d.survey&&d.survey.pic)||'-')}</div>
         <div class="section-title" style="font-size:12px;margin:14px 0 8px">실측 결과 보고서</div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
           <div class="wf-photo">📷 현장 전경</div><div class="wf-photo">📷 진입로·경계</div><div class="wf-photo">📷 계통 인입점</div>
         </div>
         <textarea id="rep-${d.id}" class="ta" placeholder="현장 상황 상세 — 실측 치수, 지반·경사, 음영, 진입로 폭, 계통 인입 위치, 특이사항 등"></textarea>
         <div class="wf-actions"><button class="btn primary sm" onclick="wfAction('${d.id}','survey_done','실측 완료 — 영업팀 실계약으로 이관')">실측 완료 처리 →</button></div>`;
+      pill=['prog','실측 진행'];
     }
-    const pill = d.stage==='survey_handover'?['wait','실측 대기'] : d.stage==='survey_sched'?['prog','승인 대기'] : ['prog','실측 진행'];
     return `<div class="card pad" style="margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
         <div><div style="font-size:15px;font-weight:800">${esc(d.site)} · ${d.cap.toLocaleString()}kW <span class="type-chip">${d.type}</span></div>
@@ -2459,7 +2825,7 @@ function renderSurvey(){
       </div>${body}
     </div>`;
   }).join('');
-  return wfHead('현장 실측','가계약 완료 현장의 실측입니다. 스케줄 등록 → 관리자 승인 → 결과 보고서(사진·현장상황) 입력 → 실측 완료.') + (cards || emptyMsg('실측 대상 현장이 없습니다.'));
+  return wfHead('현장 실측','가계약 완료 현장의 실측입니다. 담당 배정(설계1·시공1) → 스케줄 등록 → <b>부서장 결재</b> → 결과 보고서 입력 → 실측 완료. 결재는 상단 <b>결재</b> 탭에서도 처리할 수 있습니다.') + (cards || emptyMsg('실측 대상 현장이 없습니다.'));
 }
 
 // 실계약 (영업) — 실측완료 알림 + 본계약서 임의 양식
@@ -2506,14 +2872,18 @@ function wfReject(id){
 }
 function wfSchedule(id){
   const d=DEALS.find(x=>x.id===id); if(!d) return;
-  d.survey={ date:(document.getElementById('sd-'+id)||{}).value||'', designer:(document.getElementById('sg-'+id)||{}).value||'', builder:(document.getElementById('sc-'+id)||{}).value||'' };
-  wfAction(id,'survey_sched','실측 스케줄 등록 — 관리자 승인 대기');
+  d.survey={ pic:(document.getElementById('sp-'+id)||{}).value||'', date:(document.getElementById('sd-'+id)||{}).value||'', designer:(document.getElementById('sg-'+id)||{}).value||'', builder:(document.getElementById('sc-'+id)||{}).value||'' };
+  requestApproval(d,'survey_schedule');
+  wfAction(id,'survey_sched','실측 스케줄 등록 — 부서장 결재 요청');
+  refreshTabBadges();
 }
 
 /* ============================================================
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-09-30', team:'공통', kind:'추가', title:'관리자 · 회원/권한 관리 (팀장님 전용)', body:'상단 팀 탭에 속하지 않는 관리자 화면을 신설했습니다. 관리자 계정으로 로그인하면 사이드바 하단 ⚙(톱니) 버튼이 보이고, 관리자 암호를 입력하면 팀별 회원·직급을 편집할 수 있습니다. 직급을 “부서장”으로 지정하면 그 사람이 해당 팀의 결재권자가 됩니다. 변경은 모든 기기·팀원에게 실시간 공유됩니다. (관리자 암호는 이 기기에만 저장 · 최초 접근 시 직접 설정) 로그인에 “영업” 팀 추가.', author:'개발'},
+  {date:'2026-09-30', team:'설계', kind:'추가', title:'부서장 결재(승인) 구조 + 결재함 · 현장 실측 결재라인', body:'승인이 필요한 업무를 “부서장 결재” 구조로 만들었습니다. 현장 실측은 담당 배정(설계1·시공1) → 일정 등록 → 부서장 결재 → 결과보고 순으로 진행됩니다. 결재 권한은 “로그인한 사람”이 그 팀의 부서장일 때만 열리며(관리자는 전결), 실무자에게는 열람만 보입니다. 상단 “결재” 탭(결재함)에 전 팀의 결재 대기건이 모여 한 곳에서 승인/반려할 수 있고, 승인자·시각·의견이 기록됩니다. 반려하면 실무자에게 반송되어 일정을 다시 잡습니다.', author:'개발'},
   {date:'2026-09-23', team:'영업', kind:'변경', title:'견적서 실시간 편집 + 원가표 단가 편집·프리셋', body:'견적서를 모듈·수량 입력 즉시 계산되는 실시간 편집기로 개편(kW당 설치단가·발전/금융 가정값 직접 조정 가능). 원가표는 모든 단가·가정값을 화면에서 편집·저장할 수 있고, 자주 쓰는 단가 세트를 프리셋(이 브라우저·최대 5개)으로 저장/불러오기. 저장하면 이후 모든 견적에 반영됩니다.', author:'개발'},
   {date:'2026-09-22', team:'영업', kind:'추가', title:'견적서 실제 자동산출 엔진 + 원가표 (영업 개발본 1차 이식)', body:'영업 “견적서” 화면에서 현장명·용량·부지유형(노지/지붕/수상)·모듈을 입력하면 11공종 견적표·사업성(회수기간·순수익)·유지관리비가 원가표 기준으로 자동 산출됩니다. “공무팀 이관”하면 설계 신규접수로 실제 제안서가 전달됩니다. 영업 좌측메뉴에 “원가표”(단가 참조) 신설. 일부 단가·가정값은 잠정치로 표기(실계약 견적 전 확정 예정). 나머지 영업 기능은 팀원 추가 전달 시 순차 이식.', author:'개발'},
   {date:'2026-09-22', team:'공통', kind:'추가', title:'로그아웃 기능 추가', body:'사이드바 하단 사용자 영역에 로그아웃 버튼(⏻)을 추가했습니다. 로그아웃 시 로그인 화면이 다시 뜨며, 공용 태블릿에서 팀원 교대 시 다른 이름·팀으로 재로그인할 수 있습니다.', author:'개발'},
@@ -3051,6 +3421,14 @@ const MENUS = {
     {group:'기타'},
     {sub:'a-deadline', label:'기한 · 연계', ic:'clock'},
   ]},
+  approvals:{title:'결재함', items:[
+    {appr:'pending', label:'결재 대기', ic:'clip'},
+    {appr:'history', label:'처리 이력', ic:'check'},
+  ]},
+  manage:{title:'관리자', items:[
+    {mng:'roster', label:'회원·권한', ic:'grid'},
+    {mng:'security', label:'관리자 암호', ic:'shield'},
+  ]},
   releases:{title:'릴리즈노트', items:[
     {rel:'all', label:'전체', ic:'grid'},
     {rel:'공통', label:'공통', ic:'doc'},
@@ -3074,7 +3452,7 @@ function buildSubMenu(tab){
     let badge = '';
     if(it.risk && riskCount) badge = `<span class="ss-badge">${riskCount}</span>`;
     else if(it.wf){ const c = wfCount(it.wf); if(c) badge = it.wf==='s-supplement' ? `<span class="ss-badge">${c}</span>` : `<span class="ss-badge count">${c}</span>`; }
-    const data = it.sub ? `data-sub="${it.sub}"` : it.board ? `data-board="${it.board}"` : it.wf ? `data-wf="${it.wf}"` : it.stage ? `data-stage="${it.stage}"` : it.rel ? `data-rel="${it.rel}"` : `data-key="${it.key}"`;
+    const data = it.sub ? `data-sub="${it.sub}"` : it.board ? `data-board="${it.board}"` : it.wf ? `data-wf="${it.wf}"` : it.stage ? `data-stage="${it.stage}"` : it.rel ? `data-rel="${it.rel}"` : it.appr ? `data-appr="${it.appr}"` : it.mng ? `data-mng="${it.mng}"` : `data-key="${it.key}"`;
     return `<button class="ss-item ${active?'active':''}" ${data}>
       <svg class="ss-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${IC[it.ic]||''}</svg>
       <span>${it.label}</span>${badge}</button>`;
@@ -3101,6 +3479,12 @@ function activateItem(tab, btn){
   } else if(btn.dataset.rel){
     document.getElementById('sub-r-list').innerHTML = renderReleases(btn.dataset.rel);
     view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-r-list'));
+  } else if(btn.dataset.appr){
+    document.getElementById('sub-ap-list').innerHTML = renderApprovals(btn.dataset.appr);
+    view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-ap-list'));
+  } else if(btn.dataset.mng){
+    document.getElementById('sub-mng').innerHTML = btn.dataset.mng==='security' ? renderManageSecurity() : renderManageRoster();
+    view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-mng'));
   } else if(btn.dataset.stage){
     const target = tab==='construction' ? 'c-stage' : tab==='design' ? 'd-stage' : 'a-stage';
     document.getElementById('sub-'+target).innerHTML = renderStageBoard(btn.dataset.stage);
@@ -3193,6 +3577,7 @@ function refreshTabBadges(){
   const set = (tab,n)=>{ const el=document.getElementById('badge-'+tab); if(el) el.textContent = n>0?n:''; };
   set('construction', byTeam('시공'));
   set('admin', byTeam('행정'));
+  set('approvals', myPendingCount());
 }
 
 document.getElementById('roleSelect').addEventListener('change',e=>{
@@ -3206,7 +3591,9 @@ document.getElementById('roleSelect').addEventListener('change',e=>{
     ? `내가 등록·담당한 현장이 지금 다른 팀에서 어떻게 처리되고 있는지 한눈에 확인합니다.`
     : `영업–설계–시공–행정 전 과정을 한 화면에서. 문제 발생 현장은 빨간색으로 즉시 표시됩니다.`;
   renderKPI(); renderSalesList();
+  refreshTabBadges();
   if(document.getElementById('view-overview').classList.contains('active')){ ovFilter='all'; buildSubMenu('overview'); }
+  else { refreshActive(); }   // 결재함·실측 등에서 역할 전환 시 승인 권한 즉시 반영
   renderPipeline();
 });
 
@@ -3262,13 +3649,13 @@ function fillPanels(){
 /* ============================================================
    ESC 닫기
    ============================================================ */
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeDrawer(); closeHandover(); }});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeDrawer(); closeHandover(); closeAdminGate(); }});
 
 /* ============================================================
    간편 로그인 (이름·팀 선택) + 부트스트랩
    ============================================================ */
 let currentUser = null;
-const TEAM_TAB = {'설계':'design','시공':'construction','행정':'admin','관리자':'overview'};
+const TEAM_TAB = {'영업':'sales','설계':'design','시공':'construction','행정':'admin','관리자':'overview'};
 function hideLogin(){ const el=document.getElementById('loginScrim'); if(el) el.classList.remove('open'); }
 function showLogin(){ const el=document.getElementById('loginScrim'); if(el) el.classList.add('open'); }
 function applyUser(){
@@ -3278,6 +3665,9 @@ function applyUser(){
   document.getElementById('sideUserRole').textContent = (currentUser.team||'') + '팀';
   const av = document.getElementById('sideUserAvatar');
   if(av) av.textContent = (nm.trim()[0] || '팀');
+  const ab = document.getElementById('btnAdmin');
+  if(ab) ab.style.display = isOwner() ? '' : 'none';   // 관리자 로그인만 ⚙ 노출
+  refreshTabBadges();                                  // 로그인 신분에 따라 결재 대기수 갱신
   switchTab(TEAM_TAB[currentUser.team] || 'overview');
 }
 function doLogin(name, team){
@@ -3287,7 +3677,8 @@ function doLogin(name, team){
 }
 function doLogout(){
   currentUser = null;
-  try{ localStorage.removeItem('fsnet_user'); }catch(e){}
+  try{ localStorage.removeItem('fsnet_user'); sessionStorage.removeItem('fsnet_admin_ok'); }catch(e){}
+  const ab=document.getElementById('btnAdmin'); if(ab) ab.style.display='none';
   // 다음 사용자를 위해 로그인 입력 초기화
   const nameEl = document.getElementById('loginName'); if(nameEl) nameEl.value = '';
   document.querySelectorAll('#teamPick button').forEach(x=>x.classList.remove('active'));
@@ -3303,6 +3694,7 @@ function firstRender(){
 }
 async function bootstrap(){
   loadCostSettings();
+  loadOrgLocal();
   initSB();
   await loadShared();
   firstRender();
@@ -3324,6 +3716,11 @@ async function bootstrap(){
   document.getElementById('loginName').addEventListener('keydown',e=>{ if(e.key==='Enter') go(); });
   const lo = document.getElementById('btnLogout');
   if(lo) lo.addEventListener('click', ()=>{ pickedTeam=null; doLogout(); });
+  // 관리자 인증 모달 바인딩
+  const ag = document.getElementById('adminGateGo');
+  if(ag) ag.addEventListener('click', adminGateSubmit);
+  ['adminGateInput','adminGateInput2'].forEach(id=>{ const el=document.getElementById(id);
+    if(el) el.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); adminGateSubmit(); } }); });
 })();
 
 // 시작
