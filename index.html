@@ -624,6 +624,8 @@ button{font-family:inherit;cursor:pointer}
 .cs-tile .t-row{display:flex;align-items:center;gap:8px;margin-top:8px}
 .cs-tile .t-lbl{font-size:10.5px;color:var(--muted);white-space:nowrap}
 .cs-tile .t-row .cs-inp{flex:1;min-width:0}
+.cs-tile[data-tone]{border-color:color-mix(in srgb,var(--kc) 35%,var(--border));border-left:3px solid var(--kc);background:color-mix(in srgb,var(--kc) 8%,var(--surface-2))}
+.cs-tile[data-tone] .t-name{color:var(--kc)}
 .cst-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:14px}
 .cst-kpi{border:1px solid var(--border);border-left:3px solid var(--kc,var(--accent));border-radius:12px;padding:12px 14px 12px 15px;background:color-mix(in srgb,var(--kc,var(--accent)) 8%,var(--surface));box-shadow:var(--shadow-sm)}
 .cst-kpi .k-l{font-size:10.5px;color:var(--kc,var(--muted));font-weight:800;display:flex;align-items:center;gap:5px}
@@ -2799,7 +2801,7 @@ function renderCostSheet(){
   const sub=t=>`<div class="cs-sub">${t}</div>`;
   const field=(lbl,inp)=>`<div class="cs-f"><label>${lbl}</label>${inp}</div>`;
   const scroll=t=>`<div class="table-scroll">${t}</div>`;
-  const tile=(name,unitLabel,input,spec)=>`<div class="cs-tile"><div class="t-name">${esc(name)}</div>${spec?`<div class="t-spec">${spec}</div>`:''}<div class="t-row"><span class="t-lbl">${unitLabel}</span>${input}</div></div>`;
+  const tile=(name,unitLabel,input,spec,icon,tone)=>`<div class="cs-tile"${tone?` data-tone="1" style="--kc:${tone}"`:''}><div class="t-name">${icon?icon+' ':''}${esc(name)}</div>${spec?`<div class="t-spec">${spec}</div>`:''}<div class="t-row"><span class="t-lbl">${unitLabel}</span>${input}</div></div>`;
   const tiles=inner=>`<div class="cs-tiles">${inner}</div>`;
   // ── 콘텐츠 조각 ──
   const basicGrid = `<div class="cs-grid">
@@ -2840,13 +2842,13 @@ function renderCostSheet(){
     ['적용단가 수상','원/kWh','assump.applySusang',ASSUMP.applySusang],
   ];
   const finItems=[
-    ['대출비율','%','assump.loanpct',ASSUMP.loanpct],
-    ['이율','%','assump.rate',ASSUMP.rate],
-    ['거치','년','assump.defer',ASSUMP.defer],
-    ['상환','년','assump.repay',ASSUMP.repay],
+    ['대출비율','%','assump.loanpct',ASSUMP.loanpct,'🏦'],
+    ['이율','%','assump.rate',ASSUMP.rate,'📉'],
+    ['거치','년','assump.defer',ASSUMP.defer,'⏳'],
+    ['상환','년','assump.repay',ASSUMP.repay,'📆'],
   ];
   const genTiles = tiles(genItems.map(([nm,u,path,val])=>tile(nm,u,ci(path,val))).join(''));
-  const finTiles = tiles(finItems.map(([nm,u,path,val])=>tile(nm,u,ci(path,val))).join(''));
+  const finTiles = tiles(finItems.map(([nm,u,path,val,icon])=>tile(nm,u,ci(path,val),null,icon,'#8b7bc4')).join(''));
   // ── 상단 KPI 요약 ──
   const kpi=(label,value,subx,tone)=>`<div class="cst-kpi" style="--kc:${tone}"><div class="k-l">${label}</div><div class="k-v">${value}</div>${subx?`<div class="k-sub">${subx}</div>`:''}</div>`;
   const kMod = P.modules.korea_hyundai ? P.modules.korea_hyundai.priceW : 0;
