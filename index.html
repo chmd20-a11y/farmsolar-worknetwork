@@ -2799,19 +2799,18 @@ function renderCostSheet(){
   const fmtNum=v=>{ const p=String(v).split('.'); const i=Number(p[0]); const g=isNaN(i)?p[0]:i.toLocaleString('en-US'); return p.length>1?g+'.'+p[1]:g; };
   const ci=(path,val,opts)=>{ opts=opts||{}; const v=opts.pct?(val*100):val; return `<input class="tinput cs-inp" data-cx="${path}"${opts.pct?' data-pct="1"':''} value="${fmtNum(v)}" inputmode="decimal" oninput="cxFmtLive(this)">`; };
   const sub=t=>`<div class="cs-sub">${t}</div>`;
-  const field=(lbl,inp)=>`<div class="cs-f"><label>${lbl}</label>${inp}</div>`;
   const scroll=t=>`<div class="table-scroll">${t}</div>`;
   const tile=(name,unitLabel,input,spec,icon,tone)=>`<div class="cs-tile"${tone?` data-tone="1" style="--kc:${tone}"`:''}><div class="t-name">${icon?icon+' ':''}${esc(name)}</div>${spec?`<div class="t-spec">${spec}</div>`:''}<div class="t-row"><span class="t-lbl">${unitLabel}</span>${input}</div></div>`;
   const tiles=inner=>`<div class="cs-tiles">${inner}</div>`;
   // ── 콘텐츠 조각 ──
-  const basicGrid = `<div class="cs-grid">
-    ${field('모듈 마크업 (원/W)', ci('moduleMarkupW',P.moduleMarkupW))}
-    ${field('인버터 마크업 (원/대)', ci('inverterMarkupEach',P.inverterMarkupEach))}
-    ${field('일반관리비율 (%)', ci('managementRate',P.managementRate,{pct:1}))}
-  </div>`;
-  const modTiles = tiles(Object.entries(P.modules).map(([k,m])=>tile(m.name,'원가 원/W',ci('modules.'+k+'.priceW', m.priceW))).join(''));
-  const invTiles = tiles(Object.entries(P.inverters).map(([k,v])=>tile(v.name,'원가 원',ci('inverters.'+k+'.price', v.price))).join(''));
-  const mbTiles = tiles(P.meterBoxesQuote.map((m,i)=>tile(m.label,'견적 원',ci('meterBoxesQuote.'+i+'.price', m.price),'구간 ~'+(m.maxKW===9999?'1000':m.maxKW)+'kW')).join(''));
+  const basicTiles = tiles(
+    tile('모듈 마크업','원/W',ci('moduleMarkupW',P.moduleMarkupW),null,'⚙️','#6b8299')
+    + tile('인버터 마크업','원/대',ci('inverterMarkupEach',P.inverterMarkupEach),null,'⚙️','#6b8299')
+    + tile('일반관리비율','%',ci('managementRate',P.managementRate,{pct:1}),null,'📊','#6b8299')
+  );
+  const modTiles = tiles(Object.entries(P.modules).map(([k,m])=>tile(m.name,'원가 원/W',ci('modules.'+k+'.priceW', m.priceW),null,'☀️','#c9902f')).join(''));
+  const invTiles = tiles(Object.entries(P.inverters).map(([k,v])=>tile(v.name,'원가 원',ci('inverters.'+k+'.price', v.price),null,'⚡','#5b86c4')).join(''));
+  const mbTiles = tiles(P.meterBoxesQuote.map((m,i)=>tile(m.label,'견적 원',ci('meterBoxesQuote.'+i+'.price', m.price),'구간 ~'+(m.maxKW===9999?'1000':m.maxKW)+'kW','🔌','#5b9e6f')).join(''));
   const TYPE_C = {'노지':'#6f9e5b','지붕':'#5b86c4','수상':'#3fa9a0'};
   const capHdr = P.constructionTier.tiers.map(t=>`<th>~${t}</th>`).join('');
   const tierBody = ['노지','지붕','수상'].map(type=>{
@@ -2828,18 +2827,18 @@ function renderCostSheet(){
   const spTbl = `<table class="cs-tbl cs-tbl-grp"><thead><tr><th class="cs-railh">부지</th>${capHdr}</tr></thead><tbody>${spBody}</tbody></table>`;
   const f=P.fixed;
   const fixItems=[
-    ['인허가 (100kW 미만)','permitSmall'],['인허가 (100~500kW)','permitMed'],['인허가 (500kW+)','permitLarge'],
-    ['구조검토 base','structCheckBase'],['구조계산 base','structCalcBase'],
-    ['기술지도 (시공비 1~2억)','techGuideMed'],['기술지도 (2억+)','techGuideLarge'],
-    ['설계감리 (원/kW)','designBase'],['안전진단 (300kW+)','safetyDiag300'],['안전진단 (500kW+)','safetyDiag500'],
-    ['사다리 (지붕형)','ladderPerSite'],
+    ['인허가 (100kW 미만)','permitSmall','📋'],['인허가 (100~500kW)','permitMed','📋'],['인허가 (500kW+)','permitLarge','📋'],
+    ['구조검토 base','structCheckBase','📐'],['구조계산 base','structCalcBase','📐'],
+    ['기술지도 (시공비 1~2억)','techGuideMed','🧭'],['기술지도 (2억+)','techGuideLarge','🧭'],
+    ['설계감리 (원/kW)','designBase','✏️'],['안전진단 (300kW+)','safetyDiag300','🛡️'],['안전진단 (500kW+)','safetyDiag500','🛡️'],
+    ['사다리 (지붕형)','ladderPerSite','🪜'],
   ];
-  const fixTiles = tiles(fixItems.map(([lbl,key])=>tile(lbl,'원',ci('fixed.'+key, f[key]))).join(''));
+  const fixTiles = tiles(fixItems.map(([lbl,key,icon])=>tile(lbl,'원',ci('fixed.'+key, f[key]),null,icon,'#a0824e')).join(''));
   const genItems=[
-    ['발전시간','h/일','assump.hours',ASSUMP.hours],
-    ['적용단가 노지','원/kWh','assump.applyNoji',ASSUMP.applyNoji],
-    ['적용단가 지붕','원/kWh','assump.applyRoof',ASSUMP.applyRoof],
-    ['적용단가 수상','원/kWh','assump.applySusang',ASSUMP.applySusang],
+    ['발전시간','h/일','assump.hours',ASSUMP.hours,'⏱️'],
+    ['적용단가 노지','원/kWh','assump.applyNoji',ASSUMP.applyNoji,'💡'],
+    ['적용단가 지붕','원/kWh','assump.applyRoof',ASSUMP.applyRoof,'💡'],
+    ['적용단가 수상','원/kWh','assump.applySusang',ASSUMP.applySusang,'💡'],
   ];
   const finItems=[
     ['대출비율','%','assump.loanpct',ASSUMP.loanpct,'🏦'],
@@ -2847,7 +2846,7 @@ function renderCostSheet(){
     ['거치','년','assump.defer',ASSUMP.defer,'⏳'],
     ['상환','년','assump.repay',ASSUMP.repay,'📆'],
   ];
-  const genTiles = tiles(genItems.map(([nm,u,path,val])=>tile(nm,u,ci(path,val))).join(''));
+  const genTiles = tiles(genItems.map(([nm,u,path,val,icon])=>tile(nm,u,ci(path,val),null,icon,'#3fa9a0')).join(''));
   const finTiles = tiles(finItems.map(([nm,u,path,val,icon])=>tile(nm,u,ci(path,val),null,icon,'#8b7bc4')).join(''));
   // ── 상단 KPI 요약 ──
   const kpi=(label,value,subx,tone)=>`<div class="cst-kpi" style="--kc:${tone}"><div class="k-l">${label}</div><div class="k-v">${value}</div>${subx?`<div class="k-sub">${subx}</div>`:''}</div>`;
@@ -2864,7 +2863,7 @@ function renderCostSheet(){
   const tabBar = `<div class="cst-tabs">${TABS.map(([k,t])=>`<button class="cst-tabbtn ${_costTab===k?'active':''}" data-tab="${k}" onclick="costTab('${k}')">${t}</button>`).join('')}</div>`;
   const panel=(name,inner)=>`<div class="cst-panel" data-tab="${name}"${_costTab===name?'':' style="display:none"'}><div class="card pad">${inner}</div></div>`;
   const panels =
-      panel('material', sub('⚙️ 기본 마크업 · 관리비율')+basicGrid + sub('☀️ 모듈 · 원/W')+modTiles + sub('⚡ 인버터 · 원/대')+invTiles + sub('🔌 계량기함 · 원')+mbTiles)
+      panel('material', sub('⚙️ 기본 마크업 · 관리비율')+basicTiles + sub('☀️ 모듈 · 원/W')+modTiles + sub('⚡ 인버터 · 원/대')+invTiles + sub('🔌 계량기함 · 원')+mbTiles)
     + panel('constr', sub('🏗️ 시공 tier · 만원/kW')+scroll(tierTbl) + sub('💰 kW당 판매단가 · 원/kW')+scroll(spTbl))
     + panel('fixed', sub('📋 고정비 · 인허가·설계·검사 (원)')+fixTiles)
     + panel('assump', sub('📈 발전 가정값')+genTiles)
