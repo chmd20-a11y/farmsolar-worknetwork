@@ -719,6 +719,31 @@ button{font-family:inherit;cursor:pointer}
   </div>
 </div>
 
+<!-- 개발 요청 작성 모달 -->
+<div class="modal-scrim" id="devreqScrim" onclick="if(event.target===this)closeDevreq()">
+  <div class="modal">
+    <div class="modal-head"><h3>새 개발 요청</h3><p>대시보드에 추가·수정하고 싶은 기능이나 오류를 남겨주세요.</p></div>
+    <div class="modal-body">
+      <div class="field-row">
+        <div class="tfield"><label>분류</label><select class="tinput" id="dr-cat"><option>기능요청</option><option>버그</option><option>개선</option><option>기타</option></select></div>
+        <div class="tfield"><label>작성자</label><input class="tinput" id="dr-author" placeholder="이름"></div>
+      </div>
+      <div class="tfield" style="margin-top:10px"><label>제목</label><input class="tinput" id="dr-title" placeholder="예) 현장 목록에 준공 예정일 컬럼 추가"></div>
+      <div class="tfield" style="margin-top:10px"><label>요청 내용</label><textarea class="ta" id="dr-body" placeholder="원하는 기능·수정 내용과 이유, 가능하면 예시를 구체적으로 적어주세요."></textarea></div>
+    </div>
+    <div class="modal-foot"><button class="btn ghost" onclick="closeDevreq()">취소</button><button class="btn primary" onclick="submitDevreq()">등록</button></div>
+  </div>
+</div>
+
+<!-- 개발 요청 상세·답변 모달 -->
+<div class="modal-scrim" id="devreqDetailScrim" onclick="if(event.target===this)closeDevreqDetail()">
+  <div class="modal">
+    <div class="modal-head" style="padding-right:52px"><h3>요청 상세</h3></div>
+    <div class="modal-body scroll" id="drdBody"></div>
+    <div class="modal-foot" id="drdFoot"></div>
+  </div>
+</div>
+
 <div class="app">
   <!-- ============ 상단바: 브랜드 | 중앙 팀탭 | 우측 도구 ============ -->
   <header class="topbar">
@@ -740,6 +765,7 @@ button{font-family:inherit;cursor:pointer}
       <button class="maintab" data-tab="construction"><svg class="mt-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>시공<span class="mt-badge" id="badge-construction"></span></button>
       <button class="maintab" data-tab="approvals"><svg class="mt-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>결재<span class="mt-badge count" id="badge-approvals" style="background:var(--accent);color:var(--accent-ink)"></span></button>
       <button class="maintab" data-tab="manage" style="display:none" aria-hidden="true"></button>
+      <button class="maintab" data-tab="devreqs"><svg class="mt-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7a8.5 8.5 0 0 1-.9-3.8A8.38 8.38 0 0 1 12.5 3 8.38 8.38 0 0 1 21 11.5z"/></svg>개발 요청<span class="mt-badge" id="badge-devreqs"></span></button>
       <button class="maintab" data-tab="releases"><svg class="mt-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l18-5v12L3 15z"/><path d="M11.6 16.8a3 3 0 01-5.8-1.6"/></svg>릴리즈노트</button>
     </nav>
 
@@ -1135,6 +1161,15 @@ button{font-family:inherit;cursor:pointer}
         <div class="subview active" id="sub-ap-list"></div>
       </section>
 
+      <!-- ==================== 개발 요청 게시판 ==================== -->
+      <section class="view" id="view-devreqs">
+        <div class="page-head">
+          <div><h1>개발 요청</h1><p>대시보드에 추가·수정하고 싶은 기능이나 오류를 자유롭게 남겨주세요. 접수된 요청은 검토 후 여기서 처리 결과를 답변드립니다.</p></div>
+          <div class="ph-actions"><button class="btn dark sm" onclick="openDevreq()">＋ 새 요청 작성</button></div>
+        </div>
+        <div class="subview active" id="sub-dr-list"></div>
+      </section>
+
       <section class="view" id="view-releases">
         <div class="page-head">
           <div><h1>릴리즈노트</h1><p>개발하면서 추가·변경·삭제된 기능과 바로 확인할 공지입니다. 좌측에서 팀별로 볼 수 있습니다.</p></div>
@@ -1522,6 +1557,20 @@ async function saveOrg(){
 }
 
 /* ============================================================
+   개발 요청 게시판 — 요청 접수·처리 답변. 여러 기기 공유(fsnet_deals 예약행 __devreqs__).
+   접수=로그인 누구나 / 답변·상태·삭제=관리자(isOwner). 신규 테이블 불필요.
+   ============================================================ */
+let devreqs = [], drFilter = 'all';
+const DEVREQS_ID = '__devreqs__';
+function drUid(){ return 'dr_'+Date.now().toString(36)+'_'+Math.floor(Math.random()*1e5).toString(36); }
+function applyDevreqs(l){ if(Array.isArray(l)) devreqs = l; }
+function loadDevreqsLocal(){ try{ const s=JSON.parse(localStorage.getItem('fsnet_devreqs')||'null'); if(Array.isArray(s)) devreqs=s; }catch(e){} }
+async function saveDevreqs(){
+  try{ localStorage.setItem('fsnet_devreqs', JSON.stringify(devreqs)); }catch(e){}
+  if(SB){ try{ await SB.from('fsnet_deals').upsert({id:DEVREQS_ID, data:{list:devreqs}}); }catch(e){ toast('요청 공유 저장 실패 — 로컬 보관'); } }
+}
+
+/* ============================================================
    저장·공유 계층 — 키 없으면 로컬(localStorage), 키 있으면 Supabase 실시간 공유
    ▶ 필드테스트: 아래 SB_URL / SB_KEY 두 줄만 채우면 여러 기기·팀이 실시간 공유
    ============================================================ */
@@ -1552,6 +1601,8 @@ async function loadShared(){
       if(dq.data && dq.data.length){
         const st = dq.data.find(r=>r.id===SETTINGS_ID);
         if(st && st.data && st.data.org) applyOrg(st.data.org);   // 공유된 회원·권한 반영
+        const drRow = dq.data.find(r=>r.id===DEVREQS_ID);
+        if(drRow && drRow.data && Array.isArray(drRow.data.list)) applyDevreqs(drRow.data.list);  // 공유된 개발요청
         const dealRows = dq.data.filter(r=>!isReservedId(r.id));
         if(dealRows.length) DEALS = dealRows.map(r=>r.data);
         else await Promise.all(DEALS.map(d=>SB.from('fsnet_deals').upsert({id:d.id, data:d})));
@@ -1571,7 +1622,10 @@ function subscribeRT(){
     SB.channel('fsnet')
       .on('postgres_changes', {event:'*', schema:'public', table:'fsnet_deals'}, p=>{
         const id=(p.new&&p.new.id)||(p.old&&p.old.id);
-        if(isReservedId(id)){ if(p.new&&p.new.data&&p.new.data.org){ applyOrg(p.new.data.org); refreshActive(); refreshTabBadges(); } return; }
+        if(isReservedId(id)){ const nd=p.new&&p.new.data;
+          if(nd&&nd.org) applyOrg(nd.org);
+          if(nd&&Array.isArray(nd.list)) applyDevreqs(nd.list);
+          refreshActive(); refreshTabBadges(); return; }
         applyRemote(DEALS, p);
       })
       .on('postgres_changes', {event:'*', schema:'public', table:'fsnet_sites'}, p=>applyRemote(SITES, p))
@@ -1587,7 +1641,7 @@ function applyRemote(arr, p){
 }
 async function resetDemo(){
   try{ localStorage.removeItem(LS_KEY); localStorage.removeItem('fsnet_user'); }catch(e){}
-  if(SB){ try{ await SB.from('fsnet_deals').delete().neq('id',SETTINGS_ID); await SB.from('fsnet_sites').delete().neq('id','__none__'); }catch(e){} }  // 회원·권한(__settings__)은 보존
+  if(SB){ try{ await SB.from('fsnet_deals').delete().neq('id',SETTINGS_ID).neq('id',DEVREQS_ID); await SB.from('fsnet_sites').delete().neq('id','__none__'); }catch(e){} }  // 회원·권한·개발요청 예약행은 보존
   location.reload();
 }
 
@@ -1634,7 +1688,7 @@ function refreshActive(){
   const tab = currentTab();
   const cur = document.querySelector('#ssNav .ss-item.active');
   let key = null;
-  if(cur){ for(const k of ['sub','board','wf','stage','rel','appr','mng','key']){ if(cur.dataset[k]!==undefined){ key={k,v:cur.dataset[k]}; break; } } }
+  if(cur){ for(const k of ['sub','board','wf','stage','rel','appr','mng','dreq','key']){ if(cur.dataset[k]!==undefined){ key={k,v:cur.dataset[k]}; break; } } }
   buildSubMenu(tab);
   let btn = key ? document.querySelector(`#ssNav .ss-item[data-${key.k}="${key.v}"]`) : null;
   if(!btn) btn = document.querySelector('#ssNav .ss-item');
@@ -2807,6 +2861,99 @@ function delTestSurvey(id){
 }
 /* ===== [임시·개발테스트용] 끝 ===== */
 
+/* ============================================================
+   개발 요청 게시판 — 렌더·작성·상세·답변 (접수=누구나 / 답변·삭제=관리자)
+   ============================================================ */
+function drIsAdmin(){ return isOwner(); }
+function drPill(s){ return s==='완료'?['done','완료'] : s==='검토중'?['prog','검토중'] : s==='보류'?['risk','보류'] : ['wait','접수']; }
+function fmtStamp(v){ if(!v) return ''; const d=new Date(v); if(isNaN(d)) return ''; const p=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; }
+function renderDevreqs(){
+  const cnt=s=>devreqs.filter(d=>d.status===s).length;
+  const bar=`<div class="card" style="margin-bottom:14px"><div class="card-body" style="padding:12px 16px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+    <span style="font-size:12.5px;color:var(--ink-2)">
+      <b style="color:var(--wait-ink2)">📬 접수 ${cnt('접수')}</b> · <b style="color:var(--prog-ink)">🔧 검토중 ${cnt('검토중')}</b> · <b style="color:var(--ok-ink)">✅ 완료 ${cnt('완료')}</b> · 전체 ${devreqs.length}건
+    </span><span class="type-chip">필터: ${drFilter==='all'?'전체':esc(drFilter)}</span></div></div>`;
+  const list = drFilter==='all' ? devreqs : devreqs.filter(d=>d.status===drFilter);
+  const items = list.length ? list.map(d=>{ const p=drPill(d.status); return `
+    <div class="card pad" style="margin-bottom:10px;cursor:pointer" onclick="openDevreqDetail('${d.id}')">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span class="pill ${p[0]}"><span class="pd"></span>${p[1]}</span>
+        <span class="type-chip">${esc(d.category||'기타')}</span>
+        <b style="font-size:14.5px">${esc(d.title)}</b>
+        <span style="flex:1"></span>
+        <span class="lr-s">${esc(d.author||'익명')} · ${fmtStamp(d.created)}</span>
+      </div>
+      ${d.body?`<div class="lr-s" style="margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(d.body).slice(0,120)}</div>`:''}
+      <div style="font-size:12px;margin-top:6px;font-weight:700;color:${d.reply?'var(--ok-ink)':'var(--muted)'}">${d.reply?'✅ 답변 완료 — 클릭해 확인':'⏳ 답변 대기'}</div>
+    </div>`; }).join('') : emptyMsg('아직 등록된 요청이 없습니다. 우측 상단 “＋ 새 요청 작성”으로 남겨주세요.');
+  return bar + items;
+}
+function openDevreq(){
+  document.getElementById('dr-cat').value='기능요청';
+  document.getElementById('dr-author').value=(currentUser&&currentUser.name)||'';
+  document.getElementById('dr-title').value='';
+  document.getElementById('dr-body').value='';
+  document.getElementById('devreqScrim').classList.add('open');
+  setTimeout(()=>{ const el=document.getElementById('dr-title'); if(el) el.focus(); }, 60);
+}
+function closeDevreq(){ document.getElementById('devreqScrim').classList.remove('open'); }
+async function submitDevreq(){
+  const title=(document.getElementById('dr-title')||{}).value.trim();
+  if(!title){ toast('제목을 입력하세요'); return; }
+  const o={ id:drUid(), title, body:(document.getElementById('dr-body')||{}).value.trim(), category:(document.getElementById('dr-cat')||{}).value||'기타',
+    author:((document.getElementById('dr-author')||{}).value||'').trim()||(currentUser&&currentUser.name)||'익명', authorId:(currentUser&&currentUser.name)||null,
+    status:'접수', reply:'', repliedBy:'', repliedAt:'', created:new Date().toISOString() };
+  devreqs.unshift(o);
+  await saveDevreqs();
+  closeDevreq(); refreshActive(); refreshTabBadges();
+  toast('요청을 접수했습니다');
+}
+function drdFootHtml(id, admin, arm){
+  let f='';
+  if(admin) f += arm
+    ? `<button class="btn danger sm" style="margin-right:auto" onclick="doDeleteDevreq('${id}')">정말 삭제 ✓</button>`
+    : `<button class="btn ghost sm" style="margin-right:auto" onclick="armDeleteDevreq('${id}')">삭제</button>`;
+  f+=`<button class="btn ghost sm" onclick="closeDevreqDetail()">닫기</button>`;
+  if(admin) f+=`<button class="btn primary sm" onclick="saveDevreqReply('${id}')">답변 저장</button>`;
+  return f;
+}
+function openDevreqDetail(id){
+  const d=devreqs.find(x=>x.id===id); if(!d) return;
+  const admin=drIsAdmin(), p=drPill(d.status);
+  let h='';
+  h+=`<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px"><span class="type-chip">${esc(d.category||'기타')}</span><span class="pill ${p[0]}"><span class="pd"></span>${p[1]}</span><span class="lr-s">${esc(d.author||'익명')} · ${fmtStamp(d.created)}</span></div>`;
+  h+=`<h3 style="margin:0 0 10px;font-size:17px">${esc(d.title)}</h3>`;
+  h+=`<div style="white-space:pre-wrap;font-size:13.5px;line-height:1.65">${esc(d.body)||'<span class="lr-s">내용 없음</span>'}</div>`;
+  h+=`<div class="card pad" style="margin-top:16px">`;
+  h+=`<div class="section-title" style="font-size:12px;margin:0 0 8px">💬 처리 답변</div>`;
+  if(admin){
+    h+=`<div class="tfield" style="max-width:220px;margin-bottom:10px"><label>상태</label><select class="tinput" id="drd-status">${['접수','검토중','완료','보류'].map(s=>`<option${d.status===s?' selected':''}>${s}</option>`).join('')}</select></div>`;
+    h+=`<textarea class="ta" id="drd-reply" placeholder="처리 결과·답변을 작성하세요">${esc(d.reply||'')}</textarea>`;
+  } else if(d.reply){
+    h+=`<div style="white-space:pre-wrap;font-size:13.5px;line-height:1.6">${esc(d.reply)}</div><div class="lr-s" style="margin-top:8px">— ${esc(d.repliedBy||'관리자')} · ${fmtStamp(d.repliedAt)}</div>`;
+  } else {
+    h+=`<div class="lr-s">아직 답변이 등록되지 않았습니다. 검토 후 답변드리겠습니다.</div>`;
+  }
+  h+=`</div>`;
+  document.getElementById('drdBody').innerHTML=h;
+  document.getElementById('drdFoot').innerHTML=drdFootHtml(id, admin, false);
+  document.getElementById('devreqDetailScrim').classList.add('open');
+}
+function closeDevreqDetail(){ document.getElementById('devreqDetailScrim').classList.remove('open'); }
+function armDeleteDevreq(id){ document.getElementById('drdFoot').innerHTML=drdFootHtml(id, true, true); }
+async function doDeleteDevreq(id){
+  const i=devreqs.findIndex(x=>x.id===id); if(i<0) return; const t=devreqs[i].title;
+  devreqs.splice(i,1); await saveDevreqs(); closeDevreqDetail(); refreshActive(); refreshTabBadges(); toast('삭제했습니다 — '+t);
+}
+async function saveDevreqReply(id){
+  const d=devreqs.find(x=>x.id===id); if(!d) return;
+  d.reply=((document.getElementById('drd-reply')||{}).value||'').trim();
+  d.status=(document.getElementById('drd-status')||{}).value||d.status;
+  d.repliedBy=(currentUser&&currentUser.name)||'관리자'; d.repliedAt=new Date().toISOString();
+  await saveDevreqs(); closeDevreqDetail(); refreshActive(); refreshTabBadges(); toast('답변을 저장했습니다');
+}
+
 // 현장 실측 (설계) — 스케줄+부서장 결재+결과보고서
 function renderSurvey(){
   const cards = DEALS.filter(d=>['survey_handover','survey_sched','survey_progress'].includes(d.stage)).map(d=>{
@@ -3457,6 +3604,13 @@ const MENUS = {
     {mng:'roster', label:'회원·권한', ic:'grid'},
     {mng:'security', label:'관리자 암호', ic:'shield'},
   ]},
+  devreqs:{title:'개발 요청', items:[
+    {dreq:'all', label:'전체', ic:'grid'},
+    {dreq:'접수', label:'접수(미답변)', ic:'inbox'},
+    {dreq:'검토중', label:'검토중', ic:'clock'},
+    {dreq:'완료', label:'완료', ic:'check'},
+    {dreq:'보류', label:'보류', ic:'alert'},
+  ]},
   releases:{title:'릴리즈노트', items:[
     {rel:'all', label:'전체', ic:'grid'},
     {rel:'공통', label:'공통', ic:'doc'},
@@ -3480,7 +3634,7 @@ function buildSubMenu(tab){
     let badge = '';
     if(it.risk && riskCount) badge = `<span class="ss-badge">${riskCount}</span>`;
     else if(it.wf){ const c = wfCount(it.wf); if(c) badge = it.wf==='s-supplement' ? `<span class="ss-badge">${c}</span>` : `<span class="ss-badge count">${c}</span>`; }
-    const data = it.sub ? `data-sub="${it.sub}"` : it.board ? `data-board="${it.board}"` : it.wf ? `data-wf="${it.wf}"` : it.stage ? `data-stage="${it.stage}"` : it.rel ? `data-rel="${it.rel}"` : it.appr ? `data-appr="${it.appr}"` : it.mng ? `data-mng="${it.mng}"` : `data-key="${it.key}"`;
+    const data = it.sub ? `data-sub="${it.sub}"` : it.board ? `data-board="${it.board}"` : it.wf ? `data-wf="${it.wf}"` : it.stage ? `data-stage="${it.stage}"` : it.rel ? `data-rel="${it.rel}"` : it.appr ? `data-appr="${it.appr}"` : it.mng ? `data-mng="${it.mng}"` : it.dreq ? `data-dreq="${it.dreq}"` : `data-key="${it.key}"`;
     return `<button class="ss-item ${active?'active':''}" ${data}>
       <svg class="ss-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${IC[it.ic]||''}</svg>
       <span>${it.label}</span>${badge}</button>`;
@@ -3513,6 +3667,10 @@ function activateItem(tab, btn){
   } else if(btn.dataset.mng){
     document.getElementById('sub-mng').innerHTML = btn.dataset.mng==='security' ? renderManageSecurity() : renderManageRoster();
     view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-mng'));
+  } else if(btn.dataset.dreq){
+    drFilter = btn.dataset.dreq;
+    document.getElementById('sub-dr-list').innerHTML = renderDevreqs();
+    view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-dr-list'));
   } else if(btn.dataset.stage){
     const target = tab==='construction' ? 'c-stage' : tab==='design' ? 'd-stage' : 'a-stage';
     document.getElementById('sub-'+target).innerHTML = renderStageBoard(btn.dataset.stage);
@@ -3606,6 +3764,7 @@ function refreshTabBadges(){
   set('construction', byTeam('시공'));
   set('admin', byTeam('행정'));
   set('approvals', myPendingCount());
+  set('devreqs', devreqs.filter(d=>d.status==='접수').length);
 }
 
 document.getElementById('roleSelect').addEventListener('change',e=>{
@@ -3677,7 +3836,7 @@ function fillPanels(){
 /* ============================================================
    ESC 닫기
    ============================================================ */
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeDrawer(); closeHandover(); closeAdminGate(); }});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeDrawer(); closeHandover(); closeAdminGate(); closeDevreq(); closeDevreqDetail(); }});
 
 /* ============================================================
    간편 로그인 (이름·팀 선택) + 부트스트랩
@@ -3723,6 +3882,7 @@ function firstRender(){
 async function bootstrap(){
   loadCostSettings();
   loadOrgLocal();
+  loadDevreqsLocal();
   initSB();
   await loadShared();
   firstRender();
