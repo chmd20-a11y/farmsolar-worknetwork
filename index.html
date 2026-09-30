@@ -389,6 +389,9 @@ button{font-family:inherit;cursor:pointer}
 .ap-row .ap-ctx{font-size:12px;color:var(--ink-2);margin-top:3px}
 .ap-row .ap-req{font-size:11px;color:var(--muted);margin-top:3px}
 .ap-row .ap-act{flex:none;display:flex;flex-direction:column;gap:7px;align-items:flex-end;max-width:320px}
+/* [임시·개발테스트용] 현장실측 테스트 바 — 삭제 시 이 줄도 제거 */
+.dev-testbar{margin:0 0 14px;padding:10px 13px;border:1px dashed var(--accent);border-radius:10px;background:color-mix(in srgb,var(--accent) 7%,var(--surface-2));font-size:12.5px;font-weight:700;color:var(--accent);display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.dev-testbar .lr-s{font-weight:500;color:var(--muted)}
 /* 관리자 · 회원/권한 */
 .mng-list{display:flex;flex-direction:column;gap:8px}
 .mng-row{display:grid;grid-template-columns:1fr 118px 92px 34px;gap:8px;align-items:center}
@@ -2781,6 +2784,29 @@ function mngChangePw(){
   toast('관리자 암호가 변경되었습니다');
 }
 
+/* ===== [임시·개발테스트용] 현장 실측 테스트 데이터 — 테스트 완료 후 이 블록 + renderSurvey의 dev-testbar/🧪삭제 버튼을 삭제하면 원복 ===== */
+const TEST_SURVEY_SITES = [
+  {site:'테스트 노지 990kW',      cap:990,  type:'노지', rep:'김영수'},
+  {site:'테스트 축사지붕 500kW',  cap:500,  type:'지붕', rep:'박서준'},
+  {site:'테스트 저수지 수상 1200kW', cap:1200, type:'수상', rep:'김영수'},
+];
+function spawnTestSurvey(){
+  const t = TEST_SURVEY_SITES[dealSeq % TEST_SURVEY_SITES.length];
+  const d = { id:'D-'+(dealSeq++), site:'[테스트] '+t.site, cap:t.cap, type:t.type, rep:t.rep, stage:'survey_handover', rejectReason:'', test:true };
+  DEALS.unshift(d);
+  persistDeal(d);
+  toast('테스트 현장 추가 — 현장 실측(실측 대기)로 투입');
+  refreshActive(); refreshTabBadges();
+}
+function delTestSurvey(id){
+  const i = DEALS.findIndex(x=>x.id===id); if(i<0) return;
+  const d = DEALS[i]; DEALS.splice(i,1);
+  cacheLocal(); if(SB){ try{ SB.from('fsnet_deals').delete().eq('id',id); }catch(e){} }
+  toast(`테스트 현장 삭제 — ${d.site}`);
+  refreshActive(); refreshTabBadges();
+}
+/* ===== [임시·개발테스트용] 끝 ===== */
+
 // 현장 실측 (설계) — 스케줄+부서장 결재+결과보고서
 function renderSurvey(){
   const cards = DEALS.filter(d=>['survey_handover','survey_sched','survey_progress'].includes(d.stage)).map(d=>{
@@ -2821,11 +2847,13 @@ function renderSurvey(){
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
         <div><div style="font-size:15px;font-weight:800">${esc(d.site)} · ${d.cap.toLocaleString()}kW <span class="type-chip">${d.type}</span></div>
           <div class="lr-s" style="margin-top:4px">${d.id} · 가계약 완료 · 영업 ${esc(d.rep)}</div></div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${proposalBtn(d)}<span class="pill ${pill[0]}"><span class="pd"></span>${pill[1]}</span></div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${proposalBtn(d)}<span class="pill ${pill[0]}"><span class="pd"></span>${pill[1]}</span>${d.test?`<button class="btn ghost sm" onclick="delTestSurvey('${d.id}')" title="테스트 현장 삭제">🧪 삭제</button>`:''}</div>
       </div>${body}
     </div>`;
   }).join('');
-  return wfHead('현장 실측','가계약 완료 현장의 실측입니다. 담당 배정(설계1·시공1) → 스케줄 등록 → <b>부서장 결재</b> → 결과 보고서 입력 → 실측 완료. 결재는 상단 <b>결재</b> 탭에서도 처리할 수 있습니다.') + (cards || emptyMsg('실측 대상 현장이 없습니다.'));
+  /* [임시·개발테스트용] dev-testbar — 테스트 후 삭제 */
+  const testbar = `<div class="dev-testbar">🧪 개발 테스트용 · <button class="btn dark sm" onclick="spawnTestSurvey()">＋ 테스트 현장 불러오기</button> <span class="lr-s">가계약 완료를 거치지 않고 실측 대기 현장을 즉시 추가합니다. 테스트 후 삭제 예정.</span></div>`;
+  return wfHead('현장 실측','가계약 완료 현장의 실측입니다. 담당 배정(설계1·시공1) → 스케줄 등록 → <b>부서장 결재</b> → 결과 보고서 입력 → 실측 완료. 결재는 상단 <b>결재</b> 탭에서도 처리할 수 있습니다.') + testbar + (cards || emptyMsg('실측 대상 현장이 없습니다.'));
 }
 
 // 실계약 (영업) — 실측완료 알림 + 본계약서 임의 양식
