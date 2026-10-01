@@ -422,7 +422,7 @@ button{font-family:inherit;cursor:pointer}
 
 /* 간편 로그인 */
 .login-scrim{position:fixed;inset:0;z-index:120;display:none;place-items:center;padding:20px;
-  background:radial-gradient(circle at 30% 20%,rgba(202,162,60,.10),transparent 45%),linear-gradient(180deg,var(--brand),var(--bg))}
+  background:radial-gradient(circle at 24% 16%,rgba(202,162,60,.14),transparent 42%),radial-gradient(circle at 82% 88%,rgba(202,162,60,.07),transparent 45%),linear-gradient(165deg,#0a2026,#07161a 62%,#050f12)}
 .login-scrim.open{display:grid}
 .login-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);box-shadow:var(--shadow-lg);
   width:420px;max-width:100%;padding:26px 26px 22px}
@@ -442,6 +442,38 @@ button{font-family:inherit;cursor:pointer}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
 .login-box .btn.primary{width:100%;justify-content:center;margin-top:20px;padding:12px;font-size:14px}
 .login-mode{font-size:11px;color:var(--muted);text-align:center;margin-top:12px}
+/* 로그인 스플릿 레이아웃(브랜드 히어로 + 폼) — adminScrim엔 영향 없게 .login-wrap 스코프 */
+.login-wrap{display:flex;width:880px;max-width:100%;max-height:92vh;border-radius:20px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.5),0 2px 10px rgba(0,0,0,.3)}
+.login-wrap .login-box{width:388px;flex:none;border:none;border-radius:0;box-shadow:none;max-height:92vh;overflow:auto;padding:34px 30px 26px}
+.lb-title{font-size:17px;font-weight:800;letter-spacing:-.3px;margin:0}
+.login-hero{flex:1 1 440px;min-width:0;padding:40px 36px;display:flex;flex-direction:column;gap:22px;color:#eef5f4;position:relative;overflow:hidden;
+  background:linear-gradient(158deg,#123a42 0%,#0b2a30 46%,#07181c 100%)}
+.login-hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(circle at 80% 10%,rgba(202,162,60,.22),transparent 40%),radial-gradient(circle at 10% 92%,rgba(202,162,60,.10),transparent 42%)}
+.login-hero > *{position:relative}
+.lh-top{display:flex;align-items:center;gap:11px}
+.lh-mark{width:36px;height:36px;border-radius:10px;flex:none;background:linear-gradient(145deg,var(--accent),#8a6320);display:grid;place-items:center;box-shadow:0 5px 16px rgba(202,162,60,.42)}
+.lh-mark svg{width:21px;height:21px}
+.lh-brand{font-size:12px;font-weight:800;letter-spacing:2.5px;color:#d3e3e1}
+.lh-slogan h2{font-size:26px;font-weight:800;line-height:1.34;letter-spacing:-.6px;margin:0;color:#fff}
+.lh-slogan .en{font-size:11px;font-weight:700;letter-spacing:1.3px;color:var(--accent);margin-top:13px;text-transform:uppercase}
+.lh-slogan .ko-sub{font-size:12.5px;color:#a9c0be;margin-top:7px;line-height:1.5}
+.pledge{border:1px solid rgba(202,162,60,.32);border-radius:14px;padding:19px 21px;background:rgba(255,255,255,.045)}
+.pledge .pl-label{font-size:11px;font-weight:800;letter-spacing:3px;color:var(--accent);display:flex;align-items:center;gap:9px;margin-bottom:13px}
+.pledge .pl-label::before{content:"";width:20px;height:2px;background:var(--accent);border-radius:2px}
+.pledge p{margin:0;font-size:15.5px;font-weight:700;line-height:1.85;color:#eef5f4;letter-spacing:-.3px}
+.pledge .hl{color:var(--accent);font-weight:800}
+.pledge .q{color:var(--accent);font-size:21px;font-weight:800;line-height:0}
+.lh-foot{margin-top:auto;padding-top:18px;border-top:1px solid rgba(255,255,255,.1)}
+.lh-foot .gname{font-size:16px;font-weight:800;letter-spacing:.4px;color:#fff}
+.lh-foot .gco{font-size:11px;color:#9bb2b0;margin-top:5px;letter-spacing:.3px}
+@media(max-width:760px){
+  .login-wrap{flex-direction:column;width:420px;max-height:94vh;overflow:auto}
+  .login-wrap .login-box{width:auto;max-height:none;overflow:visible}
+  .login-hero{padding:26px 24px;gap:15px}
+  .lh-slogan h2{font-size:21px}
+  .pledge{padding:15px 17px}.pledge p{font-size:14px;line-height:1.75}
+}
 
 /* 스탯 미니 */
 .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
@@ -704,14 +736,31 @@ button{font-family:inherit;cursor:pointer}
 
 <!-- ============ 회원 로그인 / 회원가입 ============ -->
 <div class="login-scrim" id="loginScrim">
-  <div class="login-box" style="max-height:90vh;overflow:auto">
-    <div class="login-brand">
-      <div class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.2" fill="#3d2f08"/><g stroke="#3d2f08" stroke-width="2" stroke-linecap="round"><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></g></svg>
+  <div class="login-wrap">
+    <aside class="login-hero">
+      <div class="lh-top">
+        <div class="lh-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.2" fill="#3d2f08"/><g stroke="#3d2f08" stroke-width="2" stroke-linecap="round"><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></g></svg>
+        </div>
+        <div class="lh-brand">HAPPYSOLAR GROUP</div>
       </div>
-      <div><h2>해피솔라그룹 파주지사 업무네트웍</h2></div>
-    </div>
-    <div class="lb-sub" id="authSub">회사 계정으로 로그인하세요.</div>
+      <div class="lh-slogan">
+        <h2>혁신을 통해<br>미래를 선도합니다</h2>
+        <div class="en">Powering the Future with Solar Innovation</div>
+        <div class="ko-sub">태양광 전문기업 · 대한민국 재생에너지산업의 선두주자</div>
+      </div>
+      <div class="pledge">
+        <div class="pl-label">우리의 다짐</div>
+        <p><span class="q">“</span><span class="hl">나는!</span> 1000억 달성을 위해! 개인의 목표를 제시하고! 직접 성과를 창출하는 <span class="hl">실행 리더</span>다.<span class="q">”</span></p>
+      </div>
+      <div class="lh-foot">
+        <div class="gname">Happysolar Group</div>
+        <div class="gco">(주)팜솔라 &middot; (주)해피솔라 &middot; (주)스마트솔라</div>
+      </div>
+    </aside>
+    <div class="login-box">
+      <h2 class="lb-title">파주지사 업무네트웍</h2>
+      <div class="lb-sub" id="authSub">회사 계정으로 로그인하세요.</div>
     <div class="auth-tabs">
       <button type="button" class="auth-tab active" id="tabLogin" onclick="authTab('login')">로그인</button>
       <button type="button" class="auth-tab" id="tabSignup" onclick="authTab('signup')">회원가입</button>
@@ -758,6 +807,7 @@ button{font-family:inherit;cursor:pointer}
 
     <div id="authErr" class="note" style="color:var(--risk-ink);min-height:16px;margin-top:10px"></div>
     <div class="login-mode" id="loginMode"></div>
+    </div>
   </div>
 </div>
 
