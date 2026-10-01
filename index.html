@@ -717,6 +717,10 @@ button{font-family:inherit;cursor:pointer}
           <option>팀원</option><option>팀장</option><option>실장</option><option>지사장</option><option>본부장</option><option>대표</option>
         </select></div>
       </div>
+      <label style="margin-top:10px">소속팀</label>
+      <select id="suTeam" class="tinput">
+        <option>임원</option><option>경영지원</option><option>영업</option><option>설계</option><option>시공</option><option>행정</option><option>홍보</option>
+      </select>
       <label style="margin-top:10px">연락처(휴대폰)</label>
       <input id="suPhone" class="tinput" inputmode="numeric" placeholder="010-0000-0000" autocomplete="off">
       <div class="field-row" style="margin-top:10px">
@@ -750,6 +754,20 @@ button{font-family:inherit;cursor:pointer}
       <button class="btn ghost" style="flex:1;justify-content:center" onclick="closeAdminGate()">취소</button>
       <button class="btn primary" style="flex:1;justify-content:center" id="adminGateGo">확인 →</button>
     </div>
+  </div>
+</div>
+
+<!-- 비밀번호 초기화 모달 (관리자) -->
+<div class="modal-scrim" id="pwResetScrim" onclick="if(event.target===this)closePwReset()">
+  <div class="modal">
+    <div class="modal-head"><h3>비밀번호 초기화</h3><p id="prTarget"></p></div>
+    <div class="modal-body">
+      <label style="font-size:12px;font-weight:700;color:var(--ink-2);display:block;margin:0 0 6px">새 임시 비밀번호 (6자 이상)</label>
+      <input class="tinput" id="prPw" placeholder="임시 비밀번호">
+      <div class="lr-s" style="margin-top:8px">초기화 후 이 임시 비밀번호를 본인에게 전달하세요. 본인이 로그인한 뒤 <b>내 계정</b>에서 변경하면 됩니다.</div>
+      <div id="prMsg" class="note" style="min-height:16px;margin-top:8px"></div>
+    </div>
+    <div class="modal-foot"><button class="btn ghost" onclick="closePwReset()">닫기</button><button class="btn primary" id="prGo" onclick="doPwReset()">초기화</button></div>
   </div>
 </div>
 
@@ -2934,11 +2952,13 @@ async function acDoWithdraw(){ const r=await withdrawMe(); if(r.error){ toast('�
 /* ============================================================
    관리자 · 회원 관리 (가입 승인 · 역할 · 탈퇴)
    ============================================================ */
+const TEAMS = ['임원','경영지원','영업','설계','시공','행정','홍보'];
 function renderManageMembers(){
   setTimeout(fillManageMembers, 0);
-  return wfHead('회원 관리','가입 승인, 회원 목록, 관리자 지정, 탈퇴를 처리합니다. 변경은 모든 기기에 실시간 반영됩니다.')
+  return wfHead('회원 관리','가입 승인, 회원 목록, 소속팀·관리자 지정, 비밀번호 초기화, 탈퇴를 처리합니다. 변경은 모든 기기에 실시간 반영됩니다.')
     + '<div id="mm-wrap"><div class="card pad" style="color:var(--muted)">불러오는 중…</div></div>';
 }
+function mmTeamSelect(m){ return `<select class="tinput" style="width:auto;min-width:96px;padding:6px 8px" onchange="mmSetTeam('${m.id}',this.value)"><option value=""${!m.team?' selected':''}>소속팀</option>${TEAMS.map(t=>`<option${m.team===t?' selected':''}>${t}</option>`).join('')}</select>`; }
 async function fillManageMembers(){
   const wrap=document.getElementById('mm-wrap'); if(!wrap) return;
   if(!SB){ wrap.innerHTML='<div class="card pad" style="color:var(--muted)">서버가 연결되지 않아 회원 관리를 사용할 수 없습니다.</div>'; return; }
@@ -2949,14 +2969,14 @@ async function fillManageMembers(){
   const row=(m,acts)=>`<div class="ap-row">
     <div class="ap-main">
       <div class="ap-t">${esc(m.name||'(이름없음)')} <span class="type-chip">${esc(m.branch||'')}</span>${m.role==='admin'?' <span class="pill done"><span class="pd"></span>관리자</span>':''}</div>
-      <div class="ap-ctx">${esc(m.rank||'')} · ${esc(m.position||'')} · ${esc(m.phone||'')}</div>
+      <div class="ap-ctx">${esc(m.team||'소속팀 미지정')} · ${esc(m.rank||'')} ${esc(m.position||'')} · ${esc(m.phone||'')}</div>
     </div>
-    <div class="ap-act" style="flex-direction:row;align-items:center">${acts}</div></div>`;
+    <div class="ap-act" style="flex-direction:row;align-items:center;flex-wrap:wrap;justify-content:flex-end">${acts}</div></div>`;
   let h='';
   h+=`<div class="section-title" style="font-size:13px;margin:4px 0 8px">가입 승인 대기 (${pend.length})</div>`;
   h+= pend.length ? pend.map(m=>row(m,`<button class="btn ok sm" onclick="mmApprove('${m.id}')">승인 ✓</button><button class="btn danger sm" onclick="mmDelete('${m.id}')">거절</button>`)).join('') : emptyMsg('승인 대기 중인 가입이 없습니다.');
   h+=`<div class="section-title" style="font-size:13px;margin:18px 0 8px">회원 (${act.length})</div>`;
-  h+= act.length ? act.map(m=>row(m,`${m.role==='admin'?`<button class="btn ghost sm" onclick="mmSetRole('${m.id}','member')">관리자 해제</button>`:`<button class="btn ghost sm" onclick="mmSetRole('${m.id}','admin')">관리자 지정</button>`}<button class="btn danger sm" onclick="mmWithdraw('${m.id}')">탈퇴</button>`)).join('') : emptyMsg('회원이 없습니다.');
+  h+= act.length ? act.map(m=>row(m,`${mmTeamSelect(m)}<button class="btn ghost sm" onclick="openPwReset('${m.id}','${esc((m.name||'').replace(/'/g,''))}')">비번 초기화</button>${m.role==='admin'?`<button class="btn ghost sm" onclick="mmSetRole('${m.id}','member')">관리자 해제</button>`:`<button class="btn ghost sm" onclick="mmSetRole('${m.id}','admin')">관리자 지정</button>`}<button class="btn danger sm" onclick="mmWithdraw('${m.id}')">탈퇴</button>`)).join('') : emptyMsg('회원이 없습니다.');
   if(wd.length){ h+=`<div class="section-title" style="font-size:13px;margin:18px 0 8px">탈퇴 (${wd.length})</div>`;
     h+= wd.map(m=>row(m,`<button class="btn ghost sm" onclick="mmRestore('${m.id}')">복구</button><button class="btn danger sm" onclick="mmDelete('${m.id}')">완전삭제</button>`)).join(''); }
   wrap.innerHTML=h;
@@ -2966,6 +2986,44 @@ async function mmSetRole(id,role){ const r=await adminUpdateMember(id,{role}); i
 async function mmWithdraw(id){ const r=await adminUpdateMember(id,{withdrawn:true,approved:false}); if(r.error){ toast('처리 실패: '+r.error); return; } toast('탈퇴 처리했습니다'); fillManageMembers(); }
 async function mmRestore(id){ const r=await adminUpdateMember(id,{withdrawn:false,approved:true}); if(r.error){ toast('복구 실패: '+r.error); return; } toast('복구했습니다'); fillManageMembers(); }
 async function mmDelete(id){ const r=await adminDeleteMember(id); if(r.error){ toast('삭제 실패: '+r.error); return; } toast('완전 삭제했습니다'); fillManageMembers(); }
+async function mmSetTeam(id, team){ const r=await adminUpdateMember(id,{team}); if(r.error){ toast('소속팀 변경 실패: '+r.error); return; } toast('소속팀을 변경했습니다'); }
+
+// 비밀번호 초기화 (관리자 → Edge Function 경유, 서버에서 서비스롤로 처리)
+async function adminResetPassword(targetId, newPw){
+  if(!SB) return {error:'서버 미연결'};
+  let session=null; try{ const s=await SB.auth.getSession(); session=s.data&&s.data.session; }catch(e){}
+  if(!session) return {error:'로그인이 필요합니다'};
+  try{
+    const res=await fetch(`${SB_URL}/functions/v1/admin-reset-password`, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${session.access_token}`, 'apikey':SB_KEY },
+      body: JSON.stringify({ targetId, newPassword:newPw })
+    });
+    let j={}; try{ j=await res.json(); }catch(e){}
+    if(!res.ok) return {error: (j&&j.error) || `초기화 실패(${res.status}) — Edge Function(admin-reset-password) 배포를 확인하세요.`};
+    return {ok:true};
+  }catch(e){ return {error:'요청 실패 — Edge Function 배포/네트워크 확인: '+e }; }
+}
+let _prTargetId=null;
+function openPwReset(id, name){
+  _prTargetId=id;
+  document.getElementById('prTarget').textContent = (name||'') + ' 님의 비밀번호를 초기화합니다';
+  const pw=document.getElementById('prPw'); if(pw) pw.value='fs'+Math.floor(100000+Math.random()*900000);
+  const m=document.getElementById('prMsg'); if(m) m.textContent='';
+  document.getElementById('pwResetScrim').classList.add('open');
+}
+function closePwReset(){ document.getElementById('pwResetScrim').classList.remove('open'); }
+async function doPwReset(){
+  const m=document.getElementById('prMsg'); m.style.color='var(--risk-ink)';
+  const pw=((document.getElementById('prPw')||{}).value||'').trim();
+  if(pw.length<6){ m.textContent='임시 비밀번호는 6자 이상이어야 합니다.'; return; }
+  const btn=document.getElementById('prGo'); if(btn) btn.disabled=true;
+  const r=await adminResetPassword(_prTargetId, pw);
+  if(btn) btn.disabled=false;
+  if(r.error){ m.textContent=r.error; return; }
+  m.style.color='var(--ok-ink)'; m.textContent='✓ 초기화 완료 — 임시 비밀번호 「'+pw+'」 를 본인에게 전달하세요. (본인이 로그인 후 ‘내 계정’에서 변경)';
+  toast('비밀번호를 초기화했습니다');
+}
 
 /* ===== [임시·개발테스트용] 현장 실측 테스트 데이터 — 테스트 완료 후 이 블록 + renderSurvey의 dev-testbar/🧪삭제 버튼을 삭제하면 원복 ===== */
 const TEST_SURVEY_SITES = [
@@ -3186,6 +3244,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-01', team:'공통', kind:'추가', title:'회원 소속팀 입력 + 관리자 비밀번호 초기화', body:'회원가입에 “소속팀”(임원·경영지원·영업·설계·시공·행정·홍보) 선택을 추가했습니다. 관리자(⚙ → 회원 관리)에서는 회원의 소속팀을 변경하고, 비밀번호를 분실한 회원의 비밀번호를 임시값으로 초기화할 수 있습니다(초기화한 임시 비밀번호를 본인에게 전달하면 로그인 후 ‘내 계정’에서 바꾸면 됩니다).', author:'개발'},
   {date:'2026-10-01', team:'공통', kind:'변경', title:'회원 로그인 전환 (휴대폰 + 비밀번호 · 관리자 승인제)', body:'기존 간편 로그인(이름·팀 선택)을 회사 회원제 로그인으로 전환했습니다. 회원가입 시 지사·직급·직책·이름·연락처(휴대폰)·비밀번호를 입력하고, 로그인은 휴대폰번호+비밀번호로 합니다. 가입은 관리자 승인 후 사용할 수 있습니다(회사 소속 인원만). 사이드바에서 본인 비밀번호 변경·회원 탈퇴가 가능하고, 관리자는 ⚙ 관리자 화면의 “회원 관리”에서 가입 승인·관리자 지정·탈퇴를 처리합니다. 비밀번호는 서버에서 안전하게 암호화되어 저장됩니다.', author:'개발'},
   {date:'2026-09-30', team:'공통', kind:'추가', title:'개발 요청 게시판', body:'상단에 “💬 개발 요청” 탭을 신설했습니다. 대시보드에 추가·수정하고 싶은 기능이나 오류를 누구나 접수할 수 있고(분류: 기능요청·버그·개선·기타 / 제목·내용·작성자), 관리자가 검토 후 상태 변경(접수→검토중→완료·보류)과 처리 답변을 남기면 요청자가 확인할 수 있습니다. 좌측에서 상태별 필터, 미답변(접수) 건수는 탭 배지로 표시됩니다. 접수·답변 내용은 모든 기기·팀원에게 실시간 공유됩니다.', author:'개발'},
   {date:'2026-09-30', team:'공통', kind:'추가', title:'관리자 · 회원/권한 관리 (팀장님 전용)', body:'상단 팀 탭에 속하지 않는 관리자 화면을 신설했습니다. 관리자 계정으로 로그인하면 사이드바 하단 ⚙(톱니) 버튼이 보이고, 관리자 암호를 입력하면 팀별 회원·직급을 편집할 수 있습니다. 직급을 “부서장”으로 지정하면 그 사람이 해당 팀의 결재권자가 됩니다. 변경은 모든 기기·팀원에게 실시간 공유됩니다. (관리자 암호는 이 기기에만 저장 · 최초 접근 시 직접 설정) 로그인에 “영업” 팀 추가.', author:'개발'},
@@ -3969,7 +4028,7 @@ function fillPanels(){
 /* ============================================================
    ESC 닫기
    ============================================================ */
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeDrawer(); closeHandover(); closeAdminGate(); closeDevreq(); closeDevreqDetail(); closeAccount(); }});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeDrawer(); closeHandover(); closeAdminGate(); closeDevreq(); closeDevreqDetail(); closeAccount(); closePwReset(); }});
 
 /* ============================================================
    간편 로그인 (이름·팀 선택) + 부트스트랩
@@ -3994,7 +4053,7 @@ function applyUser(){
   if(!currentUser) return;
   const nm = currentUser.name || '사용자';
   document.getElementById('sideUserName').textContent = nm;
-  document.getElementById('sideUserRole').textContent = `${currentUser.branch||''} · ${currentUser.position||currentUser.rank||''}`.replace(/^ · | · $/,'').replace(/^· |· $/,'').trim() || '회원';
+  document.getElementById('sideUserRole').textContent = [currentUser.branch, currentUser.team, (currentUser.position||currentUser.rank)].filter(Boolean).join(' · ') || '회원';
   const av = document.getElementById('sideUserAvatar'); if(av) av.textContent = (nm.trim()[0] || '팀');
   const ab = document.getElementById('btnAdmin'); if(ab) ab.style.display = isOwner() ? '' : 'none';
   const ac = document.getElementById('btnAccount'); if(ac) ac.style.display = '';
@@ -4008,7 +4067,7 @@ async function loadMyProfile(){
   if(!user){ currentUser=null; return null; }
   let data=null; try{ const r=await SB.from('fsnet_members').select('*').eq('id',user.id).single(); data=r.data; if(r.error) data=null; }catch(e){ data=null; }
   if(!data){ currentUser=null; return null; }
-  currentUser = { id:data.id, name:data.name, branch:data.branch, rank:data.rank, position:data.position, phone:data.phone, role:data.role, approved:!!data.approved, withdrawn:!!data.withdrawn };
+  currentUser = { id:data.id, name:data.name, branch:data.branch, team:data.team, rank:data.rank, position:data.position, phone:data.phone, role:data.role, approved:!!data.approved, withdrawn:!!data.withdrawn };
   return currentUser;
 }
 // 로그인 (휴대폰+비번)
@@ -4036,8 +4095,11 @@ async function authSignup(o){
   if(!data || !data.session || !data.user) return {error:'가입 세션 생성 실패 — 관리자: Supabase에서 "Confirm email"을 OFF로 설정해야 합니다.'};
   let isFirst=false;
   try{ const c=await SB.from('fsnet_members').select('id',{count:'exact',head:true}); isFirst=((c.count||0)===0); }catch(e){}
-  const row={ id:data.user.id, phone:phoneDigits(o.phone), name:o.name, branch:o.branch, rank:o.rank, position:o.position, role:isFirst?'admin':'member', approved:isFirst, withdrawn:false };
-  const { error:e2 } = await SB.from('fsnet_members').insert(row);
+  const row={ id:data.user.id, phone:phoneDigits(o.phone), name:o.name, branch:o.branch, team:o.team, rank:o.rank, position:o.position, role:isFirst?'admin':'member', approved:isFirst, withdrawn:false };
+  let { error:e2 } = await SB.from('fsnet_members').insert(row);
+  if(e2 && (e2.code==='PGRST204' || /team/i.test(e2.message||''))){   // team 칼럼 미추가(ALTER 전) → team 빼고 재시도
+    const { team, ...row2 }=row; const r2=await SB.from('fsnet_members').insert(row2); e2=r2.error;
+  }
   if(e2) return {error:'프로필 저장 실패: '+e2.message};
   if(isFirst){ await loadMyProfile(); return {ok:true, admin:true}; }
   try{ await SB.auth.signOut(); }catch(e){} currentUser=null;
@@ -4119,7 +4181,7 @@ async function doAuthLogin(){
 }
 async function doAuthSignup(){
   setAuthErr(''); const btn=document.getElementById('suGo'); if(btn) btn.disabled=true;
-  const o={ branch:(document.getElementById('suBranch')||{}).value, name:((document.getElementById('suName')||{}).value||'').trim(),
+  const o={ branch:(document.getElementById('suBranch')||{}).value, team:(document.getElementById('suTeam')||{}).value, name:((document.getElementById('suName')||{}).value||'').trim(),
     rank:(document.getElementById('suRank')||{}).value, position:(document.getElementById('suPos')||{}).value,
     phone:(document.getElementById('suPhone')||{}).value, pw:(document.getElementById('suPw')||{}).value, pw2:(document.getElementById('suPw2')||{}).value };
   const r=await authSignup(o);
