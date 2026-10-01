@@ -2994,13 +2994,13 @@ async function adminResetPassword(targetId, newPw){
   let session=null; try{ const s=await SB.auth.getSession(); session=s.data&&s.data.session; }catch(e){}
   if(!session) return {error:'로그인이 필요합니다'};
   try{
-    const res=await fetch(`${SB_URL}/functions/v1/admin-reset-password`, {
+    const res=await fetch(`${SB_URL}/functions/v1/fsnet-admin-reset-password`, {
       method:'POST',
       headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${session.access_token}`, 'apikey':SB_KEY },
       body: JSON.stringify({ targetId, newPassword:newPw })
     });
     let j={}; try{ j=await res.json(); }catch(e){}
-    if(!res.ok) return {error: (j&&j.error) || `초기화 실패(${res.status}) — Edge Function(admin-reset-password) 배포를 확인하세요.`};
+    if(!res.ok) return {error: (j&&j.error) || `초기화 실패(${res.status}) — Edge Function(fsnet-admin-reset-password) 배포를 확인하세요.`};
     return {ok:true};
   }catch(e){ return {error:'요청 실패 — Edge Function 배포/네트워크 확인: '+e }; }
 }
