@@ -387,10 +387,10 @@ button{font-family:inherit;cursor:pointer}
 .sv-sec:last-child{margin-bottom:0}
 .sv-sec-h{font-size:12px;font-weight:800;color:color-mix(in srgb,var(--kc,var(--prog-ink)) 72%,var(--ink));background:color-mix(in srgb,var(--kc,transparent) 11%,transparent);border-bottom:1px solid color-mix(in srgb,var(--kc,var(--border)) 20%,var(--border));padding:8px 12px;display:flex;align-items:center;gap:7px}
 .sv-sec-ic{font-size:13px;line-height:1}
-.sv-row{display:grid;grid-template-columns:19px 94px minmax(0,1fr) 90px;gap:9px;align-items:center;padding:4px 12px}
+.sv-row{display:grid;grid-template-columns:106px minmax(0,1fr);gap:10px;align-items:center;padding:4px 12px}
 .sv-sec .sv-row:first-of-type{padding-top:8px}
 .sv-sec .sv-row:last-child{padding-bottom:9px}
-@media(max-width:1180px){.sv-row{grid-template-columns:19px 88px minmax(0,1fr)}.sv-row .sv-note{display:none}}
+@media(max-width:1180px){.sv-row{grid-template-columns:92px minmax(0,1fr)}}
 .sv-k{font-size:12px;font-weight:700;color:var(--ink-2);line-height:1.3}
 .sv-chk{width:17px;height:17px;border:1.5px solid var(--border-strong);border-radius:5px;cursor:pointer;flex:none;position:relative;transition:.12s;background:var(--surface)}
 .sv-chk:hover{border-color:var(--kc,var(--accent))}
@@ -400,7 +400,8 @@ button{font-family:inherit;cursor:pointer}
 .sv-inpwrap{display:flex;align-items:center;gap:6px}
 .sv-inpwrap .sv-sm2{padding:6px 9px;font-size:12px}
 .sv-unit{font-size:11px;color:var(--muted);font-weight:700;flex:none}
-.sv-note{padding:6px 8px;font-size:11.5px}
+.sv-auto{background:color-mix(in srgb,var(--kc,var(--accent)) 8%,var(--surface-2));color:var(--ink);font-weight:600;cursor:default}
+.sv-auto:focus{border-color:var(--border-strong)}
 .sv-wh{display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:11px;color:var(--muted);font-weight:700}
 .sv-wh .sv-sm{width:60px;padding:6px 8px;font-size:12px;flex:none}
 .sv-wh em{font-style:normal;color:var(--ink-2);font-weight:800;margin:0 1px}
@@ -1863,9 +1864,8 @@ let DEALS = [
   {id:'D-1030', site:'신평 노지형',     cap:700,  type:'노지', rep:'박서준', stage:'feasibility',      rejectReason:''},
   {id:'D-1026', site:'양지리 공장지붕', cap:520,  type:'지붕', rep:'박서준', stage:'rejected',         rejectReason:'개발행위 이격거리 미달 — 인접 주거지 100m 이내. 부지 경계 재검토 필요.'},
   {id:'D-1027', site:'봉산 노지형',     cap:1350, type:'노지', rep:'김영수', stage:'approved',         rejectReason:''},
-  {id:'D-1028', site:'대곡 저수지 수상', cap:900, type:'수상', rep:'박서준', stage:'survey_sched',   rejectReason:'',
-    survey:{ pic:'이도현', date:'2026-09-24 10:00', designer:'이도현', builder:'최현우' },
-    approvals:{ survey_schedule:{ status:'pending', requestedBy:'설계팀 이도현', requestedAt:'2026-09-23 17:40', approver:'', decidedAt:'', comment:'' } } },
+  {id:'D-1028', site:'대곡 저수지 수상', cap:900, type:'수상', rep:'박서준', stage:'survey_progress', rejectReason:'',
+    survey:{ pic:'이도현', date:'2026-09-24 10:00', designer:'이도현', builder:'최현우' } },
   {id:'D-1029', site:'하리 노지형',     cap:990,  type:'노지', rep:'김영수', stage:'survey_done',       rejectReason:''},
 ];
 const WF_STAGES = {
@@ -3071,12 +3071,14 @@ function renderPreContract(){
    탭이 늘어도 APPROVAL_GATES에 항목만 추가하면 결재함이 자동 수집.
    역할연동: 전체 관리자=전결 / 해당 팀 부서장만 승인·반려 / 실무자는 열람.
    ============================================================ */
+/* ⚠ 승인(부서장 결재) 적용 보류 — 팀장님 지시(2026-10-01): 승인 프로세스 기능/코드는 보존하되
+   현재 적용된 승인 게이트만 비활성화. 승인이 필요한 구간은 추후 다시 아래에 등록하면
+   즉시 복원됩니다(결재 탭·결재함·배지는 게이트가 있을 때만 자동 노출). */
 const APPROVAL_GATES = {
-  survey_schedule: {
-    label:'실측 일정', team:'설계', tab:'design', wf:'d-survey',
-    // 결재함에서 한 줄 맥락으로 보여줄 내용
-    ctx: d => `🗓 ${(d.survey&&d.survey.date)||'-'} · 설계 ${(d.survey&&d.survey.designer)||'-'} + 시공 ${(d.survey&&d.survey.builder)||'-'}`,
-  },
+  // survey_schedule: {   // ← 재활성화하려면 이 블록의 주석을 해제하고 wfSchedule/renderSurvey의 승인 분기도 함께 복원
+  //   label:'실측 일정', team:'설계', tab:'design', wf:'d-survey',
+  //   ctx: d => `🗓 ${(d.survey&&d.survey.date)||'-'} · 설계 ${(d.survey&&d.survey.designer)||'-'} + 시공 ${(d.survey&&d.survey.builder)||'-'}`,
+  // },
   // 향후: feasibility_approve, groundbreak_approve … 여기에 추가만 하면 됨
 };
 function nowStr(){ const d=new Date(), p=n=>String(n).padStart(2,'0');
@@ -3537,7 +3539,7 @@ async function saveDevreqReply(id){
 /* ===== 현장실측 결과 보고서: 체크리스트 양식(1시트) + 사진 첨부 체크(2시트) ===== */
 const SURVEY_FORM = [
   {grp:'현장 기본정보', ic:'🏢', kc:'#5b86c4', rows:[
-    {k:'현장명'}, {k:'주소'}, {k:'발전소 용량', unit:'kW'},
+    {k:'현장명', src:d=>d.site}, {k:'주소', src:d=>d.jibun}, {k:'발전소 용량', unit:'kW', src:d=>d.cap},
   ]},
   {grp:'차량 및 장비 진입', ic:'🚚', kc:'#c9902f', rows:[
     {k:'진입도로 폭', unit:'m'}, {k:'자재 하차 / 적치 장소'}, {k:'양중 작업 위치'},
@@ -3572,10 +3574,28 @@ const SURVEY_PHOTOS = [
   {k:'드론 촬영', opt:['전체 부지','주변 현황 / 음영']},
   {k:'예정 전기실 위치', opt:['위치','주변']},
 ];
-function svCheck(el){ el.classList.toggle('on'); }
 function svOpt(el,multi){ if(multi){ el.classList.toggle('on'); return; } const was=el.classList.contains('on'); [...el.parentElement.children].forEach(c=>c.classList.remove('on')); if(!was) el.classList.add('on'); }
-function svPhotoTick(el,did){ el.classList.toggle('on'); const box=document.getElementById('svph-'+did); if(!box) return; const tot=box.querySelectorAll('.svph-chk').length, on=box.querySelectorAll('.svph-chk.on').length; const c=document.getElementById('svcount-'+did); if(c) c.textContent=on+' / '+tot; }
-function svRowContent(r){
+function svPhotoTick(el,did){ el.classList.toggle('on'); const box=document.getElementById('svph-'+did); if(box){ const tot=box.querySelectorAll('.svph-chk').length, on=box.querySelectorAll('.svph-chk.on').length; const c=document.getElementById('svcount-'+did); if(c) c.textContent=on+' / '+tot; } svRecount(did); }
+// 항목 값 입력 여부(칩=1개 이상 선택 / 입력칸=모두 채움)
+function svRowFilled(vcell){ if(!vcell) return false;
+  const chips=vcell.querySelectorAll('.sv-chip'); if(chips.length) return [...chips].some(c=>c.classList.contains('on'));
+  const inps=vcell.querySelectorAll('input'); if(!inps.length) return true; return [...inps].every(i=>(i.value||'').trim()!==''); }
+function svTotals(did){ const form=document.getElementById('svform-'+did), box=document.getElementById('svph-'+did);
+  const rows=form?[...form.querySelectorAll('.sv-row')]:[]; const rowsDone=rows.filter(r=>svRowFilled(r.querySelector('.sv-v'))).length;
+  const ph=box?[...box.querySelectorAll('.svph-chk')]:[]; const phDone=ph.filter(c=>c.classList.contains('on')).length;
+  return {rows:rows.length, rowsDone, ph:ph.length, phDone}; }
+function svRecount(did){ const t=svTotals(did);
+  const fc=document.getElementById('svfc-'+did); if(fc) fc.textContent=t.rowsDone+' / '+t.rows;
+  const pc=document.getElementById('svcount-'+did); if(pc) pc.textContent=t.phDone+' / '+t.ph; }
+function trySurveyDone(id){ const t=svTotals(id);
+  if(t.rows===0 || t.rowsDone<t.rows || t.phDone<t.ph){ const m=[];
+    if(t.rowsDone<t.rows) m.push(`체크리스트 ${t.rows-t.rowsDone}개 항목 미입력`);
+    if(t.phDone<t.ph) m.push(`사진 ${t.ph-t.phDone}개 미첨부`);
+    toast('실측 완료 불가 — '+m.join(' · ')); svRecount(id); return; }
+  wfAction(id,'survey_done','실측 완료 — 영업팀 실계약으로 이관'); }
+function svRowContent(r,d){
+  if(r.src){ const v=r.src(d), val=(v==null?'':String(v)), ro=val!==''?' readonly':'';
+    return `<div class="sv-inpwrap"><input class="tinput sv-sm2${ro?' sv-auto':''}" value="${esc(val)}"${ro}>${r.unit?`<span class="sv-unit">${esc(r.unit)}</span>`:''}</div>`; }
   if(r.wh)   return `<div class="sv-wh"><span>가로</span><input class="tinput sv-sm"><span>m</span><em>×</em><span>세로</span><input class="tinput sv-sm"><span>m</span></div>`;
   if(r.sign) return `<div class="sv-wh"><span>성명</span><input class="tinput sv-sm" style="width:90px"><span style="margin-left:4px">서명</span><input class="tinput sv-sm" style="width:90px"></div>`;
   if(r.opt)  return `<div class="sv-chips">${r.opt.map(o=>`<span class="sv-chip" onclick="svOpt(this,false)">${esc(o)}</span>`).join('')}</div>`;
@@ -3583,17 +3603,18 @@ function svRowContent(r){
   return `<div class="sv-inpwrap"><input class="tinput sv-sm2">${r.unit?`<span class="sv-unit">${esc(r.unit)}</span>`:''}</div>`;
 }
 function renderSurveyForm(d){
+  const total = SURVEY_FORM.reduce((n,g)=>n+g.rows.length,0);
+  const pre = SURVEY_FORM.reduce((n,g)=>n+g.rows.filter(r=>r.src && String(r.src(d)??'').trim()!=='').length,0);
   const secs = SURVEY_FORM.map(g=>`
     <div class="sv-sec" style="--kc:${g.kc}">
       <div class="sv-sec-h">${g.ic?`<span class="sv-sec-ic">${g.ic}</span>`:''}${esc(g.grp)}</div>
       ${g.rows.map(r=>`<div class="sv-row">
-        <span class="sv-chk" onclick="svCheck(this)" title="확인"></span>
         <span class="sv-k">${esc(r.k)}</span>
-        <div class="sv-v">${svRowContent(r)}</div>
-        <input class="tinput sv-note" placeholder="비고">
+        <div class="sv-v">${svRowContent(r,d)}</div>
       </div>`).join('')}
     </div>`).join('');
-  return `<div class="sv-report"><div class="sv-report-h">📋 현장실측 체크리스트</div>${secs}</div>`;
+  return `<div class="sv-report" id="svform-${d.id}" oninput="svRecount('${d.id}')" onclick="svRecount('${d.id}')">
+    <div class="sv-report-h">📋 현장실측 체크리스트 <span id="svfc-${d.id}" class="sv-count">${pre} / ${total}</span></div>${secs}</div>`;
 }
 function renderSurveyPhotos(d){
   const items = SURVEY_PHOTOS.map(p=>`<div class="sv-ph-item">
@@ -3610,12 +3631,8 @@ function renderSurveyPhotos(d){
 function renderSurvey(){
   const cards = DEALS.filter(d=>['survey_handover','survey_sched','survey_progress'].includes(d.stage)).map(d=>{
     let body='', pill;
-    const a = getApproval(d,'survey_schedule');
     if(d.stage==='survey_handover'){
-      // 이전 반려가 있으면 사유 표시 후 일정 재조정
-      const rej = (a && a.status==='rejected')
-        ? `<div class="tl-note" style="margin-top:12px">↩︎ 부서장 반려 · ${esc(a.approver)} (${esc(a.decidedAt)})${a.comment?` — “${esc(a.comment)}”`:''} · 일정 재조정 후 재요청하세요</div>` : '';
-      body=`${rej}<div class="section-title" style="font-size:12px;margin:14px 0 8px">실측 담당 배정 (담당자 + 설계팀원 1 · 시공팀원 1)</div>
+      body=`<div class="section-title" style="font-size:12px;margin:14px 0 8px">실측 담당 배정 (담당자 + 설계팀원 1 · 시공팀원 1)</div>
         <div class="field-row">
           <div class="tfield"><label>담당자 (PIC)</label><input class="tinput" value="이도현" id="sp-${d.id}"></div>
           <div class="tfield"><label>실측 일시</label><input class="tinput" value="2026-09-24 10:00" id="sd-${d.id}"></div>
@@ -3624,20 +3641,14 @@ function renderSurvey(){
           <div class="tfield"><label>설계팀원</label><input class="tinput" value="이도현" id="sg-${d.id}"></div>
           <div class="tfield"><label>시공팀원</label><input class="tinput" value="최현우" id="sc-${d.id}"></div>
         </div>
-        <div class="wf-actions"><button class="btn primary sm" onclick="wfSchedule('${d.id}')">스케줄 등록 · 부서장 결재요청</button></div>`;
+        <div class="wf-actions"><button class="btn primary sm" onclick="wfSchedule('${d.id}')">스케줄 등록 · 실측 진행 →</button></div>`;
       pill=['wait','실측 대기'];
-    } else if(d.stage==='survey_sched'){
-      body=`<div class="tl-note" style="margin-top:12px;color:var(--prog-ink);background:var(--prog-bg)">${APPROVAL_GATES.survey_schedule.ctx(d)} · 담당 ${esc((d.survey&&d.survey.pic)||'-')} — 부서장 승인 대기</div>
-        <div class="appr-meta">요청 ${esc(a&&a.requestedBy||'')} · ${esc(a&&a.requestedAt||'')}</div>
-        ${approvalActions(d,'survey_schedule')}`;
-      pill=['wait','승인 대기'];
     } else {
-      body=`<div class="tl-note" style="margin-top:12px;color:var(--ok-ink);background:var(--ok-bg)">✓ 부서장 승인 · ${esc(a&&a.approver||'')} (${esc(a&&a.decidedAt||'')})${a&&a.comment?` — “${esc(a.comment)}”`:''}</div>
-        <div class="tl-note" style="margin-top:8px;color:var(--prog-ink);background:var(--prog-bg)">${APPROVAL_GATES.survey_schedule.ctx(d)} · 담당 ${esc((d.survey&&d.survey.pic)||'-')}</div>
+      body=`<div class="tl-note" style="margin-top:12px;color:var(--prog-ink);background:var(--prog-bg)">🗓 ${esc((d.survey&&d.survey.date)||'-')} · 설계 ${esc((d.survey&&d.survey.designer)||'-')} + 시공 ${esc((d.survey&&d.survey.builder)||'-')} · 담당 ${esc((d.survey&&d.survey.pic)||'-')}</div>
         <div class="section-title" style="font-size:12px;margin:14px 0 10px">실측 결과 보고서</div>
         <div class="sv-grid">${renderSurveyForm(d)}${renderSurveyPhotos(d)}</div>
-        <textarea id="rep-${d.id}" class="ta" placeholder="종합 의견 · 특이사항 — 전반적인 현장 상황, 리스크, 추가 확인이 필요한 사항 등"></textarea>
-        <div class="wf-actions"><button class="btn primary sm" onclick="wfAction('${d.id}','survey_done','실측 완료 — 영업팀 실계약으로 이관')">실측 완료 처리 →</button></div>`;
+        <textarea id="rep-${d.id}" class="ta" placeholder="종합 의견 · 특이사항(선택) — 전반적인 현장 상황, 리스크, 추가 확인이 필요한 사항 등 · 공란 가능"></textarea>
+        <div class="wf-actions"><button class="btn primary sm" onclick="trySurveyDone('${d.id}')">실측 완료 처리 →</button><span class="lr-s">모든 항목 입력 + 사진 전부 첨부 시 완료할 수 있습니다 (종합 의견은 공란 가능)</span></div>`;
       pill=['prog','실측 진행'];
     }
     return `<div class="card pad" style="margin-bottom:14px">
@@ -3650,7 +3661,7 @@ function renderSurvey(){
   }).join('');
   /* [임시·개발테스트용] dev-testbar — 테스트 후 삭제 */
   const testbar = `<div class="dev-testbar">🧪 개발 테스트용 · <button class="btn dark sm" onclick="spawnTestSurvey()">＋ 테스트 현장 불러오기</button> <span class="lr-s">가계약 완료를 거치지 않고 실측 대기 현장을 즉시 추가합니다. 테스트 후 삭제 예정.</span></div>`;
-  return wfHead('현장 실측','가계약 완료 현장의 실측입니다. 담당 배정(설계1·시공1) → 스케줄 등록 → <b>부서장 결재</b> → 결과 보고서 입력 → 실측 완료. 결재는 상단 <b>결재</b> 탭에서도 처리할 수 있습니다.') + testbar + (cards || emptyMsg('실측 대상 현장이 없습니다.'));
+  return wfHead('현장 실측','가계약 완료 현장의 실측입니다. 담당 배정(설계1·시공1) → 스케줄 등록 → 결과 보고서 입력 → 실측 완료. <b>모든 항목 입력 + 사진 전부 첨부</b> 시 완료 처리됩니다.') + testbar + (cards || emptyMsg('실측 대상 현장이 없습니다.'));
 }
 
 // 실계약 (영업) — 실측완료 알림 + 본계약서 임의 양식
@@ -3698,9 +3709,8 @@ function wfReject(id){
 function wfSchedule(id){
   const d=DEALS.find(x=>x.id===id); if(!d) return;
   d.survey={ pic:(document.getElementById('sp-'+id)||{}).value||'', date:(document.getElementById('sd-'+id)||{}).value||'', designer:(document.getElementById('sg-'+id)||{}).value||'', builder:(document.getElementById('sc-'+id)||{}).value||'' };
-  requestApproval(d,'survey_schedule');
-  wfAction(id,'survey_sched','실측 스케줄 등록 — 부서장 결재 요청');
-  refreshTabBadges();
+  // 승인 적용 보류 — 결재 요청 없이 바로 실측 진행(결과 보고서 작성)으로 넘어감
+  wfAction(id,'survey_progress','실측 스케줄 등록 — 실측 진행');
 }
 
 /* ============================================================
@@ -4426,6 +4436,9 @@ function refreshTabBadges(){
   set('admin', byTeam('행정'));
   set('approvals', myPendingCount());
   set('devreqs', devreqs.filter(d=>d.status==='접수').length);
+  // 승인 게이트가 하나도 등록되지 않았으면 결재 탭 숨김(게이트 재등록 시 자동 복원). 기능/화면은 보존.
+  const apTab=document.querySelector('.maintab[data-tab="approvals"]');
+  if(apTab) apTab.style.display = Object.keys(APPROVAL_GATES).length ? '' : 'none';
 }
 
 document.getElementById('roleSelect').addEventListener('change',e=>{
