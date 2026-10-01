@@ -383,16 +383,19 @@ button{font-family:inherit;cursor:pointer}
 .sv-report,.sv-photos{border:1px solid var(--border);background:var(--surface);border-radius:11px;padding:13px 14px}
 .sv-report-h{font-size:12.5px;font-weight:800;color:var(--ink);margin:0 0 11px;display:flex;align-items:center;gap:7px}
 .sv-count{margin-left:auto;font-size:11px;font-weight:800;color:var(--accent-ink);background:var(--accent-soft);padding:2px 9px;border-radius:20px}
-.sv-sec{margin-bottom:12px}
+.sv-sec{margin-bottom:11px;border:1px solid color-mix(in srgb,var(--kc,var(--border)) 28%,var(--border));border-left:3px solid var(--kc,var(--accent));border-radius:10px;background:color-mix(in srgb,var(--kc,var(--surface-2)) 5%,var(--surface));overflow:hidden}
 .sv-sec:last-child{margin-bottom:0}
-.sv-sec-h{font-size:11.5px;font-weight:800;color:var(--prog-ink);background:var(--prog-bg);border-radius:6px;padding:4px 10px;margin-bottom:7px}
-.sv-row{display:grid;grid-template-columns:19px 94px minmax(0,1fr) 90px;gap:9px;align-items:center;padding:3px 0}
+.sv-sec-h{font-size:12px;font-weight:800;color:color-mix(in srgb,var(--kc,var(--prog-ink)) 72%,var(--ink));background:color-mix(in srgb,var(--kc,transparent) 11%,transparent);border-bottom:1px solid color-mix(in srgb,var(--kc,var(--border)) 20%,var(--border));padding:8px 12px;display:flex;align-items:center;gap:7px}
+.sv-sec-ic{font-size:13px;line-height:1}
+.sv-row{display:grid;grid-template-columns:19px 94px minmax(0,1fr) 90px;gap:9px;align-items:center;padding:4px 12px}
+.sv-sec .sv-row:first-of-type{padding-top:8px}
+.sv-sec .sv-row:last-child{padding-bottom:9px}
 @media(max-width:1180px){.sv-row{grid-template-columns:19px 88px minmax(0,1fr)}.sv-row .sv-note{display:none}}
 .sv-k{font-size:12px;font-weight:700;color:var(--ink-2);line-height:1.3}
 .sv-chk{width:17px;height:17px;border:1.5px solid var(--border-strong);border-radius:5px;cursor:pointer;flex:none;position:relative;transition:.12s;background:var(--surface)}
-.sv-chk:hover{border-color:var(--accent)}
-.sv-chk.on{background:var(--accent);border-color:var(--accent)}
-.sv-chk.on::after{content:'✓';position:absolute;inset:0;display:grid;place-items:center;color:var(--accent-ink);font-size:11px;font-weight:900}
+.sv-chk:hover{border-color:var(--kc,var(--accent))}
+.sv-chk.on{background:var(--kc,var(--accent));border-color:var(--kc,var(--accent))}
+.sv-chk.on::after{content:'✓';position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:11px;font-weight:900}
 .sv-v{min-width:0}
 .sv-inpwrap{display:flex;align-items:center;gap:6px}
 .sv-inpwrap .sv-sm2{padding:6px 9px;font-size:12px}
@@ -404,8 +407,8 @@ button{font-family:inherit;cursor:pointer}
 .sv-chips{display:flex;gap:6px;flex-wrap:wrap}
 .sv-chip{font-size:11px;font-weight:700;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--border-strong);border-radius:20px;padding:4px 11px;cursor:pointer;transition:.12s;user-select:none}
 .sv-chip.sm{padding:3px 9px;font-size:10.5px}
-.sv-chip:hover{border-color:var(--accent)}
-.sv-chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.sv-chip:hover{border-color:var(--kc,var(--accent))}
+.sv-chip.on{background:var(--kc,var(--accent));border-color:var(--kc,var(--accent));color:#fff}
 .sv-ph-note{font-size:10.5px;color:var(--muted);background:var(--surface-2);border-radius:7px;padding:7px 9px;margin-bottom:11px;line-height:1.55}
 .sv-ph-item{padding:9px 0;border-bottom:1px dashed var(--border)}
 .sv-ph-item:last-child{border-bottom:0;padding-bottom:0}
@@ -3533,20 +3536,20 @@ async function saveDevreqReply(id){
 // 현장 실측 (설계) — 스케줄+부서장 결재+결과보고서
 /* ===== 현장실측 결과 보고서: 체크리스트 양식(1시트) + 사진 첨부 체크(2시트) ===== */
 const SURVEY_FORM = [
-  {grp:'현장 기본정보', rows:[
+  {grp:'현장 기본정보', ic:'🏢', kc:'#5b86c4', rows:[
     {k:'현장명'}, {k:'주소'}, {k:'발전소 용량', unit:'kW'},
   ]},
-  {grp:'차량 및 장비 진입', rows:[
+  {grp:'차량 및 장비 진입', ic:'🚚', kc:'#c9902f', rows:[
     {k:'진입도로 폭', unit:'m'}, {k:'자재 하차 / 적치 장소'}, {k:'양중 작업 위치'},
   ]},
-  {grp:'주요 구조재', rows:[
+  {grp:'주요 구조재', ic:'🏗️', kc:'#3fa9a0', rows:[
     {k:'용마루 폭', unit:'m'},
     {k:'용마루 방향', opt:['남북','동서','기타']},
     {k:'H-BEAM 규격'},
     {k:'기둥 간격', unit:'m'},
     {k:'중도리 개수', unit:'EA'},
   ]},
-  {grp:'지붕 및 설치면적', rows:[
+  {grp:'지붕 및 설치면적', ic:'🏠', kc:'#5b9e6f', rows:[
     {k:'지붕 전체', wh:true},
     {k:'지붕 경사도', unit:'°'},
     {k:'판넬 두께', unit:'mm'},
@@ -3555,7 +3558,7 @@ const SURVEY_FORM = [
     {k:'설치 장애물', optm:['환기구','실외기','적치물','기타']},
     {k:'음영 장애물', optm:['파라펫','기타']},
   ]},
-  {grp:'전기실 위치', rows:[
+  {grp:'전기실 위치', ic:'⚡', kc:'#8b7bc4', rows:[
     {k:'예정 위치'},
     {k:'설치 공간', wh:true},
     {k:'인입 경로', optm:['가공','지중','트레이','기타']},
@@ -3581,8 +3584,8 @@ function svRowContent(r){
 }
 function renderSurveyForm(d){
   const secs = SURVEY_FORM.map(g=>`
-    <div class="sv-sec">
-      <div class="sv-sec-h">${esc(g.grp)}</div>
+    <div class="sv-sec" style="--kc:${g.kc}">
+      <div class="sv-sec-h">${g.ic?`<span class="sv-sec-ic">${g.ic}</span>`:''}${esc(g.grp)}</div>
       ${g.rows.map(r=>`<div class="sv-row">
         <span class="sv-chk" onclick="svCheck(this)" title="확인"></span>
         <span class="sv-k">${esc(r.k)}</span>
