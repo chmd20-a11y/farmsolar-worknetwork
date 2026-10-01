@@ -586,6 +586,16 @@ button{font-family:inherit;cursor:pointer}
 .wfn:hover rect,.wfn:hover polygon{opacity:.82}
 .wfn text{pointer-events:none;user-select:none}
 .wfd-note{font-size:11.5px;color:var(--muted);margin-top:12px;line-height:1.65}
+/* 설계 진행 현황(진행률) */
+.dpb-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin:2px 0 16px}
+.dpb-kpi{background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:12px 14px}
+.dpb-k-l{font-size:11.5px;color:var(--muted);font-weight:700}
+.dpb-k-v{font-size:26px;font-weight:800;margin-top:5px;letter-spacing:-.5px;font-variant-numeric:tabular-nums;line-height:1}
+.dpb-k-v small{font-size:13px;font-weight:700;color:var(--muted);margin-left:2px}
+.dpb-bar{display:inline-block;vertical-align:middle;width:150px;max-width:52%;height:8px;border-radius:5px;background:var(--surface-3);overflow:hidden}
+.dpb-fill{height:100%;border-radius:5px;transition:width .4s}
+.dpb-pct{display:inline-block;vertical-align:middle;margin-left:9px;font-size:12px;font-weight:800;font-variant-numeric:tabular-nums}
+@media(max-width:720px){.dpb-kpis{grid-template-columns:repeat(2,1fr)}}
 /* 설치 가능성 진단(타당성검토) */
 .feas-verdict{display:flex;align-items:center;gap:11px;padding:12px 15px;border-radius:12px;font-weight:800;font-size:15px;margin:2px 0 12px;border:1px solid var(--border)}
 .feas-verdict .fv-b{font-size:20px;line-height:1}
@@ -1588,6 +1598,50 @@ function renderTeamBoard(team){
       <thead><tr><th style="min-width:150px">현장</th>${head}</tr></thead>
       <tbody>${rows}</tbody>
     </table></div>
+  </div>`;
+}
+
+/* ============================================================
+   설계 현황판 — 설계 진행상태(단계) 기준 진행률(%)
+   DEALS(설계 파이프라인) 단계를 %로 환산 · 현장별 진행바 + 상단 요약
+   ============================================================ */
+const DESIGN_FLOW = [
+  {label:'신규 접수',      pct:20,  stages:['handover_design']},
+  {label:'타당성검토',     pct:45,  stages:['feasibility']},
+  {label:'현장 실측',      pct:70,  stages:['survey_handover','survey_sched','survey_progress']},
+  {label:'실측 완료',      pct:88,  stages:['survey_done']},
+  {label:'검토 완료 · 전달', pct:100, stages:['approved']},
+];
+function designProgress(d){
+  if(d.stage==='rejected') return {label:'반려 · 보완 필요', pct:30, cls:'risk'};
+  for(const s of DESIGN_FLOW){ if(s.stages.includes(d.stage)) return {label:s.label, pct:s.pct, cls: s.pct>=100?'done':'prog'}; }
+  return null;   // 설계 파이프라인 단계가 아님(영업 quote 등)
+}
+function renderDesignProgressBoard(){
+  const items = DEALS.filter(d=>!isReservedId(d.id)).map(d=>({d, p:designProgress(d)})).filter(x=>x.p);
+  const rej    = items.filter(x=>x.d.stage==='rejected');
+  const active = items.filter(x=>x.d.stage!=='rejected');
+  const doneN  = active.filter(x=>x.p.pct>=100).length;
+  const inprog = active.length - doneN;
+  const avg    = active.length ? Math.round(active.reduce((a,x)=>a+x.p.pct,0)/active.length) : 0;
+  const barColor = cls => cls==='done' ? 'var(--ok)' : cls==='risk' ? 'var(--risk)' : 'var(--prog)';
+  const rows = items.slice().sort((a,b)=> (a.d.stage==='rejected'?-1:0)-(b.d.stage==='rejected'?-1:0) || b.p.pct-a.p.pct).map(({d,p})=>`
+    <tr class="site-row"${d.proposal||d.quoteOpts?` onclick="openProposal('${d.id}')" style="cursor:pointer"`:''}>
+      <td><div class="lr-t" style="font-size:13px">${esc(d.site)} · ${d.cap.toLocaleString()}kW <span class="type-chip">${esc(d.type)}</span></div><div class="site-id">${esc(d.id)} · 영업 ${esc(d.rep)}</div></td>
+      <td><span class="pill ${p.cls}"><span class="pd"></span>${esc(p.label)}</span></td>
+      <td><span class="dpb-bar"><span class="dpb-fill" style="width:${p.pct}%;background:${barColor(p.cls)}"></span></span><span class="dpb-pct" style="color:${barColor(p.cls)}">${p.pct}%</span></td>
+      <td>${esc(d.rep)}</td></tr>`).join('');
+  return `<div class="card">
+    <div class="card-head"><h2>설계 진행 현황</h2><span class="ch-sub">신규 접수 → 타당성검토 → 현장 실측 → 검토 완료·전달 (단계 기준 진행률)</span></div>
+    <div class="dpb-kpis">
+      <div class="dpb-kpi"><div class="dpb-k-l">평균 진행률</div><div class="dpb-k-v" style="color:var(--accent-ink)">${avg}<small>%</small></div></div>
+      <div class="dpb-kpi"><div class="dpb-k-l">진행중</div><div class="dpb-k-v">${inprog}<small>건</small></div></div>
+      <div class="dpb-kpi"><div class="dpb-k-l">검토 완료·전달</div><div class="dpb-k-v">${doneN}<small>건</small></div></div>
+      <div class="dpb-kpi"><div class="dpb-k-l">반려·보완</div><div class="dpb-k-v" style="${rej.length?'color:var(--risk)':''}">${rej.length}<small>건</small></div></div>
+    </div>
+    ${items.length ? `<div class="table-scroll"><table class="chk-table">
+      <thead><tr><th style="min-width:180px">현장</th><th style="min-width:116px">현재 단계</th><th style="min-width:230px">진행률</th><th style="min-width:70px">담당</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>` : emptyMsg('진행 중인 설계 현장이 없습니다.')}
   </div>`;
 }
 
@@ -3999,7 +4053,7 @@ function activateItem(tab, btn){
   } else if(btn.dataset.board){
     const map = {'시공':'c-board','행정':'a-status','설계':'d-overview'};
     const target = map[btn.dataset.board];
-    document.getElementById('sub-'+target).innerHTML = renderTeamBoard(btn.dataset.board);
+    document.getElementById('sub-'+target).innerHTML = btn.dataset.board==='설계' ? renderDesignProgressBoard() : renderTeamBoard(btn.dataset.board);
     view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-'+target));
   } else if(btn.dataset.wf){
     const s = WF_SCREENS[btn.dataset.wf];
