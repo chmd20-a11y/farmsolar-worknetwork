@@ -474,6 +474,24 @@ button{font-family:inherit;cursor:pointer}
   .lh-slogan h2{font-size:21px}
   .pledge{padding:15px 17px}.pledge p{font-size:14px;line-height:1.75}
 }
+/* 로그인 페이지 전체 배경 — 태양광 필드(원근 격자) + 햇살 글로우. #loginScrim 전용(adminScrim 제외) */
+#loginScrim{overflow:hidden;
+  background:
+    radial-gradient(ellipse 58% 48% at 84% 8%, rgba(202,162,60,.22), transparent 55%),
+    radial-gradient(circle at 12% 88%, rgba(202,162,60,.07), transparent 46%),
+    linear-gradient(168deg,#0e2a30 0%,#09191e 52%,#050d10 100%)}
+#loginScrim::before{content:"";position:absolute;left:50%;bottom:-8%;width:230%;height:60%;
+  transform:translateX(-50%) perspective(440px) rotateX(63deg);transform-origin:bottom center;
+  background-image:linear-gradient(rgba(202,162,60,.17) 1px,transparent 1px),linear-gradient(90deg,rgba(202,162,60,.11) 1px,transparent 1px);
+  background-size:50px 50px;
+  -webkit-mask-image:linear-gradient(to top,#000 6%,transparent 72%);mask-image:linear-gradient(to top,#000 6%,transparent 72%);
+  z-index:0;pointer-events:none}
+#loginScrim::after{content:"";position:absolute;top:-26%;right:-8%;width:78%;height:96%;
+  background:conic-gradient(from 205deg at 100% 0%,rgba(202,162,60,.11),transparent 22%,rgba(202,162,60,.06) 38%,transparent 52%);
+  z-index:0;pointer-events:none;animation:sunbreathe 11s ease-in-out infinite}
+@keyframes sunbreathe{0%,100%{opacity:.72}50%{opacity:1}}
+#loginScrim .login-wrap{position:relative;z-index:2}
+@media(prefers-reduced-motion:reduce){#loginScrim::after{animation:none}}
 
 /* 스탯 미니 */
 .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
