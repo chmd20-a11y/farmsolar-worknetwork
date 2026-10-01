@@ -426,6 +426,10 @@ button{font-family:inherit;cursor:pointer}
 .login-box h2{font-size:18px;font-weight:800;margin:0;letter-spacing:-.3px}
 .login-box .lb-sub{font-size:12px;color:var(--muted);margin:2px 0 18px}
 .login-box label{font-size:12px;font-weight:700;color:var(--ink-2);display:block;margin:14px 0 6px}
+.auth-tabs{display:flex;gap:6px;background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:4px;margin:4px 0 16px}
+.auth-tab{flex:1;border:none;background:transparent;color:var(--ink-2);font-weight:800;font-size:13.5px;padding:9px 0;border-radius:8px;cursor:pointer;transition:.12s}
+.auth-tab.active{background:var(--accent);color:var(--accent-ink);box-shadow:var(--shadow-sm)}
+.login-box .field-row label,.login-box .tfield label{margin:0 0 6px}
 .team-pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(62px,1fr));gap:8px}
 .team-pick button{border:1px solid var(--border-strong);background:var(--surface-2);border-radius:10px;padding:11px 0;font-weight:700;font-size:13px;color:var(--ink-2);transition:.12s}
 .team-pick button:hover{background:var(--surface-3);color:var(--ink)}
@@ -673,27 +677,57 @@ button{font-family:inherit;cursor:pointer}
 .cs-tbl-grp .cs-grp-end > td{border-bottom:2px solid var(--border)}
 </style>
 
-<!-- ============ 간편 로그인 (필드테스트: 이름·팀 선택) ============ -->
+<!-- ============ 회원 로그인 / 회원가입 ============ -->
 <div class="login-scrim" id="loginScrim">
-  <div class="login-box">
+  <div class="login-box" style="max-height:90vh;overflow:auto">
     <div class="login-brand">
       <div class="brand-mark" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.2" fill="#3d2f08"/><g stroke="#3d2f08" stroke-width="2" stroke-linecap="round"><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></g></svg>
       </div>
       <div><h2>팜솔라그룹 업무네트웍</h2></div>
     </div>
-    <div class="lb-sub">필드테스트 · 이름과 소속 팀을 선택하고 시작하세요.</div>
-    <label>이름</label>
-    <input id="loginName" class="tinput" placeholder="이름 입력 (선택)" autocomplete="off" />
-    <label>소속 팀</label>
-    <div class="team-pick" id="teamPick">
-      <button data-team="영업">영업</button>
-      <button data-team="설계">설계</button>
-      <button data-team="시공">시공</button>
-      <button data-team="행정">행정</button>
-      <button data-team="관리자">관리자</button>
+    <div class="lb-sub" id="authSub">회사 계정으로 로그인하세요.</div>
+    <div class="auth-tabs">
+      <button type="button" class="auth-tab active" id="tabLogin" onclick="authTab('login')">로그인</button>
+      <button type="button" class="auth-tab" id="tabSignup" onclick="authTab('signup')">회원가입</button>
     </div>
-    <button class="btn primary" id="loginGo">시작하기 →</button>
+
+    <!-- 로그인 -->
+    <div id="authLogin">
+      <label>휴대폰번호</label>
+      <input id="lgPhone" class="tinput" inputmode="numeric" placeholder="010-0000-0000" autocomplete="username">
+      <label style="margin-top:10px">비밀번호</label>
+      <input id="lgPw" class="tinput" type="password" placeholder="비밀번호" autocomplete="current-password">
+      <button class="btn primary" style="width:100%;justify-content:center;margin-top:16px;padding:12px" id="lgGo">로그인 →</button>
+    </div>
+
+    <!-- 회원가입 -->
+    <div id="authSignup" style="display:none">
+      <div class="field-row">
+        <div class="tfield"><label>지사</label><select id="suBranch" class="tinput">
+          <option value="광주본사">광주본사</option><option value="장흥지사">장흥지사</option><option value="영암지사">영암지사</option><option value="파주지사" selected>파주지사</option><option value="평택지사">평택지사</option><option value="해남사업소">해남사업소</option><option value="강화사업소">강화사업소</option>
+        </select></div>
+        <div class="tfield"><label>이름</label><input id="suName" class="tinput" placeholder="이름"></div>
+      </div>
+      <div class="field-row" style="margin-top:10px">
+        <div class="tfield"><label>직급</label><select id="suRank" class="tinput">
+          <option>사원</option><option>주임</option><option>대리</option><option>과장</option><option>차장</option><option>부장</option><option>이사</option><option>대표</option>
+        </select></div>
+        <div class="tfield"><label>직책</label><select id="suPos" class="tinput">
+          <option>팀원</option><option>팀장</option><option>실장</option><option>지사장</option><option>본부장</option><option>대표</option>
+        </select></div>
+      </div>
+      <label style="margin-top:10px">연락처(휴대폰)</label>
+      <input id="suPhone" class="tinput" inputmode="numeric" placeholder="010-0000-0000" autocomplete="off">
+      <div class="field-row" style="margin-top:10px">
+        <div class="tfield"><label>비밀번호(6자 이상)</label><input id="suPw" class="tinput" type="password" autocomplete="new-password"></div>
+        <div class="tfield"><label>비밀번호 확인</label><input id="suPw2" class="tinput" type="password" autocomplete="new-password"></div>
+      </div>
+      <button class="btn primary" style="width:100%;justify-content:center;margin-top:16px;padding:12px" id="suGo">가입 신청 →</button>
+      <div class="lb-sub" style="margin-top:10px">가입 후 <b>관리자 승인</b>이 되면 로그인할 수 있습니다. (회사 소속 인원만)</div>
+    </div>
+
+    <div id="authErr" class="note" style="color:var(--risk-ink);min-height:16px;margin-top:10px"></div>
     <div class="login-mode" id="loginMode"></div>
   </div>
 </div>
@@ -732,6 +766,27 @@ button{font-family:inherit;cursor:pointer}
       <div class="tfield" style="margin-top:10px"><label>요청 내용</label><textarea class="ta" id="dr-body" placeholder="원하는 기능·수정 내용과 이유, 가능하면 예시를 구체적으로 적어주세요."></textarea></div>
     </div>
     <div class="modal-foot"><button class="btn ghost" onclick="closeDevreq()">취소</button><button class="btn primary" onclick="submitDevreq()">등록</button></div>
+  </div>
+</div>
+
+<!-- 내 계정 (비밀번호 변경 · 회원 탈퇴) -->
+<div class="modal-scrim" id="accountScrim" onclick="if(event.target===this)closeAccount()">
+  <div class="modal">
+    <div class="modal-head"><h3>내 계정</h3><p id="acHead"></p></div>
+    <div class="modal-body">
+      <div class="section-title" style="font-size:12px;margin:0 0 8px">🔑 비밀번호 변경</div>
+      <div class="field-row">
+        <div class="tfield"><label>새 비밀번호(6자+)</label><input class="tinput" type="password" id="acPw1" autocomplete="new-password"></div>
+        <div class="tfield"><label>새 비밀번호 확인</label><input class="tinput" type="password" id="acPw2" autocomplete="new-password"></div>
+      </div>
+      <div class="wf-actions"><button class="btn primary sm" onclick="acChangePw()">비밀번호 변경</button></div>
+      <div id="acMsg" class="note" style="min-height:16px;margin-top:6px"></div>
+      <div style="border-top:1px solid var(--border);margin:16px 0"></div>
+      <div class="section-title" style="font-size:12px;margin:0 0 8px;color:var(--risk-ink)">⚠ 회원 탈퇴</div>
+      <div class="lr-s" style="margin-bottom:9px">탈퇴하면 로그인할 수 없게 됩니다. (기록은 관리자가 완전 삭제할 수 있습니다)</div>
+      <button class="btn ghost sm" id="acWithdrawBtn" onclick="acArmWithdraw()">회원 탈퇴</button>
+    </div>
+    <div class="modal-foot"><button class="btn ghost" onclick="closeAccount()">닫기</button></div>
   </div>
 </div>
 
@@ -802,6 +857,9 @@ button{font-family:inherit;cursor:pointer}
             <div class="su-name" id="sideUserName">전체 관리자</div>
             <div class="su-role" id="sideUserRole">그룹 통합 뷰</div>
           </div>
+          <button class="su-logout" id="btnAccount" type="button" title="내 계정 (비밀번호·탈퇴)" aria-label="내 계정" style="display:none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+          </button>
           <button class="su-logout" id="btnAdmin" type="button" title="관리자 · 회원/권한 관리" aria-label="관리자" style="display:none" onclick="tryOpenAdmin()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </button>
@@ -1539,7 +1597,7 @@ function orgTeams(){ return Object.keys(ORG); }
 function teamHeads(team){ return (ORG[team]||[]).filter(m=>m.rank==='부서장').map(m=>m.name); }
 function isTeamHead(team, name){ return !!name && teamHeads(team).includes(name); }
 // 관리자(전결) = 관리자 팀으로 로그인. 관리자 페이지 편집은 별도 암호 필요(adminUnlocked).
-function isOwner(){ return !!(currentUser && currentUser.team==='관리자'); }
+function isOwner(){ return !!(currentUser && currentUser.role==='admin'); }
 function adminUnlocked(){ try{ return sessionStorage.getItem('fsnet_admin_ok')==='1'; }catch(e){ return false; } }
 // 관리자 암호(기기별 저장 — 공유 안 함, 보안). 해시만 보관. '' = 미설정(최초 설정 필요).
 function _adminHash(s){ let h=5381; for(let i=0;i<s.length;i++){ h=((h<<5)+h)+s.charCodeAt(i); h|=0; } return String(h>>>0); }
@@ -2613,21 +2671,23 @@ const APPROVAL_GATES = {
 };
 function nowStr(){ const d=new Date(), p=n=>String(n).padStart(2,'0');
   return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; }
-// 로그인한 사람 표기 (결재 요청자·화면용)
-function userLabel(){ return currentUser ? `${currentUser.team} ${currentUser.name}` : '미로그인'; }
+// 로그인한 사람 표기 (결재 요청자·화면용) — 지사 기준
+function userLabel(){ return currentUser ? `${currentUser.branch||''} ${currentUser.name}`.trim() : '미로그인'; }
+function anyTeamHead(name){ return orgTeams().some(t=>isTeamHead(t, name)); }
 function roleDisplayName(){
   if(!currentUser) return '미로그인';
-  if(isOwner()) return `관리자 ${currentUser.name}`;
-  return `${currentUser.name} · ${currentUser.team} ${isTeamHead(currentUser.team, currentUser.name)?'부서장':'실무자'}`;
+  if(isOwner()) return `${currentUser.name} · 관리자`;
+  const head = anyTeamHead(currentUser.name);
+  return `${currentUser.name} · ${currentUser.branch||''} ${currentUser.position||(head?'부서장':'실무자')}`.trim();
 }
 function approverLabel(){
   if(!currentUser) return '관리자';
-  return isOwner() ? `${currentUser.name} (관리자)` : `${currentUser.name} (${currentUser.team} 부서장)`;
+  return isOwner() ? `${currentUser.name} (관리자)` : `${currentUser.name} (${currentUser.position||'부서장'})`;
 }
-// 결재권: 로그인한 사람이 그 팀 부서장인가 (관리자 로그인 = 전결)
-function isDeptHead(team){ if(isOwner()) return true; return !!(currentUser && currentUser.team===team && isTeamHead(team, currentUser.name)); }
-// 실무자(결재권 없음): 로그인했으나 관리자도 아니고 본인 팀 부서장도 아님
-function isStaff(){ return !!(currentUser && !isOwner() && !isTeamHead(currentUser.team, currentUser.name)); }
+// 결재권: 로그인한 사람 이름이 그 팀 부서장 명단(ORG)에 있는가 (관리자=전결). 지사 무관(회원·권한에서 지정).
+function isDeptHead(team){ if(isOwner()) return true; return !!(currentUser && isTeamHead(team, currentUser.name)); }
+// 실무자(결재권 없음): 로그인했으나 관리자도 아니고 어느 팀의 부서장도 아님
+function isStaff(){ return !!(currentUser && !isOwner() && !anyTeamHead(currentUser.name)); }
 // 결재 요청 (실무자 → 대기). 반려됐던 게 재요청되면 pending으로 리셋.
 function requestApproval(d, gateKey){
   d.approvals = d.approvals || {};
@@ -2837,6 +2897,75 @@ function mngChangePw(){
   e.style.color='var(--ok-ink)'; e.textContent='✓ 저장되었습니다.';
   toast('관리자 암호가 변경되었습니다');
 }
+
+/* ============================================================
+   내 계정 (비밀번호 변경 · 회원 탈퇴)
+   ============================================================ */
+function openAccount(){
+  if(!currentUser) return;
+  document.getElementById('acHead').textContent = `${currentUser.name} · ${currentUser.branch||''} ${currentUser.position||''}`.trim();
+  ['acPw1','acPw2'].forEach(id=>{ const e=document.getElementById(id); if(e) e.value=''; });
+  const m=document.getElementById('acMsg'); if(m) m.textContent='';
+  const wb=document.getElementById('acWithdrawBtn'); if(wb){ wb.textContent='회원 탈퇴'; wb.classList.remove('danger'); }
+  _acArm=false;
+  document.getElementById('accountScrim').classList.add('open');
+}
+function closeAccount(){ document.getElementById('accountScrim').classList.remove('open'); }
+async function acChangePw(){
+  const m=document.getElementById('acMsg'); m.style.color='var(--risk-ink)';
+  const a=(document.getElementById('acPw1')||{}).value||'', b=(document.getElementById('acPw2')||{}).value||'';
+  if(!a||a.length<6){ m.textContent='비밀번호는 6자 이상이어야 합니다.'; return; }
+  if(a!==b){ m.textContent='비밀번호가 일치하지 않습니다.'; return; }
+  const r=await changeMyPassword(a);
+  if(r.error){ m.textContent=r.error; return; }
+  m.style.color='var(--ok-ink)'; m.textContent='✓ 변경되었습니다.';
+  document.getElementById('acPw1').value=''; document.getElementById('acPw2').value='';
+  toast('비밀번호가 변경되었습니다');
+}
+let _acArm=false;
+function acArmWithdraw(){
+  const wb=document.getElementById('acWithdrawBtn');
+  if(!_acArm){ _acArm=true; wb.textContent='정말 탈퇴하시겠습니까? (한 번 더 클릭)'; wb.classList.add('danger');
+    setTimeout(()=>{ _acArm=false; if(wb){ wb.textContent='회원 탈퇴'; wb.classList.remove('danger'); } }, 4000); return; }
+  _acArm=false; acDoWithdraw();
+}
+async function acDoWithdraw(){ const r=await withdrawMe(); if(r.error){ toast('탈퇴 실패: '+r.error); return; } closeAccount(); toast('탈퇴 처리되었습니다'); }
+
+/* ============================================================
+   관리자 · 회원 관리 (가입 승인 · 역할 · 탈퇴)
+   ============================================================ */
+function renderManageMembers(){
+  setTimeout(fillManageMembers, 0);
+  return wfHead('회원 관리','가입 승인, 회원 목록, 관리자 지정, 탈퇴를 처리합니다. 변경은 모든 기기에 실시간 반영됩니다.')
+    + '<div id="mm-wrap"><div class="card pad" style="color:var(--muted)">불러오는 중…</div></div>';
+}
+async function fillManageMembers(){
+  const wrap=document.getElementById('mm-wrap'); if(!wrap) return;
+  if(!SB){ wrap.innerHTML='<div class="card pad" style="color:var(--muted)">서버가 연결되지 않아 회원 관리를 사용할 수 없습니다.</div>'; return; }
+  const all=await adminListMembers();
+  const pend=all.filter(m=>!m.approved && !m.withdrawn);
+  const act=all.filter(m=>m.approved && !m.withdrawn);
+  const wd=all.filter(m=>m.withdrawn);
+  const row=(m,acts)=>`<div class="ap-row">
+    <div class="ap-main">
+      <div class="ap-t">${esc(m.name||'(이름없음)')} <span class="type-chip">${esc(m.branch||'')}</span>${m.role==='admin'?' <span class="pill done"><span class="pd"></span>관리자</span>':''}</div>
+      <div class="ap-ctx">${esc(m.rank||'')} · ${esc(m.position||'')} · ${esc(m.phone||'')}</div>
+    </div>
+    <div class="ap-act" style="flex-direction:row;align-items:center">${acts}</div></div>`;
+  let h='';
+  h+=`<div class="section-title" style="font-size:13px;margin:4px 0 8px">가입 승인 대기 (${pend.length})</div>`;
+  h+= pend.length ? pend.map(m=>row(m,`<button class="btn ok sm" onclick="mmApprove('${m.id}')">승인 ✓</button><button class="btn danger sm" onclick="mmDelete('${m.id}')">거절</button>`)).join('') : emptyMsg('승인 대기 중인 가입이 없습니다.');
+  h+=`<div class="section-title" style="font-size:13px;margin:18px 0 8px">회원 (${act.length})</div>`;
+  h+= act.length ? act.map(m=>row(m,`${m.role==='admin'?`<button class="btn ghost sm" onclick="mmSetRole('${m.id}','member')">관리자 해제</button>`:`<button class="btn ghost sm" onclick="mmSetRole('${m.id}','admin')">관리자 지정</button>`}<button class="btn danger sm" onclick="mmWithdraw('${m.id}')">탈퇴</button>`)).join('') : emptyMsg('회원이 없습니다.');
+  if(wd.length){ h+=`<div class="section-title" style="font-size:13px;margin:18px 0 8px">탈퇴 (${wd.length})</div>`;
+    h+= wd.map(m=>row(m,`<button class="btn ghost sm" onclick="mmRestore('${m.id}')">복구</button><button class="btn danger sm" onclick="mmDelete('${m.id}')">완전삭제</button>`)).join(''); }
+  wrap.innerHTML=h;
+}
+async function mmApprove(id){ const r=await adminUpdateMember(id,{approved:true,withdrawn:false}); if(r.error){ toast('승인 실패: '+r.error); return; } toast('가입을 승인했습니다'); fillManageMembers(); }
+async function mmSetRole(id,role){ const r=await adminUpdateMember(id,{role}); if(r.error){ toast('변경 실패: '+r.error); return; } toast(role==='admin'?'관리자로 지정했습니다':'관리자를 해제했습니다'); fillManageMembers(); }
+async function mmWithdraw(id){ const r=await adminUpdateMember(id,{withdrawn:true,approved:false}); if(r.error){ toast('처리 실패: '+r.error); return; } toast('탈퇴 처리했습니다'); fillManageMembers(); }
+async function mmRestore(id){ const r=await adminUpdateMember(id,{withdrawn:false,approved:true}); if(r.error){ toast('복구 실패: '+r.error); return; } toast('복구했습니다'); fillManageMembers(); }
+async function mmDelete(id){ const r=await adminDeleteMember(id); if(r.error){ toast('삭제 실패: '+r.error); return; } toast('완전 삭제했습니다'); fillManageMembers(); }
 
 /* ===== [임시·개발테스트용] 현장 실측 테스트 데이터 — 테스트 완료 후 이 블록 + renderSurvey의 dev-testbar/🧪삭제 버튼을 삭제하면 원복 ===== */
 const TEST_SURVEY_SITES = [
@@ -3057,6 +3186,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-01', team:'공통', kind:'변경', title:'회원 로그인 전환 (휴대폰 + 비밀번호 · 관리자 승인제)', body:'기존 간편 로그인(이름·팀 선택)을 회사 회원제 로그인으로 전환했습니다. 회원가입 시 지사·직급·직책·이름·연락처(휴대폰)·비밀번호를 입력하고, 로그인은 휴대폰번호+비밀번호로 합니다. 가입은 관리자 승인 후 사용할 수 있습니다(회사 소속 인원만). 사이드바에서 본인 비밀번호 변경·회원 탈퇴가 가능하고, 관리자는 ⚙ 관리자 화면의 “회원 관리”에서 가입 승인·관리자 지정·탈퇴를 처리합니다. 비밀번호는 서버에서 안전하게 암호화되어 저장됩니다.', author:'개발'},
   {date:'2026-09-30', team:'공통', kind:'추가', title:'개발 요청 게시판', body:'상단에 “💬 개발 요청” 탭을 신설했습니다. 대시보드에 추가·수정하고 싶은 기능이나 오류를 누구나 접수할 수 있고(분류: 기능요청·버그·개선·기타 / 제목·내용·작성자), 관리자가 검토 후 상태 변경(접수→검토중→완료·보류)과 처리 답변을 남기면 요청자가 확인할 수 있습니다. 좌측에서 상태별 필터, 미답변(접수) 건수는 탭 배지로 표시됩니다. 접수·답변 내용은 모든 기기·팀원에게 실시간 공유됩니다.', author:'개발'},
   {date:'2026-09-30', team:'공통', kind:'추가', title:'관리자 · 회원/권한 관리 (팀장님 전용)', body:'상단 팀 탭에 속하지 않는 관리자 화면을 신설했습니다. 관리자 계정으로 로그인하면 사이드바 하단 ⚙(톱니) 버튼이 보이고, 관리자 암호를 입력하면 팀별 회원·직급을 편집할 수 있습니다. 직급을 “부서장”으로 지정하면 그 사람이 해당 팀의 결재권자가 됩니다. 변경은 모든 기기·팀원에게 실시간 공유됩니다. (관리자 암호는 이 기기에만 저장 · 최초 접근 시 직접 설정) 로그인에 “영업” 팀 추가.', author:'개발'},
   {date:'2026-09-30', team:'설계', kind:'추가', title:'부서장 결재(승인) 구조 + 결재함 · 현장 실측 결재라인', body:'승인이 필요한 업무를 “부서장 결재” 구조로 만들었습니다. 현장 실측은 담당 배정(설계1·시공1) → 일정 등록 → 부서장 결재 → 결과보고 순으로 진행됩니다. 결재 권한은 “로그인한 사람”이 그 팀의 부서장일 때만 열리며(관리자는 전결), 실무자에게는 열람만 보입니다. 상단 “결재” 탭(결재함)에 전 팀의 결재 대기건이 모여 한 곳에서 승인/반려할 수 있고, 승인자·시각·의견이 기록됩니다. 반려하면 실무자에게 반송되어 일정을 다시 잡습니다.', author:'개발'},
@@ -3602,7 +3732,8 @@ const MENUS = {
     {appr:'history', label:'처리 이력', ic:'check'},
   ]},
   manage:{title:'관리자', items:[
-    {mng:'roster', label:'회원·권한', ic:'grid'},
+    {mng:'members', label:'회원 관리', ic:'inbox'},
+    {mng:'roster', label:'결재 권한(부서장)', ic:'grid'},
     {mng:'security', label:'관리자 암호', ic:'shield'},
   ]},
   devreqs:{title:'개발 요청', items:[
@@ -3666,7 +3797,8 @@ function activateItem(tab, btn){
     document.getElementById('sub-ap-list').innerHTML = renderApprovals(btn.dataset.appr);
     view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-ap-list'));
   } else if(btn.dataset.mng){
-    document.getElementById('sub-mng').innerHTML = btn.dataset.mng==='security' ? renderManageSecurity() : renderManageRoster();
+    const mng=btn.dataset.mng;
+    document.getElementById('sub-mng').innerHTML = mng==='security' ? renderManageSecurity() : mng==='members' ? renderManageMembers() : renderManageRoster();
     view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-mng'));
   } else if(btn.dataset.dreq){
     drFilter = btn.dataset.dreq;
@@ -3837,42 +3969,107 @@ function fillPanels(){
 /* ============================================================
    ESC 닫기
    ============================================================ */
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeDrawer(); closeHandover(); closeAdminGate(); closeDevreq(); closeDevreqDetail(); }});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeDrawer(); closeHandover(); closeAdminGate(); closeDevreq(); closeDevreqDetail(); closeAccount(); }});
 
 /* ============================================================
    간편 로그인 (이름·팀 선택) + 부트스트랩
    ============================================================ */
-let currentUser = null;
-const TEAM_TAB = {'영업':'sales','설계':'design','시공':'construction','행정':'admin','관리자':'overview'};
+let currentUser = null;   // {id,name,branch,rank,position,phone,role,approved,withdrawn}
 function hideLogin(){ const el=document.getElementById('loginScrim'); if(el) el.classList.remove('open'); }
 function showLogin(){ const el=document.getElementById('loginScrim'); if(el) el.classList.add('open'); }
+function setAuthErr(m){ const el=document.getElementById('authErr'); if(el){ el.style.color='var(--risk-ink)'; el.textContent=m||''; } }
+function authTab(which){
+  const lg = which!=='signup';
+  const L=document.getElementById('authLogin'), S=document.getElementById('authSignup');
+  if(L) L.style.display=lg?'':'none'; if(S) S.style.display=lg?'none':'';
+  document.getElementById('tabLogin').classList.toggle('active', lg);
+  document.getElementById('tabSignup').classList.toggle('active', !lg);
+  const sub=document.getElementById('authSub'); if(sub) sub.textContent = lg?'회사 계정으로 로그인하세요.':'회사 소속 인원만 가입할 수 있습니다.';
+  setAuthErr('');
+}
+function phoneDigits(p){ return String(p||'').replace(/\D/g,''); }
+function phoneToEmail(p){ return phoneDigits(p)+'@farmsolar.local'; }
+
 function applyUser(){
   if(!currentUser) return;
   const nm = currentUser.name || '사용자';
   document.getElementById('sideUserName').textContent = nm;
-  document.getElementById('sideUserRole').textContent = (currentUser.team||'') + '팀';
-  const av = document.getElementById('sideUserAvatar');
-  if(av) av.textContent = (nm.trim()[0] || '팀');
-  const ab = document.getElementById('btnAdmin');
-  if(ab) ab.style.display = isOwner() ? '' : 'none';   // 관리자 로그인만 ⚙ 노출
-  refreshTabBadges();                                  // 로그인 신분에 따라 결재 대기수 갱신
-  switchTab(TEAM_TAB[currentUser.team] || 'overview');
+  document.getElementById('sideUserRole').textContent = `${currentUser.branch||''} · ${currentUser.position||currentUser.rank||''}`.replace(/^ · | · $/,'').replace(/^· |· $/,'').trim() || '회원';
+  const av = document.getElementById('sideUserAvatar'); if(av) av.textContent = (nm.trim()[0] || '팀');
+  const ab = document.getElementById('btnAdmin'); if(ab) ab.style.display = isOwner() ? '' : 'none';
+  const ac = document.getElementById('btnAccount'); if(ac) ac.style.display = '';
+  refreshTabBadges();
+  switchTab('overview');
 }
-function doLogin(name, team){
-  currentUser = { name:(name||'').trim() || (team+' 팀원'), team };
-  try{ localStorage.setItem('fsnet_user', JSON.stringify(currentUser)); }catch(e){}
-  hideLogin(); applyUser();
+// 현재 세션의 회원 프로필 로드
+async function loadMyProfile(){
+  if(!SB){ currentUser=null; return null; }
+  let user=null; try{ const r=await SB.auth.getUser(); user=r&&r.data&&r.data.user; }catch(e){}
+  if(!user){ currentUser=null; return null; }
+  let data=null; try{ const r=await SB.from('fsnet_members').select('*').eq('id',user.id).single(); data=r.data; if(r.error) data=null; }catch(e){ data=null; }
+  if(!data){ currentUser=null; return null; }
+  currentUser = { id:data.id, name:data.name, branch:data.branch, rank:data.rank, position:data.position, phone:data.phone, role:data.role, approved:!!data.approved, withdrawn:!!data.withdrawn };
+  return currentUser;
 }
-function doLogout(){
+// 로그인 (휴대폰+비번)
+async function authLogin(phone, pw){
+  if(!SB) return {error:'서버가 연결되지 않았습니다. 관리자에게 문의하세요.'};
+  if(phoneDigits(phone).length<10) return {error:'휴대폰번호를 정확히 입력하세요.'};
+  if(!pw) return {error:'비밀번호를 입력하세요.'};
+  const { error } = await SB.auth.signInWithPassword({ email:phoneToEmail(phone), password:pw });
+  if(error) return {error:'휴대폰번호 또는 비밀번호가 올바르지 않습니다.'};
+  const prof = await loadMyProfile();
+  if(!prof){ try{await SB.auth.signOut();}catch(e){} return {error:'회원 정보를 불러오지 못했습니다.'}; }
+  if(prof.withdrawn){ try{await SB.auth.signOut();}catch(e){} currentUser=null; return {error:'탈퇴 처리된 계정입니다.'}; }
+  if(!prof.approved){ try{await SB.auth.signOut();}catch(e){} currentUser=null; return {error:'pending'}; }
+  return {ok:true};
+}
+// 회원가입 (첫 가입자는 자동 관리자, 이후는 승인 대기)
+async function authSignup(o){
+  if(!SB) return {error:'서버가 연결되지 않았습니다. 관리자에게 문의하세요.'};
+  if(!o.name) return {error:'이름을 입력하세요.'};
+  if(phoneDigits(o.phone).length<10) return {error:'휴대폰번호를 정확히 입력하세요.'};
+  if(!o.pw || o.pw.length<6) return {error:'비밀번호는 6자 이상이어야 합니다.'};
+  if(o.pw!==o.pw2) return {error:'비밀번호가 일치하지 않습니다.'};
+  const { data, error } = await SB.auth.signUp({ email:phoneToEmail(o.phone), password:o.pw });
+  if(error) return {error:/registered|already|exists/i.test(error.message||'')?'이미 가입된 휴대폰번호입니다.':('가입 실패: '+error.message)};
+  if(!data || !data.session || !data.user) return {error:'가입 세션 생성 실패 — 관리자: Supabase에서 "Confirm email"을 OFF로 설정해야 합니다.'};
+  let isFirst=false;
+  try{ const c=await SB.from('fsnet_members').select('id',{count:'exact',head:true}); isFirst=((c.count||0)===0); }catch(e){}
+  const row={ id:data.user.id, phone:phoneDigits(o.phone), name:o.name, branch:o.branch, rank:o.rank, position:o.position, role:isFirst?'admin':'member', approved:isFirst, withdrawn:false };
+  const { error:e2 } = await SB.from('fsnet_members').insert(row);
+  if(e2) return {error:'프로필 저장 실패: '+e2.message};
+  if(isFirst){ await loadMyProfile(); return {ok:true, admin:true}; }
+  try{ await SB.auth.signOut(); }catch(e){} currentUser=null;
+  return {ok:true, pending:true};
+}
+async function doLogout(){
+  try{ if(SB) await SB.auth.signOut(); }catch(e){}
   currentUser = null;
-  try{ localStorage.removeItem('fsnet_user'); sessionStorage.removeItem('fsnet_admin_ok'); }catch(e){}
+  try{ sessionStorage.removeItem('fsnet_admin_ok'); }catch(e){}
   const ab=document.getElementById('btnAdmin'); if(ab) ab.style.display='none';
-  // 다음 사용자를 위해 로그인 입력 초기화
-  const nameEl = document.getElementById('loginName'); if(nameEl) nameEl.value = '';
-  document.querySelectorAll('#teamPick button').forEach(x=>x.classList.remove('active'));
-  showLogin();
-  const nm = document.getElementById('loginName'); if(nm) setTimeout(()=>nm.focus(), 50);
+  const ac=document.getElementById('btnAccount'); if(ac) ac.style.display='none';
+  ['lgPhone','lgPw','suName','suPhone','suPw','suPw2'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  showLogin(); authTab('login');
 }
+// 내 계정
+async function changeMyPassword(newPw){
+  if(!SB) return {error:'서버 미연결'};
+  if(!newPw||newPw.length<6) return {error:'비밀번호는 6자 이상'};
+  const { error } = await SB.auth.updateUser({ password:newPw });
+  return error ? {error:'변경 실패: '+error.message} : {ok:true};
+}
+async function withdrawMe(){
+  if(!SB||!currentUser) return {error:'로그인이 필요합니다'};
+  const { error } = await SB.from('fsnet_members').update({ withdrawn:true, approved:false }).eq('id',currentUser.id);
+  if(error) return {error:'탈퇴 처리 실패: '+error.message};
+  await doLogout();
+  return {ok:true};
+}
+// 관리자: 회원 목록/승인/역할/탈퇴/삭제
+async function adminListMembers(){ if(!SB) return []; try{ const {data}=await SB.from('fsnet_members').select('*').order('created_at',{ascending:false}); return data||[]; }catch(e){ return []; } }
+async function adminUpdateMember(id, patch){ if(!SB) return {error:'서버 미연결'}; const { error }=await SB.from('fsnet_members').update(patch).eq('id',id); return error?{error:error.message}:{ok:true}; }
+async function adminDeleteMember(id){ if(!SB) return {error:'서버 미연결'}; const { error }=await SB.from('fsnet_members').delete().eq('id',id); return error?{error:error.message}:{ok:true}; }
 
 function firstRender(){
   buildSubMenu('overview');
@@ -3889,31 +4086,47 @@ async function bootstrap(){
   firstRender();
   subscribeRT();
   const modeEl = document.getElementById('loginMode');
-  if(modeEl) modeEl.textContent = SB ? '공유 모드(Supabase) · 여러 기기 실시간' : '로컬 모드 · 이 브라우저에만 저장 (키 입력 시 공유)';
-  if(currentUser) applyUser();
+  if(modeEl) modeEl.textContent = SB ? '회사 계정 · 안전 연결(Supabase)' : '⚠ 서버 미연결 — 관리자에게 문의';
+  // 로그인 세션 복원
+  if(SB){
+    try{
+      const prof = await loadMyProfile();
+      if(prof && prof.approved && !prof.withdrawn){ hideLogin(); applyUser(); }
+      else { if(prof){ try{ await SB.auth.signOut(); }catch(e){} } currentUser=null; showLogin(); authTab('login'); }
+    }catch(e){ currentUser=null; showLogin(); authTab('login'); }
+  } else { showLogin(); authTab('login'); }
 }
 
-// 로그인 UI 바인딩
-(function initLoginUI(){
-  let pickedTeam = null;
-  document.querySelectorAll('#teamPick button').forEach(b=>b.addEventListener('click',()=>{
-    pickedTeam = b.dataset.team;
-    document.querySelectorAll('#teamPick button').forEach(x=>x.classList.toggle('active', x===b));
-  }));
-  const go = ()=>{ if(!pickedTeam){ document.getElementById('teamPick').classList.add('shake'); setTimeout(()=>document.getElementById('teamPick').classList.remove('shake'),400); return; } doLogin(document.getElementById('loginName').value, pickedTeam); };
-  document.getElementById('loginGo').addEventListener('click', go);
-  document.getElementById('loginName').addEventListener('keydown',e=>{ if(e.key==='Enter') go(); });
-  const lo = document.getElementById('btnLogout');
-  if(lo) lo.addEventListener('click', ()=>{ pickedTeam=null; doLogout(); });
-  // 관리자 인증 모달 바인딩
-  const ag = document.getElementById('adminGateGo');
-  if(ag) ag.addEventListener('click', adminGateSubmit);
-  ['adminGateInput','adminGateInput2'].forEach(id=>{ const el=document.getElementById(id);
-    if(el) el.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); adminGateSubmit(); } }); });
+// 로그인/가입/계정 UI 바인딩
+(function initAuthUI(){
+  const byId=id=>document.getElementById(id);
+  const lg=byId('lgGo'); if(lg) lg.addEventListener('click', doAuthLogin);
+  const lgPw=byId('lgPw'); if(lgPw) lgPw.addEventListener('keydown',e=>{ if(e.key==='Enter') doAuthLogin(); });
+  const lgPhone=byId('lgPhone'); if(lgPhone) lgPhone.addEventListener('keydown',e=>{ if(e.key==='Enter'){ const p=byId('lgPw'); if(p) p.focus(); } });
+  const su=byId('suGo'); if(su) su.addEventListener('click', doAuthSignup);
+  const lo=byId('btnLogout'); if(lo) lo.addEventListener('click', ()=>doLogout());
+  const ac=byId('btnAccount'); if(ac) ac.addEventListener('click', openAccount);
+  const ag=byId('adminGateGo'); if(ag) ag.addEventListener('click', adminGateSubmit);
+  ['adminGateInput','adminGateInput2'].forEach(id=>{ const el=byId(id); if(el) el.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); adminGateSubmit(); } }); });
 })();
-
-// 시작
-try{ const u=localStorage.getItem('fsnet_user'); if(u) currentUser=JSON.parse(u); }catch(e){}
-if(!currentUser) showLogin();
+async function doAuthLogin(){
+  setAuthErr(''); const btn=document.getElementById('lgGo'); if(btn) btn.disabled=true;
+  const r=await authLogin((document.getElementById('lgPhone')||{}).value, (document.getElementById('lgPw')||{}).value);
+  if(btn) btn.disabled=false;
+  if(r.ok){ hideLogin(); applyUser(); toast('로그인되었습니다'); return; }
+  if(r.error==='pending'){ const el=document.getElementById('authErr'); if(el){ el.style.color='var(--wait-ink2)'; el.textContent='⏳ 가입 승인 대기 중입니다 — 관리자(팀장) 승인 후 로그인됩니다.'; } return; }
+  setAuthErr(r.error);
+}
+async function doAuthSignup(){
+  setAuthErr(''); const btn=document.getElementById('suGo'); if(btn) btn.disabled=true;
+  const o={ branch:(document.getElementById('suBranch')||{}).value, name:((document.getElementById('suName')||{}).value||'').trim(),
+    rank:(document.getElementById('suRank')||{}).value, position:(document.getElementById('suPos')||{}).value,
+    phone:(document.getElementById('suPhone')||{}).value, pw:(document.getElementById('suPw')||{}).value, pw2:(document.getElementById('suPw2')||{}).value };
+  const r=await authSignup(o);
+  if(btn) btn.disabled=false;
+  if(r.ok && r.admin){ hideLogin(); applyUser(); toast('가입 완료 — 첫 가입자라 관리자로 지정되었습니다'); return; }
+  if(r.ok && r.pending){ authTab('login'); const el=document.getElementById('authErr'); if(el){ el.style.color='var(--ok-ink)'; el.textContent='✅ 가입 신청 완료 — 관리자 승인 후 로그인할 수 있습니다.'; } return; }
+  setAuthErr(r.error);
+}
 bootstrap();
 </script>
