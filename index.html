@@ -377,6 +377,42 @@ button{font-family:inherit;cursor:pointer}
 .doc-line .dl-v{padding:10px 12px;font-size:13px;flex:1;font-weight:600}
 .wf-photo{height:86px;border-radius:9px;display:grid;place-items:center;color:rgba(255,255,255,.82);font-size:11px;font-weight:700;background:linear-gradient(145deg,#2a3f4a,#1b2a32)}
 
+/* 현장실측 결과 보고서 — 체크리스트 양식 + 사진 첨부 체크 */
+.sv-grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(258px,1fr);gap:16px;margin-bottom:12px}
+@media(max-width:900px){.sv-grid{grid-template-columns:1fr}}
+.sv-report,.sv-photos{border:1px solid var(--border);background:var(--surface);border-radius:11px;padding:13px 14px}
+.sv-report-h{font-size:12.5px;font-weight:800;color:var(--ink);margin:0 0 11px;display:flex;align-items:center;gap:7px}
+.sv-count{margin-left:auto;font-size:11px;font-weight:800;color:var(--accent-ink);background:var(--accent-soft);padding:2px 9px;border-radius:20px}
+.sv-sec{margin-bottom:12px}
+.sv-sec:last-child{margin-bottom:0}
+.sv-sec-h{font-size:11.5px;font-weight:800;color:var(--prog-ink);background:var(--prog-bg);border-radius:6px;padding:4px 10px;margin-bottom:7px}
+.sv-row{display:grid;grid-template-columns:19px 94px minmax(0,1fr) 90px;gap:9px;align-items:center;padding:3px 0}
+@media(max-width:1180px){.sv-row{grid-template-columns:19px 88px minmax(0,1fr)}.sv-row .sv-note{display:none}}
+.sv-k{font-size:12px;font-weight:700;color:var(--ink-2);line-height:1.3}
+.sv-chk{width:17px;height:17px;border:1.5px solid var(--border-strong);border-radius:5px;cursor:pointer;flex:none;position:relative;transition:.12s;background:var(--surface)}
+.sv-chk:hover{border-color:var(--accent)}
+.sv-chk.on{background:var(--accent);border-color:var(--accent)}
+.sv-chk.on::after{content:'✓';position:absolute;inset:0;display:grid;place-items:center;color:var(--accent-ink);font-size:11px;font-weight:900}
+.sv-v{min-width:0}
+.sv-inpwrap{display:flex;align-items:center;gap:6px}
+.sv-inpwrap .sv-sm2{padding:6px 9px;font-size:12px}
+.sv-unit{font-size:11px;color:var(--muted);font-weight:700;flex:none}
+.sv-note{padding:6px 8px;font-size:11.5px}
+.sv-wh{display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:11px;color:var(--muted);font-weight:700}
+.sv-wh .sv-sm{width:60px;padding:6px 8px;font-size:12px;flex:none}
+.sv-wh em{font-style:normal;color:var(--ink-2);font-weight:800;margin:0 1px}
+.sv-chips{display:flex;gap:6px;flex-wrap:wrap}
+.sv-chip{font-size:11px;font-weight:700;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--border-strong);border-radius:20px;padding:4px 11px;cursor:pointer;transition:.12s;user-select:none}
+.sv-chip.sm{padding:3px 9px;font-size:10.5px}
+.sv-chip:hover{border-color:var(--accent)}
+.sv-chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.sv-ph-note{font-size:10.5px;color:var(--muted);background:var(--surface-2);border-radius:7px;padding:7px 9px;margin-bottom:11px;line-height:1.55}
+.sv-ph-item{padding:9px 0;border-bottom:1px dashed var(--border)}
+.sv-ph-item:last-child{border-bottom:0;padding-bottom:0}
+.sv-ph-top{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.sv-ph-k{font-size:12px;font-weight:800;color:var(--ink)}
+.sv-ph-opts{padding-left:25px}
+
 /* 부서장 결재 게이트 */
 .appr-box{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;padding:11px 12px;border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:10px;background:color-mix(in srgb,var(--accent) 7%,var(--surface-2))}
 .appr-box .appr-cm{flex:1;min-width:200px;border-color:var(--border-strong)}
@@ -3495,6 +3531,79 @@ async function saveDevreqReply(id){
 }
 
 // 현장 실측 (설계) — 스케줄+부서장 결재+결과보고서
+/* ===== 현장실측 결과 보고서: 체크리스트 양식(1시트) + 사진 첨부 체크(2시트) ===== */
+const SURVEY_FORM = [
+  {grp:'현장 기본정보', rows:[
+    {k:'현장명'}, {k:'주소'}, {k:'발전소 용량', unit:'kW'},
+  ]},
+  {grp:'차량 및 장비 진입', rows:[
+    {k:'진입도로 폭', unit:'m'}, {k:'자재 하차 / 적치 장소'}, {k:'양중 작업 위치'},
+  ]},
+  {grp:'주요 구조재', rows:[
+    {k:'용마루 폭', unit:'m'},
+    {k:'용마루 방향', opt:['남북','동서','기타']},
+    {k:'H-BEAM 규격'},
+    {k:'기둥 간격', unit:'m'},
+    {k:'중도리 개수', unit:'EA'},
+  ]},
+  {grp:'지붕 및 설치면적', rows:[
+    {k:'지붕 전체', wh:true},
+    {k:'지붕 경사도', unit:'°'},
+    {k:'판넬 두께', unit:'mm'},
+    {k:'노후 · 부식', opt:['양호','일부','심함']},
+    {k:'누수 흔적', opt:['없음','있음']},
+    {k:'설치 장애물', optm:['환기구','실외기','적치물','기타']},
+    {k:'음영 장애물', optm:['파라펫','기타']},
+  ]},
+  {grp:'전기실 위치', rows:[
+    {k:'예정 위치'},
+    {k:'설치 공간', wh:true},
+    {k:'인입 경로', optm:['가공','지중','트레이','기타']},
+    {k:'담당자 확인', sign:true},
+  ]},
+];
+const SURVEY_PHOTOS = [
+  {k:'현장 전경', opt:['전체 전경','발전소 예정 부지']},
+  {k:'건물 외관 / 내부', opt:['외부','내부','장비']},
+  {k:'한전 전주', opt:['전주 사진','전주번호 확대']},
+  {k:'드론 촬영', opt:['전체 부지','주변 현황 / 음영']},
+  {k:'예정 전기실 위치', opt:['위치','주변']},
+];
+function svCheck(el){ el.classList.toggle('on'); }
+function svOpt(el,multi){ if(multi){ el.classList.toggle('on'); return; } const was=el.classList.contains('on'); [...el.parentElement.children].forEach(c=>c.classList.remove('on')); if(!was) el.classList.add('on'); }
+function svPhotoTick(el,did){ el.classList.toggle('on'); const box=document.getElementById('svph-'+did); if(!box) return; const tot=box.querySelectorAll('.svph-chk').length, on=box.querySelectorAll('.svph-chk.on').length; const c=document.getElementById('svcount-'+did); if(c) c.textContent=on+' / '+tot; }
+function svRowContent(r){
+  if(r.wh)   return `<div class="sv-wh"><span>가로</span><input class="tinput sv-sm"><span>m</span><em>×</em><span>세로</span><input class="tinput sv-sm"><span>m</span></div>`;
+  if(r.sign) return `<div class="sv-wh"><span>성명</span><input class="tinput sv-sm" style="width:90px"><span style="margin-left:4px">서명</span><input class="tinput sv-sm" style="width:90px"></div>`;
+  if(r.opt)  return `<div class="sv-chips">${r.opt.map(o=>`<span class="sv-chip" onclick="svOpt(this,false)">${esc(o)}</span>`).join('')}</div>`;
+  if(r.optm) return `<div class="sv-chips">${r.optm.map(o=>`<span class="sv-chip" onclick="svOpt(this,true)">${esc(o)}</span>`).join('')}</div>`;
+  return `<div class="sv-inpwrap"><input class="tinput sv-sm2">${r.unit?`<span class="sv-unit">${esc(r.unit)}</span>`:''}</div>`;
+}
+function renderSurveyForm(d){
+  const secs = SURVEY_FORM.map(g=>`
+    <div class="sv-sec">
+      <div class="sv-sec-h">${esc(g.grp)}</div>
+      ${g.rows.map(r=>`<div class="sv-row">
+        <span class="sv-chk" onclick="svCheck(this)" title="확인"></span>
+        <span class="sv-k">${esc(r.k)}</span>
+        <div class="sv-v">${svRowContent(r)}</div>
+        <input class="tinput sv-note" placeholder="비고">
+      </div>`).join('')}
+    </div>`).join('');
+  return `<div class="sv-report"><div class="sv-report-h">📋 현장실측 체크리스트</div>${secs}</div>`;
+}
+function renderSurveyPhotos(d){
+  const items = SURVEY_PHOTOS.map(p=>`<div class="sv-ph-item">
+      <div class="sv-ph-top"><span class="sv-chk svph-chk" onclick="svPhotoTick(this,'${d.id}')" title="첨부됨"></span><span class="sv-ph-k">${esc(p.k)}</span></div>
+      <div class="sv-chips sv-ph-opts">${p.opt.map(o=>`<span class="sv-chip sm" onclick="svOpt(this,true)">${esc(o)}</span>`).join('')}</div>
+    </div>`).join('');
+  return `<div class="sv-photos">
+    <div class="sv-report-h">📷 현장 사진 첨부 <span id="svcount-${d.id}" class="sv-count">0 / ${SURVEY_PHOTOS.length}</span></div>
+    <div class="sv-ph-note">⚠ 실제 이미지 업로드는 추후 지원됩니다. 현재는 <b>촬영 · 첨부 여부</b>만 체크합니다.</div>
+    <div id="svph-${d.id}">${items}</div>
+  </div>`;
+}
+
 function renderSurvey(){
   const cards = DEALS.filter(d=>['survey_handover','survey_sched','survey_progress'].includes(d.stage)).map(d=>{
     let body='', pill;
@@ -3522,11 +3631,9 @@ function renderSurvey(){
     } else {
       body=`<div class="tl-note" style="margin-top:12px;color:var(--ok-ink);background:var(--ok-bg)">✓ 부서장 승인 · ${esc(a&&a.approver||'')} (${esc(a&&a.decidedAt||'')})${a&&a.comment?` — “${esc(a.comment)}”`:''}</div>
         <div class="tl-note" style="margin-top:8px;color:var(--prog-ink);background:var(--prog-bg)">${APPROVAL_GATES.survey_schedule.ctx(d)} · 담당 ${esc((d.survey&&d.survey.pic)||'-')}</div>
-        <div class="section-title" style="font-size:12px;margin:14px 0 8px">실측 결과 보고서</div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
-          <div class="wf-photo">📷 현장 전경</div><div class="wf-photo">📷 진입로·경계</div><div class="wf-photo">📷 계통 인입점</div>
-        </div>
-        <textarea id="rep-${d.id}" class="ta" placeholder="현장 상황 상세 — 실측 치수, 지반·경사, 음영, 진입로 폭, 계통 인입 위치, 특이사항 등"></textarea>
+        <div class="section-title" style="font-size:12px;margin:14px 0 10px">실측 결과 보고서</div>
+        <div class="sv-grid">${renderSurveyForm(d)}${renderSurveyPhotos(d)}</div>
+        <textarea id="rep-${d.id}" class="ta" placeholder="종합 의견 · 특이사항 — 전반적인 현장 상황, 리스크, 추가 확인이 필요한 사항 등"></textarea>
         <div class="wf-actions"><button class="btn primary sm" onclick="wfAction('${d.id}','survey_done','실측 완료 — 영업팀 실계약으로 이관')">실측 완료 처리 →</button></div>`;
       pill=['prog','실측 진행'];
     }
