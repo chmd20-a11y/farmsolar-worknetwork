@@ -4109,10 +4109,8 @@ async function doLogout(){
   try{ if(SB) await SB.auth.signOut(); }catch(e){}
   currentUser = null;
   try{ sessionStorage.removeItem('fsnet_admin_ok'); }catch(e){}
-  const ab=document.getElementById('btnAdmin'); if(ab) ab.style.display='none';
-  const ac=document.getElementById('btnAccount'); if(ac) ac.style.display='none';
-  ['lgPhone','lgPw','suName','suPhone','suPw','suPw2'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  showLogin(); authTab('login');
+  // 잠긴 데이터·실시간 구독을 깨끗이 정리하기 위해 새로고침(로그인 화면으로 복귀)
+  location.reload();
 }
 // 내 계정
 async function changeMyPassword(newPw){
@@ -4125,6 +4123,7 @@ async function withdrawMe(){
   if(!SB||!currentUser) return {error:'로그인이 필요합니다'};
   const { error } = await SB.from('fsnet_members').update({ withdrawn:true, approved:false }).eq('id',currentUser.id);
   if(error) return {error:'탈퇴 처리 실패: '+error.message};
+  try{ sessionStorage.setItem('fsnet_flash','탈퇴 처리되었습니다'); }catch(e){}
   await doLogout();
   return {ok:true};
 }
@@ -4144,19 +4143,33 @@ async function bootstrap(){
   loadOrgLocal();
   loadDevreqsLocal();
   initSB();
-  await loadShared();
-  firstRender();
-  subscribeRT();
   const modeEl = document.getElementById('loginMode');
   if(modeEl) modeEl.textContent = SB ? '회사 계정 · 안전 연결(Supabase)' : '⚠ 서버 미연결 — 관리자에게 문의';
-  // 로그인 세션 복원
+  // 1) 먼저 로그인 세션을 확인한다.
+  //    (데이터 창고를 RLS로 잠그면 '로그인 토큰'이 있어야 읽을 수 있으므로,
+  //     반드시 세션 확정 → 그 다음에 loadShared/subscribeRT 순서여야 한다.)
+  let authed=false;
   if(SB){
     try{
       const prof = await loadMyProfile();
-      if(prof && prof.approved && !prof.withdrawn){ hideLogin(); applyUser(); }
-      else { if(prof){ try{ await SB.auth.signOut(); }catch(e){} } currentUser=null; showLogin(); authTab('login'); }
-    }catch(e){ currentUser=null; showLogin(); authTab('login'); }
-  } else { showLogin(); authTab('login'); }
+      if(prof && prof.approved && !prof.withdrawn) authed=true;
+      else if(prof){ try{ await SB.auth.signOut(); }catch(e){} currentUser=null; }
+    }catch(e){ currentUser=null; }
+  }
+  // 2) 로그인된 경우에만 공유 데이터 로드 + 실시간 구독 (인증된 요청으로 나감)
+  if(authed){
+    await loadShared();
+    firstRender();
+    subscribeRT();
+    hideLogin(); applyUser();
+  } else {
+    // 로그인 전엔 공유 데이터를 불러오지 않는다(잠기면 어차피 거부됨). 로컬 캐시만 — 로그인 스크림 뒤라 화면엔 안 보임.
+    loadLocal();
+    firstRender();
+    showLogin(); authTab('login');
+  }
+  // 로그인/로그아웃 등으로 새로고침된 경우 안내 메시지 1회 표시
+  try{ const f=sessionStorage.getItem('fsnet_flash'); if(f){ toast(f); sessionStorage.removeItem('fsnet_flash'); } }catch(e){}
 }
 
 // 로그인/가입/계정 UI 바인딩
@@ -4175,7 +4188,7 @@ async function doAuthLogin(){
   setAuthErr(''); const btn=document.getElementById('lgGo'); if(btn) btn.disabled=true;
   const r=await authLogin((document.getElementById('lgPhone')||{}).value, (document.getElementById('lgPw')||{}).value);
   if(btn) btn.disabled=false;
-  if(r.ok){ hideLogin(); applyUser(); toast('로그인되었습니다'); return; }
+  if(r.ok){ try{ sessionStorage.setItem('fsnet_flash','로그인되었습니다'); }catch(e){} location.reload(); return; }
   if(r.error==='pending'){ const el=document.getElementById('authErr'); if(el){ el.style.color='var(--wait-ink2)'; el.textContent='⏳ 가입 승인 대기 중입니다 — 관리자(팀장) 승인 후 로그인됩니다.'; } return; }
   setAuthErr(r.error);
 }
@@ -4186,7 +4199,7 @@ async function doAuthSignup(){
     phone:(document.getElementById('suPhone')||{}).value, pw:(document.getElementById('suPw')||{}).value, pw2:(document.getElementById('suPw2')||{}).value };
   const r=await authSignup(o);
   if(btn) btn.disabled=false;
-  if(r.ok && r.admin){ hideLogin(); applyUser(); toast('가입 완료 — 첫 가입자라 관리자로 지정되었습니다'); return; }
+  if(r.ok && r.admin){ try{ sessionStorage.setItem('fsnet_flash','가입 완료 — 첫 가입자라 관리자로 지정되었습니다'); }catch(e){} location.reload(); return; }
   if(r.ok && r.pending){ authTab('login'); const el=document.getElementById('authErr'); if(el){ el.style.color='var(--ok-ink)'; el.textContent='✅ 가입 신청 완료 — 관리자 승인 후 로그인할 수 있습니다.'; } return; }
   setAuthErr(r.error);
 }
