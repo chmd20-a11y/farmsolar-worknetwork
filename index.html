@@ -1645,6 +1645,68 @@ function renderDesignProgressBoard(){
   </div>`;
 }
 
+/* ---- 팀별(SITES) 진행률 보드 — 시공/행정=그 팀 단계 완료율, 영업=전체 생애주기 진행률 ---- */
+function teamStagePct(site, team){
+  let done=0, tot=0;
+  STAGES.forEach((st,i)=>{ if(st.team!==team) return; const s=stageStatus(site,i); if(s==='na') return; tot++; if(s==='done') done++; });
+  return tot ? Math.round(done/tot*100) : 0;
+}
+function teamCurLabel(site, team){
+  if(site.stage==='sales') return {label:'이관 대기', cls:'wait'};
+  const pct = teamStagePct(site, team);
+  if(pct>=100) return {label:'완료', cls:'done'};
+  if(site.cur<STAGES.length && STAGES[site.cur].team===team) return {label:STAGES[site.cur].name, cls: site.risk?'risk':'prog'};
+  for(let i=0;i<STAGES.length;i++){ if(STAGES[i].team===team){ const s=stageStatus(site,i); if(s!=='done'&&s!=='na') return {label: pct>0 ? STAGES[i].name+' 대기' : '대기', cls: pct>0?'prog':'wait'}; } }
+  return {label:'완료', cls:'done'};
+}
+const BOARD_SUB = {
+  '영업':'발굴 → 이관 → 인허가 → 시공 → 준공 (현장 전체 진행률)',
+  '시공':'신규접수 → 기초 → 자재입고 → 구조물 → 모듈 → 전기 → 사용전검사 (시공 단계 완료율)',
+  '행정':'발전사업허가 → 개발행위 → PPA → 선로비 → 공사계획 → 한전수급 → 준공 → 상업운전 → 설비확인 (행정 단계 완료율)',
+};
+function renderSitesProgressBoard(team){
+  const isSales = team==='영업';
+  const rowsData = SITES.map(site=>{
+    let pct, info, owner;
+    if(isSales){
+      pct = sitePct(site);
+      if(site.stage==='sales') info={label:'영업 검토중', cls:'prog'};
+      else if(pct>=100) info={label:'준공 완료', cls:'done'};
+      else info={label:curStageName(site), cls: site.risk?'risk':'prog'};
+      owner = site.rep;
+    } else {
+      pct = teamStagePct(site, team);
+      info = teamCurLabel(site, team);
+      owner = team==='시공' ? (site.mgr!=='-'?site.mgr+' 소장':'미배정') : '한지원';
+    }
+    return {site, pct, info, owner};
+  });
+  const scope = isSales ? rowsData : rowsData.filter(x=>x.site.stage!=='sales');
+  const doneN = scope.filter(x=>x.pct>=100).length;
+  const riskN = scope.filter(x=>x.info.cls==='risk').length;
+  const inprog = scope.length - doneN;
+  const avg = scope.length ? Math.round(scope.reduce((a,x)=>a+x.pct,0)/scope.length) : 0;
+  const barColor = cls => cls==='done' ? 'var(--ok)' : cls==='risk' ? 'var(--risk)' : 'var(--prog)';
+  const rows = rowsData.slice().sort((a,b)=> b.pct-a.pct).map(({site,pct,info,owner})=>`
+    <tr class="site-row" onclick="openDrawer('${site.id}')" style="cursor:pointer">
+      <td><div class="lr-t" style="font-size:13px">${esc(site.name)} · ${site.cap.toLocaleString()}kW <span class="type-chip">${esc(site.type)}</span></div><div class="site-id">${esc(site.id)}</div></td>
+      <td><span class="pill ${info.cls}"><span class="pd"></span>${esc(info.label)}</span></td>
+      <td><span class="dpb-bar"><span class="dpb-fill" style="width:${pct}%;background:${barColor(info.cls)}"></span></span><span class="dpb-pct" style="color:${barColor(info.cls)}">${pct}%</span></td>
+      <td>${esc(owner)}</td></tr>`).join('');
+  return `<div class="card">
+    <div class="card-head"><h2>${team} 진행 현황</h2><span class="ch-sub">${BOARD_SUB[team]||''}</span></div>
+    <div class="dpb-kpis">
+      <div class="dpb-kpi"><div class="dpb-k-l">평균 진행률</div><div class="dpb-k-v" style="color:var(--accent-ink)">${avg}<small>%</small></div></div>
+      <div class="dpb-kpi"><div class="dpb-k-l">진행중</div><div class="dpb-k-v">${inprog}<small>건</small></div></div>
+      <div class="dpb-kpi"><div class="dpb-k-l">${isSales?'준공 완료':'완료'}</div><div class="dpb-k-v">${doneN}<small>건</small></div></div>
+      <div class="dpb-kpi"><div class="dpb-k-l">지연·문제</div><div class="dpb-k-v" style="${riskN?'color:var(--risk)':''}">${riskN}<small>건</small></div></div>
+    </div>
+    <div class="table-scroll"><table class="chk-table">
+      <thead><tr><th style="min-width:180px">현장</th><th style="min-width:116px">현재 단계</th><th style="min-width:230px">진행률</th><th style="min-width:80px">담당</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>
+  </div>`;
+}
+
 /* ============================================================
    영업 ↔ 설계 이관 워크플로우 (타당성·가계약·실측·실계약)
    ============================================================ */
@@ -3502,9 +3564,9 @@ function renderReleases(team){
    영업 리스트
    ============================================================ */
 function renderSalesList(){
-  const sites = SITES.filter(s=>currentRole==='all'||currentRole==='design'||currentRole==='construction'||currentRole==='admin' ? true : s.rep===currentRole);
+  const el = document.getElementById('salesList'); if(!el) return;   // 영업 현황판이 진행률 보드로 대체됨(옛 목록 타겟 부재 시 no-op)
   const stageLabel = s=> s.stage==='sales'?'견적·이관 대기': (s.risk?'공무 처리중 (지연)':'공무 처리중');
-  document.getElementById('salesList').innerHTML = SITES.map(s=>{
+  el.innerHTML = SITES.map(s=>{
     const stt = siteStatus(s);
     return `<div class="list-row" onclick="openDrawer('${s.id}')">
       ${avatar(s.rep)}
@@ -3824,7 +3886,8 @@ function renderCostSheet(){
   return header + kpiRow + renderCostPresets() + tabBar + panels;
 }
 function renderDynamicSub(sub){
-  if(sub==='s-quote'){ const el=document.getElementById('sub-s-quote'); if(el){ el.innerHTML=renderSalesQuote(); initQuoteEditor(); } }
+  if(sub==='s-status'){ const el=document.getElementById('sub-s-status'); if(el) el.innerHTML=renderSitesProgressBoard('영업'); }
+  else if(sub==='s-quote'){ const el=document.getElementById('sub-s-quote'); if(el){ el.innerHTML=renderSalesQuote(); initQuoteEditor(); } }
   else if(sub==='s-costsheet'){ const el=document.getElementById('sub-s-costsheet'); if(el) el.innerHTML=renderCostSheet(); }
 }
 
@@ -4053,7 +4116,8 @@ function activateItem(tab, btn){
   } else if(btn.dataset.board){
     const map = {'시공':'c-board','행정':'a-status','설계':'d-overview'};
     const target = map[btn.dataset.board];
-    document.getElementById('sub-'+target).innerHTML = btn.dataset.board==='설계' ? renderDesignProgressBoard() : renderTeamBoard(btn.dataset.board);
+    const b = btn.dataset.board;
+    document.getElementById('sub-'+target).innerHTML = b==='설계' ? renderDesignProgressBoard() : renderSitesProgressBoard(b);
     view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-'+target));
   } else if(btn.dataset.wf){
     const s = WF_SCREENS[btn.dataset.wf];
