@@ -824,6 +824,69 @@ button{font-family:inherit;cursor:pointer}
 .cs-tbl-grp th.cs-railh{background:var(--surface-2);border-right:1px solid var(--border);color:var(--ink-2);font-weight:700}
 .cs-tbl-grp tbody tr:nth-child(even){background:transparent}
 .cs-tbl-grp .cs-grp-end > td{border-bottom:2px solid var(--border)}
+
+/* ===== 발전사업 허가 (행정) ===== */
+.pm-modebar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.pm-dealsel{min-width:220px;padding:9px 12px;border:1px solid var(--border-strong);border-radius:9px;background:var(--surface);color:var(--ink);font-size:13px;font-weight:700}
+.pm-typetag{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;padding:5px 11px;border-radius:999px}
+.pm-typetag.land{background:color-mix(in srgb,#2e8b63 15%,transparent);color:#2e8b63}
+.pm-typetag.bld{background:color-mix(in srgb,#bd8a2e 16%,transparent);color:#9a6f16}
+.pm-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:860px){.pm-grid{grid-template-columns:1fr}}
+.pi-row{display:grid;grid-template-columns:118px minmax(0,1fr);gap:9px;align-items:center;padding:3px 12px}
+.pi-row > label{font-size:11.5px;font-weight:700;color:var(--ink-2)}
+.pi-inwrap{display:flex;align-items:center;gap:6px}
+.pi-in{flex:1;min-width:0;padding:6px 9px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--ink);font-size:12.5px}
+.pi-in:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+.pi-in.ro{background:var(--surface-2);color:var(--ink-2)}
+.pi-unit{font-size:11px;color:var(--muted);white-space:nowrap}
+.pi-sel{flex:1;padding:6px 9px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--ink);font-size:12.5px;font-weight:600}
+.pm-tbl{width:100%;border-collapse:collapse;font-size:11.5px;margin:2px 0 6px}
+.pm-tbl th,.pm-tbl td{border:1px solid var(--border);padding:3px 5px;text-align:center}
+.pm-tbl th{background:var(--surface-2);color:var(--ink-2);font-weight:700;font-size:11px}
+.pm-tbl input{width:100%;border:none;background:transparent;color:var(--ink);font-size:11.5px;text-align:center;padding:3px 2px}
+.pm-tbl input:focus{outline:1px solid var(--accent);border-radius:4px}
+.pm-src{font-size:11px;color:var(--accent-ink,var(--accent));background:color-mix(in srgb,var(--accent) 12%,transparent);padding:2px 8px;border-radius:999px;font-weight:700}
+/* 발급 서류 */
+.doc-item{display:flex;gap:11px;align-items:flex-start;padding:12px;border:1px solid var(--border);border-radius:11px;background:var(--surface);margin-bottom:9px}
+.doc-item.done{border-color:color-mix(in srgb,var(--ok-ink,#2e8b63) 45%,var(--border));background:color-mix(in srgb,#2e8b63 6%,var(--surface))}
+.doc-item.skip{opacity:.5}
+.doc-ck{width:26px;height:26px;border-radius:7px;flex:none;display:grid;place-items:center;font-size:14px;font-weight:800;border:1.5px solid var(--border);background:var(--surface-2);color:var(--muted);cursor:pointer}
+.doc-item.done .doc-ck{background:#2e8b63;border-color:#2e8b63;color:#fff}
+.doc-b{flex:1;min-width:0}
+.doc-t{font-size:13px;font-weight:800;color:var(--ink);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.doc-badge{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px;background:var(--surface-3);color:var(--ink-2)}
+.doc-g{font-size:11.5px;color:var(--ink-2);line-height:1.55;margin-top:5px}
+.doc-act{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;align-items:center}
+.doc-cred{font-size:11px;color:var(--muted);margin-top:6px;padding:6px 9px;background:var(--surface-2);border-radius:7px;border:1px dashed var(--border)}
+.doc-cred b{color:var(--ink-2);font-weight:800}
+.cred-warn{font-size:11.5px;color:#9a6f16;background:color-mix(in srgb,#bd8a2e 12%,transparent);border:1px solid color-mix(in srgb,#bd8a2e 30%,transparent);border-radius:9px;padding:9px 12px;margin-bottom:12px;line-height:1.5}
+/* ===== 인쇄(PDF) 전용 ===== */
+#permitPrintArea{display:none}
+.pp-doc{font-family:"Malgun Gothic","맑은 고딕",sans-serif;color:#111;background:#fff}
+.pp-page{width:190mm;padding:4mm 0;margin:0 auto}
+.pp-h1{text-align:center;font-size:19px;font-weight:800;margin:2mm 0 3mm;letter-spacing:4px}
+.pp-formtop{font-size:10.5px;margin-bottom:1mm}
+.pp-note{font-size:10px;color:#444;margin:1mm 0}
+.pp-t{width:100%;border-collapse:collapse;font-size:11px;margin:1mm 0 3mm}
+.pp-t th,.pp-t td{border:1px solid #333;padding:3px 6px;vertical-align:middle}
+.pp-t th{background:#eef1f5;font-weight:700;text-align:center}
+.pp-t .lbl{background:#f3f5f8;font-weight:700;text-align:center;white-space:nowrap}
+.pp-t .ctr{text-align:center}
+.pp-sec{font-size:13px;font-weight:800;margin:4mm 0 2mm;border-left:4px solid #333;padding-left:7px}
+.pp-sub{font-size:11.5px;font-weight:700;margin:3mm 0 1mm}
+.pp-li{font-size:11px;margin:1mm 0 1mm 4mm;line-height:1.7}
+.pp-li b{display:inline-block;min-width:36mm}
+.pp-sign{text-align:right;font-size:11px;margin:3mm 2mm 2mm 0;line-height:2}
+@media print{
+  @page{size:A4;margin:12mm 10mm}
+  body.printing-permit > *:not(#permitPrintArea){display:none !important}
+  body.printing-permit #permitPrintArea{display:block !important}
+  .pp-page{page-break-after:always}
+  .pp-page:last-child{page-break-after:auto}
+  .pp-t{page-break-inside:auto}
+  tr{page-break-inside:avoid}
+}
 </style>
 
 <!-- ============ 회원 로그인 / 회원가입 ============ -->
@@ -1368,6 +1431,12 @@ button{font-family:inherit;cursor:pointer}
         <!-- 개별 인허가 업무 현황(동적) -->
         <div class="subview" id="sub-a-stage"></div>
 
+        <!-- 발전사업 허가 신청·출력 전용화면(동적) -->
+        <div class="subview" id="sub-a-permit"></div>
+
+        <!-- 발급 계정 관리(동적) -->
+        <div class="subview" id="sub-a-creds"></div>
+
         <!-- 인허가 현황판(동적) -->
         <div class="subview" id="sub-a-status"></div>
 
@@ -1492,6 +1561,9 @@ button{font-family:inherit;cursor:pointer}
 </div>
 
 <div class="toast-wrap" id="toastWrap"></div>
+
+<!-- 발전사업 허가 접수용 PDF 인쇄 영역(평소 숨김, 인쇄 시에만 표시) -->
+<div id="permitPrintArea"></div>
 
 <!-- 공유 모드용 Supabase 클라이언트 (키 없으면 미사용 · 아티팩트에선 차단되어도 로컬로 동작) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1974,6 +2046,8 @@ async function loadShared(){
         if(st && st.data && st.data.org) applyOrg(st.data.org);   // 공유된 회원·권한 반영
         const drRow = dq.data.find(r=>r.id===DEVREQS_ID);
         if(drRow && drRow.data && Array.isArray(drRow.data.list)) applyDevreqs(drRow.data.list);  // 공유된 개발요청
+        const pcRow = dq.data.find(r=>r.id===PERMIT_CREDS_ID);
+        if(pcRow && pcRow.data && pcRow.data.creds) applyPermitCreds(pcRow.data.creds);   // 발급 계정(로그인 직원만)
         const dealRows = dq.data.filter(r=>!isReservedId(r.id));
         if(dealRows.length) DEALS = dealRows.map(r=>r.data);
         else await Promise.all(DEALS.map(d=>SB.from('fsnet_deals').upsert({id:d.id, data:d})));
@@ -3739,8 +3813,415 @@ function renderRealContract(){
         <button class="btn ghost sm">실계약서 PDF</button>
         <button class="btn primary sm" onclick="wfAction('${d.id}','done','실계약 완료 — 공무팀 착수(발전허가·개발행위)')">실계약 완료 처리 ✓</button>
       </div>
+      ${renderPermitSalesForm(d)}
     </div>`).join('');
   return wfHead('실계약','실측 완료된 현장의 본계약입니다. 완료 처리하면 공무팀 인허가·시공 단계로 진행됩니다.') + (cards || emptyMsg('실계약 대상 현장이 없습니다.'));
+}
+
+/* ============================================================
+   발전사업 허가 (행정) — 신청서(별지 제1호서식) + 사업계획서 작성·PDF 출력
+   · 영업 실계약에서 신청정보(permit)를 입력 → 행정에서 끌어와 보정·출력
+   · 토지(노지/수상) / 건물(지붕) 두 유형 지원
+   · 첨부서류 6종 발급 가이드·링크·첨부 슬롯 + 발급 계정(Supabase 보관)
+   ============================================================ */
+function pNum(v){ return Number(String(v==null?'':v).replace(/[^0-9.-]/g,''))||0; }
+function pComma(n){ return Math.round(pNum(n)).toLocaleString(); }
+
+// 신청정보 기본값 — 딜(발전소명·용량·유형)+설비스펙에서 자동 파생. 금액 단위 = 천원.
+function defaultPermit(d){
+  const sp = dealSpec(d);
+  const isBld = d.type==='지붕';
+  const costK = Math.round(d.cap*1360);                 // 총사업비(천원)
+  const ownK = Math.round(costK*0.15), loanK = costK-ownK;
+  const annual = Math.round(d.cap*1460);                // 연간발전량(kWh)
+  const useArea = Math.round(d.cap*4.2);
+  const totalArea = isBld ? useArea : Math.round(useArea*1.8);
+  return {
+    installType: isBld ? '건물' : '토지',
+    office: '○○시청',
+    applicant:{ name:'홍길동', idno:'●●●●●●-●●●●●●●', corp:false,
+      addr:'경기도 파주시 ○○로 00', bizname:d.site+' 태양광발전소', phone:'010-0000-0000' },
+    biz:{ kind:'발전사업(태양광발전)', place:'경기도 ○○시 ○○면 ○○리 000-0'+(isBld?' (건물 지붕)':' 외 ○필지 (노지형)'),
+      cap:d.cap, volt:380, freq:60, prep:18 },
+    outline:{ plantName:d.site+' 태양광발전소', method:isBld?'건물형(지붕)':'노지형', genType:'고정식',
+      supply:'380V 교류 3상 4선식', useArea, totalArea, bldArea:isBld?useArea:0,
+      totalCost:costK, unitCost:Math.round(costK/d.cap), annual, startMonths:18 },
+    fund:{ ownPct:15, loanPct:85, own:ownK, loan:loanK },
+    equip:{ modMaker:sp.modMaker, modModel:sp.modModel, modW:sp.modW, modType:sp.modType, modQty:sp.modQty,
+      modTilt:isBld?10:15, modVoc:'49.7', modIsc:'16.5', modSize:(sp.modW>=640?'2,382':'2,278')+' x 1,134 x 30', modWeight:(sp.modW/19).toFixed(1),
+      invKW:sp.invKW, invQty:sp.invQty, invType:sp.invType, invIn:'200~1000', invOut:'220/380', invFreq:60 },
+    lands: isBld ? [] : [{ addr:'경기도 ○○시 ○○면 ○○리', jibun:'000-0', jimok:'답', area:Math.round(totalArea*0.5), owner:'(토지주)', ownerAddr:'', zone:'생산관리지역' }],
+    builds: isBld ? [{ addr:'경기도 ○○시 ○○동 000-0', jibun:'000-0', bldArea:useArea, div:'공장', struct:'철골조', use:'공장(제조업소)', owner:'(건물주)' }] : [],
+    rep:{ title:'대표', name:'홍길동', idno:'●●●●●●-●●●●●●●', addr:'경기도 파주시 ○○로 00', relation:'본인' },
+    docs:{}
+  };
+}
+function getPermit(d){ if(!d.permit) d.permit = defaultPermit(d); return d.permit; }
+// 도트경로 저장 (예: 'applicant.name', 'lands.0.area')
+function setPermit(id, path, val){
+  const d = DEALS.find(x=>x.id===id); if(!d) return;
+  const p = getPermit(d); const parts = String(path).split('.');
+  let o = p;
+  for(let i=0;i<parts.length-1;i++){ const k=parts[i]; if(o[k]==null) o[k]=(/^\d+$/.test(parts[i+1])?[]:{}); o=o[k]; }
+  o[parts[parts.length-1]] = val;
+  persistDeal(d);
+}
+// 행정 발전사업 허가 대상 = permit 입력된 딜 + 실계약 완료(또는 대기) 딜
+function permitBizList(){ return DEALS.filter(d=>d.permit || d.stage==='survey_done' || d.stage==='done'); }
+// 데모용 가상 시드 — 토지(하리 노지형)·건물(금빛리 축사지붕) 신청정보 예시(미편집 딜에만, 메모리). 편집·저장되면 유지됨.
+function seedPermits(){
+  ['D-1029','D-1024'].forEach(id=>{ const d=DEALS.find(x=>x.id===id); if(d && !d.permit) d.permit=defaultPermit(d); });
+}
+
+/* ---- 파생 계산(사업계획서 표/원가) ---- */
+function permitCalc(d){
+  const p=getPermit(d);
+  const cap=pNum(p.biz.cap)||pNum(d.cap);
+  const costK=pNum(p.outline.totalCost);
+  const ownK=pNum(p.fund.own), loanK=pNum(p.fund.loan)||(costK-ownK);
+  const annual=pNum(p.outline.annual);
+  const genCost = annual? Math.round(costK*1000*0.08/annual*10)/10 : 0;   // 발전원가 원/kWh
+  // 소요자금 내역(천원): 설비47% 부대21% 구조물30% 기타2%
+  const eq=Math.round(costK*0.47), aux=Math.round(costK*0.21), str=Math.round(costK*0.30), etc=costK-eq-aux-str;
+  // 5년 공급계획(완만 감소 0.5%/년)
+  const yrs=[]; let g=annual/1000; for(let i=0;i<5;i++){ yrs.push(Math.round(g*1000)/1000); g=g*0.995; }
+  const sum5=Math.round(yrs.reduce((a,b)=>a+b,0)*1000)/1000;
+  return {cap,costK,ownK,loanK,annual,genCost,eq,aux,str,etc,yrs,sum5};
+}
+
+/* ---- 입력 위젯 ---- */
+function piRow(id,label,path,val,opt){ opt=opt||{};
+  const v=(val==null)?'':val;
+  const unit=opt.unit?`<span class="pi-unit">${esc(opt.unit)}</span>`:'';
+  return `<div class="pi-row"><label>${esc(label)}</label><div class="pi-inwrap"><input class="pi-in ${opt.ro?'ro':''}" type="${opt.type||'text'}" value="${esc(String(v))}" placeholder="${esc(opt.ph||'')}" ${opt.ro?'readonly':''} oninput="setPermit('${id}','${path}',this.value)">${unit}</div></div>`;
+}
+function piSec(kc,ic,title,badge,inner){
+  return `<div class="sv-sec" style="--kc:${kc}"><div class="sv-sec-h"><span class="sv-sec-ic">${ic}</span>${esc(title)}${badge?`<span class="pm-src" style="margin-left:auto">${esc(badge)}</span>`:''}</div><div style="padding:7px 0 9px">${inner}</div></div>`;
+}
+
+/* ---- 부지(토지/건물) 명세 테이블 ---- */
+function renderPermitLands(d){
+  const id=d.id, p=getPermit(d), ls=p.lands||[];
+  const rows=ls.map((L,i)=>`<tr>
+     <td><input value="${esc(L.addr||'')}" oninput="setPermit('${id}','lands.${i}.addr',this.value)"></td>
+     <td style="width:64px"><input value="${esc(L.jibun||'')}" oninput="setPermit('${id}','lands.${i}.jibun',this.value)"></td>
+     <td style="width:46px"><input value="${esc(L.jimok||'')}" oninput="setPermit('${id}','lands.${i}.jimok',this.value)"></td>
+     <td style="width:70px"><input value="${esc(L.area||'')}" oninput="setPermit('${id}','lands.${i}.area',this.value)"></td>
+     <td><input value="${esc(L.owner||'')}" oninput="setPermit('${id}','lands.${i}.owner',this.value)"></td>
+     <td style="width:96px"><input value="${esc(L.zone||'')}" oninput="setPermit('${id}','lands.${i}.zone',this.value)"></td>
+     <td style="width:30px"><button class="btn ghost sm" style="padding:2px 6px" onclick="delPermitRow('${id}','lands',${i})">✕</button></td></tr>`).join('');
+  return `<table class="pm-tbl"><thead><tr><th>소재지</th><th>지번</th><th>지목</th><th>면적(㎡)</th><th>소유자</th><th>용도지역</th><th></th></tr></thead><tbody>${rows||'<tr><td colspan="7" style="color:var(--muted)">필지를 추가하세요</td></tr>'}</tbody></table>
+     <button class="btn ghost sm" onclick="addPermitRow('${id}','lands')">＋ 필지 추가</button>`;
+}
+function renderPermitBuilds(d){
+  const id=d.id, p=getPermit(d), bs=p.builds||[];
+  const rows=bs.map((B,i)=>`<tr>
+     <td><input value="${esc(B.addr||'')}" oninput="setPermit('${id}','builds.${i}.addr',this.value)"></td>
+     <td style="width:64px"><input value="${esc(B.jibun||'')}" oninput="setPermit('${id}','builds.${i}.jibun',this.value)"></td>
+     <td style="width:78px"><input value="${esc(B.bldArea||'')}" oninput="setPermit('${id}','builds.${i}.bldArea',this.value)"></td>
+     <td style="width:66px"><input value="${esc(B.struct||'')}" oninput="setPermit('${id}','builds.${i}.struct',this.value)"></td>
+     <td><input value="${esc(B.use||'')}" oninput="setPermit('${id}','builds.${i}.use',this.value)"></td>
+     <td><input value="${esc(B.owner||'')}" oninput="setPermit('${id}','builds.${i}.owner',this.value)"></td>
+     <td style="width:30px"><button class="btn ghost sm" style="padding:2px 6px" onclick="delPermitRow('${id}','builds',${i})">✕</button></td></tr>`).join('');
+  return `<table class="pm-tbl"><thead><tr><th>소재지</th><th>지번</th><th>건축면적(㎡)</th><th>구조</th><th>용도</th><th>소유자</th><th></th></tr></thead><tbody>${rows||'<tr><td colspan="7" style="color:var(--muted)">건물을 추가하세요</td></tr>'}</tbody></table>
+     <button class="btn ghost sm" onclick="addPermitRow('${id}','builds')">＋ 건물 추가</button>`;
+}
+function addPermitRow(id,kind){ const d=DEALS.find(x=>x.id===id); const p=getPermit(d);
+  if(kind==='lands') (p.lands=p.lands||[]).push({addr:'',jibun:'',jimok:'전',area:'',owner:'',ownerAddr:'',zone:''});
+  else (p.builds=p.builds||[]).push({addr:'',jibun:'',bldArea:'',div:'',struct:'',use:'',owner:''});
+  persistDeal(d); refreshActive(); }
+function delPermitRow(id,kind,i){ const d=DEALS.find(x=>x.id===id); const p=getPermit(d); (p[kind]||[]).splice(i,1); persistDeal(d); refreshActive(); }
+
+/* ---- 신청정보 편집 폼(영업 이관 + 행정 보정 공용) ---- */
+function renderPermitForm(d, origin){
+  const id=d.id, p=getPermit(d), isBld=p.installType==='건물';
+  const src = origin==='sales' ? '' : '영업 실계약 이관';
+  const applicant = piSec('#3f77a8','👤','신청인(사업주) · 접수관청', src,
+    `<div class="pm-grid">
+      ${piRow(id,'대표자 성명','applicant.name',p.applicant.name)}
+      ${piRow(id,'주민/법인등록번호','applicant.idno',p.applicant.idno)}
+      ${piRow(id,'상호(발전소명)','applicant.bizname',p.applicant.bizname)}
+      ${piRow(id,'전화번호','applicant.phone',p.applicant.phone)}
+      ${piRow(id,'주소','applicant.addr',p.applicant.addr)}
+      ${piRow(id,'접수 관청','office',p.office,{ph:'○○시청/군청'})}
+    </div>`);
+  const biz = piSec('#2e8b63','⚡','신청내용', src,
+    `<div class="pm-grid">
+      ${piRow(id,'사업의 종류','biz.kind',p.biz.kind)}
+      ${piRow(id,'설비용량','biz.cap',p.biz.cap,{unit:'kW',type:'text'})}
+      ${piRow(id,'설치장소','biz.place',p.biz.place)}
+      ${piRow(id,'공급전압','biz.volt',p.biz.volt,{unit:'V'})}
+      ${piRow(id,'주파수','biz.freq',p.biz.freq,{unit:'Hz'})}
+      ${piRow(id,'준비기간','biz.prep',p.biz.prep,{unit:'개월'})}
+    </div>`);
+  const outline = piSec('#7e6bb0','📄','사업계획 개요', '',
+    `<div class="pm-grid">
+      ${piRow(id,'발전소 명칭','outline.plantName',p.outline.plantName)}
+      ${piRow(id,'설치방법','outline.method',p.outline.method)}
+      ${piRow(id,'발전방식','outline.genType',p.outline.genType)}
+      ${piRow(id,'전력수급방식','outline.supply',p.outline.supply)}
+      ${piRow(id,'사용면적','outline.useArea',p.outline.useArea,{unit:'㎡'})}
+      ${piRow(id,'전체면적','outline.totalArea',p.outline.totalArea,{unit:'㎡'})}
+      ${isBld?piRow(id,'건축면적','outline.bldArea',p.outline.bldArea,{unit:'㎡'}):''}
+      ${piRow(id,'총사업비','outline.totalCost',p.outline.totalCost,{unit:'천원'})}
+      ${piRow(id,'건설단가','outline.unitCost',p.outline.unitCost,{unit:'천원/kW'})}
+      ${piRow(id,'연간발전량','outline.annual',p.outline.annual,{unit:'kWh'})}
+    </div>`);
+  const fund = piSec('#bd8a2e','💰','소요자금 조달', '',
+    `<div class="pm-grid">
+      ${piRow(id,'자기자금 비율','fund.ownPct',p.fund.ownPct,{unit:'%'})}
+      ${piRow(id,'타인자금 비율','fund.loanPct',p.fund.loanPct,{unit:'%'})}
+      ${piRow(id,'자기자금','fund.own',p.fund.own,{unit:'천원'})}
+      ${piRow(id,'타인자금','fund.loan',p.fund.loan,{unit:'천원'})}
+    </div>`);
+  const eq=p.equip;
+  const equip = piSec('#3f77a8','🔧','발전설비 개요', '',
+    `<div class="pm-grid">
+      ${piRow(id,'모듈 정격출력','equip.modW',eq.modW,{unit:'W'})}
+      ${piRow(id,'모듈 수량','equip.modQty',eq.modQty,{unit:'매'})}
+      ${piRow(id,'모듈 형식','equip.modType',eq.modType)}
+      ${piRow(id,'경사각','equip.modTilt',eq.modTilt,{unit:'°'})}
+      ${piRow(id,'개방/단락','equip.modVoc',eq.modVoc,{unit:'V · '+esc(eq.modIsc)+'A'})}
+      ${piRow(id,'외형크기','equip.modSize',eq.modSize,{unit:'mm'})}
+      ${piRow(id,'인버터 용량','equip.invKW',eq.invKW,{unit:'kW'})}
+      ${piRow(id,'인버터 수량','equip.invQty',eq.invQty,{unit:'대'})}
+      ${piRow(id,'인버터 형식','equip.invType',eq.invType)}
+      ${piRow(id,'입/출력전압','equip.invIn',eq.invIn,{unit:'V · '+esc(eq.invOut)+'V'})}
+    </div>`);
+  const siteSec = piSec('#2e8b63', isBld?'🏭':'🌾', isBld?'대상 건물 명세서':'대상 토지 명세서', src,
+    isBld ? renderPermitBuilds(d) : renderPermitLands(d));
+  const rep = piSec('#7e6bb0','🧾','대표자 인적사항', '',
+    `<div class="pm-grid">
+      ${piRow(id,'직위','rep.title',p.rep.title)}
+      ${piRow(id,'성명','rep.name',p.rep.name)}
+      ${piRow(id,'주민등록번호','rep.idno',p.rep.idno)}
+      ${piRow(id,'현주소','rep.addr',p.rep.addr)}
+      ${piRow(id,'호주관계','rep.relation',p.rep.relation)}
+    </div>`);
+  return applicant+biz+outline+fund+equip+siteSec+rep;
+}
+
+/* ---- 영업 실계약: 발전사업 허가 신청정보 입력 카드 ---- */
+function renderPermitSalesForm(d){
+  const p=getPermit(d), isBld=p.installType==='건물';
+  return `<div class="card pad" style="margin-top:12px;border-top:3px solid var(--brand)">
+    <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:10px">
+      <span class="sv-sec-ic" style="font-size:16px">🏛️</span>
+      <b style="font-size:13.5px">발전사업 허가 신청정보 입력</b>
+      <span class="lr-s">여기 입력한 내용이 행정팀 “발전사업 허가” 화면으로 그대로 넘어갑니다.</span>
+      <select class="pm-sel" style="max-width:150px;margin-left:auto" onchange="setPermit('${d.id}','installType',this.value);refreshActive()">
+        <option value="토지" ${!isBld?'selected':''}>유형: 토지(노지)</option>
+        <option value="건물" ${isBld?'selected':''}>유형: 건물(지붕)</option>
+      </select>
+    </div>
+    ${renderPermitForm(d,'sales')}
+  </div>`;
+}
+
+/* ---- 행정: 발전사업 허가 전용화면 ---- */
+let permitSel = null, permitPrevOpen = false;
+function selectPermitDeal(id){ permitSel=id; refreshActive(); }
+function togglePermitPreview(){ permitPrevOpen=!permitPrevOpen; refreshActive(); }
+function renderPermitBiz(){
+  const list = permitBizList();
+  const head = wfHead('발전사업 허가','영업 실계약에서 입력된 신청정보를 끌어와 「전기사업 허가신청서(별지 제1호서식)」와 사업계획서를 완성하고, 접수용 PDF로 출력합니다. 토지(노지·수상)/건물(지붕) 두 유형을 지원합니다.');
+  if(!list.length) return head + emptyMsg('발전사업 허가 대상(실계약 완료) 현장이 없습니다. 영업 “실계약”에서 신청정보를 입력하면 여기로 넘어옵니다.');
+  if(!permitSel || !list.find(d=>d.id===permitSel)) permitSel = list[0].id;
+  const d = DEALS.find(x=>x.id===permitSel), p=getPermit(d);
+  const opts = list.map(x=>`<option value="${x.id}" ${x.id===permitSel?'selected':''}>${esc(x.site)} (${x.id})</option>`).join('');
+  const tag = p.installType==='건물' ? '<span class="pm-typetag bld">🏭 건물형(지붕)</span>' : '<span class="pm-typetag land">🌾 토지형(노지)</span>';
+  const bar = `<div class="pm-modebar">
+      <span class="lr-s">대상 현장</span>
+      <select class="pm-dealsel" onchange="selectPermitDeal(this.value)">${opts}</select>
+      ${tag}
+      <select class="pm-sel" style="max-width:150px" onchange="setPermit('${d.id}','installType',this.value);refreshActive()">
+        <option value="토지" ${p.installType!=='건물'?'selected':''}>유형: 토지(노지)</option>
+        <option value="건물" ${p.installType==='건물'?'selected':''}>유형: 건물(지붕)</option>
+      </select>
+      <div style="flex:1"></div>
+      <button class="btn ghost sm" onclick="togglePermitPreview()">${permitPrevOpen?'미리보기 닫기':'🔍 양식 미리보기'}</button>
+      <button class="btn primary sm" onclick="printPermit('${d.id}')">📄 접수 PDF 출력</button>
+    </div>`;
+  const preview = permitPrevOpen ? `<div style="margin:14px 0;border:1px solid var(--border-strong);border-radius:12px;overflow:auto;max-height:620px;background:#fff;padding:6px">${renderPermitPrint(d)}</div>` : '';
+  return head + bar + renderPermitForm(d,'admin') + preview + renderPermitDocs(d);
+}
+
+/* ---- 첨부서류 발급 섹션 ---- */
+const PERMIT_DOCS = [
+  {key:'건축물대장', site:'정부24', url:'https://www.gov.kr', cred:'gov24', land:false, bld:true,
+    guide:'동·읍·리까지 검색 → 세부지번(000-00) 입력 → “건물(동) 명칭 검색” → 뜨는 건물 모두 인쇄'},
+  {key:'토지(임야)대장', site:'정부24', url:'https://www.gov.kr', cred:'gov24', land:true, bld:true,
+    guide:'토지(임야)대장 등본 발급 → 동·읍·리까지 검색 → 세부지번(000-00) 입력'},
+  {key:'지적도', site:'정부24', url:'https://www.gov.kr', cred:'gov24', land:true, bld:false,
+    guide:'반드시 “지적도”로 발급(임야도 ❌) · 축척은 보통 첫 숫자, 너무 작으면 1000~1200 선택'},
+  {key:'토지이용계획확인서', site:'토지이음', url:'https://www.eum.go.kr', cred:'eum', land:true, bld:true,
+    guide:'주소 입력 → 하단에 뜨는 주소 클릭 → 인쇄 (로그인 불필요)'},
+  {key:'건축물 현황도(배치도)', site:'세움터', url:'https://www.eais.go.kr', cred:'eais', land:false, bld:true,
+    guide:'로그인 → 건축물 현황도 발급 → 발급유형: 배치도 발급 → 신청하기 → 지번까지 검색'},
+  {key:'등기부등본(토지·건물)', site:'인터넷등기소', url:'http://www.iros.go.kr', cred:'iros', land:true, bld:true,
+    guide:'메인에서 주소 검색(건물·토지 따로) → 용도 “발급(출력)” → 다음 → 선불전자지급수단 결제 → 법인카드 사용내역서에 태양광명과 함께 기재'},
+];
+function toggleDoc(id,key){ const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d); p.docs=p.docs||{};
+  const cur=p.docs[key]&&p.docs[key].attached;
+  p.docs[key]= cur?{attached:false}:{attached:true, at:new Date().toLocaleString('ko-KR')};
+  persistDeal(d); refreshActive(); }
+function renderPermitDocs(d){
+  const p=getPermit(d), isBld=p.installType==='건물';
+  const need = PERMIT_DOCS.filter(x=> isBld?x.bld:x.land);
+  const doneN = need.filter(x=>p.docs&&p.docs[x.key]&&p.docs[x.key].attached).length;
+  const creds = window.PERMIT_CREDS||{};
+  const credLine=(c)=>{
+    if(c==='eum') return '<span class="doc-cred">로그인 불필요</span>';
+    const cc=creds[c]||{};
+    const has=cc.id||cc.pw;
+    return `<div class="doc-cred">${has?`발급계정 <b>${esc(cc.id||'-')}</b> / ${esc(cc.pw||'-')}`:'발급계정 미등록 — 행정 “발급 계정 관리”에서 등록'}${c==='iros'&&(creds.irospay&&(creds.irospay.id||creds.irospay.pw))?` · 선불결제 <b>${esc(creds.irospay.id||'-')}</b> / ${esc(creds.irospay.pw||'-')}`:''}</div>`;
+  };
+  const items = PERMIT_DOCS.map(x=>{
+    const req = isBld?x.bld:x.land;
+    const att = p.docs&&p.docs[x.key]&&p.docs[x.key].attached;
+    return `<div class="doc-item ${att?'done':''} ${req?'':'skip'}">
+      <div class="doc-ck" onclick="toggleDoc('${d.id}','${esc(x.key)}')" title="첨부 토글">${att?'✓':''}</div>
+      <div class="doc-b">
+        <div class="doc-t">${esc(x.key)} <span class="doc-badge">${esc(x.site)}</span>${req?'':'<span class="doc-badge">이 유형 불필요</span>'}${att?`<span class="doc-badge" style="background:color-mix(in srgb,#2e8b63 16%,transparent);color:#2e8b63">첨부됨 · ${esc(p.docs[x.key].at||'')}</span>`:''}</div>
+        <div class="doc-g">${esc(x.guide)}</div>
+        ${credLine(x.cred)}
+        <div class="doc-act">
+          <a class="btn ghost sm" href="${x.url}" target="_blank" rel="noopener">발급처 열기 ↗</a>
+          <button class="btn ${att?'ghost':'dark'} sm" onclick="toggleDoc('${d.id}','${esc(x.key)}')">${att?'첨부 취소':'파일 첨부(표시)'}</button>
+        </div>
+      </div></div>`;
+  }).join('');
+  return `<div class="card pad" style="margin-top:16px">
+    <h3 class="section-title" style="font-size:13px;margin:0 0 4px"><svg class="st-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>첨부서류 발급 · 준비 <span class="lr-s" style="font-weight:600">(${isBld?'건물':'토지'} 유형 필요 ${doneN}/${need.length})</span></h3>
+    <div class="cred-warn">ℹ️ 관할 관청에 제출하는 <b>공식 발급본</b>은 발급처별 자동 API 발급이 불가해(조회 API는 날인본이 아님) 각 포털에서 직접 발급해야 합니다. 아래 버튼으로 발급처를 열고 가이드대로 발급 → 각 서류를 첨부하세요. 발급 계정은 로그인한 내부 직원에게만 표시되며 공개 소스에는 저장되지 않습니다.</div>
+    ${items}
+    <div style="margin-top:8px">${doneN>=need.length?'<span class="pill done"><span class="pd"></span>필요 서류 모두 첨부 완료 — 접수 준비 OK</span>':`<span class="pill wait"><span class="pd"></span>필요 서류 ${need.length-doneN}건 남음</span>`}</div>
+  </div>`;
+}
+
+/* ---- 발급 계정 관리 (행정담당자/관리자 편집 · Supabase 보관) ---- */
+const PERMIT_CREDS_ID = '__permit_creds__';
+window.PERMIT_CREDS = { gov24:{id:'',pw:''}, eais:{id:'',pw:''}, iros:{id:'',pw:''}, irospay:{id:'',pw:''} };
+function applyPermitCreds(c){ if(c&&typeof c==='object'){ ['gov24','eais','iros','irospay'].forEach(k=>{ if(c[k]) window.PERMIT_CREDS[k]={id:c[k].id||'',pw:c[k].pw||''}; }); } }
+function loadPermitCredsLocal(){ try{ const s=JSON.parse(localStorage.getItem('fsnet_permit_creds')||'null'); if(s) applyPermitCreds(s); }catch(e){} }
+function setCred(site,field,val){ window.PERMIT_CREDS[site]=window.PERMIT_CREDS[site]||{id:'',pw:''}; window.PERMIT_CREDS[site][field]=val; }
+async function savePermitCreds(){
+  const c=window.PERMIT_CREDS;
+  try{ localStorage.setItem('fsnet_permit_creds', JSON.stringify(c)); }catch(e){}
+  if(SB){ try{ await SB.from('fsnet_deals').upsert({id:PERMIT_CREDS_ID, data:{creds:c}}); toast('발급 계정을 저장했습니다 (로그인 직원만 열람)'); }
+    catch(e){ toast('저장 실패 — 로컬 보관'); } }
+  else toast('저장됨 (로컬)');
+  const el=document.getElementById('sub-a-creds'); if(el) el.innerHTML=renderPermitCreds();
+}
+function canEditCreds(){ return isOwner() || (currentUser && (currentUser.team==='행정' || isTeamHead('행정', currentUser.name))); }
+function renderPermitCreds(){
+  const c=window.PERMIT_CREDS||{};
+  const editable = canEditCreds();
+  const row=(site,label,note)=>{
+    const cc=c[site]||{id:'',pw:''};
+    return `<div class="sv-sec" style="--kc:#3f77a8"><div class="sv-sec-h"><span class="sv-sec-ic">🔑</span>${esc(label)}${note?`<span class="lr-s" style="margin-left:auto;font-weight:600">${esc(note)}</span>`:''}</div>
+      <div class="pm-grid" style="padding:8px 0">
+        <div class="pi-row"><label>아이디</label><div class="pi-inwrap"><input class="pi-in ${editable?'':'ro'}" value="${esc(cc.id||'')}" ${editable?'':'readonly'} oninput="setCred('${site}','id',this.value)" placeholder="미등록"></div></div>
+        <div class="pi-row"><label>비밀번호</label><div class="pi-inwrap"><input class="pi-in ${editable?'':'ro'}" value="${esc(cc.pw||'')}" ${editable?'':'readonly'} oninput="setCred('${site}','pw',this.value)" placeholder="미등록"></div></div>
+      </div></div>`;
+  };
+  return `<div class="wf-head" style="margin-bottom:14px"><h3 class="section-title" style="margin:0">발급 계정 관리</h3>
+      <div class="note" style="margin-top:5px">서류 발급 포털 로그인 정보를 관리합니다. ${editable?'행정 담당자·관리자가 편집할 수 있습니다.':'열람 전용입니다(편집은 행정 담당자·관리자).'}</div></div>
+    <div class="cred-warn">🔒 이 정보는 <b>로그인한 내부 직원에게만</b> 보이며, 서버(Supabase)에 보관되어 공개 소스코드에는 저장되지 않습니다. 실제 자격증명은 외부에 공유하지 마세요.</div>
+    ${row('gov24','정부24 (건축물대장·토지대장·지적도)','gov.kr')}
+    ${row('eais','세움터 (건축물 현황도)','eais.go.kr · 자동저장')}
+    ${row('iros','인터넷등기소 (등기부등본)','iros.go.kr')}
+    ${row('irospay','인터넷등기소 선불전자지급수단 (결제)','결제 ID / 비밀번호')}
+    <div class="sv-sec" style="--kc:#2e8b63"><div class="sv-sec-h"><span class="sv-sec-ic">ℹ️</span>토지이음 (토지이용계획확인서)</div><div style="padding:9px 12px;font-size:12px;color:var(--ink-2)">로그인 불필요 — 주소 검색 후 바로 발급</div></div>
+    ${editable?`<div style="margin-top:12px"><button class="btn primary" onclick="savePermitCreds()">저장 (직원 공유)</button></div>`:''}`;
+}
+
+/* ---- 접수용 PDF(신청서+사업계획서) 인쇄 ---- */
+function ppT(rows){ return rows; }
+function renderPermitPrint(d){
+  const p=getPermit(d), c=permitCalc(d), isBld=p.installType==='건물', eq=p.equip;
+  const today='2026년 10월 2일';
+  const win=(k)=>pComma(k)+' 천원';
+  // 1) 전기사업 허가신청서 (별지 제1호서식)
+  const applForm = `<div class="pp-page">
+    <div class="pp-formtop">■ 전기사업법 시행규칙 [별지 제1호서식] &lt;개정 2022.01.21&gt;</div>
+    <div class="pp-h1">전기사업 허가신청서</div>
+    <div class="pp-note">※ 바탕색이 어두운 난은 신청인이 작성하지 않습니다.</div>
+    <table class="pp-t">
+      <tr><td class="lbl" style="width:16%">접수번호</td><td style="width:34%"></td><td class="lbl" style="width:16%">접수일자</td><td style="width:16%"></td><td class="lbl" style="width:9%">처리기간</td><td class="ctr" style="width:9%">60일</td></tr>
+      <tr><td class="lbl" rowspan="4">신청인</td><td class="lbl">대표자 성명</td><td>${esc(p.applicant.name)}</td><td class="lbl">주민등록번호<br>(법인등록번호)</td><td colspan="2">${esc(p.applicant.idno)}</td></tr>
+      <tr><td class="lbl">주소</td><td colspan="4">${esc(p.applicant.addr)}</td></tr>
+      <tr><td class="lbl">상호</td><td colspan="4">${esc(p.applicant.bizname)}</td></tr>
+      <tr><td class="lbl">전화번호</td><td colspan="4">${esc(p.applicant.phone)}</td></tr>
+      <tr><td class="lbl" rowspan="5">신청내용</td><td class="lbl">사업의 종류</td><td colspan="4">${esc(p.biz.kind)}</td></tr>
+      <tr><td class="lbl">설치장소</td><td colspan="4">${esc(p.biz.place)}</td></tr>
+      <tr><td class="lbl">사업구역 또는 특정한 공급구역</td><td colspan="4"></td></tr>
+      <tr><td class="lbl">원동력의 종류</td><td colspan="4">태양광　　설비용량 : ${pComma(c.cap)} kW　　공급전압 : ${esc(p.biz.volt)} V　　주파수 : ${esc(p.biz.freq)} Hz</td></tr>
+      <tr><td class="lbl">사업에 필요한 준비기간</td><td colspan="4">허가일로부터 ${esc(p.biz.prep)}개월</td></tr>
+    </table>
+    <div class="pp-note">「전기사업법」 제7조제1항 및 같은 법 시행규칙 제4조에 따라 위와 같이 전기사업의 허가를 신청합니다.</div>
+    <div class="pp-sign">${today}<br>신청인 : ${esc(p.applicant.name)} (서명 또는 인)<br><b>${esc(p.office)}</b> 귀하</div>
+    <table class="pp-t"><tr><td class="lbl" style="width:16%">첨부서류</td><td style="font-size:10px;text-align:left;line-height:1.6">1. 사업계획서(별표 1의2) 1부　2. 발전설비 개요 및 송전관계 일람도　3. 발전소부지 확보 서류(토지·건물 등기부등본, 대장, 지적도, 토지이용계획확인서 등)　4. 발전원가 명세서　5. 기타 관계 법령에 따른 서류</td></tr></table>
+  </div>`;
+  // 2) 사업계획서 — 개요/공급계획/자금/설비
+  const yrCells=c.yrs.map(v=>`<td class="ctr">${v.toFixed(3)}</td>`).join('');
+  const plan1 = `<div class="pp-page">
+    <div class="pp-h1" style="letter-spacing:2px">사업계획서</div>
+    <div class="pp-sec">1. 사업계획 개요</div>
+    <div class="pp-li"><b>가. 사업구분</b> 발전사업(태양광 발전사업)</div>
+    <div class="pp-li"><b>발전소의 명칭</b> ${esc(p.outline.plantName)}</div>
+    <div class="pp-li"><b>발전소의 위치</b> ${esc(p.biz.place)}</div>
+    <div class="pp-li"><b>설비용량</b> ${pComma(c.cap)} kWp</div>
+    <div class="pp-li"><b>설치방법</b> ${esc(p.outline.method)} (사용면적 ${pComma(p.outline.useArea)}㎡ / 전체면적 ${pComma(p.outline.totalArea)}㎡)${isBld?` · 건축면적 ${pComma(p.outline.bldArea)}㎡`:''}</div>
+    <div class="pp-li"><b>발전방식 / 수급방식</b> ${esc(p.outline.genType)} · ${esc(p.outline.supply)}</div>
+    <div class="pp-li"><b>총사업비</b> ${win(c.costK)} (자기자금 ${win(c.ownK)} / 타인자금 ${win(c.loanK)})</div>
+    <div class="pp-li"><b>건설단가</b> 약 ${pComma(p.outline.unitCost)} 천원/kWp　·　<b>연간발전량</b> ${pComma(c.annual)} kWh</div>
+    <div class="pp-li"><b>사업개시 예정일</b> 허가일로부터 ${esc(p.outline.startMonths)}개월 이내</div>
+    <div class="pp-sub">○ 사업개시일로부터 5년간 연도별 공급계획 (MWh)</div>
+    <table class="pp-t"><tr><th>구분</th><th>1차년도</th><th>2차년도</th><th>3차년도</th><th>4차년도</th><th>5차년도</th><th>계</th></tr>
+      <tr><td class="lbl">발전량</td>${yrCells}<td class="ctr">${c.sum5.toFixed(3)}</td></tr>
+      <tr><td class="lbl">송전량</td>${yrCells}<td class="ctr">${c.sum5.toFixed(3)}</td></tr></table>
+    <div class="pp-sub">○ 소요자금 및 조달방법 (천원)</div>
+    <table class="pp-t"><tr><th>태양광발전설비</th><th>부대설비공사</th><th>구축 및 구조물</th><th>기타</th><th>계</th></tr>
+      <tr><td class="ctr">${pComma(c.eq)}</td><td class="ctr">${pComma(c.aux)}</td><td class="ctr">${pComma(c.str)}</td><td class="ctr">${pComma(c.etc)}</td><td class="ctr">${pComma(c.costK)}</td></tr></table>
+    <div class="pp-li">조달방법 : 자기자금 ${esc(p.fund.ownPct)}% (${win(c.ownK)}) · 타인자금 ${esc(p.fund.loanPct)}% (${win(c.loanK)}, 금융기관 등)</div>
+    <div class="pp-sub">○ 발전설비 개요</div>
+    <table class="pp-t"><tr><th colspan="2">태양광 모듈</th><th colspan="2">인버터</th></tr>
+      <tr><td class="lbl">정격출력</td><td>${esc(eq.modW)} W × ${pComma(eq.modQty)} 매</td><td class="lbl">용량</td><td>${esc(eq.invKW)} kW × ${esc(eq.invQty)} 대</td></tr>
+      <tr><td class="lbl">형식</td><td>${esc(eq.modType)}</td><td class="lbl">형식</td><td>${esc(eq.invType)}</td></tr>
+      <tr><td class="lbl">경사각</td><td>${esc(eq.modTilt)}°</td><td class="lbl">입/출력전압</td><td>${esc(eq.invIn)}V / ${esc(eq.invOut)}V</td></tr>
+      <tr><td class="lbl">외형크기</td><td>${esc(eq.modSize)} mm</td><td class="lbl">주파수</td><td>${esc(eq.invFreq)} Hz</td></tr></table>
+  </div>`;
+  // 3) 발전원가 / 기술인력 / 부지·건물 명세 / 대표자
+  const landRows = isBld
+    ? (p.builds||[]).map((B,i)=>`<tr><td class="ctr">${i+1}</td><td>${esc(B.addr||'')}</td><td class="ctr">${esc(B.jibun||'')}</td><td class="ctr">${pComma(B.bldArea||0)}</td><td class="ctr">${esc(B.struct||'')}</td><td>${esc(B.use||'')}</td><td class="ctr">${esc(B.owner||'')}</td></tr>`).join('')
+    : (p.lands||[]).map((L,i)=>`<tr><td class="ctr">${i+1}</td><td>${esc(L.addr||'')}</td><td class="ctr">${esc(L.jibun||'')}</td><td class="ctr">${esc(L.jimok||'')}</td><td class="ctr">${pComma(L.area||0)}</td><td class="ctr">${esc(L.zone||'')}</td><td class="ctr">${esc(L.owner||'')}</td></tr>`).join('');
+  const landTbl = isBld
+    ? `<table class="pp-t"><tr><th>번호</th><th>소재지</th><th>지번</th><th>건축면적(㎡)</th><th>구조</th><th>용도</th><th>소유자</th></tr>${landRows||'<tr><td colspan="7" class="ctr">-</td></tr>'}</table>`
+    : `<table class="pp-t"><tr><th>번호</th><th>소재지</th><th>지번</th><th>지목</th><th>면적(㎡)</th><th>용도지역</th><th>소유자</th></tr>${landRows||'<tr><td colspan="7" class="ctr">-</td></tr>'}</table>`;
+  const plan2 = `<div class="pp-page">
+    <div class="pp-sec">2. 발전원가 명세서</div>
+    <div class="pp-li"><b>발전원가</b> 약 ${c.genCost} 원/kWh (고정비 원가 = 연간고정비 ÷ 연간 순 발전량)</div>
+    <div class="pp-li"><b>고정비</b> 총투자비의 약 8% · <b>변동비</b> 태양광 연료비 없음</div>
+    <div class="pp-sec">3. 발전설비 운용 기술인력 확보계획 (20kW 초과)</div>
+    <div class="pp-li">전기안전관리자 1명 — 「전기안전관리법」에 따라 안전관리 대행(선임)</div>
+    <div class="pp-sec">4. 발전소부지 확보사항 — ${isBld?'대상 건물 명세서':'대상 토지 명세서'}</div>
+    ${landTbl}
+    <div class="pp-sec">5. 대표자 인적사항</div>
+    <table class="pp-t"><tr><th>직위</th><th>성명</th><th>주민등록번호</th><th>현주소</th><th>호주관계</th></tr>
+      <tr><td class="ctr">${esc(p.rep.title)}</td><td class="ctr">${esc(p.rep.name)}</td><td class="ctr">${esc(p.rep.idno)}</td><td>${esc(p.rep.addr)}</td><td class="ctr">${esc(p.rep.relation)}</td></tr></table>
+    <div class="pp-note" style="margin-top:6mm">※ 본 양식은 팜솔라그룹 업무네트웍에서 입력한 신청정보로 생성된 접수용 출력본입니다. 실제 접수 전 관할 관청 요구사항을 확인하세요.</div>
+  </div>`;
+  return `<div class="pp-doc">${applForm}${plan1}${plan2}</div>`;
+}
+function printPermit(id){
+  const d=DEALS.find(x=>x.id===id); if(!d) return;
+  const area=document.getElementById('permitPrintArea'); if(!area){ toast('인쇄 영역이 없습니다'); return; }
+  area.innerHTML = renderPermitPrint(d);
+  const clean=()=>{ document.body.classList.remove('printing-permit'); window.removeEventListener('afterprint',clean); };
+  window.addEventListener('afterprint', clean);
+  document.body.classList.add('printing-permit');
+  setTimeout(()=>{ try{ window.print(); }catch(e){ clean(); } }, 60);
 }
 
 const WF_SCREENS = {
@@ -3779,6 +4260,8 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-02', team:'행정', kind:'추가', title:'발전사업 허가 — 신청서·사업계획서 작성 + 접수 PDF 출력', body:'행정 “발전사업 허가” 메뉴를 실제 접수 업무용으로 새로 만들었습니다. 영업 “실계약” 화면에서 발전사업 허가 신청정보(사업주·설치장소·용량·부지 명세 등)를 입력하면, 행정 화면이 그 값을 그대로 끌어와(`영업 이관`) 「전기사업 허가신청서(별지 제1호서식)」와 사업계획서를 완성하고 접수용 `PDF`로 출력합니다(브라우저 인쇄→PDF 저장, A4). `토지(노지·수상)`/`건물(지붕)` 두 유형을 지원해 유형에 맞는 명세서·필요서류로 자동 전환됩니다. 아래 “첨부서류 발급·준비”에서 건축물대장·토지대장·지적도·토지이용계획확인서·건축물현황도·등기부등본 6종을 발급처 바로가기와 단계별 가이드로 안내하고, 서류별로 첨부 상태를 체크합니다. (관청 제출용 공식 발급본은 발급처 자동 `API` 발급이 불가해 각 포털에서 직접 발급 후 첨부하는 구조입니다.) 금액·공급계획·발전원가 등은 입력값에서 자동 계산됩니다.', author:'개발'},
+  {date:'2026-10-02', team:'행정', kind:'추가', title:'발급 계정 관리 (행정 담당자 편집)', body:'행정 좌측메뉴에 “발급 계정 관리”를 신설했습니다. 서류 발급 포털(정부24·세움터·인터넷등기소·선불결제)의 로그인 정보를 행정 담당자·관리자가 앱에서 직접 등록·수정하고, 발급 화면에서 로그인한 내부 직원에게만 표시됩니다. 보안을 위해 이 정보는 공개 소스코드에 넣지 않고 서버(`Supabase` 예약행)에 보관해 공유합니다(공개 URL로 노출되지 않음). 실제 자격증명은 팀장님이 앱에서 1회 입력하시면 됩니다.', author:'개발'},
   {date:'2026-10-02', team:'설계', kind:'변경', title:'현장 실측 결과 보고서 전면 개편', body:'설계 → 현장 실측의 “실측 결과 보고서”를 실제 업무 양식으로 새로 만들었습니다. 좌측은 현장실측 체크리스트(5개 그룹 22개 항목, 그룹별 색상·아이콘으로 구분), 우측은 현장 사진 첨부입니다. 현장명·주소·발전소 용량은 이관 정보에서 `자동 채움`(읽기전용)됩니다. 사진은 위치별 버튼(📷 전체 전경·발전소 예정 부지·전주 등)을 눌러 첨부하고, 첨부한 사진은 하단 갤러리에 표시됩니다. 모든 항목 입력과 모든 위치 사진 첨부가 끝나야 “실측 완료 처리” 버튼이 활성화됩니다(맨 아래 “종합 의견”은 선택). 실제 이미지 업로드·저장은 추후 저장소 연동 시 지원되도록 `업로드 훅`과 데이터 구조를 미리 준비했습니다.', author:'개발'},
   {date:'2026-10-02', team:'공통', kind:'변경', title:'업무 흐름도 정비 — 흐름·분기 교정 + 메뉴 바로가기', body:'상단 “업무 흐름도”(`스윔레인`)를 정비했습니다. ① 계약 흐름을 실제 순서인 영업 가계약 → 설계 현장 실측 → 영업 실계약으로 바로잡았습니다. ② 설계 타당성검토 분기를 교정해, 반려(N)는 보완접수로 가고 보완 후에는 재접수하여 타당성검토를 다시 받도록(통과 시 가계약) 수정했습니다. ③ 흐름도의 각 단계를 누르면 그 업무의 실제 화면(메뉴)으로 바로 이동합니다(예: 영업 실계약 → 영업 탭의 실계약 화면). 팀 이름을 누르면 해당 팀으로 이동합니다. ④ 칸 간격을 넓히고 화살표를 굵게 해 흐름과 선이 또렷하게 보이도록 가독성을 높였습니다.', author:'개발'},
   {date:'2026-10-02', team:'공통', kind:'변경', title:'세부 메뉴 제목 표기 개선', body:'각 팀의 세부 메뉴에 들어가면 화면 상단 제목이 “설계 · 타당성검토”처럼 선택한 메뉴 이름으로 표시됩니다(이전에는 작은 부제목으로만 보여 직관적이지 않았습니다). 영업·설계·행정·시공 모든 메뉴에 동일한 규칙으로 적용됩니다.', author:'개발'},
@@ -4159,6 +4642,7 @@ function renderDynamicSub(sub){
   if(sub==='s-status'){ const el=document.getElementById('sub-s-status'); if(el) el.innerHTML=renderSitesProgressBoard('영업'); }
   else if(sub==='s-quote'){ const el=document.getElementById('sub-s-quote'); if(el){ el.innerHTML=renderSalesQuote(); initQuoteEditor(); } }
   else if(sub==='s-costsheet'){ const el=document.getElementById('sub-s-costsheet'); if(el) el.innerHTML=renderCostSheet(); }
+  else if(sub==='a-creds'){ const el=document.getElementById('sub-a-creds'); if(el) el.innerHTML=renderPermitCreds(); }
 }
 
 /* ============================================================
@@ -4328,6 +4812,7 @@ const MENUS = {
     {stage:'facility', label:'설비확인', ic:'shield'},
     {group:'기타'},
     {sub:'a-deadline', label:'기한 · 연계', ic:'clock'},
+    {sub:'a-creds', label:'발급 계정 관리', ic:'shield'},
   ]},
   approvals:{title:'결재함', items:[
     {appr:'pending', label:'결재 대기', ic:'clip'},
@@ -4408,9 +4893,14 @@ function activateItem(tab, btn){
     document.getElementById('sub-dr-list').innerHTML = renderDevreqs();
     view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-dr-list'));
   } else if(btn.dataset.stage){
-    const target = tab==='construction' ? 'c-stage' : tab==='design' ? 'd-stage' : 'a-stage';
-    document.getElementById('sub-'+target).innerHTML = renderStageBoard(btn.dataset.stage);
-    view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-'+target));
+    if(tab==='admin' && btn.dataset.stage==='permit_biz'){   // 발전사업 허가 = 전용 신청·출력 화면
+      document.getElementById('sub-a-permit').innerHTML = renderPermitBiz();
+      view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-a-permit'));
+    } else {
+      const target = tab==='construction' ? 'c-stage' : tab==='design' ? 'd-stage' : 'a-stage';
+      document.getElementById('sub-'+target).innerHTML = renderStageBoard(btn.dataset.stage);
+      view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-'+target));
+    }
   } else if(btn.dataset.key){
     ovFilter = btn.dataset.key; renderPipeline();
   }
@@ -4693,6 +5183,7 @@ async function adminUpdateMember(id, patch){ if(!SB) return {error:'서버 미�
 async function adminDeleteMember(id){ if(!SB) return {error:'서버 미연결'}; const { error }=await SB.from('fsnet_members').delete().eq('id',id); return error?{error:error.message}:{ok:true}; }
 
 function firstRender(){
+  seedPermits();
   buildSubMenu('overview');
   refreshTabBadges();
   renderKPI(); renderPipeline(); renderAlerts(); renderTeamLoad();
@@ -4702,6 +5193,7 @@ async function bootstrap(){
   loadCostSettings();
   loadOrgLocal();
   loadDevreqsLocal();
+  loadPermitCredsLocal();
   initSB();
   const modeEl = document.getElementById('loginMode');
   if(modeEl) modeEl.textContent = SB ? '회사 계정 · 안전 연결(Supabase)' : '⚠ 서버 미연결 — 관리자에게 문의';
