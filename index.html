@@ -2517,37 +2517,37 @@ const WF_LANES = [
   {key:'admin',        name:'행정', color:'#F7941E'},
   {key:'construction', name:'시공', color:'#E84A9C'},
 ];
-// lane: 0영업 1설계 2행정 3시공 · row: 세로 순서
+// lane: 0영업 1설계 2행정 3시공 · row: 세로 순서 · nav: 클릭 시 이동할 실제 대시보드 메뉴 셀렉터
 const WF_NODES = [
-  {id:'site',    lane:0, row:0, label:'부지찾기'},
-  {id:'feas1',   lane:0, row:1, label:'타당성검토'},
-  {id:'layout',  lane:0, row:2, label:'모듈 가배치'},
-  {id:'cost',    lane:0, row:3, label:'원가표'},
-  {id:'quote',   lane:0, row:4, label:'견적서'},
-  {id:'supp',    lane:0, row:5, label:'보완접수'},
-  {id:'pre',     lane:0, row:6, label:'가계약'},
-  {id:'real',    lane:0, row:7, label:'실계약'},
-  {id:'d_intake',lane:1, row:4, label:'신규 현장 접수'},
-  {id:'d_feas',  lane:1, row:5, label:'타당성검토', type:'decision'},
-  {id:'d_survey',lane:1, row:7, label:'현장 실측', sub:'설계1 · 시공1'},
-  {id:'d_struct',lane:1, row:9, label:'구조검토'},
-  {id:'a_intake',lane:2, row:8, label:'신규 현장 접수'},
-  {id:'a_biz',   lane:2, row:9, label:'발전사업 허가'},
-  {id:'a_dev',   lane:2, row:10, label:'개발행위 허가'},
-  {id:'a_ppa',   lane:2, row:11, label:'PPA신청'},
-  {id:'a_line',  lane:2, row:12, label:'선로비 납부'},
-  {id:'a_plan',  lane:2, row:13, label:'공사계획신고'},
-  {id:'a_kepco', lane:2, row:20, label:'한전수급계약'},
-  {id:'a_comp',  lane:2, row:21, label:'준공검사'},
-  {id:'a_comm',  lane:2, row:22, label:'상업운전'},
-  {id:'a_fac',   lane:2, row:23, label:'설비확인'},
-  {id:'c_intake',lane:3, row:13, label:'신규 현장 접수'},
-  {id:'c_found', lane:3, row:14, label:'기초공사'},
-  {id:'c_mat',   lane:3, row:15, label:'자재입고 확인'},
-  {id:'c_struct',lane:3, row:16, label:'구조물 설치'},
-  {id:'c_module',lane:3, row:17, label:'모듈 설치'},
-  {id:'c_elec',  lane:3, row:18, label:'전기 공사'},
-  {id:'c_inspect',lane:3, row:19, label:'사용전 검사'},
+  {id:'site',    lane:0, row:0, label:'부지찾기',      nav:"[data-sub='s-site']"},
+  {id:'feas1',   lane:0, row:1, label:'타당성검토',    nav:"[data-sub='s-feas']"},
+  {id:'layout',  lane:0, row:2, label:'모듈 가배치',   nav:"[data-sub='s-layout']"},
+  {id:'cost',    lane:0, row:3, label:'원가표',        nav:"[data-sub='s-costsheet']"},
+  {id:'quote',   lane:0, row:4, label:'견적서',        nav:"[data-sub='s-quote']"},
+  {id:'supp',    lane:0, row:5, label:'보완접수',      nav:"[data-wf='s-supplement']"},
+  {id:'pre',     lane:0, row:6, label:'가계약',        nav:"[data-wf='s-precontract']"},
+  {id:'real',    lane:0, row:8, label:'실계약',        nav:"[data-wf='s-realcontract']"},
+  {id:'d_intake',lane:1, row:4, label:'신규 현장 접수',nav:"[data-wf='d-intake']"},
+  {id:'d_feas',  lane:1, row:5, label:'타당성검토', type:'decision', nav:"[data-wf='d-feas']"},
+  {id:'d_survey',lane:1, row:7, label:'현장 실측', sub:'설계1 · 시공1', nav:"[data-wf='d-survey']"},
+  {id:'d_struct',lane:1, row:9, label:'구조검토',      nav:"[data-stage='struct']"},
+  {id:'a_intake',lane:2, row:8, label:'신규 현장 접수',nav:"[data-stage='admin_intake']"},
+  {id:'a_biz',   lane:2, row:9, label:'발전사업 허가', nav:"[data-stage='permit_biz']"},
+  {id:'a_dev',   lane:2, row:10, label:'개발행위 허가',nav:"[data-stage='permit_dev']"},
+  {id:'a_ppa',   lane:2, row:11, label:'PPA신청',      nav:"[data-stage='ppa']"},
+  {id:'a_line',  lane:2, row:12, label:'선로비 납부',  nav:"[data-stage='line_fee']"},
+  {id:'a_plan',  lane:2, row:13, label:'공사계획신고', nav:"[data-stage='const_plan']"},
+  {id:'a_kepco', lane:2, row:20, label:'한전수급계약', nav:"[data-stage='kepco']"},
+  {id:'a_comp',  lane:2, row:21, label:'준공검사',     nav:"[data-stage='completion']"},
+  {id:'a_comm',  lane:2, row:22, label:'상업운전',     nav:"[data-stage='commercial']"},
+  {id:'a_fac',   lane:2, row:23, label:'설비확인',     nav:"[data-stage='facility']"},
+  {id:'c_intake',lane:3, row:13, label:'신규 현장 접수',nav:"[data-stage='build_intake']"},
+  {id:'c_found', lane:3, row:14, label:'기초공사',     nav:"[data-stage='foundation']"},
+  {id:'c_mat',   lane:3, row:15, label:'자재입고 확인',nav:"[data-stage='material_in']"},
+  {id:'c_struct',lane:3, row:16, label:'구조물 설치',  nav:"[data-stage='struct_inst']"},
+  {id:'c_module',lane:3, row:17, label:'모듈 설치',    nav:"[data-stage='module_inst']"},
+  {id:'c_elec',  lane:3, row:18, label:'전기 공사',    nav:"[data-stage='electric']"},
+  {id:'c_inspect',lane:3, row:19, label:'사용전 검사', nav:"[data-stage='pre_inspect']"},
 ];
 const WF_EDGES = [
   ['site','feas1'],['feas1','layout'],['layout','cost'],['cost','quote'],
@@ -2555,12 +2555,12 @@ const WF_EDGES = [
   ['d_intake','d_feas'],
   ['d_feas','supp','N · 재접수'],
   ['d_feas','pre','Y'],
-  ['supp','pre'],['pre','real'],
-  ['real','d_survey'],
-  ['real','a_intake'],
+  ['supp','pre'],
+  ['pre','d_survey'],          // 가계약 → (설계)현장 실측
+  ['d_survey','real'],         // 현장 실측 → (영업)실계약
+  ['real','a_intake'],         // 실계약 → (행정)착수
   ['a_intake','a_biz'],
   ['a_biz','d_struct'],
-  ['d_survey','d_struct'],
   ['d_struct','a_dev'],
   ['a_dev','a_ppa'],['a_ppa','a_line'],['a_line','a_plan'],
   ['a_plan','c_intake'],
@@ -2594,17 +2594,25 @@ function renderWorkflow(){
     const txt = n.sub
       ? `<text x="${cx}" y="${cy-1}" text-anchor="middle" font-size="11.5" font-weight="700" fill="#fff">${esc(n.label)}</text><text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="8.5" font-weight="600" fill="#fff" opacity="0.92">${esc(n.sub)}</text>`
       : `<text x="${cx}" y="${cy+4}" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">${esc(n.label)}</text>`;
-    return `<g class="wfn" onclick="gotoWorkflowTab('${L.key}')">${shape}${txt}</g>`;
+    return `<g class="wfn" data-nav-tab="${L.key}" data-nav-sel="${n.nav||''}" onclick="gotoWorkflowNode(this)">${shape}${txt}</g>`;
   }).join('');
   return `<div class="wfd-svgwrap"><svg viewBox="0 0 ${W} ${H}" style="width:${W}px;max-width:100%;height:auto;display:block;margin:0 auto" role="img" aria-label="업무 흐름도 스윔레인">
     <defs><marker id="wfarrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink-2)" opacity="0.72"/></marker></defs>
     ${paths}${heads}${nodes}
   </svg></div>
-  <div class="wfd-note">· 팀장님 제공 「파주지사 업무프로세스(26-09-21)」 흐름도를 그대로 반영했습니다. 색상 블록은 각 팀(영업·설계·행정·시공) 레인, 화살표는 업무 이관 흐름입니다.<br>· 설계 <b>타당성검토</b>는 통과(Y)=가계약, 반려(N)=보완접수로 재접수됩니다. 각 단계/팀을 누르면 해당 팀 화면으로 이동합니다.</div>`;
+  <div class="wfd-note">· 팀장님 제공 「파주지사 업무프로세스(26-09-21)」 흐름도를 반영했습니다. 색상 블록은 각 팀(영업·설계·행정·시공) 레인, 화살표는 업무 이관 흐름입니다.<br>· 영업 <b>가계약</b> → 설계 <b>현장 실측</b> → 영업 <b>실계약</b> 순으로 진행됩니다. 설계 <b>타당성검토</b>는 통과(Y)=가계약, 반려(N)=보완접수로 재접수됩니다.<br>· <b>각 단계</b>를 누르면 그 업무의 실제 화면(메뉴)으로, <b>팀 이름</b>을 누르면 해당 팀으로 이동합니다.</div>`;
 }
 function openWorkflow(){ const b=document.getElementById('workflowBody'); if(b) b.innerHTML = renderWorkflow(); document.getElementById('workflowScrim').classList.add('open'); }
 function closeWorkflow(){ document.getElementById('workflowScrim').classList.remove('open'); }
 function gotoWorkflowTab(tab){ closeWorkflow(); switchTab(tab); }
+// 노드 클릭 → 해당 팀 탭 전환 + 그 업무의 실제 메뉴 화면으로 진입
+function gotoWorkflowNode(el){
+  const tab=el.dataset.navTab, sel=el.dataset.navSel;
+  closeWorkflow();
+  if(!tab) return;
+  switchTab(tab);                                   // 팀 탭 + 세부메뉴 생성
+  if(sel){ const b=document.querySelector('#ssNav .ss-item'+sel); if(b) activateItem(tab, b); }  // 해당 메뉴 활성화
+}
 
 // 신규 현장 접수 (설계) — 영업 이관 자료: 견적서 전체 + 배치도
 function renderIntake(){
