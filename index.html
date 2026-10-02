@@ -459,6 +459,39 @@ button{font-family:inherit;cursor:pointer}
 .rv-new{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
 .rv-dd{font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;background:color-mix(in srgb,var(--accent) 13%,transparent);border-radius:20px;padding:1px 9px;font-size:11px}
 .rv-badge{font-size:9.5px;font-weight:800;color:#fff;background:var(--accent);border-radius:20px;padding:2px 7px;margin-right:3px}
+/* 영업 제안서 문서(「태양광 발전사업 제안서」 2단) */
+.qd-doc{margin-top:6px}
+.qd-company{text-align:center;font-size:12.5px;color:var(--accent);font-weight:800;letter-spacing:.03em;margin-bottom:2px}
+.qd-title{text-align:center;font-size:21px;font-weight:800;color:var(--ink);margin:4px 0 12px;letter-spacing:-.01em;text-wrap:balance}
+.qd-prov{font-size:11px;font-weight:700;color:var(--accent-ink);background:color-mix(in srgb,var(--accent) 14%,transparent);padding:6px 10px;border-radius:8px;margin:0 0 12px;text-align:center}
+.qd-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media(max-width:760px){.qd-grid{grid-template-columns:1fr}}
+.qd-sec{font-size:13px;font-weight:800;text-align:center;padding:7px;border-radius:8px;margin:2px 0 9px;letter-spacing:.06em}
+.qd-sec.g{background:var(--ok-bg);color:var(--ok-ink);border:1px solid color-mix(in srgb,var(--ok) 34%,var(--border))}
+.qd-sec.b{background:var(--prog-bg);color:var(--prog-ink);border:1px solid color-mix(in srgb,var(--prog) 30%,var(--border))}
+.qd-tbl{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:12px}
+.qd-tbl th,.qd-tbl td{border:1px solid var(--border);padding:6px 8px;color:var(--ink)}
+.qd-tbl th{background:var(--surface-2);color:var(--muted);font-weight:700;font-size:11.5px}
+.qd-tbl td.qd-n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.qd-tbl td.qd-c{text-align:center;color:var(--ink-2);white-space:nowrap}
+.qd-tbl tr.qd-sum td{background:var(--ok-bg);font-weight:800;color:var(--ink)}
+.qd-fin{border:1px solid var(--border);border-radius:11px;padding:9px 13px;margin-bottom:10px;background:var(--surface)}
+.qd-fin .row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}
+.qd-fin .row:last-child{border-bottom:0}
+.qd-fin .row .k{color:var(--ink);font-weight:700}
+.qd-fin .row .v{color:var(--prog-ink);font-weight:800;font-variant-numeric:tabular-nums;text-align:right}
+.qd-fin .row .v.big{font-size:18px}
+.qd-fin .row small{color:var(--muted);font-weight:500;font-size:11px}
+.qd-formula{background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:9px 11px;font-size:12px;color:var(--ink);text-align:center;margin-bottom:10px;font-variant-numeric:tabular-nums}
+.qd-payback{display:flex;justify-content:space-between;align-items:center;background:linear-gradient(100deg,var(--prog),var(--prog-ink));border-radius:10px;padding:10px 14px;margin-bottom:10px;box-shadow:0 4px 14px color-mix(in srgb,var(--prog) 34%,transparent)}
+.qd-payback .k{color:rgba(255,255,255,.92);font-weight:800}
+.qd-payback .v{color:#fff;font-weight:900;font-size:19px}
+.qd-note{font-size:10.5px;color:var(--risk);font-weight:700;margin-bottom:8px;line-height:1.5}
+.qd-foot{font-size:10px;color:var(--muted);line-height:1.6;border-top:1px dashed var(--border);padding-top:9px;margin-top:12px}
+.qd-photo{width:100%;border-radius:10px;display:block;border:1px solid var(--border)}
+.qd-photo-empty{min-height:150px;border:2px dashed var(--border-strong);border-radius:11px;background:color-mix(in srgb,var(--surface-2) 50%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:18px;color:var(--muted);font-size:11.5px;line-height:1.55}
+.qd-ph-ic{font-size:26px;opacity:.6;line-height:1}
+.qd-cap{margin-top:8px;background:var(--ok);color:#fff;border-radius:8px;padding:8px 11px;font-size:11.5px;font-weight:700;line-height:1.55}
 .sv-up-ic{font-size:30px;opacity:.7;line-height:1}
 .sv-up-t{font-size:12.5px;font-weight:800;color:var(--ink-2)}
 .sv-up-s{font-size:10.5px;line-height:1.7;color:var(--muted)}
@@ -894,6 +927,7 @@ button{font-family:inherit;cursor:pointer}
 .cred-warn{font-size:11.5px;color:#9a6f16;background:color-mix(in srgb,#bd8a2e 12%,transparent);border:1px solid color-mix(in srgb,#bd8a2e 30%,transparent);border-radius:9px;padding:9px 12px;margin-bottom:12px;line-height:1.5}
 /* ===== 인쇄(PDF) 전용 ===== */
 #permitPrintArea{display:none}
+#proposalPrintArea{display:none}
 .pp-doc{font-family:"Malgun Gothic","맑은 고딕",sans-serif;color:#111;background:#fff}
 .pp-page{width:190mm;padding:4mm 0;margin:0 auto}
 .pp-h1{text-align:center;font-size:19px;font-weight:800;margin:2mm 0 3mm;letter-spacing:4px}
@@ -911,12 +945,25 @@ button{font-family:inherit;cursor:pointer}
 .pp-sign{text-align:right;font-size:11px;margin:3mm 2mm 2mm 0;line-height:2}
 @media print{
   @page{size:A4;margin:12mm 10mm}
+  @page proposalA3{size:A3 landscape;margin:10mm}
   body.printing-permit > *:not(#permitPrintArea){display:none !important}
   body.printing-permit #permitPrintArea{display:block !important}
   .pp-page{page-break-after:always}
   .pp-page:last-child{page-break-after:auto}
   .pp-t{page-break-inside:auto}
   tr{page-break-inside:avoid}
+  /* 영업 제안서 — A3 가로 1장(용지 꽉 채움) · 인쇄는 항상 라이트 팔레트 + 배경색 인쇄 */
+  body.printing-proposal > *:not(#proposalPrintArea){display:none !important}
+  body.printing-proposal #proposalPrintArea{display:block !important;page:proposalA3;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;background:#fff;color:#111;
+    --bg:#fff;--surface:#fff;--surface-2:#f1f4f4;--surface-3:#e2e9e8;
+    --ink:#18292b;--ink-2:#4e5f63;--muted:#7d8c92;--border:#dae2e1;--border-strong:#c5d0ce;
+    --accent:#bd8a2e;--accent-ink:#8a6410;--ok:#2e8b63;--ok-bg:#e2f1ea;--ok-ink:#1c6b49;
+    --prog:#2f6fa6;--prog-bg:#e7eef4;--prog-ink:#2c5a83;--risk:#c14f3c}
+  #proposalPrintArea .qd-doc{max-width:390mm;margin:0 auto}
+  #proposalPrintArea .qd-grid{grid-template-columns:1fr 1fr !important;gap:14px}
+  #proposalPrintArea .qd-tbl,#proposalPrintArea .qd-fin,#proposalPrintArea .qd-photo-empty,#proposalPrintArea .qd-photo,#proposalPrintArea .qd-sec,#proposalPrintArea .qd-payback{break-inside:avoid}
+  #proposalPrintArea .qd-title{font-size:24px}
 }
 </style>
 
@@ -1572,7 +1619,7 @@ button{font-family:inherit;cursor:pointer}
       <p id="proposalSub">영업 이관 자료</p>
     </div>
     <div class="modal-body scroll" id="proposalBody"></div>
-    <div style="padding:12px 22px 18px;text-align:right"><button class="btn ghost sm" onclick="closeProposal()">닫기</button></div>
+    <div style="padding:12px 22px 18px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="btn dark sm" id="proposalPdfBtn" onclick="printProposal()">📄 PDF 저장 (A3)</button><button class="btn ghost sm" onclick="closeProposal()">닫기</button></div>
   </div>
 </div>
 
@@ -1595,6 +1642,7 @@ button{font-family:inherit;cursor:pointer}
 
 <!-- 발전사업 허가 접수용 PDF 인쇄 영역(평소 숨김, 인쇄 시에만 표시) -->
 <div id="permitPrintArea"></div>
+<div id="proposalPrintArea"></div>
 
 <!-- 공유 모드용 Supabase 클라이언트 (키 없으면 미사용 · 아티팩트에선 차단되어도 로컬로 동작) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -2495,9 +2543,15 @@ function buildProposal(d){
       loan:   wonf(invest * cf._loanpct/100),
       own:    wonf(invest * (100-cf._loanpct)/100),
       loanNote: `정책자금 ${cf._defer}년거치 ${cf._repay}년상환 · 이율 ${cf._rate}% (총사업비의 ${cf._loanpct}% 대출 · ${100-cf._loanpct}% 자부담)`,
+      // 제안서 문서용 — 20년 장기계약 판매기준(거치·상환·잔여 평균) + 정책자금 라벨 + 발전공식값
+      avg5grace: wonf(_R6(cf.avg5grace)), avg10repay: wonf(_R6(cf.avg10repay)), avg5remain: wonf(_R6(cf.avg5remain)),
+      defer: cf._defer, repay: cf._repay, rate: cf._rate, loanpct: cf._loanpct,
+      hours, apply, kw: kwStr,
     },
     layout: `${d.type}형 · 모듈각 15° · 입사각 25° · ${q.modQty}EA 자동배치`,
     note: `${q.mod.name} × ${q.modQty}매 = ${kwStr}kW 설치 · 한전 선로 연계비${gc.ctrl?'(출력제어장치 포함)':''} 약 ${gc.man.toLocaleString()}만원 및 제세공과금 별도 · 토목비·VAT 별도`,
+    gridMan: gc.man, gridCtrl: gc.ctrl,
+    specRaw: { grade: q.isKorean?'국산2등급':'중국산무등급', modName: q.mod.name, w: q.mod.w, qty: q.modQty, kw: kwStr, invLabel, invQty: q.invSpec.qty, shape, tilt:15, inc:25 },
     modQty: q.modQty, invSpec: q.invSpec, moduleKey: d.quoteOpts?.moduleKey,
     generatedAt: new Date().toISOString().slice(0,10),
     salesRep: d.rep || '미지정', salesDealId: d.id, handoverAt: new Date().toISOString(),
@@ -2524,87 +2578,90 @@ function quoteFull(d){
   </div>`;
 }
 
-// 영업 이관 자료 — 발전사업 제안서(견적서 전체·사양·유지관리비·수익성·배치도)
+// 영업 제안서 문서 — 「태양광 발전사업 제안서」(2단: 좌 견적·제품사양·유지관리비 / 우 수익성·장기계약·정책자금·배치도)
+// 레거시 스냅샷(구버전 d.proposal)에 문서용 필드가 없으면 딜 기준으로 보강(원본 수치는 유지)
+function ensureProposalFields(d, p){
+  if(p && p.specRaw && p.econ && p.econ.avg5grace!=null) return p;
+  let fresh=null; try{ const capN=pNum(p&&p.spec&&p.spec.cap)||d.cap; fresh=buildProposal({...d, cap:capN}); }catch(e){}
+  if(!fresh) return p;
+  return Object.assign({}, fresh, p, { specRaw:(p&&p.specRaw)||fresh.specRaw, gridMan:(p&&p.gridMan)||fresh.gridMan, gridCtrl:(p&&p.gridCtrl!=null)?p.gridCtrl:fresh.gridCtrl, econ:Object.assign({}, fresh.econ, (p&&p.econ)||{}) });
+}
 function handoverProposal(d, p, showCost){
-  p = p || d.proposal; if(!p) return quoteFull(d);
-  const TH='padding:7px 10px;font-size:11px;font-weight:700;color:var(--ink-2);background:var(--surface-2);border-bottom:1px solid var(--border)';
-  const TD='padding:7px 10px;font-size:12.5px;border-bottom:1px solid var(--border)';
-  const NUM='font-variant-numeric:tabular-nums';
-  // ---- 원가 열(설계·신규 현장 접수 전용) — 딜 기준 재계산, 공종명으로 매칭(저장된 옛 제안서도 정확) ----
+  p = p || d.proposal || (d.cap!=null ? buildProposal(d) : null); if(!p) return quoteFull(d);
+  p = ensureProposalFields(d, p);
+  const e=p.econ||{}, sr=p.specRaw||{};
+  const modClean=(sr.modName||'').replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim();   // 등급 괄호 제거(예: "현대 645W (국산 2등급)" → "현대 645W")
+  // 견적 원가 열(설계·신규 현장 접수 전용) — 딜 기준 재계산, 공종명 매칭
   let costMap={}, costTotal=0, anyCost=false;
-  if(showCost){
-    try{ generateQuote(d).rows.forEach(r=>{ costMap[r[0]]=r[5]; if(r[5]!=null){ costTotal+=r[5]; anyCost=true; } }); }
-    catch(e){ showCost=false; }
-  }
-  const fmtCost=name=>{ const c=costMap[name]; return (c==null)?'-':Math.round(c).toLocaleString(); };
-  const costTH = showCost ? `<th style="${TH};text-align:right">원가(원)</th>` : '';
-  const costTD = q => showCost ? `<td style="${TD};text-align:right;${NUM};color:var(--ink-2)">${esc(fmtCost(q[0]))}</td>` : '';
-  const qrows=p.quote.map(q=>`<tr>
-      <td style="${TD};text-align:left">${esc(q[0])}</td>
-      <td style="${TD};text-align:center;color:var(--ink-2)">${esc(q[1])}</td>
-      <td style="${TD};text-align:center;color:var(--ink-2)">${esc(q[2])}</td>
-      <td style="${TD};text-align:right;${NUM}">${esc(q[3])}</td>
-      ${costTD(q)}
-      <td style="${TD};text-align:left;color:var(--muted);font-size:11px">${esc(q[4]||'')}</td></tr>`).join('');
-  const costTotalTD = showCost ? `<td style="${TD};text-align:right;font-weight:800;${NUM};background:var(--surface-2)">${anyCost?costTotal.toLocaleString():'-'}</td>` : '';
-  const quoteTbl=`<div class="table-scroll"><table style="width:100%;border-collapse:collapse">
-    <thead><tr>
-      <th style="${TH};text-align:left">공종명</th><th style="${TH};text-align:center">단위</th><th style="${TH};text-align:center">수량</th>
-      <th style="${TH};text-align:right">금액(원)</th>${costTH}<th style="${TH};text-align:left">비고</th></tr></thead>
-    <tbody>${qrows}
-      <tr><td style="${TD};text-align:left;font-weight:800;background:var(--surface-2)">합 계</td>
-        <td style="${TD};background:var(--surface-2)"></td><td style="${TD};background:var(--surface-2)"></td>
-        <td style="${TD};text-align:right;font-weight:800;${NUM};background:var(--surface-2)">${esc(p.total)}</td>
-        ${costTotalTD}
-        <td style="${TD};text-align:left;color:var(--muted);background:var(--surface-2)">${esc(p.totalNote)}</td></tr>
-    </tbody></table></div>`;
-  const srow=(k,v)=>`<div class="quote-row"><span>${k}</span><span class="qv">${esc(v)}</span></div>`;
-  const specBlk=`<div class="quote" style="margin-top:6px">
-    ${srow('기준용량', p.spec.cap+' · '+p.spec.qty)}
-    ${srow('모듈', p.spec.module)}
-    ${srow('인버터', p.spec.inverter)}
-    ${srow('설치형태', p.spec.install)}
-  </div>`;
-  const mrows=p.maint.map(m=>`<tr>
-      <td style="${TD};text-align:left">${esc(m[0])}</td>
-      <td style="${TD};text-align:right;${NUM}">${esc(m[1])}</td>
-      <td style="${TD};text-align:left;color:var(--muted)">${esc(m[2])}</td></tr>`).join('');
-  const maintTbl=`<div class="table-scroll"><table style="width:100%;border-collapse:collapse">
-    <thead><tr><th style="${TH};text-align:left">항목</th><th style="${TH};text-align:right">만원/년</th><th style="${TH};text-align:left">비고</th></tr></thead>
-    <tbody>${mrows}
-      <tr><td style="${TD};text-align:left;font-weight:800;background:var(--surface-2)">합 계</td>
-        <td style="${TD};text-align:right;font-weight:800;${NUM};background:var(--surface-2)">${esc(p.maintTotal)}</td>
-        <td style="${TD};background:var(--surface-2)"></td></tr>
-    </tbody></table></div>`;
-  const econ=`<div class="stat-grid">
-    <div class="stat"><div class="s-l">전력판매 수익</div><div class="s-v">${esc(p.econ.sell)}<small>원/년</small></div></div>
-    <div class="stat"><div class="s-l">20년 장기계약 순수익</div><div class="s-v">${esc(p.econ.net20)}<small>원/년</small></div></div>
-    <div class="stat"><div class="s-l">투자금 회수기간</div><div class="s-v" style="color:var(--accent-ink)">${esc(p.econ.payback)}</div></div>
-    <div class="stat"><div class="s-l">정책자금 대출 (80%)</div><div class="s-v">${esc(p.econ.loan)}<small>원</small></div></div>
-    <div class="stat"><div class="s-l">자부담금 (20%)</div><div class="s-v">${esc(p.econ.own)}<small>원</small></div></div>
-  </div>
-  <div class="note" style="margin-top:8px">${esc(p.econ.loanNote)}</div>`;
-  const layout=`<div class="mini-layout" style="height:150px"><div class="mini-cap">${esc(d.site)} · ${esc(p.layout)}</div></div>`;
-  const prov = p._provisional ? `<div class="note" style="margin:0 0 10px;color:var(--accent-ink);background:color-mix(in srgb,var(--accent) 14%,transparent);padding:6px 10px;border-radius:8px">※ 일부 단가·가정값은 잠정치입니다(수상 시공단가·판매단가 구간·발전시간 등). 실계약 견적 전 확정 필요.</div>` : '';
-  return `<div style="margin-top:14px">
-    <div class="section-title" style="font-size:12px;margin:0 0 8px">이관 자료 · 발전사업 제안서(영업 제공) — 견적 내역</div>
-    ${prov}${quoteTbl}
-    <div class="section-title" style="font-size:12px;margin:16px 0 6px">제품사양 · 설치형태</div>
-    ${specBlk}
-    <div class="section-title" style="font-size:12px;margin:16px 0 6px">유지관리비 <span style="font-weight:500;color:var(--muted)">(단위: 만원)</span></div>
-    ${maintTbl}
-    <div class="quote" style="margin-top:8px"><div class="quote-row total"><span>총 공사비 (VAT 별도)</span><span class="qv">₩ ${esc(p.total)}</span></div></div>
-    <div class="note" style="margin-top:8px">${esc(p.note)}</div>
-    <div class="section-title" style="font-size:12px;margin:16px 0 6px">수익성 검토</div>
-    ${econ}
-    <div class="section-title" style="font-size:12px;margin:16px 0 6px">현장 배치도</div>
-    ${layout}
+  if(showCost){ try{ generateQuote(d).rows.forEach(r=>{ costMap[r[0]]=r[5]; if(r[5]!=null){ costTotal+=r[5]; anyCost=true; } }); }catch(ex){ showCost=false; } }
+  const fc=n=>{ const c=costMap[n]; return (c==null)?'-':Math.round(c).toLocaleString(); };
+  const qrows=p.quote.map(q=>`<tr><td>${esc(q[0])}</td><td class="qd-c">${esc(q[1])}</td><td class="qd-c">${esc(q[2])}</td><td class="qd-n">${esc(q[3])}</td>${showCost?`<td class="qd-n" style="color:var(--ink-2)">${esc(fc(q[0]))}</td>`:''}<td class="qd-c">${esc(q[4]||'')}</td></tr>`).join('');
+  const quoteTbl=`<table class="qd-tbl"><thead><tr><th>공종명</th><th>단위</th><th>수량</th><th>금액</th>${showCost?'<th>원가(원)</th>':''}<th>비고</th></tr></thead>
+    <tbody>${qrows}<tr class="qd-sum"><td>합 계</td><td class="qd-c"></td><td class="qd-c"></td><td class="qd-n">${esc(p.total)}</td>${showCost?`<td class="qd-n">${anyCost?costTotal.toLocaleString():'-'}</td>`:''}<td class="qd-c">${esc(p.totalNote||'백만절사·VAT별도')}</td></tr></tbody></table>`;
+  const specTbl=`<table class="qd-tbl"><tbody>
+    <tr><td>기준용량</td><td class="qd-n">${esc(p.spec.cap)}</td><td class="qd-c">${esc(p.spec.qty)}</td></tr>
+    <tr><td>모듈</td><td class="qd-c">${esc(sr.grade||'')}</td><td class="qd-c">${esc(modClean||((sr.modName||'')))}</td></tr>
+    <tr><td>인버터</td><td class="qd-c">${esc(sr.invLabel||p.spec.inverter||'')}</td><td class="qd-c">${esc((sr.invQty||'')+' 대')}</td></tr>
+    <tr><td>설치형태</td><td class="qd-c" colspan="2">${esc(p.spec.install)}</td></tr>
+  </tbody></table>`;
+  const maintTbl=`<table class="qd-tbl"><tbody>
+    ${p.maint.map(m=>`<tr><td>${esc(m[0])}</td><td class="qd-n">${esc(m[1])}</td><td class="qd-c">만원/년</td><td class="qd-c">${esc(m[2])}</td></tr>`).join('')}
+    <tr class="qd-sum"><td>합 계</td><td class="qd-n">${esc(p.maintTotal)}</td><td class="qd-c">만원/년</td><td class="qd-c"></td></tr>
+  </tbody></table>`;
+  const addr=esc(d.jibun||d.site||'부지 미지정');
+  const modline=`${esc(sr.grade||'')} ${esc(modClean||sr.modName||'')} × ${(sr.qty||0).toLocaleString()} 매 = ${esc(sr.kw||p.spec.cap)} kW 설치`;
+  const gridfee=`* 한전 선로 연계비${p.gridCtrl?'(출력제어장치 포함)':''} 약 ${(p.gridMan||0).toLocaleString()}만원 및 제세공과금 별도 / 토목비·VAT 별도`;
+  const remainYrs=Math.max(0,20-(e.defer||5)-(e.repay||10));
+  const layoutBox=d.layoutImg?`<img class="qd-photo" src="${esc(d.layoutImg)}" alt="현장 배치도">`:`<div class="qd-photo-empty"><div class="qd-ph-ic">🗺️</div><div><b>모듈 가배치 자료</b>는 향후 자동 배치 개발 완료 시<br>이 위치에 현장 배치도로 담깁니다</div></div>`;
+  const layoutCap=`<div class="qd-cap">${esc(d.site||'')} · 모듈각 ${sr.tilt||15}° · ${esc(d.type||'노지')}형<br>${(sr.qty||0).toLocaleString()}EA × ${sr.w||0}W = ${esc(sr.kw||p.spec.cap)}kW</div>`;
+  const prov = p._provisional ? `<div class="qd-prov">※ 일부 단가·가정값은 잠정치입니다(수상 시공단가·판매단가 구간·발전시간 등). 실계약 견적 전 확정 필요.</div>` : '';
+  return `<div class="qd-doc">
+    <div class="qd-company">해피솔라그룹</div>
+    <div class="qd-title">${addr}</div>${prov}
+    <div class="qd-grid">
+      <div>
+        <div class="qd-sec g">견 적 서</div>${quoteTbl}
+        <div class="qd-sec b">제품사양 및 설치형태</div>${specTbl}
+        <div class="qd-sec b">유지관리비 <small style="font-weight:500">(단위: 만원)</small></div>${maintTbl}
+      </div>
+      <div>
+        <div class="qd-formula">${modline}</div>
+        <div class="qd-note">${gridfee}</div>
+        <div class="qd-fin">
+          <div class="row"><span class="k">◆ 총 공사비</span><span class="v big">${esc(p.total)} 원</span></div>
+          <div class="row"><span class="k">◆ 전력판매 수익</span><span class="v">${esc(e.sell||'-')} <small>/ 년</small></span></div>
+          <div class="row"><span class="k">◆ 20년 장기계약 순수익</span><span class="v">${esc(e.net20||'-')} <small>/ 년</small></span></div>
+        </div>
+        <div class="qd-formula">${esc(e.kw||p.spec.cap)}kW × ${e.hours||3.6}시간 × 365일 × ${e.apply||178}원</div>
+        <div class="qd-payback"><span class="k">투자금 회수기간</span><span class="v">${esc(e.payback||'-')}</span></div>
+        <div class="qd-sec b">20년 장기계약 판매기준</div>
+        <table class="qd-tbl"><tbody>
+          <tr><td>${e.defer||5}년 순수익 (거치기간)</td><td class="qd-n">${esc(e.avg5grace||'-')}</td><td class="qd-c">/ 년 평균</td></tr>
+          <tr><td>${e.repay||10}년 순수익 (상환기간)</td><td class="qd-n">${esc(e.avg10repay||'-')}</td><td class="qd-c">/ 년 평균</td></tr>
+          <tr><td>${remainYrs}년 순수익 (잔여기간)</td><td class="qd-n">${esc(e.avg5remain||'-')}</td><td class="qd-c">/ 년 평균</td></tr>
+        </tbody></table>
+        <div class="qd-sec g">정책자금 (${e.defer||5}년거치 ${e.repay||10}년상환 · 이율 ${e.rate||2.5}%)</div>
+        <table class="qd-tbl"><tbody>
+          <tr><td>정책자금 대출 (${e.loanpct||80}%)</td><td class="qd-n">${esc(e.loan||'-')}</td></tr>
+          <tr><td>자부담금 (${100-(e.loanpct||80)}%)</td><td class="qd-n">${esc(e.own||'-')}</td></tr>
+        </tbody></table>
+        <div class="qd-sec b">현장 배치도</div>
+        ${layoutBox}${layoutCap}
+      </div>
+    </div>
+    <div class="qd-foot">
+      * 본 제안서는 참고자료로서 정부정책과 그 지역 일사조건·시공형태에 의해 다를 수 있습니다.<br>
+      * 총공사비 VAT별도 · 한전 계통연계비/토목비/건물보강비 별도 · 제안일 기준 15일간 유효.<br>
+      * 수익성 검토는 20년 장기계약(고정가) 기준 예시이며, 실제 발전단가·부대비용에 따라 달라질 수 있습니다.
+    </div>
   </div>`;
 }
 
 // 제안서 보기 모달 — 어느 단계에서든 그 현장의 영업 이관 제안서(견적서 전체)를 다시 연다
+let _proposalId=null;   // 현재 모달에 열린 제안서 딜 — PDF 저장(printProposal)이 사용
 function openProposal(id){
   const d = DEALS.find(x=>x.id===id); if(!d) return;
+  _proposalId=id;
   const revised = !!d.revisedProposal;
   const p = d.revisedProposal || d.proposal || (d.quoteOpts ? buildProposal(d) : null);
   const capLbl = (revised && d.reviseCfg) ? d.reviseCfg.cap : d.cap;
@@ -2616,6 +2673,17 @@ function openProposal(id){
   document.getElementById('proposalScrim').classList.add('open');
 }
 function closeProposal(){ document.getElementById('proposalScrim').classList.remove('open'); }
+// 제안서 PDF 저장 — A3 가로 1장 인쇄(브라우저 인쇄→PDF)
+function printProposal(id){
+  id = id || _proposalId; const d = DEALS.find(x=>x.id===id); if(!d){ toast('제안서를 먼저 여세요'); return; }
+  const p = d.revisedProposal || d.proposal || (d.cap!=null ? buildProposal(d) : null);
+  const area=document.getElementById('proposalPrintArea'); if(!area){ toast('인쇄 영역이 없습니다'); return; }
+  area.innerHTML = p ? handoverProposal(d, p) : handoverProposal(d, buildProposal(d));
+  const clean=()=>{ document.body.classList.remove('printing-proposal'); window.removeEventListener('afterprint',clean); };
+  window.addEventListener('afterprint', clean);
+  document.body.classList.add('printing-proposal');
+  setTimeout(()=>{ try{ window.print(); }catch(e){ clean(); } }, 60);
+}
 // 카드에 붙이는 '제안서 보기' 버튼 (모든 딜 — 제안서 있으면 전체, 없으면 견적 요약)
 function proposalBtn(d, label){ return `<button class="btn ghost sm" onclick="openProposal('${d.id}')">📄 ${label||'제안서 보기'}</button>`; }
 
@@ -4598,6 +4666,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-02', team:'영업', kind:'변경', title:'제안서 — 「태양광 발전사업 제안서」 문서 형식 + A3 PDF 저장', body:'영업 “제안서” 출력을 <b>고객 제시용 「태양광 발전사업 제안서」</b> 문서 형식으로 새로 만들었습니다. 상단에 <b>해피솔라그룹</b>·부지주소를 넣고, 좌측은 <b>견적서(11공종)·제품사양·유지관리비</b>, 우측은 <b>총 공사비·전력판매 수익·20년 장기계약 순수익·투자금 회수기간·20년 장기계약 판매기준(거치/상환/잔여 평균)·정책자금(대출·자부담)·현장 배치도</b>로 2단 구성했습니다(금액·수익성 계산은 기존 견적 엔진 그대로). <b>제안서 보기</b> 모달에 <b>“📄 PDF 저장 (A3)”</b> 버튼을 추가해 <b>A3 용지 1장</b>으로 인쇄·PDF 저장할 수 있습니다(화면과 동일한 모습으로 출력). <b>현장 배치도</b>는 향후 <b>모듈 가배치</b> 개발이 끝나면 자동으로 담기도록 자리를 만들어 두었고, 지금은 안내 자리표시로 표시됩니다. 이 제안서 형식은 영업 미리보기·제안서 보기·설계 신규접수·실측 반영 수정·실계약 확인 <b>모든 곳에서 동일하게</b> 보입니다.', author:'개발'},
   {date:'2026-10-02', team:'설계', kind:'추가', title:'현장 실측 — 실측 반영 견적 수정 → 영업 실계약 전달', body:'현장 실측 결과로 <b>최초 견적과 달라진 내용</b>을 설계팀이 바로 수정해 영업 실계약으로 보낼 수 있게 했습니다. 설계 “현장 실측” 화면에 <b>“실측 반영 견적 수정”</b> 영역을 추가했습니다. “최종 제안서 작성”을 누르면 그 현장의 <b>최초 견적</b>이 불러와지고, 모듈·수량(→설비용량 자동)·단가를 실측 결과대로 고치면 수정 견적이 <b>실시간으로 다시 계산</b>되며 “<b>최초 대비 변경</b>”(설비용량·모듈 수량·총 사업비·자부담 Δ)이 함께 표시됩니다. 변경 사유도 적을 수 있습니다. 저장하면 <b>발전사업 허가 신청서·실계약 금액이 수정본 기준</b>으로 자동 반영되고(“수정해서 계약”), 최초 견적은 “변경 전”으로 보존돼 비교됩니다. <b>영업 “실계약”</b> 화면에는 “실측 반영 견적” 카드가 생겨 설계가 수정한 견적·변경 요약·사유를 그대로 확인하고(수정 견적서 전체 보기 포함) 이 기준으로 계약을 진행합니다. 용량 변동이 없으면 수정하지 않아도 되며(실측 완료 조건과 무관), 수정이 없으면 실계약은 “최초 견적 적용”으로 안내됩니다. 실제 저장은 공유 서버에 반영돼 팀원 간 공유됩니다.', author:'개발'},
   {date:'2026-10-02', team:'설계', kind:'추가', title:'현장 실측 — 실측 도면 첨부 + 영업 실계약 도면 확인', body:'설계 “현장 실측”에 <b>실측 도면 첨부</b> 영역을 추가했습니다. 설계팀이 현장 실측을 다녀와 그린 도면을 종류별 슬롯(<b>배치도(필수)</b> · 구조/단면도 · 전기 계통도 · 기타)에 첨부합니다. 첨부한 도면은 하단 갤러리에 표시되고 취소할 수 있습니다. 완료 조건에 도면이 더해져, <b>배치도(필수 도면)를 첨부해야</b> “실측 완료 처리” 버튼이 활성화됩니다(기존 체크리스트·사진 조건과 함께, 하나라도 빠지면 비활성). 실측을 완료하면 도면이 <b>영업 실계약</b>으로 전달되어, 영업이 “실계약” 화면에서 설계 도면을 그대로 확인(읽기전용)하며 이 도면 기준으로 <b>최종 견적서·실계약</b>을 진행합니다. 실제 파일 업로드·저장은 추후 저장소 연동 시 지원되도록 `업로드 훅`과 데이터 구조를 미리 준비했습니다.', author:'개발'},
   {date:'2026-10-02', team:'영업', kind:'변경', title:'견적서·실계약 — 진행 버튼 하단 이동 + 필수 입력 완료 전 잠금', body:'견적서와 실계약의 진행 버튼을 화면 <b>맨 아래</b>로 옮기고, 필수 정보를 모두 입력해야 눌리도록 잠금을 추가했습니다. ① <b>견적서</b>: 사업주(신청인) 정보(대표자 성명·상호·전화번호)를 모두 입력해야 “공무팀 이관” 버튼이 활성화됩니다(미입력 시 회색 비활성). ② <b>실계약</b>: 신청정보(주민/법인번호·주소·설치장소·부지 명세·접수관청 등)에 미기재 항목이 있으면 “실계약 완료 처리” 버튼이 비활성으로 잠기고, 모두 채우면 활성화됩니다(입력 즉시 실시간 반영).', author:'개발'},
