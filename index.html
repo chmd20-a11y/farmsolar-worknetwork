@@ -710,7 +710,6 @@ button{font-family:inherit;cursor:pointer}
 .wfn rect,.wfn polygon{transition:opacity .13s}
 .wfn:hover rect,.wfn:hover polygon{opacity:.82}
 .wfn text{pointer-events:none;user-select:none}
-.wfd-note{font-size:11.5px;color:var(--muted);margin-top:12px;line-height:1.65}
 /* 설계 진행 현황(진행률) */
 .dpb-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin:2px 0 16px}
 .dpb-kpi{background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:12px 14px}
@@ -2604,8 +2603,7 @@ function renderWorkflow(){
   return `<div class="wfd-svgwrap"><svg viewBox="0 0 ${W} ${H}" style="width:${W}px;max-width:100%;height:auto;display:block;margin:0 auto" role="img" aria-label="업무 흐름도 스윔레인">
     <defs><marker id="wfarrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink-2)" opacity="0.9"/></marker></defs>
     ${paths}${heads}${nodes}
-  </svg></div>
-  <div class="wfd-note">· 팀장님 제공 「파주지사 업무프로세스(26-09-21)」 흐름도를 반영했습니다. 색상 블록은 각 팀(영업·설계·행정·시공) 레인, 화살표는 업무 이관 흐름입니다.<br>· 영업 <b>가계약</b> → 설계 <b>현장 실측</b> → 영업 <b>실계약</b> 순으로 진행됩니다. 설계 <b>타당성검토</b>는 통과(Y)=가계약 진행, 반려(N)=보완접수 → 보완 후 <b>재접수</b>하여 타당성검토를 다시 받습니다.<br>· <b>각 단계</b>를 누르면 그 업무의 실제 화면(메뉴)으로, <b>팀 이름</b>을 누르면 해당 팀으로 이동합니다.</div>`;
+  </svg></div>`;
 }
 function openWorkflow(){ const b=document.getElementById('workflowBody'); if(b) b.innerHTML = renderWorkflow(); document.getElementById('workflowScrim').classList.add('open'); }
 function closeWorkflow(){ document.getElementById('workflowScrim').classList.remove('open'); }
