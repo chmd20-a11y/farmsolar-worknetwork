@@ -207,6 +207,7 @@ button{font-family:inherit;cursor:pointer}
 .btn:disabled:hover{filter:none}
 .btn.primary:disabled{background:var(--surface-3);border-color:var(--border);color:var(--muted)}
 .btn.primary:disabled:hover{background:var(--surface-3);filter:none}
+.btn.dark:disabled,.btn.dark:disabled:hover{background:var(--surface-3);border-color:var(--border);color:var(--muted);filter:none}
 
 /* ============================================================
    KPI
@@ -3806,21 +3807,39 @@ function renderSurvey(){
 }
 
 // 실계약 (영업) — 실측완료 알림 + 본계약서 임의 양식
+// 실계약 완료 게이트 — 실계약에서 입력하는 항목(주민번호·주소·현장·부지 등)에 미기재가 있으면 비활성
+function rcMissing(d){
+  const p=getPermit(d); const isBld=p.installType==='건물';
+  const need=[p.applicant.idno,p.applicant.addr,p.office,p.biz.kind,p.biz.place,p.biz.volt,p.biz.freq,p.biz.prep,
+    p.outline.method,p.outline.genType,p.outline.supply,p.outline.useArea,p.outline.totalArea];
+  if(isBld) need.push(p.outline.bldArea);
+  let miss=need.filter(v=>v==null||String(v).trim()==='').length;
+  const rows=isBld?(p.builds||[]):(p.lands||[]);
+  if(!rows.length) miss++;   // 부지 명세 최소 1건
+  else rows.forEach(r=>{ const req=isBld?[r.addr,r.jibun,r.bldArea,r.use,r.owner]:[r.addr,r.jibun,r.area,r.owner,r.zone]; miss+=req.filter(v=>v==null||String(v).trim()==='').length; });
+  return miss;
+}
+function rcRecount(id){ const d=DEALS.find(x=>x.id===id); if(!d) return;
+  const btn=document.getElementById('rcDoneBtn-'+id); if(btn) btn.disabled = rcMissing(d)>0; }
+function tryRealDone(id){ const d=DEALS.find(x=>x.id===id); if(!d) return;
+  if(rcMissing(d)>0){ toast('미기재 항목이 있습니다 — 모든 신청정보를 입력해야 실계약을 완료할 수 있습니다'); return; }
+  wfAction(id,'done','실계약 완료 — 공무팀 착수(발전허가·개발행위)'); }
 function renderRealContract(){
   const cards = DEALS.filter(d=>d.stage==='survey_done').map(d=>`
-    <div class="card pad" style="margin-bottom:14px">
+    <div class="card pad" style="margin-bottom:14px" oninput="rcRecount('${d.id}')">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
         <span class="pill prog"><span class="pd"></span>🔔 실측 완료 도착</span><span class="lr-s">${d.id} · 영업 ${esc(d.rep)}</span>
       </div>
       ${contractDoc('공 사 도 급 계 약 서 (본계약)', [['계약 구분','본계약 (실계약)'],['현 장 명',d.site],['사 업 주','○○○ (가상)'],['설비용량',d.cap.toLocaleString()+' kW ('+d.type+') · 실측 반영'],['총 공사대금',won(dealBudget(d.cap))+' (VAT 별도)'],['계약금 / 잔금','10% 계약 시 / 90% 기성·준공'],['공사기간','착공일로부터 약 4개월'],['작성일','2026-09-18']])}
-      <div class="wf-actions">
+      ${renderPermitSalesForm(d)}
+      <div class="wf-actions" style="margin-top:14px">
         ${proposalBtn(d)}
         <button class="btn ghost sm">실계약서 PDF</button>
-        <button class="btn primary sm" onclick="wfAction('${d.id}','done','실계약 완료 — 공무팀 착수(발전허가·개발행위)')">실계약 완료 처리 ✓</button>
+        <button class="btn primary sm" id="rcDoneBtn-${d.id}" onclick="tryRealDone('${d.id}')" ${rcMissing(d)>0?'disabled':''} title="신청정보(주민번호·주소·현장·부지 등)를 모두 입력해야 완료할 수 있습니다">실계약 완료 처리 ✓</button>
+        <span class="lr-s">미기재 항목이 있으면 완료할 수 없습니다</span>
       </div>
-      ${renderPermitSalesForm(d)}
     </div>`).join('');
-  return wfHead('실계약','실측 완료된 현장의 본계약입니다. 완료 처리하면 공무팀 인허가·시공 단계로 진행됩니다.') + (cards || emptyMsg('실계약 대상 현장이 없습니다.'));
+  return wfHead('실계약','실측 완료된 현장의 본계약입니다. 신청정보를 모두 입력한 뒤 완료 처리하면 공무팀 인허가·시공 단계로 진행됩니다.') + (cards || emptyMsg('실계약 대상 현장이 없습니다.'));
 }
 
 /* ============================================================
@@ -4378,6 +4397,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-02', team:'영업', kind:'변경', title:'견적서·실계약 — 진행 버튼 하단 이동 + 필수 입력 완료 전 잠금', body:'견적서와 실계약의 진행 버튼을 화면 <b>맨 아래</b>로 옮기고, 필수 정보를 모두 입력해야 눌리도록 잠금을 추가했습니다. ① <b>견적서</b>: 사업주(신청인) 정보(대표자 성명·상호·전화번호)를 모두 입력해야 “공무팀 이관” 버튼이 활성화됩니다(미입력 시 회색 비활성). ② <b>실계약</b>: 신청정보(주민/법인번호·주소·설치장소·부지 명세·접수관청 등)에 미기재 항목이 있으면 “실계약 완료 처리” 버튼이 비활성으로 잠기고, 모두 채우면 활성화됩니다(입력 즉시 실시간 반영).', author:'개발'},
   {date:'2026-10-02', team:'공통', kind:'추가', title:'발전사업 허가 — 원천별 데이터 분리(견적서/실계약) + 출처 표시 + 원천 외 편집잠금', body:'중복 입력을 없애기 위해 발전사업 허가 신청정보를 <b>최초 입력하는 곳(원천)</b> 기준으로 나눴습니다. ① <b>견적서</b> = 설비용량·설비 스펙·총사업비·자금 <b>+ 사업주 기본정보(대표자 성명·상호·전화번호)</b>. 견적서 화면에 사업주 정보 입력란을 추가했습니다. ② <b>영업 실계약</b> = <b>주민/법인등록번호·주소 등 민감정보</b>(보안상 견적서에서 받지 않습니다)와 현장·부지·행정 정보(설치장소·면적·설치방법·부지 명세·접수관청 등). 실계약의 사업주 섹션에서 성명·상호·전화는 견적서 값을 읽기전용으로 보여주고, 주민번호·주소만 입력합니다. ③ <b>행정 발전사업 허가</b> = 두 원천에서 <b>자동으로 직접 끌어와</b> 신청서·사업계획서를 완성(견적이 바뀌면 바로 반영). 각 항목 옆 <b>출처 태그</b>(`견적서`/`실계약`)에 마우스를 올리면 어디서 오는 값인지 안내하고, 태그를 누르면 그 원천 화면으로 이동합니다. 끌어온 값은 <b>원천에서만</b> 수정할 수 있고 다른 화면에서는 읽기전용으로 잠깁니다.', author:'개발'},
   {date:'2026-10-02', team:'행정', kind:'추가', title:'발전사업 허가 — 신청서·사업계획서 작성 + 접수 PDF 출력', body:'행정 “발전사업 허가” 메뉴를 실제 접수 업무용으로 새로 만들었습니다. 영업 “실계약” 화면에서 발전사업 허가 신청정보(사업주·설치장소·용량·부지 명세 등)를 입력하면, 행정 화면이 그 값을 그대로 끌어와(`영업 이관`) 「전기사업 허가신청서(별지 제1호서식)」와 사업계획서를 완성하고 접수용 `PDF`로 출력합니다(브라우저 인쇄→PDF 저장, A4). `토지(노지·수상)`/`건물(지붕)` 두 유형을 지원해 유형에 맞는 명세서·필요서류로 자동 전환됩니다. 아래 “첨부서류 발급·준비”에서 건축물대장·토지대장·지적도·토지이용계획확인서·건축물현황도·등기부등본 6종을 발급처 바로가기와 단계별 가이드로 안내하고, 서류별로 첨부 상태를 체크합니다. (관청 제출용 공식 발급본은 발급처 자동 `API` 발급이 불가해 각 포털에서 직접 발급 후 첨부하는 구조입니다.) 금액·공급계획·발전원가 등은 입력값에서 자동 계산됩니다.', author:'개발'},
   {date:'2026-10-02', team:'행정', kind:'추가', title:'발급 계정 관리 (행정 담당자 편집)', body:'행정 좌측메뉴에 “발급 계정 관리”를 신설했습니다. 서류 발급 포털(정부24·세움터·인터넷등기소·선불결제)의 로그인 정보를 행정 담당자·관리자가 앱에서 직접 등록·수정하고, 발급 화면에서 로그인한 내부 직원에게만 표시됩니다. 보안을 위해 이 정보는 공개 소스코드에 넣지 않고 서버(`Supabase` 예약행)에 보관해 공유합니다(공개 URL로 노출되지 않음). 실제 자격증명은 팀장님이 앱에서 1회 입력하시면 됩니다.', author:'개발'},
@@ -4489,18 +4509,18 @@ function renderSalesQuote(){
     <div style="margin-top:14px;border-top:1px dashed var(--border);padding-top:12px">
       <div class="section-title" style="font-size:12px;margin:0 0 8px"><svg class="st-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${IC.doc}</svg>사업주(신청인) 정보 <span class="lr-s" style="font-weight:500">— 발전사업 허가 신청서에 사용(성명·상호·전화만 · 행정으로 자동 연동)</span></div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
-        <div>${_lbl('대표자 성명')}<input class="tinput" id="qx-ow-name" placeholder="예: 홍길동"></div>
-        <div>${_lbl('상호(발전소명)')}<input class="tinput" id="qx-ow-biz" placeholder="예: ○○ 태양광발전소"></div>
-        <div>${_lbl('전화번호')}<input class="tinput" id="qx-ow-phone" placeholder="010-0000-0000"></div>
+        <div>${_lbl('대표자 성명')}<input class="tinput" id="qx-ow-name" oninput="qxUpdateHandover()" placeholder="예: 홍길동"></div>
+        <div>${_lbl('상호(발전소명)')}<input class="tinput" id="qx-ow-biz" oninput="qxUpdateHandover()" placeholder="예: ○○ 태양광발전소"></div>
+        <div>${_lbl('전화번호')}<input class="tinput" id="qx-ow-phone" oninput="qxUpdateHandover()" placeholder="010-0000-0000"></div>
       </div>
       <div class="note" style="margin-top:6px">※ 주민/법인등록번호·주소 등 민감정보는 <b>실계약</b>에서 입력합니다.</div>
     </div>
-    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+    <div id="qx-result" style="margin-top:12px"></div>
+    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn primary sm" onclick="saveQuoteFromEditor(false)">💾 견적 저장</button>
-      <button class="btn dark sm" onclick="saveQuoteFromEditor(true)">공무팀 이관 →</button>
+      <button class="btn dark sm" id="qxHandoverBtn" onclick="saveQuoteFromEditor(true)" disabled title="사업주(신청인) 정보(성명·상호·전화)를 모두 입력해야 이관할 수 있습니다">공무팀 이관 →</button>
       <button class="btn ghost sm" onclick="qxNewQuote()">＋ 새 견적</button>
     </div>
-    <div id="qx-result" style="margin-top:8px"></div>
   </div>`;
   const list = quotes.length ? `<div class="section-title" style="font-size:12px;margin:6px 0 8px">작성된 견적 (${quotes.length})</div>` + quotes.map(d=>{
     const q = generateQuote(d);
@@ -4563,14 +4583,19 @@ function recomputeQuotePreview(){
   const p=buildProposal(cfg);
   box.innerHTML = `<div class="section-title" style="font-size:12px;margin:14px 0 4px">견적 미리보기 · 총 사업비 ₩${p.total} <span style="font-weight:500;color:var(--muted)">(백만절사·VAT별도)</span></div>` + handoverProposal(cfg, p);
 }
-function initQuoteEditor(){ if(document.getElementById('qx-qty')) qxOnCapChange(); }
+function initQuoteEditor(){ if(document.getElementById('qx-qty')){ qxOnCapChange(); qxUpdateHandover(); } }
 function qxNewQuote(){ repaintQuote(); }
+// 공무팀 이관 게이트 — 사업주(신청인) 정보(성명·상호·전화) 모두 입력해야 활성
+function qxOwnerFilled(){ const g=id=>document.getElementById(id);
+  return !!(g('qx-ow-name')&&g('qx-ow-name').value.trim() && g('qx-ow-biz')&&g('qx-ow-biz').value.trim() && g('qx-ow-phone')&&g('qx-ow-phone').value.trim()); }
+function qxUpdateHandover(){ const b=document.getElementById('qxHandoverBtn'); if(b) b.disabled=!qxOwnerFilled(); }
 function saveQuoteFromEditor(handover){
   const cfg=buildEditorCfg();
   if(!cfg){ toast('모듈과 수량을 입력하세요'); return; }
   const g=id=>document.getElementById(id);
   const site=(g('qx-site').value||'').trim();
   if(!site){ toast('현장명을 입력하세요'); return; }
+  if(handover && !qxOwnerFilled()){ toast('사업주(신청인) 정보(성명·상호·전화)를 모두 입력해야 공무팀 이관할 수 있습니다'); return; }
   const existingId=g('qx-id').value;
   let d = existingId ? DEALS.find(x=>x.id===existingId) : null;
   if(!d){ d={ id:nextSalesId(), stage:'quote', rejectReason:'' }; DEALS.unshift(d); }
@@ -4603,7 +4628,7 @@ function loadQuoteToEditor(id){
   g('qx-unit').value=d.unitOverride||quoteTierDefaultUnit(d.type,cap)||'';
   g('qx-editing').textContent='· 편집 중: '+d.id;
   g('qx-kw').value=cap?cap.toLocaleString()+' kW':'';
-  recomputeQuotePreview();
+  recomputeQuotePreview(); qxUpdateHandover();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function handoverQuote(id){
