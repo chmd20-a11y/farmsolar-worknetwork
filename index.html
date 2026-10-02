@@ -3900,31 +3900,33 @@ function piSec(kc,ic,title,badge,inner){
 }
 
 /* ---- 부지(토지/건물) 명세 테이블 ---- */
-function renderPermitLands(d){
-  const id=d.id, p=getPermit(d), ls=p.lands||[];
+function renderPermitLands(d, ro){
+  const id=d.id, p=getPermit(d), ls=p.lands||[]; const R=ro?'readonly':'';
   const rows=ls.map((L,i)=>`<tr>
-     <td><input value="${esc(L.addr||'')}" oninput="setPermit('${id}','lands.${i}.addr',this.value)"></td>
-     <td style="width:64px"><input value="${esc(L.jibun||'')}" oninput="setPermit('${id}','lands.${i}.jibun',this.value)"></td>
-     <td style="width:46px"><input value="${esc(L.jimok||'')}" oninput="setPermit('${id}','lands.${i}.jimok',this.value)"></td>
-     <td style="width:70px"><input value="${esc(L.area||'')}" oninput="setPermit('${id}','lands.${i}.area',this.value)"></td>
-     <td><input value="${esc(L.owner||'')}" oninput="setPermit('${id}','lands.${i}.owner',this.value)"></td>
-     <td style="width:96px"><input value="${esc(L.zone||'')}" oninput="setPermit('${id}','lands.${i}.zone',this.value)"></td>
-     <td style="width:30px"><button class="btn ghost sm" style="padding:2px 6px" onclick="delPermitRow('${id}','lands',${i})">✕</button></td></tr>`).join('');
-  return `<table class="pm-tbl"><thead><tr><th>소재지</th><th>지번</th><th>지목</th><th>면적(㎡)</th><th>소유자</th><th>용도지역</th><th></th></tr></thead><tbody>${rows||'<tr><td colspan="7" style="color:var(--muted)">필지를 추가하세요</td></tr>'}</tbody></table>
-     <button class="btn ghost sm" onclick="addPermitRow('${id}','lands')">＋ 필지 추가</button>`;
+     <td><input ${R} value="${esc(L.addr||'')}" oninput="setPermit('${id}','lands.${i}.addr',this.value)"></td>
+     <td style="width:64px"><input ${R} value="${esc(L.jibun||'')}" oninput="setPermit('${id}','lands.${i}.jibun',this.value)"></td>
+     <td style="width:46px"><input ${R} value="${esc(L.jimok||'')}" oninput="setPermit('${id}','lands.${i}.jimok',this.value)"></td>
+     <td style="width:70px"><input ${R} value="${esc(L.area||'')}" oninput="setPermit('${id}','lands.${i}.area',this.value)"></td>
+     <td><input ${R} value="${esc(L.owner||'')}" oninput="setPermit('${id}','lands.${i}.owner',this.value)"></td>
+     <td style="width:96px"><input ${R} value="${esc(L.zone||'')}" oninput="setPermit('${id}','lands.${i}.zone',this.value)"></td>
+     ${ro?'':`<td style="width:30px"><button class="btn ghost sm" style="padding:2px 6px" onclick="delPermitRow('${id}','lands',${i})">✕</button></td>`}</tr>`).join('');
+  const cols=ro?6:7;
+  return `<table class="pm-tbl"><thead><tr><th>소재지</th><th>지번</th><th>지목</th><th>면적(㎡)</th><th>소유자</th><th>용도지역</th>${ro?'':'<th></th>'}</tr></thead><tbody>${rows||`<tr><td colspan="${cols}" style="color:var(--muted)">${ro?'영업 실계약에서 부지 정보를 입력하면 표시됩니다':'필지를 추가하세요'}</td></tr>`}</tbody></table>
+     ${ro?'':`<button class="btn ghost sm" onclick="addPermitRow('${id}','lands')">＋ 필지 추가</button>`}`;
 }
-function renderPermitBuilds(d){
-  const id=d.id, p=getPermit(d), bs=p.builds||[];
+function renderPermitBuilds(d, ro){
+  const id=d.id, p=getPermit(d), bs=p.builds||[]; const R=ro?'readonly':'';
   const rows=bs.map((B,i)=>`<tr>
-     <td><input value="${esc(B.addr||'')}" oninput="setPermit('${id}','builds.${i}.addr',this.value)"></td>
-     <td style="width:64px"><input value="${esc(B.jibun||'')}" oninput="setPermit('${id}','builds.${i}.jibun',this.value)"></td>
-     <td style="width:78px"><input value="${esc(B.bldArea||'')}" oninput="setPermit('${id}','builds.${i}.bldArea',this.value)"></td>
-     <td style="width:66px"><input value="${esc(B.struct||'')}" oninput="setPermit('${id}','builds.${i}.struct',this.value)"></td>
-     <td><input value="${esc(B.use||'')}" oninput="setPermit('${id}','builds.${i}.use',this.value)"></td>
-     <td><input value="${esc(B.owner||'')}" oninput="setPermit('${id}','builds.${i}.owner',this.value)"></td>
-     <td style="width:30px"><button class="btn ghost sm" style="padding:2px 6px" onclick="delPermitRow('${id}','builds',${i})">✕</button></td></tr>`).join('');
-  return `<table class="pm-tbl"><thead><tr><th>소재지</th><th>지번</th><th>건축면적(㎡)</th><th>구조</th><th>용도</th><th>소유자</th><th></th></tr></thead><tbody>${rows||'<tr><td colspan="7" style="color:var(--muted)">건물을 추가하세요</td></tr>'}</tbody></table>
-     <button class="btn ghost sm" onclick="addPermitRow('${id}','builds')">＋ 건물 추가</button>`;
+     <td><input ${R} value="${esc(B.addr||'')}" oninput="setPermit('${id}','builds.${i}.addr',this.value)"></td>
+     <td style="width:64px"><input ${R} value="${esc(B.jibun||'')}" oninput="setPermit('${id}','builds.${i}.jibun',this.value)"></td>
+     <td style="width:78px"><input ${R} value="${esc(B.bldArea||'')}" oninput="setPermit('${id}','builds.${i}.bldArea',this.value)"></td>
+     <td style="width:66px"><input ${R} value="${esc(B.struct||'')}" oninput="setPermit('${id}','builds.${i}.struct',this.value)"></td>
+     <td><input ${R} value="${esc(B.use||'')}" oninput="setPermit('${id}','builds.${i}.use',this.value)"></td>
+     <td><input ${R} value="${esc(B.owner||'')}" oninput="setPermit('${id}','builds.${i}.owner',this.value)"></td>
+     ${ro?'':`<td style="width:30px"><button class="btn ghost sm" style="padding:2px 6px" onclick="delPermitRow('${id}','builds',${i})">✕</button></td>`}</tr>`).join('');
+  const cols=ro?6:7;
+  return `<table class="pm-tbl"><thead><tr><th>소재지</th><th>지번</th><th>건축면적(㎡)</th><th>구조</th><th>용도</th><th>소유자</th>${ro?'':'<th></th>'}</tr></thead><tbody>${rows||`<tr><td colspan="${cols}" style="color:var(--muted)">${ro?'영업 실계약에서 건물 정보를 입력하면 표시됩니다':'건물을 추가하세요'}</td></tr>`}</tbody></table>
+     ${ro?'':`<button class="btn ghost sm" onclick="addPermitRow('${id}','builds')">＋ 건물 추가</button>`}`;
 }
 function addPermitRow(id,kind){ const d=DEALS.find(x=>x.id===id); const p=getPermit(d);
   if(kind==='lands') (p.lands=p.lands||[]).push({addr:'',jibun:'',jimok:'전',area:'',owner:'',ownerAddr:'',zone:''});
@@ -3932,71 +3934,74 @@ function addPermitRow(id,kind){ const d=DEALS.find(x=>x.id===id); const p=getPer
   persistDeal(d); refreshActive(); }
 function delPermitRow(id,kind,i){ const d=DEALS.find(x=>x.id===id); const p=getPermit(d); (p[kind]||[]).splice(i,1); persistDeal(d); refreshActive(); }
 
-/* ---- 신청정보 편집 폼(영업 이관 + 행정 보정 공용) ---- */
+/* ---- 신청정보 폼 — 영업(sales)=편집 / 행정(admin)=읽기전용 자동연동 ---- */
 function renderPermitForm(d, origin){
   const id=d.id, p=getPermit(d), isBld=p.installType==='건물';
-  const src = origin==='sales' ? '' : '영업 실계약 이관';
-  const applicant = piSec('#3f77a8','👤','신청인(사업주) · 접수관청', src,
+  const ro = origin==='admin';                       // 행정 = 영업 입력을 자동으로 가져와 읽기전용 표시
+  const badge = ro ? '영업 실계약 입력 · 자동연동' : '';
+  // ro면 모든 칸 readonly, 미입력 칸은 '(영업 미입력)' 안내
+  const pr=(label,path,val,opt)=>{ opt=Object.assign({},opt); if(ro){ opt.ro=true; if(val==null||val==='') opt.ph=opt.ph||'(영업 미입력)'; } return piRow(id,label,path,val,opt); };
+  const applicant = piSec('#3f77a8','👤','신청인(사업주) · 접수관청', badge,
     `<div class="pm-grid">
-      ${piRow(id,'대표자 성명','applicant.name',p.applicant.name)}
-      ${piRow(id,'주민/법인등록번호','applicant.idno',p.applicant.idno)}
-      ${piRow(id,'상호(발전소명)','applicant.bizname',p.applicant.bizname)}
-      ${piRow(id,'전화번호','applicant.phone',p.applicant.phone)}
-      ${piRow(id,'주소','applicant.addr',p.applicant.addr)}
-      ${piRow(id,'접수 관청','office',p.office,{ph:'○○시청/군청'})}
+      ${pr('대표자 성명','applicant.name',p.applicant.name)}
+      ${pr('주민/법인등록번호','applicant.idno',p.applicant.idno)}
+      ${pr('상호(발전소명)','applicant.bizname',p.applicant.bizname)}
+      ${pr('전화번호','applicant.phone',p.applicant.phone)}
+      ${pr('주소','applicant.addr',p.applicant.addr)}
+      ${pr('접수 관청','office',p.office,{ph:'○○시청/군청'})}
     </div>`);
-  const biz = piSec('#2e8b63','⚡','신청내용', src,
+  const biz = piSec('#2e8b63','⚡','신청내용', badge,
     `<div class="pm-grid">
-      ${piRow(id,'사업의 종류','biz.kind',p.biz.kind)}
-      ${piRow(id,'설비용량','biz.cap',p.biz.cap,{unit:'kW',type:'text'})}
-      ${piRow(id,'설치장소','biz.place',p.biz.place)}
-      ${piRow(id,'공급전압','biz.volt',p.biz.volt,{unit:'V'})}
-      ${piRow(id,'주파수','biz.freq',p.biz.freq,{unit:'Hz'})}
-      ${piRow(id,'준비기간','biz.prep',p.biz.prep,{unit:'개월'})}
+      ${pr('사업의 종류','biz.kind',p.biz.kind)}
+      ${pr('설비용량','biz.cap',p.biz.cap,{unit:'kW',type:'text'})}
+      ${pr('설치장소','biz.place',p.biz.place)}
+      ${pr('공급전압','biz.volt',p.biz.volt,{unit:'V'})}
+      ${pr('주파수','biz.freq',p.biz.freq,{unit:'Hz'})}
+      ${pr('준비기간','biz.prep',p.biz.prep,{unit:'개월'})}
     </div>`);
-  const outline = piSec('#7e6bb0','📄','사업계획 개요', '',
+  const outline = piSec('#7e6bb0','📄','사업계획 개요', badge,
     `<div class="pm-grid">
-      ${piRow(id,'발전소 명칭','outline.plantName',p.outline.plantName)}
-      ${piRow(id,'설치방법','outline.method',p.outline.method)}
-      ${piRow(id,'발전방식','outline.genType',p.outline.genType)}
-      ${piRow(id,'전력수급방식','outline.supply',p.outline.supply)}
-      ${piRow(id,'사용면적','outline.useArea',p.outline.useArea,{unit:'㎡'})}
-      ${piRow(id,'전체면적','outline.totalArea',p.outline.totalArea,{unit:'㎡'})}
-      ${isBld?piRow(id,'건축면적','outline.bldArea',p.outline.bldArea,{unit:'㎡'}):''}
-      ${piRow(id,'총사업비','outline.totalCost',p.outline.totalCost,{unit:'천원'})}
-      ${piRow(id,'건설단가','outline.unitCost',p.outline.unitCost,{unit:'천원/kW'})}
-      ${piRow(id,'연간발전량','outline.annual',p.outline.annual,{unit:'kWh'})}
+      ${pr('발전소 명칭','outline.plantName',p.outline.plantName)}
+      ${pr('설치방법','outline.method',p.outline.method)}
+      ${pr('발전방식','outline.genType',p.outline.genType)}
+      ${pr('전력수급방식','outline.supply',p.outline.supply)}
+      ${pr('사용면적','outline.useArea',p.outline.useArea,{unit:'㎡'})}
+      ${pr('전체면적','outline.totalArea',p.outline.totalArea,{unit:'㎡'})}
+      ${isBld?pr('건축면적','outline.bldArea',p.outline.bldArea,{unit:'㎡'}):''}
+      ${pr('총사업비','outline.totalCost',p.outline.totalCost,{unit:'천원'})}
+      ${pr('건설단가','outline.unitCost',p.outline.unitCost,{unit:'천원/kW'})}
+      ${pr('연간발전량','outline.annual',p.outline.annual,{unit:'kWh'})}
     </div>`);
-  const fund = piSec('#bd8a2e','💰','소요자금 조달', '',
+  const fund = piSec('#bd8a2e','💰','소요자금 조달', badge,
     `<div class="pm-grid">
-      ${piRow(id,'자기자금 비율','fund.ownPct',p.fund.ownPct,{unit:'%'})}
-      ${piRow(id,'타인자금 비율','fund.loanPct',p.fund.loanPct,{unit:'%'})}
-      ${piRow(id,'자기자금','fund.own',p.fund.own,{unit:'천원'})}
-      ${piRow(id,'타인자금','fund.loan',p.fund.loan,{unit:'천원'})}
+      ${pr('자기자금 비율','fund.ownPct',p.fund.ownPct,{unit:'%'})}
+      ${pr('타인자금 비율','fund.loanPct',p.fund.loanPct,{unit:'%'})}
+      ${pr('자기자금','fund.own',p.fund.own,{unit:'천원'})}
+      ${pr('타인자금','fund.loan',p.fund.loan,{unit:'천원'})}
     </div>`);
   const eq=p.equip;
-  const equip = piSec('#3f77a8','🔧','발전설비 개요', '',
+  const equip = piSec('#3f77a8','🔧','발전설비 개요', badge,
     `<div class="pm-grid">
-      ${piRow(id,'모듈 정격출력','equip.modW',eq.modW,{unit:'W'})}
-      ${piRow(id,'모듈 수량','equip.modQty',eq.modQty,{unit:'매'})}
-      ${piRow(id,'모듈 형식','equip.modType',eq.modType)}
-      ${piRow(id,'경사각','equip.modTilt',eq.modTilt,{unit:'°'})}
-      ${piRow(id,'개방/단락','equip.modVoc',eq.modVoc,{unit:'V · '+esc(eq.modIsc)+'A'})}
-      ${piRow(id,'외형크기','equip.modSize',eq.modSize,{unit:'mm'})}
-      ${piRow(id,'인버터 용량','equip.invKW',eq.invKW,{unit:'kW'})}
-      ${piRow(id,'인버터 수량','equip.invQty',eq.invQty,{unit:'대'})}
-      ${piRow(id,'인버터 형식','equip.invType',eq.invType)}
-      ${piRow(id,'입/출력전압','equip.invIn',eq.invIn,{unit:'V · '+esc(eq.invOut)+'V'})}
+      ${pr('모듈 정격출력','equip.modW',eq.modW,{unit:'W'})}
+      ${pr('모듈 수량','equip.modQty',eq.modQty,{unit:'매'})}
+      ${pr('모듈 형식','equip.modType',eq.modType)}
+      ${pr('경사각','equip.modTilt',eq.modTilt,{unit:'°'})}
+      ${pr('개방/단락','equip.modVoc',eq.modVoc,{unit:'V · '+esc(eq.modIsc)+'A'})}
+      ${pr('외형크기','equip.modSize',eq.modSize,{unit:'mm'})}
+      ${pr('인버터 용량','equip.invKW',eq.invKW,{unit:'kW'})}
+      ${pr('인버터 수량','equip.invQty',eq.invQty,{unit:'대'})}
+      ${pr('인버터 형식','equip.invType',eq.invType)}
+      ${pr('입/출력전압','equip.invIn',eq.invIn,{unit:'V · '+esc(eq.invOut)+'V'})}
     </div>`);
-  const siteSec = piSec('#2e8b63', isBld?'🏭':'🌾', isBld?'대상 건물 명세서':'대상 토지 명세서', src,
-    isBld ? renderPermitBuilds(d) : renderPermitLands(d));
-  const rep = piSec('#7e6bb0','🧾','대표자 인적사항', '',
+  const siteSec = piSec('#2e8b63', isBld?'🏭':'🌾', isBld?'대상 건물 명세서':'대상 토지 명세서', badge,
+    isBld ? renderPermitBuilds(d, ro) : renderPermitLands(d, ro));
+  const rep = piSec('#7e6bb0','🧾','대표자 인적사항', badge,
     `<div class="pm-grid">
-      ${piRow(id,'직위','rep.title',p.rep.title)}
-      ${piRow(id,'성명','rep.name',p.rep.name)}
-      ${piRow(id,'주민등록번호','rep.idno',p.rep.idno)}
-      ${piRow(id,'현주소','rep.addr',p.rep.addr)}
-      ${piRow(id,'호주관계','rep.relation',p.rep.relation)}
+      ${pr('직위','rep.title',p.rep.title)}
+      ${pr('성명','rep.name',p.rep.name)}
+      ${pr('주민등록번호','rep.idno',p.rep.idno)}
+      ${pr('현주소','rep.addr',p.rep.addr)}
+      ${pr('호주관계','rep.relation',p.rep.relation)}
     </div>`);
   return applicant+biz+outline+fund+equip+siteSec+rep;
 }
@@ -4034,16 +4039,13 @@ function renderPermitBiz(){
       <span class="lr-s">대상 현장</span>
       <select class="pm-dealsel" onchange="selectPermitDeal(this.value)">${opts}</select>
       ${tag}
-      <select class="pm-sel" style="max-width:150px" onchange="setPermit('${d.id}','installType',this.value);refreshActive()">
-        <option value="토지" ${p.installType!=='건물'?'selected':''}>유형: 토지(노지)</option>
-        <option value="건물" ${p.installType==='건물'?'selected':''}>유형: 건물(지붕)</option>
-      </select>
       <div style="flex:1"></div>
       <button class="btn ghost sm" onclick="togglePermitPreview()">${permitPrevOpen?'미리보기 닫기':'🔍 양식 미리보기'}</button>
       <button class="btn primary sm" onclick="printPermit('${d.id}')">📄 접수 PDF 출력</button>
     </div>`;
+  const info = `<div class="cred-warn" style="color:var(--ink-2);background:color-mix(in srgb,var(--brand) 9%,transparent);border-color:color-mix(in srgb,var(--brand) 26%,transparent)">🔗 아래 신청정보는 <b>영업 “실계약”에서 입력한 내용을 자동으로 가져온 것</b>입니다(읽기 전용). 내용·유형(토지/건물)을 고치려면 <b>영업 실계약 화면</b>에서 수정하면 이 화면에 자동 반영됩니다. 행정은 <b>첨부서류 발급·준비</b>와 <b>접수 PDF 출력</b>을 담당합니다.</div>`;
   const preview = permitPrevOpen ? `<div style="margin:14px 0;border:1px solid var(--border-strong);border-radius:12px;overflow:auto;max-height:620px;background:#fff;padding:6px">${renderPermitPrint(d)}</div>` : '';
-  return head + bar + renderPermitForm(d,'admin') + preview + renderPermitDocs(d);
+  return head + bar + info + renderPermitForm(d,'admin') + preview + renderPermitDocs(d);
 }
 
 /* ---- 첨부서류 발급 섹션 ---- */
