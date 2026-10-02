@@ -2113,8 +2113,13 @@ function loadLocal(){
   }catch(e){}
   return false;
 }
-async function persistDeal(d){ cacheLocal(); if(SB){ try{ await SB.from('fsnet_deals').upsert({id:d.id, data:d}); }catch(e){ toast('공유 저장 실패 — 로컬 보관'); } } }
-async function persistSite(s){ cacheLocal(); if(SB){ try{ await SB.from('fsnet_sites').upsert({id:s.id, data:s}); }catch(e){ toast('공유 저장 실패 — 로컬 보관'); } } }
+// 내 저장(upsert)이 realtime로 자기 자신에게 에코될 때, 화면을 다시 그려(refreshActive) 편집 중 입력(현장실측 체크리스트 등 DOM-only 상태)이 초기화되는 것을 방지.
+// 저장 직후 그 id를 '내 쓰기'로 표시 → 에코 수신 시 데이터만 갱신하고 화면 리렌더는 건너뜀.
+const _selfWrite=new Map();
+function markSelfWrite(id){ if(id!=null) _selfWrite.set(id, Date.now()+12000); }
+function isSelfWrite(id){ const t=_selfWrite.get(id); if(!t) return false; if(Date.now()<t) return true; _selfWrite.delete(id); return false; }
+async function persistDeal(d){ cacheLocal(); markSelfWrite(d.id); if(SB){ try{ await SB.from('fsnet_deals').upsert({id:d.id, data:d}); }catch(e){ toast('공유 저장 실패 — 로컬 보관'); } } }
+async function persistSite(s){ cacheLocal(); markSelfWrite(s.id); if(SB){ try{ await SB.from('fsnet_sites').upsert({id:s.id, data:s}); }catch(e){ toast('공유 저장 실패 — 로컬 보관'); } } }
 async function loadShared(){
   if(SB){
     try{
@@ -2159,9 +2164,12 @@ function subscribeRT(){
 }
 function applyRemote(arr, p){
   try{
+    const id=(p.new&&p.new.data&&p.new.data.id)||(p.old&&p.old.id);
     if(p.eventType==='DELETE'){ const i=arr.findIndex(x=>x.id===(p.old&&p.old.id)); if(i>=0) arr.splice(i,1); }
     else if(p.new && p.new.data){ const o=p.new.data; const i=arr.findIndex(x=>x.id===o.id); if(i>=0) arr[i]=o; else arr.unshift(o); }
-    cacheLocal(); refreshActive();
+    cacheLocal();
+    if(isSelfWrite(id)) return;   // 내 저장의 에코 — 데이터만 갱신하고 화면 리렌더는 생략(편집 중 입력 보존)
+    refreshActive();
   }catch(e){}
 }
 async function resetDemo(){
@@ -4666,6 +4674,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-02', team:'설계', kind:'수정', title:'현장 실측 — 견적 저장 시 상단 체크리스트가 초기화되던 문제 해결', body:'설계 “현장 실측”에서 상단 <b>현장실측 체크리스트</b>를 입력하고 하단 <b>“실측 반영 견적 저장 → 영업 실계약 전달”</b>을 누르면, 상단에 입력해 둔 체크리스트가 모두 비워지던 문제를 바로잡았습니다. 원인은 저장 내용이 공유 서버에 반영될 때 그 변경이 <b>내 화면으로 되돌아오며 화면을 다시 그려</b>, 아직 저장 전이던 체크리스트 입력이 지워지던 것이었습니다. 이제 <b>내가 방금 한 저장</b>이 되돌아올 때는 화면을 다시 그리지 않아, <b>입력하던 체크리스트가 그대로 유지</b>됩니다(다른 팀원이 같은 현장을 바꾸는 경우에는 정상적으로 화면이 갱신됩니다).', author:'개발'},
   {date:'2026-10-02', team:'영업', kind:'변경', title:'제안서 — 「태양광 발전사업 제안서」 문서 형식 + A3 PDF 저장', body:'영업 “제안서” 출력을 <b>고객 제시용 「태양광 발전사업 제안서」</b> 문서 형식으로 새로 만들었습니다. 상단에 <b>해피솔라그룹</b>·부지주소를 넣고, 좌측은 <b>견적서(11공종)·제품사양·유지관리비</b>, 우측은 <b>총 공사비·전력판매 수익·20년 장기계약 순수익·투자금 회수기간·20년 장기계약 판매기준(거치/상환/잔여 평균)·정책자금(대출·자부담)·현장 배치도</b>로 2단 구성했습니다(금액·수익성 계산은 기존 견적 엔진 그대로). <b>제안서 보기</b> 모달에 <b>“📄 PDF 저장 (A3)”</b> 버튼을 추가해 <b>A3 용지 1장</b>으로 인쇄·PDF 저장할 수 있습니다(화면과 동일한 모습으로 출력). <b>현장 배치도</b>는 향후 <b>모듈 가배치</b> 개발이 끝나면 자동으로 담기도록 자리를 만들어 두었고, 지금은 안내 자리표시로 표시됩니다. 이 제안서 형식은 영업 미리보기·제안서 보기·설계 신규접수·실측 반영 수정·실계약 확인 <b>모든 곳에서 동일하게</b> 보입니다.', author:'개발'},
   {date:'2026-10-02', team:'설계', kind:'추가', title:'현장 실측 — 실측 반영 견적 수정 → 영업 실계약 전달', body:'현장 실측 결과로 <b>최초 견적과 달라진 내용</b>을 설계팀이 바로 수정해 영업 실계약으로 보낼 수 있게 했습니다. 설계 “현장 실측” 화면에 <b>“실측 반영 견적 수정”</b> 영역을 추가했습니다. “최종 제안서 작성”을 누르면 그 현장의 <b>최초 견적</b>이 불러와지고, 모듈·수량(→설비용량 자동)·단가를 실측 결과대로 고치면 수정 견적이 <b>실시간으로 다시 계산</b>되며 “<b>최초 대비 변경</b>”(설비용량·모듈 수량·총 사업비·자부담 Δ)이 함께 표시됩니다. 변경 사유도 적을 수 있습니다. 저장하면 <b>발전사업 허가 신청서·실계약 금액이 수정본 기준</b>으로 자동 반영되고(“수정해서 계약”), 최초 견적은 “변경 전”으로 보존돼 비교됩니다. <b>영업 “실계약”</b> 화면에는 “실측 반영 견적” 카드가 생겨 설계가 수정한 견적·변경 요약·사유를 그대로 확인하고(수정 견적서 전체 보기 포함) 이 기준으로 계약을 진행합니다. 용량 변동이 없으면 수정하지 않아도 되며(실측 완료 조건과 무관), 수정이 없으면 실계약은 “최초 견적 적용”으로 안내됩니다. 실제 저장은 공유 서버에 반영돼 팀원 간 공유됩니다.', author:'개발'},
   {date:'2026-10-02', team:'설계', kind:'추가', title:'현장 실측 — 실측 도면 첨부 + 영업 실계약 도면 확인', body:'설계 “현장 실측”에 <b>실측 도면 첨부</b> 영역을 추가했습니다. 설계팀이 현장 실측을 다녀와 그린 도면을 종류별 슬롯(<b>배치도(필수)</b> · 구조/단면도 · 전기 계통도 · 기타)에 첨부합니다. 첨부한 도면은 하단 갤러리에 표시되고 취소할 수 있습니다. 완료 조건에 도면이 더해져, <b>배치도(필수 도면)를 첨부해야</b> “실측 완료 처리” 버튼이 활성화됩니다(기존 체크리스트·사진 조건과 함께, 하나라도 빠지면 비활성). 실측을 완료하면 도면이 <b>영업 실계약</b>으로 전달되어, 영업이 “실계약” 화면에서 설계 도면을 그대로 확인(읽기전용)하며 이 도면 기준으로 <b>최종 견적서·실계약</b>을 진행합니다. 실제 파일 업로드·저장은 추후 저장소 연동 시 지원되도록 `업로드 훅`과 데이터 구조를 미리 준비했습니다.', author:'개발'},
