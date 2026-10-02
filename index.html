@@ -434,6 +434,13 @@ button{font-family:inherit;cursor:pointer}
 .sv-thumb-x{position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;border:none;background:rgba(0,0,0,.45);color:#fff;font-size:13px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
 .sv-thumb-x:hover{background:var(--risk,#c0504d)}
 .sv-uparea{margin-top:12px;min-height:148px;border:2px dashed var(--border-strong);border-radius:12px;background:color-mix(in srgb,var(--surface-2) 40%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;padding:22px 16px}
+/* 실측 도면 패널 */
+.sv-dwg-slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px 18px}
+@media(max-width:620px){.sv-dwg-slots{grid-template-columns:1fr}}
+.sv-req{font-size:9px;font-weight:800;color:#fff;background:var(--risk,#c0504d);border-radius:20px;padding:2px 7px;margin-left:auto}
+.sv-opt{font-size:9px;font-weight:700;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:20px;padding:2px 7px;margin-left:auto}
+.sv-dwg-desc{font-size:10.5px;color:var(--muted);padding-left:25px;margin:-3px 0 7px;line-height:1.5}
+.sv-dwg-view{padding:3px 11px;font-size:10px;margin-top:2px}
 .sv-up-ic{font-size:30px;opacity:.7;line-height:1}
 .sv-up-t{font-size:12.5px;font-weight:800;color:var(--ink-2)}
 .sv-up-s{font-size:10.5px;line-height:1.7;color:var(--muted)}
@@ -1963,7 +1970,8 @@ let DEALS = [
   {id:'D-1027', site:'봉산 노지형',     cap:1350, type:'노지', rep:'김영수', stage:'approved',         rejectReason:''},
   {id:'D-1028', site:'대곡 저수지 수상', cap:900, type:'수상', rep:'박서준', stage:'survey_progress', rejectReason:'',
     survey:{ pic:'이도현', date:'2026-09-24 10:00', designer:'이도현', builder:'최현우' } },
-  {id:'D-1029', site:'하리 노지형',     cap:990,  type:'노지', rep:'김영수', stage:'survey_done',       rejectReason:''},
+  {id:'D-1029', site:'하리 노지형',     cap:990,  type:'노지', rep:'김영수', stage:'survey_done',       rejectReason:'',
+    drawings:{ '배치도':{kind:'배치도',url:null,uploadedAt:null}, '구조 / 단면도':{kind:'구조 / 단면도',url:null,uploadedAt:null} } },
 ];
 const WF_STAGES = {
   'd-intake':['handover_design'], 'd-feas':['feasibility'], 'd-survey':['survey_handover','survey_sched','survey_progress'],
@@ -3681,6 +3689,13 @@ const SURVEY_PHOTOS = [
   {k:'드론 촬영', opt:['전체 부지','주변 현황 / 음영']},
   {k:'예정 전기실 위치', opt:['위치','주변']},
 ];
+// 실측 도면 — 설계팀이 현장 실측 후 작성한 도면. 배치도는 필수(영업 견적·실계약 기준). 종류별 고정 슬롯.
+const SURVEY_DRAWINGS = [
+  {k:'배치도', req:true, desc:'패널 배치·용량 산정 기준 — 영업 견적·실계약 필수'},
+  {k:'구조 / 단면도',      desc:'구조재·지붕 단면'},
+  {k:'전기 계통도',        desc:'인입·결선 계통'},
+  {k:'기타 도면',          desc:'필요 시 추가 도면'},
+];
 function svOpt(el,multi){ if(multi){ el.classList.toggle('on'); return; } const was=el.classList.contains('on'); [...el.parentElement.children].forEach(c=>c.classList.remove('on')); if(!was) el.classList.add('on'); }
 // 위치별 사진 업로드 버튼 핸들러 — 현재는 '첨부 위치 표시'(placeholder). 유료 스토리지 연동 시 실제 파일 업로드로 교체.
 function svPhotoUpload(el){
@@ -3698,23 +3713,37 @@ function svPhotoUpload(el){
   if(host) host.outerHTML=renderSurveyPhotos(d);     // 패널 재렌더(버튼 상태·갤러리·카운트 동기화)
   svRecount(did);                                    // 완료 버튼 활성/비활성 갱신(사진 변경 반영)
 }
+// 실측 도면 첨부 버튼 핸들러 — 사진과 동일한 '첨부 자리표시'(placeholder). 유료 스토리지 연동 시 실제 파일 업로드로 교체.
+function svDwgUpload(el){
+  const did=el.dataset.did, kind=el.dataset.kind;
+  const d=DEALS.find(x=>x.id===did); if(!d) return;
+  d.drawings=d.drawings||{};
+  // ── 유료 스토리지 연동 지점(예정): input[type=file] 선택 → 업로드 → d.drawings[kind].url 저장 → persistDeal(d)로 기기간 공유.
+  if(d.drawings[kind]) delete d.drawings[kind];      // 이미 첨부 → 취소
+  else d.drawings[kind]={ kind, url:null, uploadedAt:null };
+  const host=document.getElementById('svdwg-'+did);
+  if(host) host.outerHTML=renderSurveyDrawings(d);   // 패널 재렌더
+  svRecount(did);                                    // 완료 버튼 상태 갱신(도면 변경 반영)
+}
 // 항목 값 입력 여부(칩=1개 이상 선택 / 입력칸=모두 채움)
 function svRowFilled(vcell){ if(!vcell) return false;
   const chips=vcell.querySelectorAll('.sv-chip'); if(chips.length) return [...chips].some(c=>c.classList.contains('on'));
   const inps=vcell.querySelectorAll('input'); if(!inps.length) return true; return [...inps].every(i=>(i.value||'').trim()!==''); }
-function svTotals(did){ const form=document.getElementById('svform-'+did), box=document.getElementById('svph-'+did);
+function svTotals(did){ const form=document.getElementById('svform-'+did), box=document.getElementById('svph-'+did), dbox=document.getElementById('svdwg-'+did);
   const rows=form?[...form.querySelectorAll('.sv-row')]:[]; const rowsDone=rows.filter(r=>svRowFilled(r.querySelector('.sv-v'))).length;
   const ups=box?[...box.querySelectorAll('.svph-up')]:[]; const phDone=ups.filter(c=>c.classList.contains('on')).length;  // 위치별 업로드 버튼 기준
-  return {rows:rows.length, rowsDone, ph:ups.length, phDone}; }
+  const dreq=dbox?[...dbox.querySelectorAll('.svdwg-up[data-req="1"]')]:[]; const dwgReqDone=dreq.filter(c=>c.classList.contains('on')).length;  // 필수 도면(배치도) 기준
+  return {rows:rows.length, rowsDone, ph:ups.length, phDone, dwgReq:dreq.length, dwgReqDone}; }
 function svRecount(did){ const t=svTotals(did);
   const fc=document.getElementById('svfc-'+did); if(fc) fc.textContent=t.rowsDone+' / '+t.rows;
   const pc=document.getElementById('svcount-'+did); if(pc) pc.textContent=t.phDone+' / '+t.ph;
-  // 전 항목 입력 + 사진 전부 첨부 시에만 '실측 완료 처리' 활성화(종합 의견은 제외)
-  const btn=document.getElementById('svdone-'+did); if(btn) btn.disabled = !(t.rows>0 && t.rowsDone>=t.rows && t.phDone>=t.ph); }
+  // 전 항목 입력 + 사진 전부 첨부 + 필수 도면(배치도) 첨부 시에만 '실측 완료 처리' 활성화(종합 의견은 제외)
+  const btn=document.getElementById('svdone-'+did); if(btn) btn.disabled = !(t.rows>0 && t.rowsDone>=t.rows && t.phDone>=t.ph && t.dwgReqDone>=t.dwgReq); }
 function trySurveyDone(id){ const t=svTotals(id);
-  if(t.rows===0 || t.rowsDone<t.rows || t.phDone<t.ph){ const m=[];
+  if(t.rows===0 || t.rowsDone<t.rows || t.phDone<t.ph || t.dwgReqDone<t.dwgReq){ const m=[];
     if(t.rowsDone<t.rows) m.push(`체크리스트 ${t.rows-t.rowsDone}개 항목 미입력`);
     if(t.phDone<t.ph) m.push(`사진 ${t.ph-t.phDone}개 미첨부`);
+    if(t.dwgReqDone<t.dwgReq) m.push(`필수 도면(배치도) 미첨부`);
     toast('실측 완료 불가 — '+m.join(' · ')); svRecount(id); return; }
   wfAction(id,'survey_done','실측 완료 — 영업팀 실계약으로 이관'); }
 function svRowContent(r,d){
@@ -3769,6 +3798,32 @@ function renderSurveyPhotos(d){
     ${gallery}
   </div>`;
 }
+// 실측 도면 첨부 패널(설계) — 종류별 고정 슬롯. 배치도(필수) 첨부 시에만 실측 완료 가능. 첨부분은 영업 실계약에서 재확인.
+function renderSurveyDrawings(d){
+  const dw=d.drawings||{}; const isOn=k=>!!dw[k];
+  const total=SURVEY_DRAWINGS.length, done=SURVEY_DRAWINGS.filter(x=>isOn(x.k)).length;
+  const items=SURVEY_DRAWINGS.map(x=>`
+    <div class="sv-ph-item">
+      <div class="sv-ph-top"><span class="sv-chk svph-chk${isOn(x.k)?' on':''}" title="첨부되면 자동 완료"></span><span class="sv-ph-k">${esc(x.k)}</span>${x.req?'<span class="sv-req">필수</span>':'<span class="sv-opt">선택</span>'}</div>
+      <div class="sv-dwg-desc">${esc(x.desc)}</div>
+      <div class="sv-chips sv-ph-opts"><span class="sv-chip sm up svdwg-up${isOn(x.k)?' on':''}" data-did="${d.id}" data-kind="${esc(x.k)}" data-req="${x.req?1:0}" onclick="svDwgUpload(this)" title="${esc(x.k)} 도면 첨부"><span class="up-ic">${isOn(x.k)?'✓':'📐'}</span>${isOn(x.k)?'첨부됨':'도면 첨부'}</span></div>
+    </div>`).join('');
+  const cards=SURVEY_DRAWINGS.filter(x=>isOn(x.k)).map(x=>{ const g=dw[x.k];
+    return `<div class="sv-thumb" title="${esc(x.k)}">
+      <div class="sv-thumb-img">${g&&g.url?`<img src="${esc(g.url)}" alt="">`:'📐'}</div>
+      <div class="sv-thumb-cap">${esc(x.k)}<span class="sv-thumb-sub">실측 도면</span></div>
+      <button class="sv-thumb-x" data-did="${d.id}" data-kind="${esc(x.k)}" onclick="svDwgUpload(this)" title="첨부 취소">×</button>
+    </div>`; }).join('');
+  const gallery=done
+    ? `<div class="sv-gallery">${cards}</div>`
+    : `<div class="sv-uparea" style="min-height:112px"><div class="sv-up-ic">📐</div><div class="sv-up-t">첨부한 실측 도면이 여기에 표시됩니다</div><div class="sv-up-s">설계팀이 현장 실측 후 작성한 도면을 첨부하세요<br><b>배치도(필수)</b>를 첨부해야 실측을 완료할 수 있습니다<br>실제 파일 업로드·저장은 추후(유료 스토리지 연동) 지원 예정</div></div>`;
+  return `<div class="sv-photos sv-dwg" id="svdwg-${d.id}">
+    <div class="sv-report-h">📐 실측 도면 <span id="svdwgcount-${d.id}" class="sv-count">${done} / ${total}</span></div>
+    <div class="sv-ph-note">⚠ 실측 후 <b>설계팀이 작성한 도면</b>을 첨부합니다. <b>배치도(필수)</b> 미첨부 시 실측 완료가 되지 않으며, 첨부한 도면은 <b>영업 실계약</b>에서 그대로 확인됩니다. (실제 업로드·저장은 추후 유료 스토리지 연동)</div>
+    <div class="sv-dwg-slots">${items}</div>
+    ${gallery}
+  </div>`;
+}
 
 function renderSurvey(){
   const cards = DEALS.filter(d=>['survey_handover','survey_sched','survey_progress'].includes(d.stage)).map(d=>{
@@ -3789,8 +3844,9 @@ function renderSurvey(){
       body=`<div class="tl-note" style="margin-top:12px;color:var(--prog-ink);background:var(--prog-bg)">🗓 ${esc((d.survey&&d.survey.date)||'-')} · 설계 ${esc((d.survey&&d.survey.designer)||'-')} + 시공 ${esc((d.survey&&d.survey.builder)||'-')} · 담당 ${esc((d.survey&&d.survey.pic)||'-')}</div>
         <div class="section-title" style="font-size:12px;margin:14px 0 10px">실측 결과 보고서</div>
         <div class="sv-grid">${renderSurveyForm(d)}${renderSurveyPhotos(d)}</div>
+        ${renderSurveyDrawings(d)}
         <textarea id="rep-${d.id}" class="ta" placeholder="종합 의견 · 특이사항(선택) — 전반적인 현장 상황, 리스크, 추가 확인이 필요한 사항 등 · 공란 가능"></textarea>
-        <div class="wf-actions"><button class="btn primary sm" id="svdone-${d.id}" onclick="trySurveyDone('${d.id}')" disabled title="모든 항목 입력 + 사진 전부 첨부 시 활성화">실측 완료 처리 →</button><span class="lr-s">모든 항목 입력 + 사진 전부 첨부 시 완료할 수 있습니다 (종합 의견은 공란 가능)</span></div>`;
+        <div class="wf-actions"><button class="btn primary sm" id="svdone-${d.id}" onclick="trySurveyDone('${d.id}')" disabled title="모든 항목 입력 + 사진 전부 첨부 + 배치도(필수 도면) 첨부 시 활성화">실측 완료 처리 →</button><span class="lr-s">모든 항목 입력 + 사진 전부 첨부 + 배치도(필수 도면) 첨부 시 완료할 수 있습니다 (종합 의견은 공란 가능)</span></div>`;
       pill=['prog','실측 진행'];
     }
     return `<div class="card pad" style="margin-bottom:14px">
@@ -3803,7 +3859,7 @@ function renderSurvey(){
   }).join('');
   /* [임시·개발테스트용] dev-testbar — 테스트 후 삭제 */
   const testbar = `<div class="dev-testbar">🧪 개발 테스트용 · <button class="btn dark sm" onclick="spawnTestSurvey()">＋ 테스트 현장 불러오기</button> <span class="lr-s">가계약 완료를 거치지 않고 실측 대기 현장을 즉시 추가합니다. 테스트 후 삭제 예정.</span></div>`;
-  return wfHead('현장 실측','가계약 완료 현장의 실측입니다. 담당 배정(설계1·시공1) → 스케줄 등록 → 결과 보고서 입력 → 실측 완료. <b>모든 항목 입력 + 사진 전부 첨부</b> 시 완료 처리됩니다.') + testbar + (cards || emptyMsg('실측 대상 현장이 없습니다.'));
+  return wfHead('현장 실측','가계약 완료 현장의 실측입니다. 담당 배정(설계1·시공1) → 스케줄 등록 → 결과 보고서 입력 → 실측 도면 첨부 → 실측 완료. <b>모든 항목 입력 + 사진 전부 첨부 + 배치도(필수 도면) 첨부</b> 시 완료 처리되며, 완료 시 도면이 영업 실계약으로 전달됩니다.') + testbar + (cards || emptyMsg('실측 대상 현장이 없습니다.'));
 }
 
 // 실계약 (영업) — 실측완료 알림 + 본계약서 임의 양식
@@ -3824,6 +3880,23 @@ function rcRecount(id){ const d=DEALS.find(x=>x.id===id); if(!d) return;
 function tryRealDone(id){ const d=DEALS.find(x=>x.id===id); if(!d) return;
   if(rcMissing(d)>0){ toast('미기재 항목이 있습니다 — 모든 신청정보를 입력해야 실계약을 완료할 수 있습니다'); return; }
   wfAction(id,'done','실계약 완료 — 공무팀 착수(발전허가·개발행위)'); }
+// 영업 실계약 — 설계가 현장 실측 후 올린 도면 확인(읽기전용). 이 도면 기준으로 최종 견적서·실계약 진행.
+function renderRealDrawings(d){
+  const dw=d.drawings||{}; const attached=SURVEY_DRAWINGS.filter(x=>dw[x.k]);
+  const body=attached.length
+    ? `<div class="sv-gallery">${attached.map(x=>{ const g=dw[x.k];
+        return `<div class="sv-thumb" title="${esc(x.k)}">
+          <div class="sv-thumb-img">${g&&g.url?`<img src="${esc(g.url)}" alt="">`:'📐'}</div>
+          <div class="sv-thumb-cap">${esc(x.k)}<span class="sv-thumb-sub">설계 실측 도면</span></div>
+          <button class="btn ghost sm sv-dwg-view" ${g&&g.url?'':'disabled'} title="${g&&g.url?'도면 보기':'미리보기는 스토리지 연동 후 지원'}">보기</button>
+        </div>`;}).join('')}</div>`
+    : `<div class="sv-uparea" style="min-height:92px"><div class="sv-up-ic">📐</div><div class="sv-up-t">설계팀이 올린 실측 도면이 여기에 표시됩니다</div></div>`;
+  return `<div class="rc-dwg">
+    <div class="sv-report-h" style="margin-top:4px">📐 설계 실측 도면 <span class="sv-count">${attached.length}건</span></div>
+    <div class="sv-ph-note">설계팀이 현장 실측 후 올린 도면입니다. 이 도면을 기준으로 <b>최종 견적서·실계약</b>을 진행합니다. (읽기전용)</div>
+    ${body}
+  </div>`;
+}
 function renderRealContract(){
   const cards = DEALS.filter(d=>d.stage==='survey_done').map(d=>`
     <div class="card pad" style="margin-bottom:14px" oninput="rcRecount('${d.id}')">
@@ -3831,6 +3904,7 @@ function renderRealContract(){
         <span class="pill prog"><span class="pd"></span>🔔 실측 완료 도착</span><span class="lr-s">${d.id} · 영업 ${esc(d.rep)}</span>
       </div>
       ${contractDoc('공 사 도 급 계 약 서 (본계약)', [['계약 구분','본계약 (실계약)'],['현 장 명',d.site],['사 업 주','○○○ (가상)'],['설비용량',d.cap.toLocaleString()+' kW ('+d.type+') · 실측 반영'],['총 공사대금',won(dealBudget(d.cap))+' (VAT 별도)'],['계약금 / 잔금','10% 계약 시 / 90% 기성·준공'],['공사기간','착공일로부터 약 4개월'],['작성일','2026-09-18']])}
+      ${renderRealDrawings(d)}
       ${renderPermitSalesForm(d)}
       <div class="wf-actions" style="margin-top:14px">
         ${proposalBtn(d)}
@@ -4397,6 +4471,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-02', team:'설계', kind:'추가', title:'현장 실측 — 실측 도면 첨부 + 영업 실계약 도면 확인', body:'설계 “현장 실측”에 <b>실측 도면 첨부</b> 영역을 추가했습니다. 설계팀이 현장 실측을 다녀와 그린 도면을 종류별 슬롯(<b>배치도(필수)</b> · 구조/단면도 · 전기 계통도 · 기타)에 첨부합니다. 첨부한 도면은 하단 갤러리에 표시되고 취소할 수 있습니다. 완료 조건에 도면이 더해져, <b>배치도(필수 도면)를 첨부해야</b> “실측 완료 처리” 버튼이 활성화됩니다(기존 체크리스트·사진 조건과 함께, 하나라도 빠지면 비활성). 실측을 완료하면 도면이 <b>영업 실계약</b>으로 전달되어, 영업이 “실계약” 화면에서 설계 도면을 그대로 확인(읽기전용)하며 이 도면 기준으로 <b>최종 견적서·실계약</b>을 진행합니다. 실제 파일 업로드·저장은 추후 저장소 연동 시 지원되도록 `업로드 훅`과 데이터 구조를 미리 준비했습니다.', author:'개발'},
   {date:'2026-10-02', team:'영업', kind:'변경', title:'견적서·실계약 — 진행 버튼 하단 이동 + 필수 입력 완료 전 잠금', body:'견적서와 실계약의 진행 버튼을 화면 <b>맨 아래</b>로 옮기고, 필수 정보를 모두 입력해야 눌리도록 잠금을 추가했습니다. ① <b>견적서</b>: 사업주(신청인) 정보(대표자 성명·상호·전화번호)를 모두 입력해야 “공무팀 이관” 버튼이 활성화됩니다(미입력 시 회색 비활성). ② <b>실계약</b>: 신청정보(주민/법인번호·주소·설치장소·부지 명세·접수관청 등)에 미기재 항목이 있으면 “실계약 완료 처리” 버튼이 비활성으로 잠기고, 모두 채우면 활성화됩니다(입력 즉시 실시간 반영).', author:'개발'},
   {date:'2026-10-02', team:'공통', kind:'추가', title:'발전사업 허가 — 원천별 데이터 분리(견적서/실계약) + 출처 표시 + 원천 외 편집잠금', body:'중복 입력을 없애기 위해 발전사업 허가 신청정보를 <b>최초 입력하는 곳(원천)</b> 기준으로 나눴습니다. ① <b>견적서</b> = 설비용량·설비 스펙·총사업비·자금 <b>+ 사업주 기본정보(대표자 성명·상호·전화번호)</b>. 견적서 화면에 사업주 정보 입력란을 추가했습니다. ② <b>영업 실계약</b> = <b>주민/법인등록번호·주소 등 민감정보</b>(보안상 견적서에서 받지 않습니다)와 현장·부지·행정 정보(설치장소·면적·설치방법·부지 명세·접수관청 등). 실계약의 사업주 섹션에서 성명·상호·전화는 견적서 값을 읽기전용으로 보여주고, 주민번호·주소만 입력합니다. ③ <b>행정 발전사업 허가</b> = 두 원천에서 <b>자동으로 직접 끌어와</b> 신청서·사업계획서를 완성(견적이 바뀌면 바로 반영). 각 항목 옆 <b>출처 태그</b>(`견적서`/`실계약`)에 마우스를 올리면 어디서 오는 값인지 안내하고, 태그를 누르면 그 원천 화면으로 이동합니다. 끌어온 값은 <b>원천에서만</b> 수정할 수 있고 다른 화면에서는 읽기전용으로 잠깁니다.', author:'개발'},
   {date:'2026-10-02', team:'행정', kind:'추가', title:'발전사업 허가 — 신청서·사업계획서 작성 + 접수 PDF 출력', body:'행정 “발전사업 허가” 메뉴를 실제 접수 업무용으로 새로 만들었습니다. 영업 “실계약” 화면에서 발전사업 허가 신청정보(사업주·설치장소·용량·부지 명세 등)를 입력하면, 행정 화면이 그 값을 그대로 끌어와(`영업 이관`) 「전기사업 허가신청서(별지 제1호서식)」와 사업계획서를 완성하고 접수용 `PDF`로 출력합니다(브라우저 인쇄→PDF 저장, A4). `토지(노지·수상)`/`건물(지붕)` 두 유형을 지원해 유형에 맞는 명세서·필요서류로 자동 전환됩니다. 아래 “첨부서류 발급·준비”에서 건축물대장·토지대장·지적도·토지이용계획확인서·건축물현황도·등기부등본 6종을 발급처 바로가기와 단계별 가이드로 안내하고, 서류별로 첨부 상태를 체크합니다. (관청 제출용 공식 발급본은 발급처 자동 `API` 발급이 불가해 각 포털에서 직접 발급 후 첨부하는 구조입니다.) 금액·공급계획·발전원가 등은 입력값에서 자동 계산됩니다.', author:'개발'},
