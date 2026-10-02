@@ -492,6 +492,14 @@ button{font-family:inherit;cursor:pointer}
 .qd-photo-empty{min-height:150px;border:2px dashed var(--border-strong);border-radius:11px;background:color-mix(in srgb,var(--surface-2) 50%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:18px;color:var(--muted);font-size:11.5px;line-height:1.55}
 .qd-ph-ic{font-size:26px;opacity:.6;line-height:1}
 .qd-cap{margin-top:8px;background:var(--ok);color:#fff;border-radius:8px;padding:8px 11px;font-size:11.5px;font-weight:700;line-height:1.55}
+/* 설계 실측 도면 출력 시트 */
+.dwg-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.dwg-sheet{border:1px solid var(--border);border-radius:11px;overflow:hidden;background:var(--surface)}
+.dwg-sheet-h{background:var(--prog-bg);color:var(--prog-ink);font-weight:800;font-size:13px;text-align:center;padding:8px;border-bottom:1px solid var(--border);letter-spacing:.04em}
+.dwg-img{width:100%;display:block}
+.dwg-ph{min-height:230px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:24px;color:var(--muted);font-size:12px;line-height:1.6}
+.dwg-ph-ic{font-size:34px;opacity:.5;line-height:1}
+.dwg-ph span{font-size:10.5px;color:var(--muted)}
 .sv-up-ic{font-size:30px;opacity:.7;line-height:1}
 .sv-up-t{font-size:12.5px;font-weight:800;color:var(--ink-2)}
 .sv-up-s{font-size:10.5px;line-height:1.7;color:var(--muted)}
@@ -962,7 +970,7 @@ button{font-family:inherit;cursor:pointer}
     --prog:#2f6fa6;--prog-bg:#e7eef4;--prog-ink:#2c5a83;--risk:#c14f3c}
   #proposalPrintArea .qd-doc{max-width:390mm;margin:0 auto}
   #proposalPrintArea .qd-grid{grid-template-columns:1fr 1fr !important;gap:14px}
-  #proposalPrintArea .qd-tbl,#proposalPrintArea .qd-fin,#proposalPrintArea .qd-photo-empty,#proposalPrintArea .qd-photo,#proposalPrintArea .qd-sec,#proposalPrintArea .qd-payback{break-inside:avoid}
+  #proposalPrintArea .qd-tbl,#proposalPrintArea .qd-fin,#proposalPrintArea .qd-photo-empty,#proposalPrintArea .qd-photo,#proposalPrintArea .qd-sec,#proposalPrintArea .qd-payback,#proposalPrintArea .dwg-sheet{break-inside:avoid}
   #proposalPrintArea .qd-title{font-size:24px}
 }
 </style>
@@ -2692,6 +2700,31 @@ function printProposal(id){
   document.body.classList.add('printing-proposal');
   setTimeout(()=>{ try{ window.print(); }catch(e){ clean(); } }, 60);
 }
+// 설계 실측 도면 출력용 문서 — 종류별 시트(이미지 있으면 이미지, 없으면 연동 예정 자리표시). A3 인쇄 영역 공용 사용.
+function renderDrawingsPrint(d){
+  const dw=d.drawings||{}; const attached=SURVEY_DRAWINGS.filter(x=>dw[x.k]);
+  const sheets = attached.length ? attached.map(x=>{ const g=dw[x.k];
+    return `<div class="dwg-sheet">
+      <div class="dwg-sheet-h">${esc(x.k)}${x.req?' · 필수':''}</div>
+      ${g&&g.url?`<img class="dwg-img" src="${esc(g.url)}" alt="${esc(x.k)}">`:`<div class="dwg-ph"><div class="dwg-ph-ic">📐</div><div>${esc(x.k)} 도면<br><span>실제 도면 이미지는 설계 업로드·모듈 가배치 연동 시 이 위치에 출력됩니다</span></div></div>`}
+    </div>`;}).join('') : `<div class="dwg-ph" style="grid-column:1/-1;min-height:160px"><div>첨부된 실측 도면이 없습니다</div></div>`;
+  return `<div class="qd-doc">
+    <div class="qd-company">해피솔라그룹</div>
+    <div class="qd-title">${esc(d.site||'')} — 설계 실측 도면</div>
+    <div style="text-align:center;font-size:12px;color:var(--muted);margin:-6px 0 14px">${esc(d.id)} · 영업 ${esc(d.rep||'')}${d.reviseAt?(' · 실측 반영 '+esc(d.reviseAt)):''} · 총 ${attached.length}건</div>
+    <div class="dwg-grid">${sheets}</div>
+    <div class="qd-foot">* 본 도면은 현장 실측 결과를 반영한 설계 자료입니다. 실제 시공 도면은 인허가·구조검토 후 확정됩니다.</div>
+  </div>`;
+}
+function printDrawings(id){
+  id = id || _proposalId; const d=DEALS.find(x=>x.id===id); if(!d){ toast('현장을 먼저 선택하세요'); return; }
+  const area=document.getElementById('proposalPrintArea'); if(!area){ toast('인쇄 영역이 없습니다'); return; }
+  area.innerHTML = renderDrawingsPrint(d);
+  const clean=()=>{ document.body.classList.remove('printing-proposal'); window.removeEventListener('afterprint',clean); };
+  window.addEventListener('afterprint', clean);
+  document.body.classList.add('printing-proposal');
+  setTimeout(()=>{ try{ window.print(); }catch(e){ clean(); } }, 60);
+}
 // 카드에 붙이는 '제안서 보기' 버튼 (모든 딜 — 제안서 있으면 전체, 없으면 견적 요약)
 function proposalBtn(d, label){ return `<button class="btn ghost sm" onclick="openProposal('${d.id}')">📄 ${label||'제안서 보기'}</button>`; }
 
@@ -4074,10 +4107,12 @@ function renderRealDrawings(d){
           <button class="btn ghost sm sv-dwg-view" ${g&&g.url?'':'disabled'} title="${g&&g.url?'도면 보기':'미리보기는 스토리지 연동 후 지원'}">보기</button>
         </div>`;}).join('')}</div>`
     : `<div class="sv-uparea" style="min-height:92px"><div class="sv-up-ic">📐</div><div class="sv-up-t">설계팀이 올린 실측 도면이 여기에 표시됩니다</div></div>`;
+  const hasImg=attached.some(x=>dw[x.k]&&dw[x.k].url);
   return `<div class="rc-dwg">
     <div class="sv-report-h" style="margin-top:4px">📐 설계 실측 도면 <span class="sv-count">${attached.length}건</span></div>
     <div class="sv-ph-note">설계팀이 현장 실측 후 올린 도면입니다. 이 도면을 기준으로 <b>최종 제안서·실계약</b>을 진행합니다. (읽기전용)</div>
     ${body}
+    ${attached.length?`<div style="margin-top:11px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn dark sm" onclick="printDrawings('${d.id}')">🖨 도면 출력 (A3 PDF)</button><span class="lr-s">넘어온 실측 도면을 A3로 출력·저장합니다${hasImg?'':' (실제 도면 이미지는 설계 업로드·모듈 가배치 연동 시 포함)'}</span></div>`:''}
   </div>`;
 }
 // 실계약에 적용되는 설비용량(실측 반영 수정본이 있으면 그 용량)
@@ -4086,16 +4121,18 @@ function effCap(d){ if(d.revisedProposal&&d.reviseCfg&&d.reviseCfg.cap!=null) re
 function renderRevisedForContract(d){
   if(!d.revisedProposal){
     return `<div class="rc-dwg">
-      <div class="sv-report-h" style="margin-top:4px">📄 실측 반영 견적</div>
-      <div class="sv-ph-note">실측 반영 견적 수정이 없습니다 — <b>최초 견적</b> 그대로 실계약을 진행합니다. ${proposalBtn(d,'최초 제안서 보기')}</div>
+      <div class="sv-report-h" style="margin-top:4px">📄 최종 제안서</div>
+      <div class="sv-ph-note">실측 반영 견적 수정이 없습니다 — <b>최초 제안서</b> 그대로 실계약을 진행합니다.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn dark sm" onclick="printProposal('${d.id}')">📄 제안서 출력 (A3 PDF)</button>${proposalBtn(d,'최초 제안서 보기')}</div>
     </div>`;
   }
   const origP=d.proposal||buildProposal(d), revP=d.revisedProposal;
   return `<div class="rc-dwg">
-    <div class="sv-report-h" style="margin-top:4px">📄 실측 반영 견적 <span class="sv-count">설계 수정 · ${esc(d.reviseAt||'')}</span></div>
-    <div class="sv-ph-note">현장 실측 결과를 반영해 설계팀이 수정한 견적입니다. <b>이 수정본 기준</b>으로 발전사업 허가·실계약이 진행됩니다.${d.reviseNote?` <b>· 변경 사유:</b> ${esc(d.reviseNote)}`:''}</div>
+    <div class="sv-report-h" style="margin-top:4px">📄 최종 수정제안서 <span class="sv-count">설계 수정 · ${esc(d.reviseAt||'')}</span></div>
+    <div class="sv-ph-note">현장 실측 결과를 반영해 설계팀이 수정한 제안서입니다. <b>이 수정본 기준</b>으로 발전사업 허가·실계약이 진행됩니다.${d.reviseNote?` <b>· 변경 사유:</b> ${esc(d.reviseNote)}`:''}</div>
     ${reviseDiffHtml(origP, revP, d.cap, effCap(d))}
-    <details class="rv-details"><summary class="rv-sum">📄 수정 제안서 전체 보기</summary><div style="margin-top:8px">${handoverProposal(d, revP)}</div></details>
+    <div style="margin:11px 0 2px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn dark sm" onclick="printProposal('${d.id}')">📄 제안서 출력 (A3 PDF)</button><button class="btn ghost sm" onclick="openProposal('${d.id}')">📄 제안서 보기</button><span class="lr-s">수정본 기준으로 출력됩니다</span></div>
+    <details class="rv-details"><summary class="rv-sum">📄 수정 제안서 전체 보기(접기)</summary><div style="margin-top:8px">${handoverProposal(d, revP)}</div></details>
   </div>`;
 }
 function renderRealContract(){
@@ -4674,6 +4711,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-02', team:'영업', kind:'추가', title:'실계약 — 넘어온 도면·최종 수정제안서 A3 출력', body:'영업 “실계약”에서 설계로부터 넘어온 <b>최종 수정제안서</b>와 <b>설계 실측 도면</b>을 바로 출력(PDF 저장)할 수 있게 했습니다. ① <b>최종 수정제안서</b> 카드에 <b>“📄 제안서 출력 (A3 PDF)”</b> 버튼을 추가했습니다 — 설계가 실측을 반영해 수정한 <b>수정본 기준</b>으로 「태양광 발전사업 제안서」를 A3 1장으로 출력합니다(수정이 없으면 최초 제안서). ② <b>설계 실측 도면</b> 카드에 <b>“🖨 도면 출력 (A3 PDF)”</b> 버튼을 추가했습니다 — 넘어온 도면을 종류별(배치도·구조/단면도·전기 계통도 등) 시트로 A3에 출력합니다. <b>현재는 도면 이미지 자리표시</b>로 출력되며, 설계 업로드·<b>모듈 가배치</b> 연동이 끝나면 실제 도면 이미지가 그대로 담겨 출력됩니다. 둘 다 <b>A3 용지</b>로 깔끔하게 인쇄·PDF 저장됩니다.', author:'개발'},
   {date:'2026-10-02', team:'설계', kind:'수정', title:'현장 실측 — 견적 저장 시 상단 체크리스트가 초기화되던 문제 해결', body:'설계 “현장 실측”에서 상단 <b>현장실측 체크리스트</b>를 입력하고 하단 <b>“실측 반영 견적 저장 → 영업 실계약 전달”</b>을 누르면, 상단에 입력해 둔 체크리스트가 모두 비워지던 문제를 바로잡았습니다. 원인은 저장 내용이 공유 서버에 반영될 때 그 변경이 <b>내 화면으로 되돌아오며 화면을 다시 그려</b>, 아직 저장 전이던 체크리스트 입력이 지워지던 것이었습니다. 이제 <b>내가 방금 한 저장</b>이 되돌아올 때는 화면을 다시 그리지 않아, <b>입력하던 체크리스트가 그대로 유지</b>됩니다(다른 팀원이 같은 현장을 바꾸는 경우에는 정상적으로 화면이 갱신됩니다).', author:'개발'},
   {date:'2026-10-02', team:'영업', kind:'변경', title:'제안서 — 「태양광 발전사업 제안서」 문서 형식 + A3 PDF 저장', body:'영업 “제안서” 출력을 <b>고객 제시용 「태양광 발전사업 제안서」</b> 문서 형식으로 새로 만들었습니다. 상단에 <b>해피솔라그룹</b>·부지주소를 넣고, 좌측은 <b>견적서(11공종)·제품사양·유지관리비</b>, 우측은 <b>총 공사비·전력판매 수익·20년 장기계약 순수익·투자금 회수기간·20년 장기계약 판매기준(거치/상환/잔여 평균)·정책자금(대출·자부담)·현장 배치도</b>로 2단 구성했습니다(금액·수익성 계산은 기존 견적 엔진 그대로). <b>제안서 보기</b> 모달에 <b>“📄 PDF 저장 (A3)”</b> 버튼을 추가해 <b>A3 용지 1장</b>으로 인쇄·PDF 저장할 수 있습니다(화면과 동일한 모습으로 출력). <b>현장 배치도</b>는 향후 <b>모듈 가배치</b> 개발이 끝나면 자동으로 담기도록 자리를 만들어 두었고, 지금은 안내 자리표시로 표시됩니다. 이 제안서 형식은 영업 미리보기·제안서 보기·설계 신규접수·실측 반영 수정·실계약 확인 <b>모든 곳에서 동일하게</b> 보입니다.', author:'개발'},
   {date:'2026-10-02', team:'설계', kind:'추가', title:'현장 실측 — 실측 반영 견적 수정 → 영업 실계약 전달', body:'현장 실측 결과로 <b>최초 견적과 달라진 내용</b>을 설계팀이 바로 수정해 영업 실계약으로 보낼 수 있게 했습니다. 설계 “현장 실측” 화면에 <b>“실측 반영 견적 수정”</b> 영역을 추가했습니다. “최종 제안서 작성”을 누르면 그 현장의 <b>최초 견적</b>이 불러와지고, 모듈·수량(→설비용량 자동)·단가를 실측 결과대로 고치면 수정 견적이 <b>실시간으로 다시 계산</b>되며 “<b>최초 대비 변경</b>”(설비용량·모듈 수량·총 사업비·자부담 Δ)이 함께 표시됩니다. 변경 사유도 적을 수 있습니다. 저장하면 <b>발전사업 허가 신청서·실계약 금액이 수정본 기준</b>으로 자동 반영되고(“수정해서 계약”), 최초 견적은 “변경 전”으로 보존돼 비교됩니다. <b>영업 “실계약”</b> 화면에는 “실측 반영 견적” 카드가 생겨 설계가 수정한 견적·변경 요약·사유를 그대로 확인하고(수정 견적서 전체 보기 포함) 이 기준으로 계약을 진행합니다. 용량 변동이 없으면 수정하지 않아도 되며(실측 완료 조건과 무관), 수정이 없으면 실계약은 “최초 견적 적용”으로 안내됩니다. 실제 저장은 공유 서버에 반영돼 팀원 간 공유됩니다.', author:'개발'},
