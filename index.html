@@ -1480,7 +1480,7 @@ button{font-family:inherit;cursor:pointer}
               <div class="list-row"><div class="step-ic risk">!</div><div class="lr-main"><div class="lr-t">대명들 · 개발행위허가 보완요청</div><div class="lr-s">보완서류 제출 기한</div></div><span class="d-day urgent">D-2</span></div>
               <div class="list-row"><div class="step-ic risk">!</div><div class="lr-main"><div class="lr-t">오봉 · PPA 신청 반려</div><div class="lr-s">재신청 서류 준비</div></div><span class="d-day urgent">D-1</span></div>
               <div class="list-row"><div class="step-ic active">◐</div><div class="lr-main"><div class="lr-t">삼거리 · 준공검사 신청</div><div class="lr-s">검사기관 일정 협의</div></div><span class="d-day">D-3</span></div>
-              <div class="list-row"><div class="step-ic active">◐</div><div class="lr-main"><div class="lr-t">서촌 · 설비확인 신청</div><div class="lr-s">상업운전 후 절차</div></div><span class="d-day">D-5</span></div>
+              <div class="list-row"><div class="step-ic active">◐</div><div class="lr-main"><div class="lr-t">서촌 · 설비확인 신청</div><div class="lr-s">사업개시 후 절차</div></div><span class="d-day">D-5</span></div>
             </div>
           </div>
           <div>
@@ -1619,7 +1619,7 @@ const STAGES = [
   {key:'pre_inspect',  name:'사용전 검사',   team:'시공', phase:'준공'},
   {key:'kepco',        name:'한전수급계약',  team:'행정', phase:'준공'},
   {key:'completion',   name:'준공검사',      team:'행정', phase:'준공'},
-  {key:'commercial',   name:'상업운전',      team:'행정', phase:'준공'},
+  {key:'commercial',   name:'사업개시',      team:'행정', phase:'준공'},
   {key:'facility',     name:'설비확인',      team:'행정', phase:'준공'},
 ];
 const ROOF_NA = ['foundation'];   // 지붕형·수상형은 기초공사 해당없음
@@ -1760,7 +1760,7 @@ const ALERTS = [
   {cls:'risk', t:'대명들 · 개발행위허가 보완요청 접수 — 서류 보완 D-2', id:'FS-2402', team:'행정', time:'오늘 08:50'},
   {cls:'risk', t:'오봉 · PPA 신청 반려 → 재신청 준비', id:'FS-2407', team:'행정', time:'어제 17:20'},
   {cls:'info', t:'두물머리 · 전기공사 60% 진행 (우천 리스크 점검)', id:'FS-2408', team:'시공', time:'오늘 08:40'},
-  {cls:'ok',   t:'서촌 · 상업운전 완료 → 설비확인 신청 예정', id:'FS-2405', team:'행정', time:'어제 15:00'},
+  {cls:'ok',   t:'서촌 · 사업개시 완료 → 설비확인 신청 예정', id:'FS-2405', team:'행정', time:'어제 15:00'},
 ];
 function renderAlerts(){
   const ico = {risk:'!', info:'i', ok:'✓'};
@@ -1821,9 +1821,9 @@ const HEADER_NAME = {
   admin_intake:'접수', permit_biz:'발전허가', struct:'구조검토', permit_dev:'개발행위', ppa:'PPA',
   line_fee:'선로비', const_plan:'공사계획', build_intake:'접수', foundation:'기초', material_in:'자재입고',
   struct_inst:'구조물설치', module_inst:'모듈설치', electric:'전기', pre_inspect:'사용전검사',
-  kepco:'한전수급', completion:'준공검사', commercial:'상업운전', facility:'설비확인',
+  kepco:'한전수급', completion:'준공검사', commercial:'사업개시', facility:'설비확인',
 };
-const TEAM_DESC = {'행정':'신규접수·발전허가·개발행위·PPA·선로비·공사계획·한전수급계약·준공·상업운전·설비확인',
+const TEAM_DESC = {'행정':'신규접수·발전허가·개발행위·PPA·선로비·공사계획·한전수급계약·준공·사업개시·설비확인',
   '시공':'신규접수·기초~전기공사·사용전검사', '설계':'구조검토'};
 function renderTeamBoard(team){
   const cols = STAGES.map((s,i)=>({...s,i})).filter(s=>s.team===team);
@@ -1909,7 +1909,7 @@ function teamCurLabel(site, team){
 const BOARD_SUB = {
   '영업':'발굴 → 이관 → 인허가 → 시공 → 준공 (현장 전체 진행률)',
   '시공':'신규접수 → 기초 → 자재입고 → 구조물 → 모듈 → 전기 → 사용전검사 (시공 단계 완료율)',
-  '행정':'발전사업허가 → 개발행위 → PPA → 선로비 → 공사계획 → 한전수급 → 준공 → 상업운전 → 설비확인 (행정 단계 완료율)',
+  '행정':'발전사업허가 → 개발행위 → PPA → 선로비 → 공사계획 → 한전수급 → 준공 → 사업개시 → 설비확인 (행정 단계 완료율)',
 };
 function renderSitesProgressBoard(team){
   const isSales = team==='영업';
@@ -2587,7 +2587,7 @@ function handoverProposal(d, p, showCost){
   const layout=`<div class="mini-layout" style="height:150px"><div class="mini-cap">${esc(d.site)} · ${esc(p.layout)}</div></div>`;
   const prov = p._provisional ? `<div class="note" style="margin:0 0 10px;color:var(--accent-ink);background:color-mix(in srgb,var(--accent) 14%,transparent);padding:6px 10px;border-radius:8px">※ 일부 단가·가정값은 잠정치입니다(수상 시공단가·판매단가 구간·발전시간 등). 실계약 견적 전 확정 필요.</div>` : '';
   return `<div style="margin-top:14px">
-    <div class="section-title" style="font-size:12px;margin:0 0 8px">이관 자료 · 발전사업 제안서(영업 제공) — 견적서</div>
+    <div class="section-title" style="font-size:12px;margin:0 0 8px">이관 자료 · 발전사업 제안서(영업 제공) — 견적 내역</div>
     ${prov}${quoteTbl}
     <div class="section-title" style="font-size:12px;margin:16px 0 6px">제품사양 · 설치형태</div>
     ${specBlk}
@@ -2609,9 +2609,9 @@ function openProposal(id){
   const p = d.revisedProposal || d.proposal || (d.quoteOpts ? buildProposal(d) : null);
   const capLbl = (revised && d.reviseCfg) ? d.reviseCfg.cap : d.cap;
   document.getElementById('proposalTitle').textContent = d.site + ' · ' + capLbl.toLocaleString() + 'kW 제안서' + (revised?' (실측 반영 수정본)':'');
-  document.getElementById('proposalSub').textContent = d.id + ' · 영업 ' + d.rep + ' · 견적서(전체)' + (revised?` · 설계 수정 ${d.reviseAt||''}`:'');
+  document.getElementById('proposalSub').textContent = d.id + ' · 영업 ' + d.rep + ' · 제안서(전체)' + (revised?` · 설계 수정 ${d.reviseAt||''}`:'');
   document.getElementById('proposalBody').innerHTML = p ? handoverProposal(d, p)
-    : `<div class="section-title" style="font-size:12px;margin:0 0 8px">이관 자료 · 고객 제공 견적서(전체)</div>${quoteFull(d)}
+    : `<div class="section-title" style="font-size:12px;margin:0 0 8px">이관 자료 · 고객 제공 제안서(전체)</div>${quoteFull(d)}
        <div class="section-title" style="font-size:12px;margin:16px 0 8px">배치도</div>${miniLayout(d.cap)}`;
   document.getElementById('proposalScrim').classList.add('open');
 }
@@ -2635,7 +2635,7 @@ const WF_NODES = [
   {id:'feas1',   lane:0, row:1, label:'타당성검토',    nav:"[data-sub='s-feas']"},
   {id:'layout',  lane:0, row:2, label:'모듈 가배치',   nav:"[data-sub='s-layout']"},
   {id:'cost',    lane:0, row:3, label:'원가표',        nav:"[data-sub='s-costsheet']"},
-  {id:'quote',   lane:0, row:4, label:'견적서',        nav:"[data-sub='s-quote']"},
+  {id:'quote',   lane:0, row:4, label:'제안서',        nav:"[data-sub='s-quote']"},
   {id:'supp',    lane:0, row:5, label:'보완접수',      nav:"[data-wf='s-supplement']"},
   {id:'pre',     lane:0, row:6, label:'가계약',        nav:"[data-wf='s-precontract']"},
   {id:'real',    lane:0, row:8, label:'실계약',        nav:"[data-wf='s-realcontract']"},
@@ -2651,7 +2651,7 @@ const WF_NODES = [
   {id:'a_plan',  lane:2, row:13, label:'공사계획신고', nav:"[data-stage='const_plan']"},
   {id:'a_kepco', lane:2, row:20, label:'한전수급계약', nav:"[data-stage='kepco']"},
   {id:'a_comp',  lane:2, row:21, label:'준공검사',     nav:"[data-stage='completion']"},
-  {id:'a_comm',  lane:2, row:22, label:'상업운전',     nav:"[data-stage='commercial']"},
+  {id:'a_comm',  lane:2, row:22, label:'사업개시',     nav:"[data-stage='commercial']"},
   {id:'a_fac',   lane:2, row:23, label:'설비확인',     nav:"[data-stage='facility']"},
   {id:'c_intake',lane:3, row:13, label:'신규 현장 접수',nav:"[data-stage='build_intake']"},
   {id:'c_found', lane:3, row:14, label:'기초공사',     nav:"[data-stage='foundation']"},
@@ -2736,7 +2736,7 @@ function renderIntake(){
       </div>
       ${d.proposal ? handoverProposal(d, null, true) : `<div style="display:grid;grid-template-columns:1fr 190px;gap:14px;margin-top:14px;align-items:start">
         <div>
-          <div class="section-title" style="font-size:12px;margin:0 0 8px">이관 자료 · 고객 제공 견적서(전체)</div>
+          <div class="section-title" style="font-size:12px;margin:0 0 8px">이관 자료 · 고객 제공 제안서(전체)</div>
           ${quoteFull(d)}
         </div>
         <div><div class="section-title" style="font-size:12px;margin:0 0 8px">배치도</div>${miniLayout(d.cap)}</div>
@@ -2746,12 +2746,12 @@ function renderIntake(){
         <input class="tinput" id="jibun-${d.id}" style="flex:1;min-width:200px" value="${esc(d.jibun||'')}" placeholder="영업 이관 지번 입력 (예: 경기도 파주시 문발동 66)">
       </div>
       <div class="wf-actions">
-        <button class="btn ghost sm" onclick="openProposal('${d.id}')">📄 견적서 전체 열기</button>
+        <button class="btn ghost sm" onclick="openProposal('${d.id}')">📄 제안서 전체 열기</button>
         <button class="btn primary sm" onclick="startFeasibility('${d.id}')">타당성검토 시작 →</button>
       </div>
     </div>`).join('');
   const header = `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px;flex-wrap:wrap">
-    <div class="wf-head"><h3 class="section-title" style="margin:0">신규 현장 접수</h3><div class="note" style="margin-top:5px">영업에서 이관된 현장(견적서 전체·배치도 포함)이 여기로 도착합니다. <b>영업 발굴·검토는 별도 모듈</b>이며, 여기서는 넘어온 자료만 받습니다.</div></div>
+    <div class="wf-head"><h3 class="section-title" style="margin:0">신규 현장 접수</h3><div class="note" style="margin-top:5px">영업에서 이관된 현장(제안서 전체·배치도 포함)이 여기로 도착합니다. <b>영업 발굴·검토는 별도 모듈</b>이며, 여기서는 넘어온 자료만 받습니다.</div></div>
     <button class="btn dark sm" style="flex:none" onclick="receiveFromSales()">⇩ 영업 자료 수신 (가상)</button>
   </div>`;
   return header + (cards || emptyMsg('접수된 신규 현장이 없습니다. 우측 상단 "영업 자료 수신"으로 시뮬레이션할 수 있습니다.'));
@@ -4000,7 +4000,7 @@ function renderRealDrawings(d){
     : `<div class="sv-uparea" style="min-height:92px"><div class="sv-up-ic">📐</div><div class="sv-up-t">설계팀이 올린 실측 도면이 여기에 표시됩니다</div></div>`;
   return `<div class="rc-dwg">
     <div class="sv-report-h" style="margin-top:4px">📐 설계 실측 도면 <span class="sv-count">${attached.length}건</span></div>
-    <div class="sv-ph-note">설계팀이 현장 실측 후 올린 도면입니다. 이 도면을 기준으로 <b>최종 견적서·실계약</b>을 진행합니다. (읽기전용)</div>
+    <div class="sv-ph-note">설계팀이 현장 실측 후 올린 도면입니다. 이 도면을 기준으로 <b>최종 제안서·실계약</b>을 진행합니다. (읽기전용)</div>
     ${body}
   </div>`;
 }
@@ -4011,7 +4011,7 @@ function renderRevisedForContract(d){
   if(!d.revisedProposal){
     return `<div class="rc-dwg">
       <div class="sv-report-h" style="margin-top:4px">📄 실측 반영 견적</div>
-      <div class="sv-ph-note">실측 반영 견적 수정이 없습니다 — <b>최초 견적</b> 그대로 실계약을 진행합니다. ${proposalBtn(d,'최초 견적서 보기')}</div>
+      <div class="sv-ph-note">실측 반영 견적 수정이 없습니다 — <b>최초 견적</b> 그대로 실계약을 진행합니다. ${proposalBtn(d,'최초 제안서 보기')}</div>
     </div>`;
   }
   const origP=d.proposal||buildProposal(d), revP=d.revisedProposal;
@@ -4019,7 +4019,7 @@ function renderRevisedForContract(d){
     <div class="sv-report-h" style="margin-top:4px">📄 실측 반영 견적 <span class="sv-count">설계 수정 · ${esc(d.reviseAt||'')}</span></div>
     <div class="sv-ph-note">현장 실측 결과를 반영해 설계팀이 수정한 견적입니다. <b>이 수정본 기준</b>으로 발전사업 허가·실계약이 진행됩니다.${d.reviseNote?` <b>· 변경 사유:</b> ${esc(d.reviseNote)}`:''}</div>
     ${reviseDiffHtml(origP, revP, d.cap, effCap(d))}
-    <details class="rv-details"><summary class="rv-sum">📄 수정 견적서 전체 보기</summary><div style="margin-top:8px">${handoverProposal(d, revP)}</div></details>
+    <details class="rv-details"><summary class="rv-sum">📄 수정 제안서 전체 보기</summary><div style="margin-top:8px">${handoverProposal(d, revP)}</div></details>
   </div>`;
 }
 function renderRealContract(){
@@ -4116,7 +4116,7 @@ function defaultPermit(d){
 function pullPermitFromQuote(id){
   const d=DEALS.find(x=>x.id===id); if(!d) return;
   const q=permitFromQuote(d);
-  if(!q){ toast('이 현장은 아직 견적서 정보가 없습니다 — 영업 “견적서”에서 작성·이관하면 불러올 수 있습니다'); return; }
+  if(!q){ toast('이 현장은 아직 제안서 정보가 없습니다 — 영업 “제안서”에서 작성·이관하면 불러올 수 있습니다'); return; }
   const p=getPermit(d);
   if(q.cap){ p.biz.cap=q.cap; }
   if(q.totalCostK){ p.outline.totalCost=q.totalCostK; p.outline.unitCost=Math.round(q.totalCostK/((pNum(p.biz.cap))||1)); }
@@ -4129,7 +4129,7 @@ function pullPermitFromQuote(id){
   if(q.invKW) p.equip.invKW=q.invKW;
   if(q.invQty) p.equip.invQty=q.invQty;
   if(q.modTilt!=null) p.equip.modTilt=q.modTilt;
-  persistDeal(d); toast('견적서에서 설비·금액 정보를 가져왔습니다'); refreshActive();
+  persistDeal(d); toast('제안서에서 설비·금액 정보를 가져왔습니다'); refreshActive();
 }
 // 출처(원천) 메뉴로 이동 — 끌어온 값은 여기서만 수정
 function gotoSource(tab, key){
@@ -4260,14 +4260,14 @@ function renderPermitForm(d, origin){
   const id=d.id, p=resolvePermit(d), isBld=p.installType==='건물';
   const adminRO = origin==='admin';
   const badge = adminRO ? '자동 연동 · 읽기전용' : '';
-  const QSRC={tag:'견적서', color:'#2e8b63', title:'설비·금액·사업주 정보는 영업 「견적서」에서 입력·산출됩니다. 수정은 영업 › 견적서에서 하세요. (클릭하면 견적서로 이동)', go:"gotoSource('sales','s-quote')"};
+  const QSRC={tag:'제안서', color:'#2e8b63', title:'설비·금액·사업주 정보는 영업 「제안서」에서 입력·산출됩니다. 수정은 영업 › 제안서에서 하세요. (클릭하면 제안서로 이동)', go:"gotoSource('sales','s-quote')"};
   const ASRC={tag:'실계약', color:'#bd8a2e', title:'현장·부지·행정 정보는 영업 「실계약」에서 입력합니다. 수정은 영업 › 실계약에서 하세요. (클릭하면 실계약으로 이동)', go:"gotoSource('sales','s-realcontract')"};
   const pr=(label,path,val,opt)=>{
     opt=Object.assign({},opt);
     const org=fieldOrigin(path);
     if(origin==='sales'){
       if(org==='quote') return '';                      // 설비·금액은 실계약에서 숨김(원천=견적서)
-      if(org==='owner'){ opt.ro=true; opt.src=QSRC; if(val==null||val==='') opt.ph=opt.ph||'(견적서 입력)'; return piRow(id,label,path,val,opt); }  // 성명·상호·전화=견적서에서 끌어온 읽기전용
+      if(org==='owner'){ opt.ro=true; opt.src=QSRC; if(val==null||val==='') opt.ph=opt.ph||'(제안서 입력)'; return piRow(id,label,path,val,opt); }  // 성명·상호·전화=견적서에서 끌어온 읽기전용
       return piRow(id,label,path,val,opt);               // 주민번호·주소·현장·부지 등=실계약 입력(편집)
     }
     opt.ro=true;                                         // 행정=전부 읽기전용
@@ -4349,7 +4349,7 @@ function renderPermitSalesForm(d){
     <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:10px">
       <span class="sv-sec-ic" style="font-size:16px">🏛️</span>
       <b style="font-size:13.5px">발전사업 허가 — 추가 신청정보 입력</b>
-      <span class="lr-s"><b>설비·금액</b>과 사업주 <b>성명·상호·전화</b>는 「견적서」에서 받아 읽기전용으로 끌어옵니다. <b>주민/법인번호·주소</b> 등 민감정보와 현장·부지 정보는 여기서 입력하세요. 입력값은 행정 화면으로 자동 연동됩니다.</span>
+      <span class="lr-s"><b>설비·금액</b>과 사업주 <b>성명·상호·전화</b>는 「제안서」에서 받아 읽기전용으로 끌어옵니다. <b>주민/법인번호·주소</b> 등 민감정보와 현장·부지 정보는 여기서 입력하세요. 입력값은 행정 화면으로 자동 연동됩니다.</span>
       <select class="pm-sel" style="margin-left:auto;max-width:150px" onchange="setPermit('${d.id}','installType',this.value);refreshActive()">
         <option value="토지" ${!isBld?'selected':''}>유형: 토지(노지)</option>
         <option value="건물" ${isBld?'selected':''}>유형: 건물(지붕)</option>
@@ -4379,7 +4379,7 @@ function renderPermitBiz(){
       <button class="btn ghost sm" onclick="togglePermitPreview()">${permitPrevOpen?'미리보기 닫기':'🔍 양식 미리보기'}</button>
       <button class="btn primary sm" onclick="printPermit('${d.id}')">📄 접수 PDF 출력</button>
     </div>`;
-  const info = `<div class="cred-warn" style="color:var(--ink-2);background:color-mix(in srgb,var(--brand) 9%,transparent);border-color:color-mix(in srgb,var(--brand) 26%,transparent)">🔗 아래 신청정보는 각 원천에서 <b>자동으로 가져온 읽기전용</b>입니다 — <b style="color:#2e8b63">견적서</b>(설비·금액·사업주) / <b style="color:#9a6f16">실계약</b>(현장·부지·행정정보). 각 항목의 출처 태그를 누르면 그 원천 화면으로 이동해 수정할 수 있습니다. 행정은 <b>첨부서류 발급·준비</b>와 <b>접수 PDF 출력</b>을 담당합니다.</div>`;
+  const info = `<div class="cred-warn" style="color:var(--ink-2);background:color-mix(in srgb,var(--brand) 9%,transparent);border-color:color-mix(in srgb,var(--brand) 26%,transparent)">🔗 아래 신청정보는 각 원천에서 <b>자동으로 가져온 읽기전용</b>입니다 — <b style="color:#2e8b63">제안서</b>(설비·금액·사업주) / <b style="color:#9a6f16">실계약</b>(현장·부지·행정정보). 각 항목의 출처 태그를 누르면 그 원천 화면으로 이동해 수정할 수 있습니다. 행정은 <b>첨부서류 발급·준비</b>와 <b>접수 PDF 출력</b>을 담당합니다.</div>`;
   const preview = permitPrevOpen ? `<div style="margin:14px 0;border:1px solid var(--border-strong);border-radius:12px;overflow:auto;max-height:620px;background:#fff;padding:6px">${renderPermitPrint(d)}</div>` : '';
   return head + bar + info + renderPermitForm(d,'admin') + preview + renderPermitDocs(d);
 }
@@ -4735,14 +4735,14 @@ function renderSalesQuote(){
       </div>
       <div class="wf-actions" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn ghost sm" onclick="loadQuoteToEditor('${d.id}')">✎ 편집</button>
-        <button class="btn ghost sm" onclick="openProposal('${d.id}')">📄 견적서 보기</button>
+        <button class="btn ghost sm" onclick="openProposal('${d.id}')">📄 제안서 보기</button>
         <button class="btn primary sm" onclick="handoverQuote('${d.id}')">공무팀 이관 →</button>
         <button class="btn ghost sm" onclick="deleteQuote('${d.id}')">삭제</button>
       </div>
     </div>`;
   }).join('') : '';
   const header = `<div style="margin-bottom:14px">
-    <h3 class="section-title" style="margin:0">견적서</h3>
+    <h3 class="section-title" style="margin:0">제안서</h3>
     <div class="note" style="margin-top:5px">모듈·수량을 넣으면 <b>원가표 기준</b>으로 견적 11공종·사업성·유지관리비가 실시간 계산됩니다. “공무팀 이관”하면 설계 신규접수로 넘어갑니다.</div>
   </div>`;
   return header + editor + list;
@@ -5126,7 +5126,7 @@ const MENUS = {
     {sub:'s-site', label:'부지찾기', ic:'map'},
     {sub:'s-feas', label:'타당성검토', ic:'check'},
     {sub:'s-layout', label:'모듈 가배치', ic:'layout'},
-    {sub:'s-quote', label:'견적서', ic:'doc'},
+    {sub:'s-quote', label:'제안서', ic:'doc'},
     {sub:'s-costsheet', label:'원가표', ic:'coin'},
     {group:'계약 · 이관'},
     {wf:'s-supplement', label:'보완 접수', ic:'alert'},
@@ -5171,7 +5171,7 @@ const MENUS = {
     {group:'준공 · 개시'},
     {stage:'kepco', label:'한전수급계약', ic:'coin'},
     {stage:'completion', label:'준공검사', ic:'check'},
-    {stage:'commercial', label:'상업운전', ic:'flag'},
+    {stage:'commercial', label:'사업개시', ic:'flag'},
     {stage:'facility', label:'설비확인', ic:'shield'},
     {group:'기타'},
     {sub:'a-deadline', label:'기한 · 연계', ic:'clock'},
