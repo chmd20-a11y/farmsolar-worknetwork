@@ -416,6 +416,22 @@ button{font-family:inherit;cursor:pointer}
 .sv-ph-top{display:flex;align-items:center;gap:8px;margin-bottom:7px}
 .sv-ph-k{font-size:12px;font-weight:800;color:var(--ink)}
 .sv-ph-opts{padding-left:25px}
+.svph-chk{cursor:default}
+.sv-chip.up{display:inline-flex;align-items:center;gap:4px;border-style:dashed}
+.sv-chip.up .up-ic{font-size:11px;line-height:1}
+.sv-chip.up.on{border-style:solid}
+.sv-gallery{margin-top:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(102px,1fr));gap:9px}
+.sv-thumb{position:relative;border:1px solid var(--border);border-radius:9px;background:var(--surface-2);padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.sv-thumb-img{width:100%;height:56px;border-radius:6px;background:color-mix(in srgb,var(--accent) 10%,var(--surface-3));display:grid;place-items:center;font-size:21px;opacity:.9;overflow:hidden}
+.sv-thumb-img img{width:100%;height:100%;object-fit:cover;display:block}
+.sv-thumb-cap{font-size:10.5px;font-weight:800;color:var(--ink-2);line-height:1.25;display:flex;flex-direction:column;gap:1px}
+.sv-thumb-sub{font-size:9px;font-weight:600;color:var(--muted)}
+.sv-thumb-x{position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;border:none;background:rgba(0,0,0,.45);color:#fff;font-size:13px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
+.sv-thumb-x:hover{background:var(--risk,#c0504d)}
+.sv-uparea{margin-top:12px;min-height:148px;border:2px dashed var(--border-strong);border-radius:12px;background:color-mix(in srgb,var(--surface-2) 40%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;padding:22px 16px}
+.sv-up-ic{font-size:30px;opacity:.7;line-height:1}
+.sv-up-t{font-size:12.5px;font-weight:800;color:var(--ink-2)}
+.sv-up-s{font-size:10.5px;line-height:1.7;color:var(--muted)}
 
 /* 부서장 결재 게이트 */
 .appr-box{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;padding:11px 12px;border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:10px;background:color-mix(in srgb,var(--accent) 7%,var(--surface-2))}
@@ -3575,15 +3591,29 @@ const SURVEY_PHOTOS = [
   {k:'예정 전기실 위치', opt:['위치','주변']},
 ];
 function svOpt(el,multi){ if(multi){ el.classList.toggle('on'); return; } const was=el.classList.contains('on'); [...el.parentElement.children].forEach(c=>c.classList.remove('on')); if(!was) el.classList.add('on'); }
-function svPhotoTick(el,did){ el.classList.toggle('on'); const box=document.getElementById('svph-'+did); if(box){ const tot=box.querySelectorAll('.svph-chk').length, on=box.querySelectorAll('.svph-chk.on').length; const c=document.getElementById('svcount-'+did); if(c) c.textContent=on+' / '+tot; } svRecount(did); }
+// 위치별 사진 업로드 버튼 핸들러 — 현재는 '첨부 위치 표시'(placeholder). 유료 스토리지 연동 시 실제 파일 업로드로 교체.
+function svPhotoUpload(el){
+  const did=el.dataset.did, item=el.dataset.item, pos=el.dataset.pos;
+  const d=DEALS.find(x=>x.id===did); if(!d) return;
+  d.photos=d.photos||{}; const key=item+'||'+pos;
+  // ── 유료 스토리지 연동 지점(예정) ─────────────────────────────────────────────
+  //   추후: 여기서 input[type=file] 선택 → Supabase Storage(또는 확보한 저장소) 업로드
+  //         → 반환 URL을 d.photos[key].url 에 저장하고 persistDeal(d)로 기기간 공유.
+  //         썸네일은 url이 있으면 <img>로 자동 교체(renderSurveyPhotos에 분기 있음).
+  //   키 = "사진항목||세부위치" (현장 d 안에서 유일). 지금은 url=null 자리표시만 저장.
+  if(d.photos[key]) delete d.photos[key];            // 이미 첨부 → 취소
+  else d.photos[key]={ item, pos, url:null, uploadedAt:null };
+  const host=document.getElementById('svphoto-'+did);
+  if(host) host.outerHTML=renderSurveyPhotos(d);     // 패널 재렌더(버튼 상태·갤러리·카운트 동기화)
+}
 // 항목 값 입력 여부(칩=1개 이상 선택 / 입력칸=모두 채움)
 function svRowFilled(vcell){ if(!vcell) return false;
   const chips=vcell.querySelectorAll('.sv-chip'); if(chips.length) return [...chips].some(c=>c.classList.contains('on'));
   const inps=vcell.querySelectorAll('input'); if(!inps.length) return true; return [...inps].every(i=>(i.value||'').trim()!==''); }
 function svTotals(did){ const form=document.getElementById('svform-'+did), box=document.getElementById('svph-'+did);
   const rows=form?[...form.querySelectorAll('.sv-row')]:[]; const rowsDone=rows.filter(r=>svRowFilled(r.querySelector('.sv-v'))).length;
-  const ph=box?[...box.querySelectorAll('.svph-chk')]:[]; const phDone=ph.filter(c=>c.classList.contains('on')).length;
-  return {rows:rows.length, rowsDone, ph:ph.length, phDone}; }
+  const ups=box?[...box.querySelectorAll('.svph-up')]:[]; const phDone=ups.filter(c=>c.classList.contains('on')).length;  // 위치별 업로드 버튼 기준
+  return {rows:rows.length, rowsDone, ph:ups.length, phDone}; }
 function svRecount(did){ const t=svTotals(did);
   const fc=document.getElementById('svfc-'+did); if(fc) fc.textContent=t.rowsDone+' / '+t.rows;
   const pc=document.getElementById('svcount-'+did); if(pc) pc.textContent=t.phDone+' / '+t.ph; }
@@ -3617,14 +3647,32 @@ function renderSurveyForm(d){
     <div class="sv-report-h">📋 현장실측 체크리스트 <span id="svfc-${d.id}" class="sv-count">${pre} / ${total}</span></div>${secs}</div>`;
 }
 function renderSurveyPhotos(d){
-  const items = SURVEY_PHOTOS.map(p=>`<div class="sv-ph-item">
-      <div class="sv-ph-top"><span class="sv-chk svph-chk" onclick="svPhotoTick(this,'${d.id}')" title="첨부됨"></span><span class="sv-ph-k">${esc(p.k)}</span></div>
-      <div class="sv-chips sv-ph-opts">${p.opt.map(o=>`<span class="sv-chip sm" onclick="svOpt(this,true)">${esc(o)}</span>`).join('')}</div>
-    </div>`).join('');
-  return `<div class="sv-photos">
-    <div class="sv-report-h">📷 현장 사진 첨부 <span id="svcount-${d.id}" class="sv-count">0 / ${SURVEY_PHOTOS.length}</span></div>
-    <div class="sv-ph-note">⚠ 실제 이미지 업로드는 추후 지원됩니다. 현재는 <b>촬영 · 첨부 여부</b>만 체크합니다.</div>
+  const photos = d.photos||{};
+  const isOn=(item,pos)=>!!photos[item+'||'+pos];
+  const totalPos = SURVEY_PHOTOS.reduce((n,p)=>n+p.opt.length,0);
+  const donePos = SURVEY_PHOTOS.reduce((n,p)=>n+p.opt.filter(o=>isOn(p.k,o)).length,0);
+  const items = SURVEY_PHOTOS.map(p=>{
+    const allOn = p.opt.every(o=>isOn(p.k,o));   // 이 항목의 모든 위치 첨부됨 → 항목 자동 '완료' 표시
+    return `<div class="sv-ph-item">
+      <div class="sv-ph-top"><span class="sv-chk svph-chk${allOn?' on':''}" title="이 항목의 모든 위치 사진이 첨부되면 자동 완료"></span><span class="sv-ph-k">${esc(p.k)}</span></div>
+      <div class="sv-chips sv-ph-opts">${p.opt.map(o=>`<span class="sv-chip sm up svph-up${isOn(p.k,o)?' on':''}" data-did="${d.id}" data-item="${esc(p.k)}" data-pos="${esc(o)}" onclick="svPhotoUpload(this)" title="이 위치 사진 업로드"><span class="up-ic">${isOn(p.k,o)?'✓':'📷'}</span>${esc(o)}</span>`).join('')}</div>
+    </div>`;
+  }).join('');
+  // 업로드한 사진 표시 영역(갤러리) — 각 위치 버튼으로 첨부한 사진이 여기에 쌓임
+  const cards = SURVEY_PHOTOS.flatMap(p=>p.opt.filter(o=>isOn(p.k,o)).map(o=>{ const ph=photos[p.k+'||'+o];
+    return `<div class="sv-thumb" title="${esc(p.k)} · ${esc(o)}">
+      <div class="sv-thumb-img">${ph&&ph.url?`<img src="${esc(ph.url)}" alt="">`:'🖼️'}</div>
+      <div class="sv-thumb-cap">${esc(o)}<span class="sv-thumb-sub">${esc(p.k)}</span></div>
+      <button class="sv-thumb-x" data-did="${d.id}" data-item="${esc(p.k)}" data-pos="${esc(o)}" onclick="svPhotoUpload(this)" title="첨부 취소">×</button>
+    </div>`; })).join('');
+  const gallery = donePos
+    ? `<div class="sv-gallery">${cards}</div>`
+    : `<div class="sv-uparea"><div class="sv-up-ic">🖼️</div><div class="sv-up-t">업로드한 현장 사진이 여기에 표시됩니다</div><div class="sv-up-s">위의 각 <b>위치 버튼(📷)</b>을 눌러 사진을 첨부하세요<br>실제 이미지 업로드·저장은 추후(유료 스토리지 연동) 지원 예정</div></div>`;
+  return `<div class="sv-photos" id="svphoto-${d.id}">
+    <div class="sv-report-h">📷 현장 사진 첨부 <span id="svcount-${d.id}" class="sv-count">${donePos} / ${totalPos}</span></div>
+    <div class="sv-ph-note">⚠ 각 <b>위치 버튼(📷)</b>을 눌러 해당 위치의 사진을 첨부합니다. <b>모든 위치</b>를 첨부해야 실측을 완료할 수 있습니다. (실제 업로드·저장은 추후 유료 스토리지 연동)</div>
     <div id="svph-${d.id}">${items}</div>
+    ${gallery}
   </div>`;
 }
 
