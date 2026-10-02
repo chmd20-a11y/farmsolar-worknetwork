@@ -4176,18 +4176,25 @@ function getQuoteProposal(d){
 }
 function permitFromQuote(d){
   const prop=getQuoteProposal(d); if(!prop) return null;
-  const sp=prop.spec||{}, ec=prop.econ||{}, out={};
-  const cap=pNum(sp.cap); if(cap) out.cap=cap;
+  const sp=prop.spec||{}, ec=prop.econ||{}, sr=prop.specRaw||{}, out={};
+  const cap=pNum(sp.cap)||pNum(sr.kw); if(cap) out.cap=cap;
   const totalWon=pNum(prop.total); if(totalWon) out.totalCostK=Math.round(totalWon/1000);
   const ownWon=pNum(ec.own), loanWon=pNum(ec.loan);
   if(ownWon) out.ownK=Math.round(ownWon/1000);
   if(loanWon) out.loanK=Math.round(loanWon/1000);
-  const mW=/(\d[\d,]*)\s*W/.exec(sp.module||''); if(mW) out.modW=pNum(mW[1]);
-  const mQ=pNum(sp.qty); if(mQ) out.modQty=mQ;
-  if(sp.module) out.modType=sp.module;
-  const iK=/([\d.]+)\s*kW/.exec(sp.inverter||''); if(iK) out.invKW=pNum(iK[1]);
-  const iQ=/(\d+)\s*대/.exec(sp.inverter||''); if(iQ) out.invQty=pNum(iQ[1]);
-  const tl=/모듈각도\s*([\d.]+)/.exec(sp.install||''); if(tl) out.modTilt=pNum(tl[1]);
+  // 모듈 — 정밀값(제안서 specRaw) 우선, 없으면 견적 스펙 문자열 파싱
+  if(sr.w){ out.modW=pNum(sr.w); } else { const mW=/(\d[\d,]*)\s*W/.exec(sp.module||''); if(mW) out.modW=pNum(mW[1]); }
+  if(sr.qty){ out.modQty=pNum(sr.qty); } else { const mQ=pNum(sp.qty); if(mQ) out.modQty=mQ; }
+  if(sr.modName){ const mn=String(sr.modName).replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim(); out.modType=(sr.grade?sr.grade+' / ':'')+mn; } else if(sp.module){ out.modType=sp.module; }
+  // 인버터 — specRaw 우선
+  if(sr.invLabel){ const iK=/([\d.]+)\s*kW/.exec(sr.invLabel); if(iK) out.invKW=pNum(iK[1]); }
+  if(out.invKW==null){ const iK=/([\d.]+)\s*kW/.exec(sp.inverter||''); if(iK) out.invKW=pNum(iK[1]); }
+  if(sr.invQty){ out.invQty=pNum(sr.invQty); } else { const iQ=/(\d+)\s*대/.exec(sp.inverter||''); if(iQ) out.invQty=pNum(iQ[1]); }
+  // 경사각·입사각 — specRaw 우선
+  if(sr.tilt!=null){ out.modTilt=pNum(sr.tilt); } else { const tl=/모듈각도\s*([\d.]+)/.exec(sp.install||''); if(tl) out.modTilt=pNum(tl[1]); }
+  if(sr.inc!=null){ out.modInc=pNum(sr.inc); } else { const ic=/입사각\s*([\d.]+)/.exec(sp.install||''); if(ic) out.modInc=pNum(ic[1]); }
+  // 연간발전량 — 제안서 발전공식(설비용량 × 발전시간 × 365)과 일치시킴
+  const hours=parseFloat(ec.hours); if(cap && hours) out.annual=Math.round(cap*hours*365);
   return out;
 }
 
@@ -4204,7 +4211,8 @@ function defaultPermit(d){
   const modW=q.modW||sp.modW, modQty=q.modQty||sp.modQty, modType=q.modType||sp.modType;
   const invKW=q.invKW||sp.invKW, invQty=q.invQty||sp.invQty;
   const tilt = q.modTilt!=null ? q.modTilt : (isBld?10:15);
-  const annual = Math.round(cap*1460);                  // 연간발전량(kWh)
+  const inc = q.modInc!=null ? q.modInc : 25;           // 입사각(°)
+  const annual = q.annual || Math.round(cap*1460);      // 연간발전량(kWh) — 제안서 발전시간 기준 우선
   const useArea = Math.round(cap*4.2);
   const totalArea = isBld ? useArea : Math.round(useArea*1.8);
   return {
@@ -4219,7 +4227,7 @@ function defaultPermit(d){
       totalCost:costK, unitCost:Math.round(costK/cap), annual, startMonths:18 },
     fund:{ ownPct, loanPct, own:ownK, loan:loanK },
     equip:{ modMaker:sp.modMaker, modModel:sp.modModel, modW, modType, modQty,
-      modTilt:tilt, modVoc:'49.7', modIsc:'16.5', modSize:(pNum(modW)>=640?'2,382':'2,278')+' x 1,134 x 30', modWeight:(pNum(modW)/19).toFixed(1),
+      modTilt:tilt, modInc:inc, modVoc:'49.7', modIsc:'16.5', modSize:(pNum(modW)>=640?'2,382':'2,278')+' x 1,134 x 30', modWeight:(pNum(modW)/19).toFixed(1),
       invKW, invQty, invType:sp.invType, invIn:'200~1000', invOut:'220/380', invFreq:60 },
     lands: isBld ? [] : [{ addr:'경기도 ○○시 ○○면 ○○리', jibun:'000-0', jimok:'답', area:Math.round(totalArea*0.5), owner:'(토지주)', ownerAddr:'', zone:'생산관리지역' }],
     builds: isBld ? [{ addr:'경기도 ○○시 ○○동 000-0', jibun:'000-0', bldArea:useArea, div:'공장', struct:'철골조', use:'공장(제조업소)', owner:'(건물주)' }] : [],
@@ -4244,6 +4252,8 @@ function pullPermitFromQuote(id){
   if(q.invKW) p.equip.invKW=q.invKW;
   if(q.invQty) p.equip.invQty=q.invQty;
   if(q.modTilt!=null) p.equip.modTilt=q.modTilt;
+  if(q.modInc!=null) p.equip.modInc=q.modInc;
+  if(q.annual) p.outline.annual=q.annual;
   persistDeal(d); toast('제안서에서 설비·금액 정보를 가져왔습니다'); refreshActive();
 }
 // 출처(원천) 메뉴로 이동 — 끌어온 값은 여기서만 수정
@@ -4263,7 +4273,7 @@ function getOwner(d){ if(!d.owner) d.owner=defaultOwner(d); return d.owner; }
 const PERMIT_OWNER_PATHS=['applicant.name','applicant.bizname','applicant.phone','rep.name','outline.plantName'];
 function fieldOrigin(path){
   if(path.indexOf('equip.')===0 || path.indexOf('fund.')===0) return 'quote';
-  if(['biz.cap','outline.totalCost','outline.unitCost','outline.annual'].indexOf(path)>=0) return 'quote';
+  if(['biz.cap','outline.totalCost','outline.unitCost','outline.annual','outline.method'].indexOf(path)>=0) return 'quote';
   if(PERMIT_OWNER_PATHS.indexOf(path)>=0) return 'owner';
   return 'contract';
 }
@@ -4286,7 +4296,11 @@ function resolvePermit(d){
   if(q.invKW) p.equip.invKW=q.invKW;
   if(q.invQty) p.equip.invQty=q.invQty;
   if(q.modTilt!=null) p.equip.modTilt=q.modTilt;
-  p.outline.annual=Math.round(pNum(p.biz.cap)*1460);
+  if(q.modInc!=null) p.equip.modInc=q.modInc;
+  // 설치방법 = 유형(노지/건물)에 따라 자동 파생(제안서 유형 기준, 영업 손입력 제거)
+  p.outline.method = (p.installType==='건물') ? '건물형(지붕)' : '노지형';
+  // 연간발전량 = 제안서 발전공식(설비용량 × 발전시간 × 365) 우선, 없으면 종전 추정
+  p.outline.annual = q.annual || Math.round(pNum(p.biz.cap)*1460);
   return p;
 }
 function getPermit(d){ if(!d.permit) d.permit = defaultPermit(d); return d.permit; }
@@ -4436,6 +4450,7 @@ function renderPermitForm(d, origin){
       ${pr('모듈 수량','equip.modQty',eq.modQty,{unit:'매'})}
       ${pr('모듈 형식','equip.modType',eq.modType)}
       ${pr('경사각','equip.modTilt',eq.modTilt,{unit:'°'})}
+      ${pr('입사각','equip.modInc',eq.modInc,{unit:'°'})}
       ${pr('개방/단락','equip.modVoc',eq.modVoc,{unit:'V · '+esc(eq.modIsc)+'A'})}
       ${pr('외형크기','equip.modSize',eq.modSize,{unit:'mm'})}
       ${pr('인버터 용량','equip.invKW',eq.invKW,{unit:'kW'})}
@@ -4464,7 +4479,7 @@ function renderPermitSalesForm(d){
     <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:10px">
       <span class="sv-sec-ic" style="font-size:16px">🏛️</span>
       <b style="font-size:13.5px">발전사업 허가 — 추가 신청정보 입력</b>
-      <span class="lr-s"><b>설비·금액</b>과 사업주 <b>성명·상호·전화</b>는 「제안서」에서 받아 읽기전용으로 끌어옵니다. <b>주민/법인번호·주소</b> 등 민감정보와 현장·부지 정보는 여기서 입력하세요. 입력값은 행정 화면으로 자동 연동됩니다.</span>
+      <span class="lr-s"><b>설비·금액·설치방법·연간발전량·경사각/입사각</b>과 사업주 <b>성명·상호·전화</b>는 「제안서」에서 자동으로 끌어옵니다(읽기전용). 제안서에 없는 <b>주민/법인번호·주소</b> 등 민감정보와 <b>설치장소·접수관청·공급전압·주파수·준비기간·면적·발전방식·전력수급방식·부지(토지/건물) 명세</b>를 여기서 입력하세요. 입력값은 행정 발전사업 허가로 자동 연동됩니다.</span>
       <select class="pm-sel" style="margin-left:auto;max-width:150px" onchange="setPermit('${d.id}','installType',this.value);refreshActive()">
         <option value="토지" ${!isBld?'selected':''}>유형: 토지(노지)</option>
         <option value="건물" ${isBld?'selected':''}>유형: 건물(지붕)</option>
@@ -4494,7 +4509,7 @@ function renderPermitBiz(){
       <button class="btn ghost sm" onclick="togglePermitPreview()">${permitPrevOpen?'미리보기 닫기':'🔍 양식 미리보기'}</button>
       <button class="btn primary sm" onclick="printPermit('${d.id}')">📄 접수 PDF 출력</button>
     </div>`;
-  const info = `<div class="cred-warn" style="color:var(--ink-2);background:color-mix(in srgb,var(--brand) 9%,transparent);border-color:color-mix(in srgb,var(--brand) 26%,transparent)">🔗 아래 신청정보는 각 원천에서 <b>자동으로 가져온 읽기전용</b>입니다 — <b style="color:#2e8b63">제안서</b>(설비·금액·사업주) / <b style="color:#9a6f16">실계약</b>(현장·부지·행정정보). 각 항목의 출처 태그를 누르면 그 원천 화면으로 이동해 수정할 수 있습니다. 행정은 <b>첨부서류 발급·준비</b>와 <b>접수 PDF 출력</b>을 담당합니다.</div>`;
+  const info = `<div class="cred-warn" style="color:var(--ink-2);background:color-mix(in srgb,var(--brand) 9%,transparent);border-color:color-mix(in srgb,var(--brand) 26%,transparent)">🔗 아래 신청정보는 각 원천에서 <b>자동으로 가져온 읽기전용</b>입니다 — <b style="color:#2e8b63">제안서</b>(설비·금액·사업주 성명·상호·전화·설치방법·연간발전량·경사각/입사각) / <b style="color:#9a6f16">실계약</b>(민감정보·설치장소·접수관청·전압·주파수·면적·발전방식·수급방식·부지 명세). 제안서가 바뀌면 설비·발전량이 <b>자동 반영</b>됩니다. 각 항목의 출처 태그를 누르면 그 원천 화면으로 이동해 수정할 수 있습니다. 행정은 <b>첨부서류 발급·준비</b>와 <b>접수 PDF 출력</b>을 담당합니다.</div>`;
   const preview = permitPrevOpen ? `<div style="margin:14px 0;border:1px solid var(--border-strong);border-radius:12px;overflow:auto;max-height:620px;background:#fff;padding:6px">${renderPermitPrint(d)}</div>` : '';
   return head + bar + info + renderPermitForm(d,'admin') + preview + renderPermitDocs(d);
 }
@@ -4642,7 +4657,7 @@ function renderPermitPrint(d){
     <table class="pp-t"><tr><th colspan="2">태양광 모듈</th><th colspan="2">인버터</th></tr>
       <tr><td class="lbl">정격출력</td><td>${esc(eq.modW)} W × ${pComma(eq.modQty)} 매</td><td class="lbl">용량</td><td>${esc(eq.invKW)} kW × ${esc(eq.invQty)} 대</td></tr>
       <tr><td class="lbl">형식</td><td>${esc(eq.modType)}</td><td class="lbl">형식</td><td>${esc(eq.invType)}</td></tr>
-      <tr><td class="lbl">경사각</td><td>${esc(eq.modTilt)}°</td><td class="lbl">입/출력전압</td><td>${esc(eq.invIn)}V / ${esc(eq.invOut)}V</td></tr>
+      <tr><td class="lbl">경사각 / 입사각</td><td>${esc(eq.modTilt)}° / ${esc(eq.modInc!=null?eq.modInc:25)}°</td><td class="lbl">입/출력전압</td><td>${esc(eq.invIn)}V / ${esc(eq.invOut)}V</td></tr>
       <tr><td class="lbl">외형크기</td><td>${esc(eq.modSize)} mm</td><td class="lbl">주파수</td><td>${esc(eq.invFreq)} Hz</td></tr></table>
   </div>`;
   // 3) 발전원가 / 기술인력 / 부지·건물 명세 / 대표자
@@ -4713,6 +4728,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-02', team:'공통', kind:'변경', title:'발전사업 허가 — 바뀐 제안서 기준으로 자동연동 항목 재정리', body:'영업 “제안서”가 상세해진 만큼, 행정 <b>발전사업 허가</b>가 <b>제안서에서 가져올 수 있는 값</b>과 <b>가져올 수 없어 영업이 입력할 값</b>을 다시 정리했습니다. ① <b>제안서에서 자동으로 가져오는 값(읽기전용 유지·강화)</b> — 설비용량·총사업비·자금·모듈/인버터 스펙에 더해, <b>연간발전량</b>을 제안서 <b>발전공식(설비용량 × 발전시간 × 365)과 똑같이</b> 맞췄고(종전에는 고정 추정값이라 제안서와 달랐습니다), <b>입사각</b>을 새로 가져와 발전설비 개요·사업계획서에 표시하며, <b>설치방법</b>(노지형/건물형)은 유형에 따라 <b>자동</b>으로 채워 영업 손입력에서 뺐습니다. 모듈 제조사·모델·등급도 제안서 값으로 더 정확히 끌어옵니다. ② <b>제안서에 없어 영업 “실계약”에서 입력하는 값</b> — 주민/법인번호·주소 등 민감정보, 설치장소·접수관청, 공급전압·주파수·준비기간, 사용/전체/건축면적, 발전방식·전력수급방식, 대상 토지/건물 명세. ③ 행정 화면의 각 항목 <b>출처 태그</b>(제안서/실계약)와 안내문을 이 분류에 맞게 갱신했습니다. 제안서가 수정되면 설비·발전량이 발전사업 허가에 <b>자동 반영</b>됩니다.', author:'개발'},
   {date:'2026-10-02', team:'영업', kind:'수정', title:'제안서 보기 — 가로로 넓게(2단 눌림 해결)', body:'“제안서 보기” 창이 좁아 제안서가 세로로 눌리고 견적 표 글자가 줄바꿈되던 것을, <b>가로로 넓은 창</b>으로 바꿔 A3 출력물과 같은 모습으로 자연스럽게 보이도록 했습니다(좌: 견적·제품사양·유지관리비 / 우: 수익성·장기계약·정책자금·배치도 2단). 작은 화면에서는 자동으로 접혀 보기 편하게 표시됩니다.', author:'개발'},
   {date:'2026-10-02', team:'영업', kind:'추가', title:'실계약 — 넘어온 도면·최종 수정제안서 A3 출력', body:'영업 “실계약”에서 설계로부터 넘어온 <b>최종 수정제안서</b>와 <b>설계 실측 도면</b>을 바로 출력(PDF 저장)할 수 있게 했습니다. ① <b>최종 수정제안서</b> 카드에 <b>“📄 제안서 출력 (A3 PDF)”</b> 버튼을 추가했습니다 — 설계가 실측을 반영해 수정한 <b>수정본 기준</b>으로 「태양광 발전사업 제안서」를 A3 1장으로 출력합니다(수정이 없으면 최초 제안서). ② <b>설계 실측 도면</b> 카드에 <b>“🖨 도면 출력 (A3 PDF)”</b> 버튼을 추가했습니다 — 넘어온 도면을 종류별(배치도·구조/단면도·전기 계통도 등) 시트로 A3에 출력합니다. <b>현재는 도면 이미지 자리표시</b>로 출력되며, 설계 업로드·<b>모듈 가배치</b> 연동이 끝나면 실제 도면 이미지가 그대로 담겨 출력됩니다. 둘 다 <b>A3 용지</b>로 깔끔하게 인쇄·PDF 저장됩니다.', author:'개발'},
   {date:'2026-10-02', team:'설계', kind:'수정', title:'현장 실측 — 견적 저장 시 상단 체크리스트가 초기화되던 문제 해결', body:'설계 “현장 실측”에서 상단 <b>현장실측 체크리스트</b>를 입력하고 하단 <b>“실측 반영 견적 저장 → 영업 실계약 전달”</b>을 누르면, 상단에 입력해 둔 체크리스트가 모두 비워지던 문제를 바로잡았습니다. 원인은 저장 내용이 공유 서버에 반영될 때 그 변경이 <b>내 화면으로 되돌아오며 화면을 다시 그려</b>, 아직 저장 전이던 체크리스트 입력이 지워지던 것이었습니다. 이제 <b>내가 방금 한 저장</b>이 되돌아올 때는 화면을 다시 그리지 않아, <b>입력하던 체크리스트가 그대로 유지</b>됩니다(다른 팀원이 같은 현장을 바꾸는 경우에는 정상적으로 화면이 갱신됩니다).', author:'개발'},
