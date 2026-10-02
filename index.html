@@ -2558,9 +2558,9 @@ const WF_EDGES = [
   ['site','feas1'],['feas1','layout'],['layout','cost'],['cost','quote'],
   ['quote','d_intake','고객 Data 이관'],
   ['d_intake','d_feas'],
-  ['d_feas','supp','N · 재접수'],
-  ['d_feas','pre','Y'],
-  ['supp','pre'],
+  ['d_feas','supp','N', -10],       // 반려(N) → 보완접수
+  ['supp','d_feas','재접수', 10],    // 보완접수 → 재접수하여 타당성검토 재검토(루프백)
+  ['d_feas','pre','Y'],             // 통과(Y) → 가계약
   ['pre','d_survey'],          // 가계약 → (설계)현장 실측
   ['d_survey','real'],         // 현장 실측 → (영업)실계약
   ['real','a_intake'],         // 실계약 → (행정)착수
@@ -2580,11 +2580,11 @@ function renderWorkflow(){
   const byId=id=>WF_NODES.find(n=>n.id===id);
   const maxRow=WF_NODES.reduce((m,n)=>Math.max(m,n.row),0);
   const W=LEFT+3*COLW+NODEW+LEFT, H=TOP+maxRow*ROWH+NODEH+18;
-  const paths=WF_EDGES.map(([f,t,lb])=>{
+  const paths=WF_EDGES.map(([f,t,lb,yoff])=>{
     const a=byId(f), b=byId(t); if(!a||!b) return '';
     let d, lx, ly;
     if(a.lane===b.lane){ d=`M ${ncx(a.lane)} ${nb(a.row)} L ${ncx(b.lane)} ${ny(b.row)}`; lx=ncx(a.lane); ly=(nb(a.row)+ny(b.row))/2; }
-    else if(a.row===b.row){ const fx=a.lane<b.lane?nx(a.lane)+NODEW:nx(a.lane), tx=a.lane<b.lane?nx(b.lane):nx(b.lane)+NODEW; d=`M ${fx} ${ncy(a.row)} L ${tx} ${ncy(a.row)}`; lx=(fx+tx)/2; ly=ncy(a.row)-6; }
+    else if(a.row===b.row){ const yy=ncy(a.row)+(yoff||0); const fx=a.lane<b.lane?nx(a.lane)+NODEW:nx(a.lane), tx=a.lane<b.lane?nx(b.lane):nx(b.lane)+NODEW; d=`M ${fx} ${yy} L ${tx} ${yy}`; lx=(fx+tx)/2; ly=yy-6; }
     else { const midY=(nb(a.row)+ny(b.row))/2; d=`M ${ncx(a.lane)} ${nb(a.row)} L ${ncx(a.lane)} ${midY} L ${ncx(b.lane)} ${midY} L ${ncx(b.lane)} ${ny(b.row)}`; lx=(ncx(a.lane)+ncx(b.lane))/2; ly=midY-6; }
     let label='';
     if(lb){ const lw=lb.length*8.6+10; label=`<rect x="${(lx-lw/2).toFixed(1)}" y="${(ly-11).toFixed(1)}" width="${lw.toFixed(1)}" height="15" rx="4" fill="var(--surface)" opacity="0.93"/><text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--ink-2)">${esc(lb)}</text>`; }
@@ -2605,7 +2605,7 @@ function renderWorkflow(){
     <defs><marker id="wfarrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink-2)" opacity="0.72"/></marker></defs>
     ${paths}${heads}${nodes}
   </svg></div>
-  <div class="wfd-note">· 팀장님 제공 「파주지사 업무프로세스(26-09-21)」 흐름도를 반영했습니다. 색상 블록은 각 팀(영업·설계·행정·시공) 레인, 화살표는 업무 이관 흐름입니다.<br>· 영업 <b>가계약</b> → 설계 <b>현장 실측</b> → 영업 <b>실계약</b> 순으로 진행됩니다. 설계 <b>타당성검토</b>는 통과(Y)=가계약, 반려(N)=보완접수로 재접수됩니다.<br>· <b>각 단계</b>를 누르면 그 업무의 실제 화면(메뉴)으로, <b>팀 이름</b>을 누르면 해당 팀으로 이동합니다.</div>`;
+  <div class="wfd-note">· 팀장님 제공 「파주지사 업무프로세스(26-09-21)」 흐름도를 반영했습니다. 색상 블록은 각 팀(영업·설계·행정·시공) 레인, 화살표는 업무 이관 흐름입니다.<br>· 영업 <b>가계약</b> → 설계 <b>현장 실측</b> → 영업 <b>실계약</b> 순으로 진행됩니다. 설계 <b>타당성검토</b>는 통과(Y)=가계약 진행, 반려(N)=보완접수 → 보완 후 <b>재접수</b>하여 타당성검토를 다시 받습니다.<br>· <b>각 단계</b>를 누르면 그 업무의 실제 화면(메뉴)으로, <b>팀 이름</b>을 누르면 해당 팀으로 이동합니다.</div>`;
 }
 function openWorkflow(){ const b=document.getElementById('workflowBody'); if(b) b.innerHTML = renderWorkflow(); document.getElementById('workflowScrim').classList.add('open'); }
 function closeWorkflow(){ document.getElementById('workflowScrim').classList.remove('open'); }
