@@ -441,6 +441,24 @@ button{font-family:inherit;cursor:pointer}
 .sv-opt{font-size:9px;font-weight:700;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:20px;padding:2px 7px;margin-left:auto}
 .sv-dwg-desc{font-size:10.5px;color:var(--muted);padding-left:25px;margin:-3px 0 7px;line-height:1.5}
 .sv-dwg-view{padding:3px 11px;font-size:10px;margin-top:2px}
+/* 실측 반영 견적 수정 */
+.rv-opt{font-size:9px;font-weight:700;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:20px;padding:2px 7px;margin-left:auto}
+.rv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.rv-sum{cursor:pointer;font-size:12.5px;font-weight:800;color:var(--accent-ink);padding:5px 0;list-style:none}
+.rv-sum::-webkit-details-marker{display:none}
+.rv-sum::before{content:'▸ ';font-size:11px}
+.rv-details[open] .rv-sum::before{content:'▾ '}
+.rv-details[open] .rv-sum{margin-bottom:8px}
+.rv-diff{margin-top:12px;border:1px solid var(--border);border-radius:9px}
+.rv-diff-h{font-size:11.5px;font-weight:800;color:var(--ink-2);background:var(--surface-2);padding:7px 11px;border-bottom:1px solid var(--border);border-radius:8px 8px 0 0}
+.rv-drow{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:7px 11px;border-bottom:1px solid var(--border);font-size:12px}
+.rv-drow:last-child{border-bottom:0}
+.rv-dl{font-weight:700;color:var(--ink-2);width:76px;flex:none}
+.rv-old{color:var(--muted);font-variant-numeric:tabular-nums}
+.rv-ar{color:var(--muted)}
+.rv-new{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
+.rv-dd{font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;background:color-mix(in srgb,var(--accent) 13%,transparent);border-radius:20px;padding:1px 9px;font-size:11px}
+.rv-badge{font-size:9.5px;font-weight:800;color:#fff;background:var(--accent);border-radius:20px;padding:2px 7px;margin-right:3px}
 .sv-up-ic{font-size:30px;opacity:.7;line-height:1}
 .sv-up-t{font-size:12.5px;font-weight:800;color:var(--ink-2)}
 .sv-up-s{font-size:10.5px;line-height:1.7;color:var(--muted)}
@@ -2587,9 +2605,11 @@ function handoverProposal(d, p, showCost){
 // 제안서 보기 모달 — 어느 단계에서든 그 현장의 영업 이관 제안서(견적서 전체)를 다시 연다
 function openProposal(id){
   const d = DEALS.find(x=>x.id===id); if(!d) return;
-  const p = d.proposal || (d.quoteOpts ? buildProposal(d) : null);
-  document.getElementById('proposalTitle').textContent = d.site + ' · ' + d.cap.toLocaleString() + 'kW 제안서';
-  document.getElementById('proposalSub').textContent = d.id + ' · 영업 ' + d.rep + ' · 견적서(전체)';
+  const revised = !!d.revisedProposal;
+  const p = d.revisedProposal || d.proposal || (d.quoteOpts ? buildProposal(d) : null);
+  const capLbl = (revised && d.reviseCfg) ? d.reviseCfg.cap : d.cap;
+  document.getElementById('proposalTitle').textContent = d.site + ' · ' + capLbl.toLocaleString() + 'kW 제안서' + (revised?' (실측 반영 수정본)':'');
+  document.getElementById('proposalSub').textContent = d.id + ' · 영업 ' + d.rep + ' · 견적서(전체)' + (revised?` · 설계 수정 ${d.reviseAt||''}`:'');
   document.getElementById('proposalBody').innerHTML = p ? handoverProposal(d, p)
     : `<div class="section-title" style="font-size:12px;margin:0 0 8px">이관 자료 · 고객 제공 견적서(전체)</div>${quoteFull(d)}
        <div class="section-title" style="font-size:12px;margin:16px 0 8px">배치도</div>${miniLayout(d.cap)}`;
@@ -3825,6 +3845,92 @@ function renderSurveyDrawings(d){
   </div>`;
 }
 
+// ===== 실측 반영 견적 수정(설계) — 현장 실측 결과로 달라진 견적을 수정해 영업 실계약으로 전달 =====
+// 편집기 기준 cfg: 수정본(d.reviseCfg)이 있으면 그 값, 없으면 현재 딜(최초 견적) 값
+function reviseBaseCfg(d){
+  if(d.reviseCfg){ const c=d.reviseCfg, mk=c.moduleKey||'china_aiko', W=(COST_PRESET.modules[mk]||{}).w||655;
+    return { moduleKey:mk, type:c.type||d.type, cap:(c.cap!=null?c.cap:d.cap), unit:c.unitOverride||0, qty:c.qty||Math.round(((c.cap||d.cap)*1000)/W) }; }
+  const mk=(d.quoteOpts&&d.quoteOpts.moduleKey)||'china_aiko', W=(COST_PRESET.modules[mk]||{}).w||655;
+  return { moduleKey:mk, type:d.type, cap:d.cap, unit:d.unitOverride||quoteTierDefaultUnit(d.type,d.cap)||0, qty:Math.round((d.cap*1000)/W) };
+}
+function reviseCfgFromInputs(did){ const g=k=>document.getElementById(k+'-'+did);
+  const qEl=g('rv-qty'); if(!qEl) return null;
+  const moduleKey=(g('rv-module')||{}).value||'china_aiko';
+  const W=(COST_PRESET.modules[moduleKey]||{}).w||655;
+  const qty=parseFloat(qEl.value)||0; if(!qty) return null;
+  const type=(g('rv-type')||{}).value||'노지';
+  const cap=Math.round(qty*W/1000*100)/100; if(!cap) return null;
+  const unit=parseFloat((g('rv-unit')||{}).value)||0;
+  return { moduleKey, cap, type, unit, qty }; }
+// 수정 딜 cfg로 제안서 산출(최초 d는 보존, 복제본에 오버레이)
+function reviseBuild(d,cfg){ return buildProposal({...d, cap:cfg.cap, type:cfg.type, quoteOpts:{moduleKey:cfg.moduleKey}, unitOverride:cfg.unit, quoteParams:d.quoteParams}); }
+// 최초 대비 변경 요약 테이블
+function reviseDiffHtml(o,r,oc,rc){ const n=pNum;
+  const row=(label,a,b,delta,unit)=>{ const z=Math.abs(delta)<0.005; const col=z?'var(--muted)':'var(--accent-ink)';
+    const dv=z?'변동 없음':`${delta>0?'▲':'▼'} ${Math.abs(delta).toLocaleString()}${unit}`;
+    return `<div class="rv-drow"><span class="rv-dl">${label}</span><span class="rv-old">${a}</span><span class="rv-ar">→</span><b class="rv-new">${b}</b><span class="rv-dd" style="color:${col}">${dv}</span></div>`; };
+  const rows=[
+    row('설비용량', oc.toLocaleString()+' kW', rc.toLocaleString()+' kW', Math.round((rc-oc)*100)/100, ' kW'),
+    row('모듈 수량', (o.modQty||0).toLocaleString()+' 매', (r.modQty||0).toLocaleString()+' 매', (r.modQty||0)-(o.modQty||0), ' 매'),
+    row('총 사업비', '₩'+n(o.total).toLocaleString(), '₩'+n(r.total).toLocaleString(), n(r.total)-n(o.total), ' 원'),
+    row('자부담', '₩'+n(o.econ.own).toLocaleString(), '₩'+n(r.econ.own).toLocaleString(), n(r.econ.own)-n(o.econ.own), ' 원'),
+  ];
+  return `<div class="rv-diff"><div class="rv-diff-h">최초 대비 변경</div>${rows.join('')}</div>`;
+}
+// 수정 미리보기(변경 요약 + 수정 제안서 전체)
+function reviseResultHtml(d,cfg){
+  if(!cfg||!cfg.cap) return '<div class="note" style="margin-top:8px">모듈과 수량을 입력하면 수정 견적이 계산됩니다.</div>';
+  const revP=reviseBuild(d,cfg), origP=d.proposal||buildProposal(d);
+  return reviseDiffHtml(origP, revP, d.cap, cfg.cap)
+    + `<div class="section-title" style="font-size:12px;margin:12px 0 4px">수정 견적 미리보기 · 총 사업비 ₩${revP.total} <span style="font-weight:500;color:var(--muted)">(백만절사·VAT별도)</span></div>`
+    + handoverProposal({...d, cap:cfg.cap, type:cfg.type, quoteOpts:{moduleKey:cfg.moduleKey}, unitOverride:cfg.unit}, revP);
+}
+function rvPreview(did){ const d=DEALS.find(x=>x.id===did); if(!d) return;
+  const cfg=reviseCfgFromInputs(did);
+  const kwEl=document.getElementById('rv-kw-'+did); if(kwEl) kwEl.value = cfg&&cfg.cap ? cfg.cap.toLocaleString()+' kW' : '';
+  const box=document.getElementById('rv-result-'+did); if(box) box.innerHTML=reviseResultHtml(d,cfg); }
+function saveRevisedQuote(did){ const d=DEALS.find(x=>x.id===did); if(!d) return;
+  const cfg=reviseCfgFromInputs(did); if(!cfg){ toast('모듈과 수량을 입력하세요'); return; }
+  if(!d.proposal) d.proposal=buildProposal(d);                 // 최초 견적 스냅샷 보존(원본 유지)
+  d.reviseCfg={ moduleKey:cfg.moduleKey, cap:cfg.cap, type:cfg.type, unitOverride:cfg.unit, qty:cfg.qty };
+  d.reviseNote=((document.getElementById('rv-note-'+did)||{}).value||'').trim();
+  d.revisedProposal=reviseBuild(d,cfg);
+  d.reviseAt=new Date().toISOString().slice(0,10);
+  persistDeal(d);
+  toast(`실측 반영 견적 저장 — ${d.site} · 영업 실계약으로 전달`);
+  const host=document.getElementById('rvpanel-'+did); if(host) host.outerHTML=renderReviseQuote(d); }
+function clearRevisedQuote(did){ const d=DEALS.find(x=>x.id===did); if(!d) return;
+  delete d.revisedProposal; delete d.reviseCfg; delete d.reviseNote; delete d.reviseAt;
+  persistDeal(d); toast('실측 반영 견적 취소 — 최초 견적 적용');
+  const host=document.getElementById('rvpanel-'+did); if(host) host.outerHTML=renderReviseQuote(d); }
+function renderReviseQuote(d){
+  const base=reviseBaseCfg(d), has=!!d.revisedProposal;
+  const modOpts=Object.entries(COST_PRESET.modules).map(([k,v])=>`<option value="${k}"${k===base.moduleKey?' selected':''}>${esc(v.name)} · ${v.w}W</option>`).join('');
+  const summary=has
+    ? `<span class="rv-badge">수정본 저장됨</span> 총 ₩${d.revisedProposal.total} · ${esc(d.reviseAt||'')} — 발전사업 허가·실계약이 <b>수정본 기준</b>으로 반영됩니다`
+    : `최초 견적을 불러와 실측 결과(용량·단가 등)를 반영합니다. 저장하면 허가·실계약 금액이 <b>수정본 기준</b>으로 반영되고 최초 견적은 “변경 전”으로 함께 표시됩니다`;
+  const editor=`<div class="rv-form">
+      <div class="rv-grid">
+        <div>${_lbl('부지유형')}<select class="tinput" id="rv-type-${d.id}" onchange="rvPreview('${d.id}')"><option${base.type==='노지'?' selected':''}>노지</option><option${base.type==='지붕'?' selected':''}>지붕</option><option${base.type==='수상'?' selected':''}>수상</option></select></div>
+        <div>${_lbl('모듈')}<select class="tinput" id="rv-module-${d.id}" onchange="rvPreview('${d.id}')">${modOpts}</select></div>
+        <div>${_lbl('모듈 수량 (EA)')}<input class="tinput" id="rv-qty-${d.id}" type="number" min="1" value="${base.qty}" oninput="rvPreview('${d.id}')"></div>
+        <div>${_lbl('설비용량 (kW)')}<input class="tinput" id="rv-kw-${d.id}" readonly style="background:var(--surface-2)" value="${base.cap.toLocaleString()} kW"></div>
+        <div>${_lbl('kW당 설치단가 (원)')}<input class="tinput" id="rv-unit-${d.id}" type="number" value="${base.unit}" oninput="rvPreview('${d.id}')"></div>
+      </div>
+      <div style="margin-top:10px">${_lbl('변경 사유 (실측 반영 내용)')}<input class="tinput" id="rv-note-${d.id}" value="${esc(d.reviseNote||'')}" placeholder="예: 실측 결과 설치 가능 용량 축소 · 음영 회피 배치 조정"></div>
+      <div id="rv-result-${d.id}" style="margin-top:4px">${reviseResultHtml(d,base)}</div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn primary sm" onclick="saveRevisedQuote('${d.id}')">💾 실측 반영 견적 저장 → 영업 실계약 전달</button>
+        ${has?`<button class="btn ghost sm" onclick="clearRevisedQuote('${d.id}')">수정 취소(최초 견적 사용)</button>`:''}
+      </div>
+    </div>`;
+  return `<div class="sv-photos rv-panel" id="rvpanel-${d.id}">
+    <div class="sv-report-h">📄 실측 반영 견적 수정 ${has?'<span class="sv-count">수정됨</span>':'<span class="rv-opt">선택</span>'}</div>
+    <div class="sv-ph-note">${summary}. <b>용량 변동이 없으면</b> 수정하지 않아도 됩니다(실측 완료 조건과 무관).</div>
+    <details class="rv-details"${has?' open':''}><summary class="rv-sum">📄 제안서 불러와 수정</summary>${editor}</details>
+  </div>`;
+}
+
 function renderSurvey(){
   const cards = DEALS.filter(d=>['survey_handover','survey_sched','survey_progress'].includes(d.stage)).map(d=>{
     let body='', pill;
@@ -3845,6 +3951,7 @@ function renderSurvey(){
         <div class="section-title" style="font-size:12px;margin:14px 0 10px">실측 결과 보고서</div>
         <div class="sv-grid">${renderSurveyForm(d)}${renderSurveyPhotos(d)}</div>
         ${renderSurveyDrawings(d)}
+        ${renderReviseQuote(d)}
         <textarea id="rep-${d.id}" class="ta" placeholder="종합 의견 · 특이사항(선택) — 전반적인 현장 상황, 리스크, 추가 확인이 필요한 사항 등 · 공란 가능"></textarea>
         <div class="wf-actions"><button class="btn primary sm" id="svdone-${d.id}" onclick="trySurveyDone('${d.id}')" disabled title="모든 항목 입력 + 사진 전부 첨부 + 배치도(필수 도면) 첨부 시 활성화">실측 완료 처리 →</button><span class="lr-s">모든 항목 입력 + 사진 전부 첨부 + 배치도(필수 도면) 첨부 시 완료할 수 있습니다 (종합 의견은 공란 가능)</span></div>`;
       pill=['prog','실측 진행'];
@@ -3897,14 +4004,33 @@ function renderRealDrawings(d){
     ${body}
   </div>`;
 }
+// 실계약에 적용되는 설비용량(실측 반영 수정본이 있으면 그 용량)
+function effCap(d){ if(d.revisedProposal&&d.reviseCfg&&d.reviseCfg.cap!=null) return d.reviseCfg.cap; return d.cap; }
+// 영업 실계약 — 설계가 실측 반영해 수정한 견적 확인(수정본 있으면 최초 대비 변경 + 전체, 없으면 최초 견적 적용 안내)
+function renderRevisedForContract(d){
+  if(!d.revisedProposal){
+    return `<div class="rc-dwg">
+      <div class="sv-report-h" style="margin-top:4px">📄 실측 반영 견적</div>
+      <div class="sv-ph-note">실측 반영 견적 수정이 없습니다 — <b>최초 견적</b> 그대로 실계약을 진행합니다. ${proposalBtn(d,'최초 견적서 보기')}</div>
+    </div>`;
+  }
+  const origP=d.proposal||buildProposal(d), revP=d.revisedProposal;
+  return `<div class="rc-dwg">
+    <div class="sv-report-h" style="margin-top:4px">📄 실측 반영 견적 <span class="sv-count">설계 수정 · ${esc(d.reviseAt||'')}</span></div>
+    <div class="sv-ph-note">현장 실측 결과를 반영해 설계팀이 수정한 견적입니다. <b>이 수정본 기준</b>으로 발전사업 허가·실계약이 진행됩니다.${d.reviseNote?` <b>· 변경 사유:</b> ${esc(d.reviseNote)}`:''}</div>
+    ${reviseDiffHtml(origP, revP, d.cap, effCap(d))}
+    <details class="rv-details"><summary class="rv-sum">📄 수정 견적서 전체 보기</summary><div style="margin-top:8px">${handoverProposal(d, revP)}</div></details>
+  </div>`;
+}
 function renderRealContract(){
   const cards = DEALS.filter(d=>d.stage==='survey_done').map(d=>`
     <div class="card pad" style="margin-bottom:14px" oninput="rcRecount('${d.id}')">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
         <span class="pill prog"><span class="pd"></span>🔔 실측 완료 도착</span><span class="lr-s">${d.id} · 영업 ${esc(d.rep)}</span>
       </div>
-      ${contractDoc('공 사 도 급 계 약 서 (본계약)', [['계약 구분','본계약 (실계약)'],['현 장 명',d.site],['사 업 주','○○○ (가상)'],['설비용량',d.cap.toLocaleString()+' kW ('+d.type+') · 실측 반영'],['총 공사대금',won(dealBudget(d.cap))+' (VAT 별도)'],['계약금 / 잔금','10% 계약 시 / 90% 기성·준공'],['공사기간','착공일로부터 약 4개월'],['작성일','2026-09-18']])}
+      ${contractDoc('공 사 도 급 계 약 서 (본계약)', [['계약 구분','본계약 (실계약)'],['현 장 명',d.site],['사 업 주','○○○ (가상)'],['설비용량',effCap(d).toLocaleString()+' kW ('+d.type+')'+(d.revisedProposal?' · 실측 반영 수정':' · 실측 반영')],['총 공사대금',won(d.revisedProposal?pNum(d.revisedProposal.total):dealBudget(d.cap))+' (VAT 별도)'],['계약금 / 잔금','10% 계약 시 / 90% 기성·준공'],['공사기간','착공일로부터 약 4개월'],['작성일','2026-09-18']])}
       ${renderRealDrawings(d)}
+      ${renderRevisedForContract(d)}
       ${renderPermitSalesForm(d)}
       <div class="wf-actions" style="margin-top:14px">
         ${proposalBtn(d)}
@@ -3926,8 +4052,9 @@ function pNum(v){ return Number(String(v==null?'':v).replace(/[^0-9.-]/g,''))||0
 function pComma(n){ return Math.round(pNum(n)).toLocaleString(); }
 
 // ── 견적서(제안서) 연동 — 발전사업 허가 신청정보 중 견적서에 들어가는 값은 견적서에서 끌어온다 ──
-// 딜의 제안서(d.proposal) 또는 견적엔진(buildProposal) 결과에서 설비·금액 추출
+// 딜의 제안서 결과에서 설비·금액 추출 — 실측 반영 수정본(d.revisedProposal)이 있으면 우선(수정해서 계약)
 function getQuoteProposal(d){
+  if(d && d.revisedProposal) return d.revisedProposal;   // 설계 실측 반영 수정본 우선
   if(d && d.proposal) return d.proposal;
   if(d && typeof buildProposal==='function'){ try{ return buildProposal(d); }catch(e){} }
   return null;
@@ -4471,6 +4598,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-02', team:'설계', kind:'추가', title:'현장 실측 — 실측 반영 견적 수정 → 영업 실계약 전달', body:'현장 실측 결과로 <b>최초 견적과 달라진 내용</b>을 설계팀이 바로 수정해 영업 실계약으로 보낼 수 있게 했습니다. 설계 “현장 실측” 화면에 <b>“실측 반영 견적 수정”</b> 영역을 추가했습니다. “제안서 불러와 수정”을 누르면 그 현장의 <b>최초 견적</b>이 불러와지고, 모듈·수량(→설비용량 자동)·단가를 실측 결과대로 고치면 수정 견적이 <b>실시간으로 다시 계산</b>되며 “<b>최초 대비 변경</b>”(설비용량·모듈 수량·총 사업비·자부담 Δ)이 함께 표시됩니다. 변경 사유도 적을 수 있습니다. 저장하면 <b>발전사업 허가 신청서·실계약 금액이 수정본 기준</b>으로 자동 반영되고(“수정해서 계약”), 최초 견적은 “변경 전”으로 보존돼 비교됩니다. <b>영업 “실계약”</b> 화면에는 “실측 반영 견적” 카드가 생겨 설계가 수정한 견적·변경 요약·사유를 그대로 확인하고(수정 견적서 전체 보기 포함) 이 기준으로 계약을 진행합니다. 용량 변동이 없으면 수정하지 않아도 되며(실측 완료 조건과 무관), 수정이 없으면 실계약은 “최초 견적 적용”으로 안내됩니다. 실제 저장은 공유 서버에 반영돼 팀원 간 공유됩니다.', author:'개발'},
   {date:'2026-10-02', team:'설계', kind:'추가', title:'현장 실측 — 실측 도면 첨부 + 영업 실계약 도면 확인', body:'설계 “현장 실측”에 <b>실측 도면 첨부</b> 영역을 추가했습니다. 설계팀이 현장 실측을 다녀와 그린 도면을 종류별 슬롯(<b>배치도(필수)</b> · 구조/단면도 · 전기 계통도 · 기타)에 첨부합니다. 첨부한 도면은 하단 갤러리에 표시되고 취소할 수 있습니다. 완료 조건에 도면이 더해져, <b>배치도(필수 도면)를 첨부해야</b> “실측 완료 처리” 버튼이 활성화됩니다(기존 체크리스트·사진 조건과 함께, 하나라도 빠지면 비활성). 실측을 완료하면 도면이 <b>영업 실계약</b>으로 전달되어, 영업이 “실계약” 화면에서 설계 도면을 그대로 확인(읽기전용)하며 이 도면 기준으로 <b>최종 견적서·실계약</b>을 진행합니다. 실제 파일 업로드·저장은 추후 저장소 연동 시 지원되도록 `업로드 훅`과 데이터 구조를 미리 준비했습니다.', author:'개발'},
   {date:'2026-10-02', team:'영업', kind:'변경', title:'견적서·실계약 — 진행 버튼 하단 이동 + 필수 입력 완료 전 잠금', body:'견적서와 실계약의 진행 버튼을 화면 <b>맨 아래</b>로 옮기고, 필수 정보를 모두 입력해야 눌리도록 잠금을 추가했습니다. ① <b>견적서</b>: 사업주(신청인) 정보(대표자 성명·상호·전화번호)를 모두 입력해야 “공무팀 이관” 버튼이 활성화됩니다(미입력 시 회색 비활성). ② <b>실계약</b>: 신청정보(주민/법인번호·주소·설치장소·부지 명세·접수관청 등)에 미기재 항목이 있으면 “실계약 완료 처리” 버튼이 비활성으로 잠기고, 모두 채우면 활성화됩니다(입력 즉시 실시간 반영).', author:'개발'},
   {date:'2026-10-02', team:'공통', kind:'추가', title:'발전사업 허가 — 원천별 데이터 분리(견적서/실계약) + 출처 표시 + 원천 외 편집잠금', body:'중복 입력을 없애기 위해 발전사업 허가 신청정보를 <b>최초 입력하는 곳(원천)</b> 기준으로 나눴습니다. ① <b>견적서</b> = 설비용량·설비 스펙·총사업비·자금 <b>+ 사업주 기본정보(대표자 성명·상호·전화번호)</b>. 견적서 화면에 사업주 정보 입력란을 추가했습니다. ② <b>영업 실계약</b> = <b>주민/법인등록번호·주소 등 민감정보</b>(보안상 견적서에서 받지 않습니다)와 현장·부지·행정 정보(설치장소·면적·설치방법·부지 명세·접수관청 등). 실계약의 사업주 섹션에서 성명·상호·전화는 견적서 값을 읽기전용으로 보여주고, 주민번호·주소만 입력합니다. ③ <b>행정 발전사업 허가</b> = 두 원천에서 <b>자동으로 직접 끌어와</b> 신청서·사업계획서를 완성(견적이 바뀌면 바로 반영). 각 항목 옆 <b>출처 태그</b>(`견적서`/`실계약`)에 마우스를 올리면 어디서 오는 값인지 안내하고, 태그를 누르면 그 원천 화면으로 이동합니다. 끌어온 값은 <b>원천에서만</b> 수정할 수 있고 다른 화면에서는 읽기전용으로 잠깁니다.', author:'개발'},
