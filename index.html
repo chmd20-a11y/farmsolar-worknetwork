@@ -203,6 +203,10 @@ button{font-family:inherit;cursor:pointer}
 .btn.dark:hover{background:var(--brand-2)}
 .btn.sm{padding:6px 10px;font-size:12px}
 .btn.ghost{background:transparent;border-color:var(--border)}
+.btn:disabled{cursor:not-allowed}
+.btn:disabled:hover{filter:none}
+.btn.primary:disabled{background:var(--surface-3);border-color:var(--border);color:var(--muted)}
+.btn.primary:disabled:hover{background:var(--surface-3);filter:none}
 
 /* ============================================================
    KPI
@@ -3614,6 +3618,7 @@ function svPhotoUpload(el){
   else d.photos[key]={ item, pos, url:null, uploadedAt:null };
   const host=document.getElementById('svphoto-'+did);
   if(host) host.outerHTML=renderSurveyPhotos(d);     // 패널 재렌더(버튼 상태·갤러리·카운트 동기화)
+  svRecount(did);                                    // 완료 버튼 활성/비활성 갱신(사진 변경 반영)
 }
 // 항목 값 입력 여부(칩=1개 이상 선택 / 입력칸=모두 채움)
 function svRowFilled(vcell){ if(!vcell) return false;
@@ -3625,7 +3630,9 @@ function svTotals(did){ const form=document.getElementById('svform-'+did), box=d
   return {rows:rows.length, rowsDone, ph:ups.length, phDone}; }
 function svRecount(did){ const t=svTotals(did);
   const fc=document.getElementById('svfc-'+did); if(fc) fc.textContent=t.rowsDone+' / '+t.rows;
-  const pc=document.getElementById('svcount-'+did); if(pc) pc.textContent=t.phDone+' / '+t.ph; }
+  const pc=document.getElementById('svcount-'+did); if(pc) pc.textContent=t.phDone+' / '+t.ph;
+  // 전 항목 입력 + 사진 전부 첨부 시에만 '실측 완료 처리' 활성화(종합 의견은 제외)
+  const btn=document.getElementById('svdone-'+did); if(btn) btn.disabled = !(t.rows>0 && t.rowsDone>=t.rows && t.phDone>=t.ph); }
 function trySurveyDone(id){ const t=svTotals(id);
   if(t.rows===0 || t.rowsDone<t.rows || t.phDone<t.ph){ const m=[];
     if(t.rowsDone<t.rows) m.push(`체크리스트 ${t.rows-t.rowsDone}개 항목 미입력`);
@@ -3705,7 +3712,7 @@ function renderSurvey(){
         <div class="section-title" style="font-size:12px;margin:14px 0 10px">실측 결과 보고서</div>
         <div class="sv-grid">${renderSurveyForm(d)}${renderSurveyPhotos(d)}</div>
         <textarea id="rep-${d.id}" class="ta" placeholder="종합 의견 · 특이사항(선택) — 전반적인 현장 상황, 리스크, 추가 확인이 필요한 사항 등 · 공란 가능"></textarea>
-        <div class="wf-actions"><button class="btn primary sm" onclick="trySurveyDone('${d.id}')">실측 완료 처리 →</button><span class="lr-s">모든 항목 입력 + 사진 전부 첨부 시 완료할 수 있습니다 (종합 의견은 공란 가능)</span></div>`;
+        <div class="wf-actions"><button class="btn primary sm" id="svdone-${d.id}" onclick="trySurveyDone('${d.id}')" disabled title="모든 항목 입력 + 사진 전부 첨부 시 활성화">실측 완료 처리 →</button><span class="lr-s">모든 항목 입력 + 사진 전부 첨부 시 완료할 수 있습니다 (종합 의견은 공란 가능)</span></div>`;
       pill=['prog','실측 진행'];
     }
     return `<div class="card pad" style="margin-bottom:14px">
