@@ -496,6 +496,9 @@ button{font-family:inherit;cursor:pointer}
 .sb-main{min-width:0;flex:none}
 .sb-meta{flex:1;text-align:right;font-size:11.5px;color:var(--muted);min-width:0}
 .sb-go{flex:none;font-size:11px;font-weight:700;color:var(--accent);white-space:nowrap}
+.st-testbar{font-size:12px;line-height:1.5;color:#7a4a00;background:color-mix(in srgb,#e8a33d 20%,transparent);border:1px solid color-mix(in srgb,#e8a33d 50%,transparent);border-radius:9px;padding:9px 13px;margin-bottom:14px}
+:root[data-theme="dark"] .st-testbar{color:#f0c177;background:color-mix(in srgb,#e8a33d 15%,transparent);border-color:color-mix(in srgb,#e8a33d 42%,transparent)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .st-testbar{color:#f0c177;background:color-mix(in srgb,#e8a33d 15%,transparent);border-color:color-mix(in srgb,#e8a33d 42%,transparent)}}
 .rv-sum{cursor:pointer;font-size:12.5px;font-weight:800;color:var(--accent);padding:5px 0;list-style:none}
 .rv-sum::-webkit-details-marker{display:none}
 .rv-sum::before{content:'▸ ';font-size:11px}
@@ -4516,6 +4519,9 @@ let STRUCT_VENDORS = [
   {key:'B', name:'대연이엔지(주)', person:'', email:'dyeng@dymail.kr', phone:'', tel:'02-443-0226', fax:'02-6499-0236', addr:'서울 송파구 법원로 128, C동 10층 18호', field:'수상', configured:true},
 ];
 let structVendorsLoaded=false;
+// 🧪 개발 중 테스트 수신 — on이면 업체이관 시 실제 업체 대신 아래 테스트 주소로 발송.
+//    개발 완료 후 on:false 로 바꾸면 실제 업체로 발송됩니다.
+let STRUCT_TEST = { on:true, email:'chmd20@gmail.com', phone:'010-6226-9329' };
 function structVendor(key){ return STRUCT_VENDORS.find(v=>v.key===key)||null; }
 function structSuggestVendor(d){ return (d && d.type==='수상') ? 'B' : 'A'; }   // 유형별 기본 업체(배정규칙·추후 확정)
 // 서버에서 업체 표시정보(마스킹) 1회 로드 — 미설정/로컬이면 가상 예시 유지
@@ -4623,8 +4629,9 @@ function renderStructReview(){
   loadStructVendors();
   const head=wfHead('구조검토','외주 구조검토 이관 현황과 개별 현장의 업체 이관을 관리합니다.');
   const tabs=`<div class="st-tabs"><button class="st-tab ${structTab==='board'?'on':''}" onclick="structSetTab('board')">구조검토 현황</button><button class="st-tab ${structTab==='handover'?'on':''}" onclick="structSetTab('handover')">구조검토 이관</button></div>`;
+  const testBar = STRUCT_TEST.on ? `<div class="st-testbar">🧪 <b>테스트 수신 모드</b> — 업체이관 시 실제 업체가 아니라 <b>테스트 주소(${esc(STRUCT_TEST.email)} / ${esc(STRUCT_TEST.phone)})</b>로 발송됩니다. 개발 완료 후 해제하면 실제 업체로 발송됩니다.</div>` : '';
   const content = structTab==='handover' ? renderStructHandoverInner() : renderStructBoardInner();
-  return head+`<div class="st-wrap">`+tabs+content+`</div>`;
+  return head+`<div class="st-wrap">`+testBar+tabs+content+`</div>`;
 }
 // 현황 탭 — 이관 상태별 목록(이관 전 / 수신 대기 / 완료)
 function renderStructBoardInner(){
@@ -4719,12 +4726,17 @@ function openStructConfirm(id){
   const d=DEALS.find(x=>x.id===id); if(!d) return;
   const v=structVendor(structVendorSel); if(!v){ toast('외주 업체를 선택하세요'); return; }
   const attLines = structAttach.length? structAttach.map(f=>`📄 ${esc(f.filename)}`).join('<br>') : '<span class="lr-s">첨부 없음 (의뢰서 본문만 발송)</span>';
-  const warn = (!v.configured)? `<div class="cred-warn" style="margin-top:10px">⚠ 업체 정보가 서버에 아직 등록되지 않았습니다 — 실제 발송은 Vercel 환경변수 등록 후 작동합니다(현재는 시뮬 기록).</div>`:'';
+  const test = STRUCT_TEST.on;
+  const warn = test
+    ? `<div class="st-testbar" style="margin-top:10px">🧪 테스트 수신 모드 — 실제 업체(<b>${esc(v.name)}</b>)가 아니라 <b>테스트 주소</b>로 발송됩니다.</div>`
+    : ((!v.configured)? `<div class="cred-warn" style="margin-top:10px">⚠ 업체 정보가 서버에 아직 등록되지 않았습니다 — 실제 발송은 Vercel 환경변수 등록 후 작동합니다(현재는 시뮬 기록).</div>`:'');
+  const mailTo = test ? `${esc(STRUCT_TEST.email)} <span class="lr-s">(테스트)</span>` : (v.email?esc(v.email):(v.configured?'서버 등록 주소':'(미설정)'));
+  const smsTo = test ? `${esc(STRUCT_TEST.phone)} <span class="lr-s">(테스트)</span>` : (v.phone?esc(v.phone):(v.configured?'<span style="color:var(--risk-ink)">휴대폰 미등록 · 문자 미발송</span>':'(미설정)'));
   document.getElementById('structConfirmBody').innerHTML=`
     <div class="st-cf-row"><span>수신 업체</span><b>${esc(v.name)} <span class="lr-s">(${esc(v.field)})</span></b></div>
     <div class="st-cf-row"><span>담당자</span><b>${esc(v.person||'담당자')}</b></div>
-    <div class="st-cf-row"><span>메일 →</span><b>${v.email?esc(v.email):(v.configured?'서버 등록 주소':'(미설정)')}</b></div>
-    <div class="st-cf-row"><span>문자 →</span><b>${v.phone?esc(v.phone):(v.configured?'<span style="color:var(--risk-ink)">휴대폰 미등록 · 문자 미발송</span>':'(미설정)')}</b></div>
+    <div class="st-cf-row"><span>메일 →</span><b>${mailTo}</b></div>
+    <div class="st-cf-row"><span>문자 →</span><b>${smsTo}</b></div>
     <div class="st-cf-row"><span>제목</span><b>${esc(structMailSubject(d))}</b></div>
     <div class="st-cf-row"><span>첨부</span><div style="text-align:right">${attLines}</div></div>${warn}`;
   document.getElementById('structConfirmGo').setAttribute('onclick', `structDoHandover('${id}')`);
@@ -4737,19 +4749,20 @@ async function structDoHandover(id){
   const go=document.getElementById('structConfirmGo'); if(go){ go.disabled=true; go.textContent='발송 중…'; }
   const atts = structAttach.map(f=>{ const i=String(f.dataUrl||'').indexOf('base64,'); return {filename:f.filename, contentType:f.type, contentBase64: i>=0? f.dataUrl.slice(i+7):''}; });
   // 브라우저는 업체 키만 전송 — 실제 수신 이메일/휴대폰은 서버(Vercel env)가 보유·발송(메일+문자 모두 서버에서)
+  const test = STRUCT_TEST.on ? {to:STRUCT_TEST.email, phone:STRUCT_TEST.phone} : null;
   let mailOk=false, smsOk=false, sim=false, err='';
   try{
     const r=await fetch('/api/struct-mail',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({vendorKey:v.key, subject:structMailSubject(d), html:structMailHtml(d), text:structMailText(d), smsText:structSmsText(d,v), attachments:atts})});
-    if(r.status===503||r.status===404||!v.configured){ mailOk=true; smsOk=true; sim=true; }
+      body:JSON.stringify({vendorKey:v.key, subject:structMailSubject(d), html:structMailHtml(d), text:structMailText(d), smsText:structSmsText(d,v), attachments:atts, test})});
+    if(r.status===503||r.status===404||(!v.configured&&!test)){ mailOk=true; smsOk=true; sim=true; }
     else { const j=await r.json().catch(()=>({})); mailOk=!!(r.ok&&j.mailOk); smsOk=!!(r.ok&&j.smsOk); err=j.mailErr||j.error||''; }
-  }catch(e){ if(!v.configured){ mailOk=true; smsOk=true; sim=true; } else err='메일서버 연결 실패'; }
+  }catch(e){ if(!v.configured&&!test){ mailOk=true; smsOk=true; sim=true; } else err='메일서버 연결 실패'; }
   const sr=getStructReview(d);
   sr.status='수신대기'; sr.vendorKey=v.key; sr.sentAt=verStamp();
-  sr.mail={ok:mailOk,sim:sim,err:err}; sr.sms={ok:smsOk,sim:sim};
-  sr.history.push({at:verStamp(), action:'이관', vendor:v.name, note:`메일 ${mailOk?(sim?'시뮬':'성공'):'실패'} · 문자 ${smsOk?(sim?'시뮬':'성공'):'실패'}`});
+  sr.mail={ok:mailOk,sim:sim,err:err,test:!!test}; sr.sms={ok:smsOk,sim:sim,test:!!test};
+  sr.history.push({at:verStamp(), action:'이관', vendor:v.name, note:`${test?'[테스트] ':''}메일 ${mailOk?(sim?'시뮬':'성공'):'실패'} · 문자 ${smsOk?(sim?'시뮬':'성공'):'실패'}`});
   persistDeal(d); closeStructConfirm();
-  toast(`${v.name} 이관 — 메일 ${mailOk?(sim?'(시뮬)':'발송'):'실패('+(err||'오류')+')'} · 문자 ${smsOk?(sim?'(시뮬)':'발송'):'실패'}`);
+  toast(`${test?'🧪 테스트 발송 — ':''}${v.name} 이관 · 메일 ${mailOk?(sim?'(시뮬)':'발송'):'실패('+(err||'오류')+')'} · 문자 ${smsOk?(sim?'(시뮬)':'발송'):'실패'}`);
   if(go){ go.disabled=false; go.textContent='발송'; }
   refreshActive();
 }
@@ -5162,7 +5175,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
-  {date:'2026-10-06', team:'설계', kind:'추가', title:'구조검토 — 외주 업체 이메일 이관 + 현장 종합 데이터 취합', body:'설계 “구조검토”를 <b>외주 업체 이관</b> 방식으로 새로 만들었습니다. 구조검토는 내부가 아니라 외부 전문업체가 수행하므로, 현장 자료를 메일로 보내고 확인요청 문자를 보내는 흐름을 그대로 담았습니다. ① <b>현장 종합 데이터</b> — 그 현장이 거쳐온 단계(접수·실계약·제안서·실측)에서 쌓인 값을 <b>자동 취합</b>해 설비사양·부지/구조조건·실측정보를 한 화면에 보여주고(각 항목에 어디서 온 값인지 <b>출처 태그</b>), 협의 버전처럼 기록이 많으면 <b>전체 기록 불러오기</b>로 펼쳐 봅니다. ② <b>업체이관</b> — 외주 2곳 중 하나를 고르고 버튼을 누르면 확인창에서 수신처를 확인한 뒤, <b>구조검토 의뢰서가 업체 담당자 이메일로</b>, “메일 보냈으니 확인·처리 부탁” <b>문자가 담당자 휴대폰으로</b> 함께 발송됩니다(도면 등 파일 첨부 가능). ③ <b>맥미니(문자중계기)가 꺼져 있어도 메일은 발송</b>됩니다(서버에서 직접 발송). ④ 좌측 메뉴는 <b>“구조검토” 하나</b>이고 안에 <b>구조검토 현황 / 구조검토 이관</b> 두 탭으로 나뉩니다. <b>구조검토 현황</b>은 모든 현장을 <b>이관 전(대기) · 수신 대기(이관 후 회신 대기) · 이관 완료</b> 세 묶음으로 보여주고, 행을 누르면 그 현장의 이관 화면으로 이동합니다. ⑤ <b>승인서 수신 → 다음 프로세스 이관</b> — 업체가 구조검토 <b>승인서</b>를 회신하면 담당자가 그 파일을 <b>업로드</b>하고(상태가 자동으로 “완료”로 바뀜), <b>“다음 프로세스로 이관”</b> 버튼으로 다음 단계로 넘깁니다. 업체가 반려하면 <b>반려 처리</b> 후 <b>재이관</b>합니다. 외주 업체 정보(상호·담당자·연락처·주소)는 화면에서 바로 확인되며, <b>발송 계정 비밀번호 등 인증정보만</b> 공개 소스에 두지 않고 서버(Vercel)에 보관합니다.', author:'개발'},
+  {date:'2026-10-06', team:'설계', kind:'추가', title:'구조검토 — 외주 업체 이메일 이관 + 현장 종합 데이터 취합', body:'설계 “구조검토”를 <b>외주 업체 이관</b> 방식으로 새로 만들었습니다. 구조검토는 내부가 아니라 외부 전문업체가 수행하므로, 현장 자료를 메일로 보내고 확인요청 문자를 보내는 흐름을 그대로 담았습니다. ① <b>현장 종합 데이터</b> — 그 현장이 거쳐온 단계(접수·실계약·제안서·실측)에서 쌓인 값을 <b>자동 취합</b>해 설비사양·부지/구조조건·실측정보를 한 화면에 보여주고(각 항목에 어디서 온 값인지 <b>출처 태그</b>), 협의 버전처럼 기록이 많으면 <b>전체 기록 불러오기</b>로 펼쳐 봅니다. ② <b>업체이관</b> — 외주 2곳 중 하나를 고르고 버튼을 누르면 확인창에서 수신처를 확인한 뒤, <b>구조검토 의뢰서가 업체 담당자 이메일로</b>, “메일 보냈으니 확인·처리 부탁” <b>문자가 담당자 휴대폰으로</b> 함께 발송됩니다(도면 등 파일 첨부 가능). ③ <b>맥미니(문자중계기)가 꺼져 있어도 메일은 발송</b>됩니다(서버에서 직접 발송). ④ 좌측 메뉴는 <b>“구조검토” 하나</b>이고 안에 <b>구조검토 현황 / 구조검토 이관</b> 두 탭으로 나뉩니다. <b>구조검토 현황</b>은 모든 현장을 <b>이관 전(대기) · 수신 대기(이관 후 회신 대기) · 이관 완료</b> 세 묶음으로 보여주고, 행을 누르면 그 현장의 이관 화면으로 이동합니다. ⑤ <b>승인서 수신 → 다음 프로세스 이관</b> — 업체가 구조검토 <b>승인서</b>를 회신하면 담당자가 그 파일을 <b>업로드</b>하고(상태가 자동으로 “완료”로 바뀜), <b>“다음 프로세스로 이관”</b> 버튼으로 다음 단계로 넘깁니다. 업체가 반려하면 <b>반려 처리</b> 후 <b>재이관</b>합니다. 외주 업체 정보(상호·담당자·연락처·주소)는 화면에서 바로 확인되며, <b>발송 계정 비밀번호 등 인증정보만</b> 공개 소스에 두지 않고 서버(Vercel)에 보관합니다. ⑥ 개발 중에는 <b>🧪 테스트 수신 모드</b>로, 업체이관 시 실제 업체가 아니라 <b>지정한 테스트 주소</b>로 발송돼(메일 제목에 “[테스트]” 표시) 안전하게 점검하고, 개발 완료 후 해제하면 실제 업체로 발송됩니다.', author:'개발'},
   {date:'2026-10-06', team:'영업', kind:'수정', title:'제안서 화면 시인성 개선 (고급 가정값 글자 · 사업주 정보 분리)', body:'영업 “제안서” 화면의 두 가지 시인성 문제를 바로잡았습니다. ① <b>“고급 · 발전/금융 가정값”</b> 토글 글자가 <b>다크 모드</b>에서 거의 보이지 않던 것을 테마에 맞는 색(다크=골드)으로 바꿔 선명하게 했습니다. ② <b>“견적 설정”</b>과 <b>“사업주(신청인) 정보”</b>의 경계가 희미한 점선뿐이라 구분이 어려웠던 것을, 사업주 정보를 <b>테두리·배경이 있는 별도 박스</b>(좌측 골드 포인트)로 분리해 두 영역이 뚜렷이 구분되도록 했습니다.', author:'개발'},
   {date:'2026-10-06', team:'영업', kind:'추가', title:'제안서 — 견적 “원가 기준(프리셋)” 선택', body:'제안서 <b>견적 설정</b>에서 <b>원가 기준(프리셋)</b>을 골라 그 단가로 견적을 낼 수 있게 했습니다. <b>원가표</b>에 저장해 둔 단가 프리셋(최대 5개) 중 하나를 드롭다운에서 선택하면, 그 프리셋의 단가·가정값으로 <b>미리보기와 저장(버전)이 계산</b>됩니다. 선택은 <b>그 견적에만</b> 적용되고(전역 원가표는 바뀌지 않아 다른 견적에 영향 없음), 어떤 기준으로 냈는지 <b>협의 이력에 “단가:○○”</b>로 남아 추적됩니다. 편집으로 과거 버전을 불러오면 그때 쓴 프리셋이 자동 선택됩니다. 프리셋이 없으면 “현재 원가표 기준”으로 계산되며, 드롭다운 옆 <b>원가표</b> 링크에서 프리셋을 저장·관리할 수 있습니다.', author:'개발'},
   {date:'2026-10-06', team:'영업', kind:'추가', title:'제안서 — 협의 버전 관리 + “확정본만” 설계 이관', body:'고객과 협의하며 제안서가 여러 번 수정되는 과정을 그대로 담고, <b>고객과 합의된 최종 확정본만</b> 설계로 넘어가도록 바꿨습니다. 설계가 아직 확정 안 된 안으로 재작업하는 일을 막기 위한 것입니다. ① 영업 “제안서”에서 저장할 때마다 <b>협의 버전</b>(v1·v2·v3…)으로 쌓이고(덮어쓰기 아님), 버전마다 <b>메모</b>(예: 1차 제안·할인 반영·고객 최종 합의)와 총사업비가 남습니다. ② 각 현장 카드의 <b>협의 이력</b>에서 버전별 <b>📄 제안서 보기</b>·<b>✎ 편집</b>(불러와 새 버전으로)이 가능하고, 합의된 버전을 <b>⭐ 최종 확정</b>으로 지정합니다(사업주 성명·상호·전화가 입력된 버전만 확정 가능). ③ <b>공무팀 이관</b> 버튼은 <b>확정본이 지정돼야</b> 활성화되며, <b>확정본 스냅샷만</b> 설계로 전달됩니다. ④ 설계 “신규 현장 접수”에는 <b>✅ 영업 확정본 vN</b> 태그가 표시됩니다. ⑤ 이관 후 추가 협의로 <b>다른 버전을 확정하면</b> 버튼이 <b>“🔁 변경된 확정본 재이관”</b>으로 바뀌고, 재이관 시 설계에 <b>변경 알림(설비용량·총사업비 전/후)</b> 배너가 뜨며 신규접수로 되돌려 재검토하게 합니다. 기존 제안서는 자동으로 v1로 이어집니다.', author:'개발'},

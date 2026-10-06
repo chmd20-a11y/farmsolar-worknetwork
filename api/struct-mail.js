@@ -12,9 +12,10 @@
 //   RELAY_URL / RELAY_KEY (문자 발송 — 기존 /api/sms 와 동일, 맥미니 중계기)
 //   RELAY_SENDER (선택, 기본 0625754745) / RELAY_ACCOUNT (선택, 기본 gwangju)
 //
+//   (테스트 수신·선택) STRUCT_TEST_TO / STRUCT_TEST_PHONE : 설정 시 실제 업체 대신 이 주소로 발송([테스트] 프리픽스)
 // GET  /api/struct-mail?list=1  → {ok, vendors:[{key,name,person,field,email(마스킹),phone(마스킹),configured}]}
-// POST /api/struct-mail {vendorKey, subject, html, text, smsText, attachments:[{filename,contentType,contentBase64}]}
-//      → {ok, mailOk, smsOk, mailErr, smsErr}
+// POST /api/struct-mail {vendorKey, subject, html, text, smsText, attachments:[...], test?:{to,phone}}
+//      test(요청) 또는 STRUCT_TEST_TO(env)가 있으면 그 주소로 발송. → {ok, mailOk, smsOk, mailErr, smsErr, test}
 const https = require('https');
 
 function vendorEnv(key) {
@@ -90,7 +91,16 @@ module.exports = async (req, res) => {
     let body = ''; await new Promise(r => { req.on('data', c => body += c); req.on('end', r); });
     const p = JSON.parse(body || '{}');
     const v = vendorEnv(p.vendorKey);
-    if (!v.email) { res.statusCode = 400; res.end(JSON.stringify({ ok: false, mailOk: false, error: '업체 이메일 미설정 (VENDOR_' + v.key + '_EMAIL)' })); return; }
+    // 🧪 테스트 수신 모드 — 요청의 test.to(또는 env STRUCT_TEST_TO)가 있으면 실제 업체 대신 테스트 주소로 발송
+    const reqTest = (p.test && p.test.to) ? p.test : null;
+    const envTestTo = process.env.STRUCT_TEST_TO || '';
+    const test = reqTest || (envTestTo ? { to: envTestTo, phone: process.env.STRUCT_TEST_PHONE || '' } : null);
+    const toEmail = test ? test.to : v.email;
+    const toPhone = test ? (test.phone || '') : v.phone;
+    if (!toEmail) { res.statusCode = 400; res.end(JSON.stringify({ ok: false, mailOk: false, error: '수신 이메일 없음 (업체 VENDOR_' + v.key + '_EMAIL 또는 테스트 주소 필요)' })); return; }
+    const intended = v.email ? (v.name ? (v.name + ' <' + v.email + '>') : v.email) : ('업체 ' + v.key);
+    const testNoteHtml = test ? ('<div style="background:#fff6e5;border:1px solid #e8a33d;border-radius:6px;padding:8px 10px;margin-bottom:12px;color:#7a4a00;font-size:13px">🧪 <b>테스트 발송</b> — 실제 수신 예정처: ' + intended + '</div>') : '';
+    const testNoteText = test ? ('[테스트 발송] 실제 수신 예정처: ' + intended + '\n\n') : '';
 
     const nodemailer = require('nodemailer');
     const tx = nodemailer.createTransport({
@@ -105,24 +115,24 @@ module.exports = async (req, res) => {
     try {
       await tx.sendMail({
         from: process.env.MAIL_FROM || SMTP_USER,
-        to: v.person ? `${v.person} <${v.email}>` : v.email,
-        subject: String(p.subject || '구조검토 의뢰'),
-        text: p.text ? String(p.text) : undefined,
-        html: p.html ? String(p.html) : undefined,
+        to: (!test && v.person) ? `${v.person} <${v.email}>` : toEmail,
+        subject: (test ? '[테스트] ' : '') + String(p.subject || '구조검토 의뢰'),
+        text: p.text ? (testNoteText + String(p.text)) : undefined,
+        html: p.html ? (testNoteHtml + String(p.html)) : undefined,
         attachments
       });
       mailOk = true;
     } catch (e) { mailErr = String((e && e.message) || e); }
 
-    // 문자(업체 담당자 확인요청) — 번호 등록 시에만
+    // 문자(업체 담당자 확인요청) — 테스트 주소 또는 업체 번호 등록 시에만
     let smsOk = false, smsErr = '';
-    if (v.phone && p.smsText) {
-      const s = await sendSms(v.phone, p.smsText, v.person || '담당자');
+    if (toPhone && p.smsText) {
+      const s = await sendSms(toPhone, (test ? '[테스트] ' : '') + p.smsText, test ? '테스트' : (v.person || '담당자'));
       smsOk = s.ok; smsErr = s.err;
-    } else { smsErr = v.phone ? '' : '업체 휴대폰 미설정'; }
+    } else { smsErr = toPhone ? '' : '수신 휴대폰 미설정'; }
 
     res.statusCode = (mailOk ? 200 : 502);
-    res.end(JSON.stringify({ ok: mailOk, mailOk, smsOk, mailErr, smsErr }));
+    res.end(JSON.stringify({ ok: mailOk, mailOk, smsOk, mailErr, smsErr, test: !!test }));
   } catch (e) {
     res.statusCode = 502; res.end(JSON.stringify({ ok: false, error: String((e && e.message) || e) }));
   }
