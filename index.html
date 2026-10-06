@@ -2601,7 +2601,8 @@ function verStamp(){ return new Date().toISOString().slice(0,16).replace('T',' '
 function dealCfg(d){
   return { site:d.site, rep:d.rep, type:d.type, cap:d.cap,
     quoteOpts:d.quoteOpts?{...d.quoteOpts}:undefined, unitOverride:d.unitOverride,
-    quoteParams:d.quoteParams?{...d.quoteParams}:undefined, owner:d.owner?{...d.owner}:undefined };
+    quoteParams:d.quoteParams?{...d.quoteParams}:undefined, owner:d.owner?{...d.owner}:undefined,
+    costPresetName:d.costPresetName||'' };
 }
 function applyCfgToDeal(d, cfg){
   if(!cfg) return;
@@ -2611,6 +2612,7 @@ function applyCfgToDeal(d, cfg){
   if(cfg.unitOverride!=null) d.unitOverride=cfg.unitOverride;
   if(cfg.quoteParams) d.quoteParams={...cfg.quoteParams};
   if(cfg.owner) d.owner={...cfg.owner};
+  if(cfg.costPresetName!=null) d.costPresetName=cfg.costPresetName;
 }
 // 하위호환: versions 없는 기존 딜은 현재 내용을 v1로 생성. 이미 이관된 딜(quote 외 단계)이면 v1을 확정·이관본으로.
 function ensureVersions(d){
@@ -4872,6 +4874,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-02', team:'영업', kind:'추가', title:'제안서 — 견적 “원가 기준(프리셋)” 선택', body:'제안서 <b>견적 설정</b>에서 <b>원가 기준(프리셋)</b>을 골라 그 단가로 견적을 낼 수 있게 했습니다. <b>원가표</b>에 저장해 둔 단가 프리셋(최대 5개) 중 하나를 드롭다운에서 선택하면, 그 프리셋의 단가·가정값으로 <b>미리보기와 저장(버전)이 계산</b>됩니다. 선택은 <b>그 견적에만</b> 적용되고(전역 원가표는 바뀌지 않아 다른 견적에 영향 없음), 어떤 기준으로 냈는지 <b>협의 이력에 “단가:○○”</b>로 남아 추적됩니다. 편집으로 과거 버전을 불러오면 그때 쓴 프리셋이 자동 선택됩니다. 프리셋이 없으면 “현재 원가표 기준”으로 계산되며, 드롭다운 옆 <b>원가표</b> 링크에서 프리셋을 저장·관리할 수 있습니다.', author:'개발'},
   {date:'2026-10-02', team:'영업', kind:'추가', title:'제안서 — 협의 버전 관리 + “확정본만” 설계 이관', body:'고객과 협의하며 제안서가 여러 번 수정되는 과정을 그대로 담고, <b>고객과 합의된 최종 확정본만</b> 설계로 넘어가도록 바꿨습니다. 설계가 아직 확정 안 된 안으로 재작업하는 일을 막기 위한 것입니다. ① 영업 “제안서”에서 저장할 때마다 <b>협의 버전</b>(v1·v2·v3…)으로 쌓이고(덮어쓰기 아님), 버전마다 <b>메모</b>(예: 1차 제안·할인 반영·고객 최종 합의)와 총사업비가 남습니다. ② 각 현장 카드의 <b>협의 이력</b>에서 버전별 <b>📄 제안서 보기</b>·<b>✎ 편집</b>(불러와 새 버전으로)이 가능하고, 합의된 버전을 <b>⭐ 최종 확정</b>으로 지정합니다(사업주 성명·상호·전화가 입력된 버전만 확정 가능). ③ <b>공무팀 이관</b> 버튼은 <b>확정본이 지정돼야</b> 활성화되며, <b>확정본 스냅샷만</b> 설계로 전달됩니다. ④ 설계 “신규 현장 접수”에는 <b>✅ 영업 확정본 vN</b> 태그가 표시됩니다. ⑤ 이관 후 추가 협의로 <b>다른 버전을 확정하면</b> 버튼이 <b>“🔁 변경된 확정본 재이관”</b>으로 바뀌고, 재이관 시 설계에 <b>변경 알림(설비용량·총사업비 전/후)</b> 배너가 뜨며 신규접수로 되돌려 재검토하게 합니다. 기존 제안서는 자동으로 v1로 이어집니다.', author:'개발'},
   {date:'2026-10-02', team:'설계', kind:'수정', title:'현장 실측 — 실측 일시를 달력에서 선택', body:'설계 “현장 실측”의 <b>실측 일시</b>를 직접 타이핑하던 방식에서 <b>달력에서 날짜·시간을 선택</b>하는 방식으로 바꿨습니다(날짜 칸을 누르면 달력이 떠 날짜를 고르고 시간도 지정). 날짜 형식이 틀릴 일이 없어지고 입력이 간편해집니다. 저장·표시 형식(예: 2026-09-24 10:00)은 종전과 동일하게 유지됩니다.', author:'개발'},
   {date:'2026-10-02', team:'공통', kind:'변경', title:'발전사업 허가 — 바뀐 제안서 기준으로 자동연동 항목 재정리', body:'영업 “제안서”가 상세해진 만큼, 행정 <b>발전사업 허가</b>가 <b>제안서에서 가져올 수 있는 값</b>과 <b>가져올 수 없어 영업이 입력할 값</b>을 다시 정리했습니다. ① <b>제안서에서 자동으로 가져오는 값(읽기전용 유지·강화)</b> — 설비용량·총사업비·자금·모듈/인버터 스펙에 더해, <b>연간발전량</b>을 제안서 <b>발전공식(설비용량 × 발전시간 × 365)과 똑같이</b> 맞췄고(종전에는 고정 추정값이라 제안서와 달랐습니다), <b>입사각</b>을 새로 가져와 발전설비 개요·사업계획서에 표시하며, <b>설치방법</b>(노지형/건물형)은 유형에 따라 <b>자동</b>으로 채워 영업 손입력에서 뺐습니다. 모듈 제조사·모델·등급도 제안서 값으로 더 정확히 끌어옵니다. ② <b>제안서에 없어 영업 “실계약”에서 입력하는 값</b> — 주민/법인번호·주소 등 민감정보, 설치장소·접수관청, 공급전압·주파수·준비기간, 사용/전체/건축면적, 발전방식·전력수급방식, 대상 토지/건물 명세. ③ 행정 화면의 각 항목 <b>출처 태그</b>(제안서/실계약)와 안내문을 이 분류에 맞게 갱신했습니다. 제안서가 수정되면 설비·발전량이 발전사업 허가에 <b>자동 반영</b>됩니다.', author:'개발'},
@@ -4965,14 +4968,16 @@ function renderSalesQuote(){
   const draftDeals = DEALS.filter(d=>d.stage==='quote');
   const handedDeals = DEALS.filter(d=>['handover_design','feasibility'].includes(d.stage));
   const modOpts = Object.entries(COST_PRESET.modules).map(([k,v])=>`<option value="${k}">${esc(v.name)} · ${v.w}W</option>`).join('');
+  const presetOpts = `<option value="">현재 원가표 기준</option>` + COST_PRESETS.map(p=>`<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('');
   const num = (t,id,ph)=>`<div>${_lbl(t)}<input class="tinput" id="${id}" type="number" oninput="recomputeQuotePreview()" placeholder="${ph||''}" style="padding:6px 8px"></div>`;
   const editor = `<div class="card pad" style="margin-bottom:16px">
     <h3 class="section-title" style="margin:0 0 4px"><svg class="st-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${IC.doc}</svg>견적 설정 <span id="qx-editing" style="font-weight:500;color:var(--muted);font-size:12px"></span></h3>
-    <div class="note" style="margin:0 0 12px">모듈과 <b>수량</b>을 넣으면 견적이 실시간으로 계산됩니다. 기준 단가는 <b>원가표</b>에서 바꿀 수 있습니다.</div>
+    <div class="note" style="margin:0 0 12px">모듈과 <b>수량</b>을 넣으면 견적이 실시간으로 계산됩니다. <b>원가 기준(프리셋)</b>을 고르면 그 단가로 견적이 계산됩니다 — 프리셋은 <a href="javascript:void(0)" onclick="switchSub('sales','s-costsheet')" style="color:var(--accent);font-weight:700">원가표</a>에서 저장합니다.</div>
     <input type="hidden" id="qx-id" value="">
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
       <div>${_lbl('현장명')}<input class="tinput" id="qx-site" oninput="recomputeQuotePreview()" placeholder="예: 솔뫼 노지형"></div>
       <div>${_lbl('영업담당')}<input class="tinput" id="qx-rep" placeholder="예: 김영수"></div>
+      <div>${_lbl('원가 기준(프리셋)')}<select class="tinput" id="qx-preset" onchange="qxApplyPreset()" title="원가표에 저장된 단가 프리셋 중 이 견적에 적용할 기준">${presetOpts}</select></div>
       <div>${_lbl('부지유형')}<select class="tinput" id="qx-type" onchange="qxOnCapChange()"><option>노지</option><option>지붕</option><option>수상</option></select></div>
       <div>${_lbl('모듈')}<select class="tinput" id="qx-module" onchange="qxOnCapChange()">${modOpts}</select></div>
       <div>${_lbl('모듈 수량 (EA)')}<input class="tinput" id="qx-qty" type="number" min="1" oninput="qxOnCapChange()" placeholder="예: 470"></div>
@@ -5032,7 +5037,7 @@ function renderDealCard(d){
       <div class="ver-main">
         <span class="ver-tag">v${v.ver}</span>${isConf?'<span class="ver-badge">⭐ 고객 확정</span>':''}
         <span class="ver-memo">${esc(v.memo||'(메모 없음)')}</span>
-        <span class="ver-meta">${total} · ${esc(v.savedAt||'')}${v.savedBy?(' · '+esc(v.savedBy)):''}</span>
+        <span class="ver-meta">${total} · ${esc(v.savedAt||'')}${v.savedBy?(' · '+esc(v.savedBy)):''}${v.cfg&&v.cfg.costPresetName?(' · 단가:'+esc(v.cfg.costPresetName)):''}</span>
       </div>
       <div class="ver-act">
         <button class="btn ghost sm" onclick="openProposalVersion('${d.id}',${v.ver})">📄 보기</button>
@@ -5078,13 +5083,27 @@ function buildEditorCfg(){
   return { id:g('qx-id').value||'(preview)', site:(g('qx-site').value||'').trim()||'(미입력 현장)', rep:(g('qx-rep').value||'').trim()||'영업', type, cap, quoteOpts:{moduleKey}, unitOverride:unit, quoteParams:qp };
 }
 function quoteTierDefaultUnit(type, cap){ const arr=COST_PRESET.kwSalesPrice[type]||COST_PRESET.kwSalesPrice['노지']; return arr[pickCapTier(cap)]; }
+// 선택한 원가 프리셋 스냅샷({cost,assump}) — 없으면 null(=현재 원가표 기준)
+function qxPresetSnap(){ const sel=document.getElementById('qx-preset'); if(!sel||!sel.value) return null; const p=(COST_PRESETS||[]).find(x=>x.name===sel.value); return p?{cost:p.cost,assump:p.assump}:null; }
+// 선택 프리셋 단가로 임시 전환해 fn 계산 → 끝나면 전역 원가표 즉시 복구(다른 견적에 영향 없음)
+function withCostPreset(snap, fn){
+  if(!snap||!snap.cost) return fn();
+  const sc=COST_PRESET, sa=ASSUMP;
+  try{ COST_PRESET=Object.assign(JSON.parse(JSON.stringify(COST_DEFAULT)), snap.cost); ASSUMP=Object.assign({},ASSUMP_DEFAULT,snap.assump||{}); return fn(); }
+  finally{ COST_PRESET=sc; ASSUMP=sa; }
+}
+function qxApplyPreset(){
+  const sel=document.getElementById('qx-preset'); const nm=sel?sel.value:'';
+  toast(nm?`원가 기준: ${nm} 적용`:'원가 기준: 현재 원가표');
+  qxOnCapChange();   // 선택 프리셋 단가로 기본단가·미리보기 재계산
+}
 function qxOnCapChange(){
   const g=id=>document.getElementById(id); if(!g('qx-qty')) return;
   const moduleKey=g('qx-module').value;
   const W=(COST_PRESET.modules[moduleKey]||{}).w||655;
   const qty=parseFloat(g('qx-qty').value)||0;
   const cap=qty*W/1000;
-  g('qx-unit').value = cap ? (quoteTierDefaultUnit(g('qx-type').value,cap)||'') : '';
+  g('qx-unit').value = cap ? (withCostPreset(qxPresetSnap(), ()=>quoteTierDefaultUnit(g('qx-type').value,cap))||'') : '';
   recomputeQuotePreview();
 }
 function qxResetUnit(){ qxOnCapChange(); }
@@ -5095,11 +5114,10 @@ function recomputeQuotePreview(){
   const qty=parseFloat(g('qx-qty').value)||0;
   const cap=Math.round(qty*W/1000*100)/100;
   g('qx-kw').value = cap ? cap.toLocaleString()+' kW' : '';
-  const cfg=buildEditorCfg();
   const box=g('qx-result');
-  if(!cfg){ box.innerHTML=`<div class="note" style="margin-top:12px">모듈과 수량을 입력하면 견적 미리보기가 표시됩니다.</div>`; return; }
-  const p=buildProposal(cfg);
-  box.innerHTML = `<div class="section-title" style="font-size:12px;margin:14px 0 4px">견적 미리보기 · 총 사업비 ₩${p.total} <span style="font-weight:500;color:var(--muted)">(백만절사·VAT별도)</span></div>` + handoverProposal(cfg, p);
+  const out=withCostPreset(qxPresetSnap(), ()=>{ const cfg=buildEditorCfg(); return cfg?{cfg, p:buildProposal(cfg)}:null; });
+  if(!out){ box.innerHTML=`<div class="note" style="margin-top:12px">모듈과 수량을 입력하면 견적 미리보기가 표시됩니다.</div>`; return; }
+  box.innerHTML = `<div class="section-title" style="font-size:12px;margin:14px 0 4px">견적 미리보기 · 총 사업비 ₩${out.p.total} <span style="font-weight:500;color:var(--muted)">(백만절사·VAT별도)</span></div>` + handoverProposal(out.cfg, out.p);
 }
 function initQuoteEditor(){ if(document.getElementById('qx-qty')){ qxOnCapChange(); qxUpdateHandover(); } }
 function qxNewQuote(){ repaintQuote(); }
@@ -5108,12 +5126,14 @@ function qxOwnerFilled(){ const g=id=>document.getElementById(id);
   return !!(g('qx-ow-name')&&g('qx-ow-name').value.trim() && g('qx-ow-biz')&&g('qx-ow-biz').value.trim() && g('qx-ow-phone')&&g('qx-ow-phone').value.trim()); }
 function qxUpdateHandover(){ const b=document.getElementById('qxHandoverBtn'); if(b) b.disabled=!qxOwnerFilled(); }
 function saveQuoteFromEditor(){
-  const cfg=buildEditorCfg();
-  if(!cfg){ toast('모듈과 수량을 입력하세요'); return; }
   const g=id=>document.getElementById(id);
+  const snap=qxPresetSnap();
+  const cfg=withCostPreset(snap, ()=>buildEditorCfg());
+  if(!cfg){ toast('모듈과 수량을 입력하세요'); return; }
   const site=(g('qx-site').value||'').trim();
   if(!site){ toast('현장명을 입력하세요'); return; }
   cfg.site=site;
+  cfg.costPresetName=(g('qx-preset')&&g('qx-preset').value)||'';   // 적용한 원가 기준(프리셋) 기록
   // 사업주(신청인) 정보 — 입력값 그대로(공란 허용). 완성 여부는 ⭐확정 시 검사.
   cfg.owner={ name:(g('qx-ow-name').value||'').trim(), bizname:(g('qx-ow-biz').value||'').trim(), phone:(g('qx-ow-phone').value||'').trim() };
   const existingId=g('qx-id').value;
@@ -5121,7 +5141,7 @@ function saveQuoteFromEditor(){
   if(!d){ d={ id:nextSalesId(), stage:'quote', rejectReason:'', versions:[], confirmedVer:null }; DEALS.unshift(d); applyCfgToDeal(d, cfg); }
   else ensureVersions(d);
   const memo=(g('qx-memo')&&g('qx-memo').value||'').trim();
-  const ver=addVersion(d, cfg, memo, cfg.rep);
+  const ver=withCostPreset(snap, ()=>addVersion(d, cfg, memo, cfg.rep));   // 선택 프리셋 단가로 스냅샷 계산
   persistDeal(d);
   toast(`v${ver} 저장 — ${d.site} (${d.id})${memo?' · '+memo:''}`);
   g('qx-id').value=d.id; if(g('qx-memo')) g('qx-memo').value='';
@@ -5135,6 +5155,7 @@ function loadQuoteToEditor(id, ver){
   const g=k=>document.getElementById(k);
   g('qx-id').value=d.id; g('qx-site').value=src.site||''; g('qx-rep').value=src.rep||'';
   g('qx-type').value=src.type||'노지';
+  if(g('qx-preset')) g('qx-preset').value=src.costPresetName||'';   // 저장 당시 원가 기준(프리셋) 복원
   g('qx-module').value=(src.quoteOpts&&src.quoteOpts.moduleKey)||'china_aiko';
   const W=(COST_PRESET.modules[g('qx-module').value]||{}).w||655;
   g('qx-qty').value=Math.round(((src.cap||0)*1000)/W);
@@ -5144,7 +5165,7 @@ function loadQuoteToEditor(id, ver){
   const ow=src.owner||{};
   g('qx-ow-name').value=ow.name||''; g('qx-ow-biz').value=ow.bizname||''; g('qx-ow-phone').value=ow.phone||'';
   const cap=src.cap;
-  g('qx-unit').value=src.unitOverride||quoteTierDefaultUnit(src.type,cap)||'';
+  g('qx-unit').value=src.unitOverride||withCostPreset(qxPresetSnap(), ()=>quoteTierDefaultUnit(src.type,cap))||'';
   g('qx-editing').textContent='· 편집 중: '+d.id+(ver!=null?` (v${ver} 불러옴 → 저장 시 새 버전)`:'');
   if(g('qx-memo')) g('qx-memo').value='';
   g('qx-kw').value=cap?cap.toLocaleString()+' kW':'';
