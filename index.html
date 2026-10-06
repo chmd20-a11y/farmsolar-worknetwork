@@ -496,6 +496,12 @@ button{font-family:inherit;cursor:pointer}
 .sb-main{min-width:0;flex:none}
 .sb-meta{flex:1;text-align:right;font-size:11.5px;color:var(--muted);min-width:0}
 .sb-go{flex:none;font-size:11px;font-weight:700;color:var(--accent);white-space:nowrap}
+.st-finalbox{display:flex;align-items:center;gap:13px;border:1px dashed var(--border-strong);border-radius:11px;padding:13px 15px;margin:4px 0 0}
+.st-finalbox.empty{cursor:pointer;transition:.15s}
+.st-finalbox.empty:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 6%,transparent)}
+.st-finalbox.has{border-style:solid;background:color-mix(in srgb,var(--accent) 8%,transparent);border-color:color-mix(in srgb,var(--accent) 40%,transparent)}
+.st-fb-main{flex:1;min-width:0}
+.st-nextrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:13px}
 .st-testbar{font-size:12px;line-height:1.5;color:#7a4a00;background:color-mix(in srgb,#e8a33d 20%,transparent);border:1px solid color-mix(in srgb,#e8a33d 50%,transparent);border-radius:9px;padding:9px 13px;margin-bottom:14px}
 :root[data-theme="dark"] .st-testbar{color:#f0c177;background:color-mix(in srgb,#e8a33d 15%,transparent);border-color:color-mix(in srgb,#e8a33d 42%,transparent)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .st-testbar{color:#f0c177;background:color-mix(in srgb,#e8a33d 15%,transparent);border-color:color-mix(in srgb,#e8a33d 42%,transparent)}}
@@ -4685,38 +4691,44 @@ function renderStructHandoverInner(){
 }
 function structStatusCard(d,sr){
   const stCls={'대기':'wait','수신대기':'prog','완료':'done','반려':'risk'}[sr.status]||'wait';
-  const stLabel={'대기':'이관 전(대기)','수신대기':'수신 대기(회신 대기)','완료':'완료(승인서 수신)','반려':'반려'}[sr.status]||sr.status;
-  // 수신대기/반려 → 승인서 업로드·반려 / 완료 → 다음 프로세스 이관
-  let actions='';
-  if(sr.status==='수신대기' || sr.status==='반려'){
-    actions=`<label class="btn primary sm" style="cursor:pointer;margin:0">📎 구조검토 승인서 업로드<input type="file" style="display:none" onchange="structUploadApproval('${d.id}',this)"></label>`+
-      (sr.status!=='반려'?`<button class="btn ghost sm" onclick="structReject('${d.id}')">⛔ 반려 처리</button>`:'');
-  } else if(sr.status==='완료'){
-    actions = sr.nextHandedAt ? `<span class="pill done"><span class="pd"></span>✅ 다음 프로세스 이관됨 · ${esc(sr.nextHandedAt)}</span>` : `<button class="btn primary sm" onclick="structHandNext('${d.id}')">➡️ 다음 프로세스로 이관</button>`;
+  const stLabel={'대기':'이관 전(대기)','수신대기':'수신 대기(최종 자료 대기)','완료':'완료(최종 자료 수신)','반려':'반려'}[sr.status]||sr.status;
+  const hasDoc=!!sr.approvalDoc, nextDone=!!sr.nextHandedAt;
+  let body='';
+  if(sr.status==='대기'){
+    body='<div class="lr-s" style="padding:4px 0 2px">아직 외주로 이관하지 않았습니다. 위 <b>외주 업체 선택 · 이관</b>에서 <b>업체이관</b>을 먼저 진행하세요.</div>';
+  } else if(sr.status==='반려'){
+    body='<div class="lr-s" style="padding:4px 0 2px">업체가 <b>반려</b>했습니다. 위 <b>외주 업체 선택 · 이관</b>에서 <b>🔁 재이관</b> 후 다시 진행하세요.</div>';
+  } else {   // 수신대기 / 완료
+    const finalBox = hasDoc
+      ? `<div class="st-finalbox has"><div class="st-fb-main"><b>📄 업체 수신 최종 자료</b><div class="lr-s">${esc(sr.approvalDoc.filename)} · ${(sr.approvalDoc.size/1024).toFixed(0)}KB · ${esc(sr.approvalDoc.uploadedAt||'')}${sr.approvalDoc.uploadedBy?' · '+esc(sr.approvalDoc.uploadedBy):''}</div></div><button class="btn ghost sm" onclick="structDelApproval('${d.id}')">삭제</button></div>`
+      : `<label class="st-finalbox empty"><input type="file" style="display:none" onchange="structUploadApproval('${d.id}',this)"><div class="st-fb-main"><b>📎 업체 수신 최종 자료 첨부</b><div class="lr-s">업체가 회신한 구조검토 최종 자료(승인서·구조계산서 등)를 여기에 첨부하세요. 첨부하면 아래 “다음 프로세스로 이관”이 활성화됩니다.</div></div><span class="btn dark sm" style="flex:none">파일 선택</span></label>`;
+    const nextBtn = nextDone
+      ? `<span class="pill done"><span class="pd"></span>✅ 다음 프로세스 이관됨 · ${esc(sr.nextHandedAt)}</span>`
+      : `<button class="btn primary" ${hasDoc?'':'disabled'} onclick="structHandNext('${d.id}')">➡️ 다음 프로세스로 이관</button>${hasDoc?'':'<span class="lr-s">최종 자료를 첨부하면 활성화됩니다</span>'}`;
+    const rejectBtn = (sr.status==='수신대기') ? `<button class="btn ghost sm" onclick="structReject('${d.id}')">⛔ 반려 처리</button>` : '';
+    body = finalBox + `<div class="st-nextrow">${nextBtn}${rejectBtn}</div>`;
   }
-  const doc = sr.approvalDoc ? `<div class="st-att" style="margin:6px 0 10px"><span>📄 승인서: ${esc(sr.approvalDoc.filename)} <span class="lr-s">· ${esc(sr.approvalDoc.uploadedAt||'')}${sr.approvalDoc.uploadedBy?' '+esc(sr.approvalDoc.uploadedBy):''}</span></span><button class="btn ghost sm" onclick="structDelApproval('${d.id}')">삭제</button></div>` : '';
   const hist=(sr.history||[]).slice().reverse();
   const histHtml = hist.length? hist.map(h=>`<div class="st-hrow"><span class="pill ${ {이관:'prog',완료:'done',다음이관:'done',반려:'risk'}[h.action]||'wait'}"><span class="pd"></span>${esc(h.action)}</span> <span class="st-hmeta">${esc(h.at)}${h.vendor?' · '+esc(h.vendor):''}${h.note?' · '+esc(h.note):''}</span></div>`).join('') : '<div class="lr-s" style="padding:6px 2px">이관 이력이 없습니다.</div>';
-  const guide = sr.status==='수신대기' ? '<div class="lr-s" style="margin:2px 0 8px">업체가 구조검토 승인서를 회신하면 파일을 업로드하세요 → 자동으로 “완료”가 되고 다음 프로세스로 이관할 수 있습니다.</div>' : '';
-  return `<div class="card pad"><div class="st-card-h"><h3 style="margin:0">📌 이관 상태</h3><span class="pill ${stCls}"><span class="pd"></span>${esc(stLabel)}</span></div>${guide}${actions?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 10px;align-items:center">${actions}</div>`:''}${doc}<div class="st-hist">${histHtml}</div></div>`;
+  return `<div class="card pad"><div class="st-card-h"><h3 style="margin:0">📌 이관 상태 · 최종 자료</h3><span class="pill ${stCls}"><span class="pd"></span>${esc(stLabel)}</span></div>${body}<div class="st-hist" style="margin-top:13px">${histHtml}</div></div>`;
 }
-// 승인서 업로드 → 완료 / 삭제 → 수신대기 / 다음 프로세스 이관 / 반려
+// 최종 자료 첨부 → 완료 / 삭제 → 수신대기 / 다음 프로세스 이관 / 반려
 function structUploadApproval(id, input){
   const f=(input&&input.files&&input.files[0]); if(!f) return;
   const rd=new FileReader();
   rd.onload=()=>{ const d=DEALS.find(x=>x.id===id); if(!d) return; const sr=getStructReview(d);
     sr.approvalDoc={filename:f.name, size:f.size, dataUrl:rd.result, uploadedAt:verStamp(), uploadedBy:(typeof currentUser!=='undefined'&&currentUser&&currentUser.name)||'담당자'};
-    sr.status='완료'; sr.result='승인(승인서 수신)'; sr.resultAt=verStamp();
-    sr.history.push({at:verStamp(), action:'완료', note:'구조검토 승인서 업로드: '+f.name});
-    persistDeal(d); toast('구조검토 승인서 업로드 완료 — 상태: 완료'); refreshActive();
+    sr.status='완료'; sr.result='최종 자료 수신'; sr.resultAt=verStamp();
+    sr.history.push({at:verStamp(), action:'완료', note:'업체 수신 최종 자료 첨부: '+f.name});
+    persistDeal(d); toast('최종 자료 첨부 완료 — “다음 프로세스로 이관”이 활성화되었습니다'); refreshActive();
   };
   rd.readAsDataURL(f);
 }
 function structDelApproval(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; const sr=getStructReview(d);
   sr.approvalDoc=null; sr.status='수신대기'; sr.result=''; sr.resultAt=''; sr.nextHandedAt='';
-  sr.history.push({at:verStamp(), action:'수정', note:'승인서 삭제 → 수신대기'}); persistDeal(d); toast('승인서를 삭제했습니다'); refreshActive(); }
+  sr.history.push({at:verStamp(), action:'수정', note:'최종 자료 삭제 → 수신대기'}); persistDeal(d); toast('최종 자료를 삭제했습니다'); refreshActive(); }
 function structHandNext(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; const sr=getStructReview(d);
-  if(sr.status!=='완료'){ toast('승인서 업로드 후 이관할 수 있습니다'); return; }
+  if(sr.status!=='완료' || !sr.approvalDoc){ toast('업체 수신 최종 자료를 첨부해야 이관할 수 있습니다'); return; }
   sr.nextHandedAt=verStamp(); sr.history.push({at:verStamp(), action:'다음이관', note:'다음 프로세스로 이관'});
   persistDeal(d); toast('다음 프로세스로 이관했습니다'); refreshActive(); }
 function structReject(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; const sr=getStructReview(d);
@@ -5175,7 +5187,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
-  {date:'2026-10-06', team:'설계', kind:'추가', title:'구조검토 — 외주 업체 이메일 이관 + 현장 종합 데이터 취합', body:'설계 “구조검토”를 <b>외주 업체 이관</b> 방식으로 새로 만들었습니다. 구조검토는 내부가 아니라 외부 전문업체가 수행하므로, 현장 자료를 메일로 보내고 확인요청 문자를 보내는 흐름을 그대로 담았습니다. ① <b>현장 종합 데이터</b> — 그 현장이 거쳐온 단계(접수·실계약·제안서·실측)에서 쌓인 값을 <b>자동 취합</b>해 설비사양·부지/구조조건·실측정보를 한 화면에 보여주고(각 항목에 어디서 온 값인지 <b>출처 태그</b>), 협의 버전처럼 기록이 많으면 <b>전체 기록 불러오기</b>로 펼쳐 봅니다. ② <b>업체이관</b> — 외주 2곳 중 하나를 고르고 버튼을 누르면 확인창에서 수신처를 확인한 뒤, <b>구조검토 의뢰서가 업체 담당자 이메일로</b>, “메일 보냈으니 확인·처리 부탁” <b>문자가 담당자 휴대폰으로</b> 함께 발송됩니다(도면 등 파일 첨부 가능). ③ <b>맥미니(문자중계기)가 꺼져 있어도 메일은 발송</b>됩니다(서버에서 직접 발송). ④ 좌측 메뉴는 <b>“구조검토” 하나</b>이고 안에 <b>구조검토 현황 / 구조검토 이관</b> 두 탭으로 나뉩니다. <b>구조검토 현황</b>은 모든 현장을 <b>이관 전(대기) · 수신 대기(이관 후 회신 대기) · 이관 완료</b> 세 묶음으로 보여주고, 행을 누르면 그 현장의 이관 화면으로 이동합니다. ⑤ <b>승인서 수신 → 다음 프로세스 이관</b> — 업체가 구조검토 <b>승인서</b>를 회신하면 담당자가 그 파일을 <b>업로드</b>하고(상태가 자동으로 “완료”로 바뀜), <b>“다음 프로세스로 이관”</b> 버튼으로 다음 단계로 넘깁니다. 업체가 반려하면 <b>반려 처리</b> 후 <b>재이관</b>합니다. 외주 업체 정보(상호·담당자·연락처·주소)는 화면에서 바로 확인되며, <b>발송 계정 비밀번호 등 인증정보만</b> 공개 소스에 두지 않고 서버(Vercel)에 보관합니다. ⑥ 개발 중에는 <b>🧪 테스트 수신 모드</b>로, 업체이관 시 실제 업체가 아니라 <b>지정한 테스트 주소</b>로 발송돼(메일 제목에 “[테스트]” 표시) 안전하게 점검하고, 개발 완료 후 해제하면 실제 업체로 발송됩니다.', author:'개발'},
+  {date:'2026-10-06', team:'설계', kind:'추가', title:'구조검토 — 외주 업체 이메일 이관 + 현장 종합 데이터 취합', body:'설계 “구조검토”를 <b>외주 업체 이관</b> 방식으로 새로 만들었습니다. 구조검토는 내부가 아니라 외부 전문업체가 수행하므로, 현장 자료를 메일로 보내고 확인요청 문자를 보내는 흐름을 그대로 담았습니다. ① <b>현장 종합 데이터</b> — 그 현장이 거쳐온 단계(접수·실계약·제안서·실측)에서 쌓인 값을 <b>자동 취합</b>해 설비사양·부지/구조조건·실측정보를 한 화면에 보여주고(각 항목에 어디서 온 값인지 <b>출처 태그</b>), 협의 버전처럼 기록이 많으면 <b>전체 기록 불러오기</b>로 펼쳐 봅니다. ② <b>업체이관</b> — 외주 2곳 중 하나를 고르고 버튼을 누르면 확인창에서 수신처를 확인한 뒤, <b>구조검토 의뢰서가 업체 담당자 이메일로</b>, “메일 보냈으니 확인·처리 부탁” <b>문자가 담당자 휴대폰으로</b> 함께 발송됩니다(도면 등 파일 첨부 가능). ③ <b>맥미니(문자중계기)가 꺼져 있어도 메일은 발송</b>됩니다(서버에서 직접 발송). ④ 좌측 메뉴는 <b>“구조검토” 하나</b>이고 안에 <b>구조검토 현황 / 구조검토 이관</b> 두 탭으로 나뉩니다. <b>구조검토 현황</b>은 모든 현장을 <b>이관 전(대기) · 수신 대기(이관 후 회신 대기) · 이관 완료</b> 세 묶음으로 보여주고, 행을 누르면 그 현장의 이관 화면으로 이동합니다. ⑤ <b>최종 자료 수신 → 다음 프로세스 이관</b> — 이관 상태 카드에 업체가 회신한 <b>구조검토 최종 자료(승인서·구조계산서 등) 첨부 공간</b>이 있습니다. <b>“다음 프로세스로 이관” 버튼은 최종 자료를 첨부하기 전까지 비활성</b>이며, 파일을 첨부하면 상태가 “완료”로 바뀌고 버튼이 <b>활성화</b>되어 다음 단계로 넘길 수 있습니다. 업체가 반려하면 <b>반려 처리</b> 후 <b>재이관</b>합니다. 외주 업체 정보(상호·담당자·연락처·주소)는 화면에서 바로 확인되며, <b>발송 계정 비밀번호 등 인증정보만</b> 공개 소스에 두지 않고 서버(Vercel)에 보관합니다. ⑥ 개발 중에는 <b>🧪 테스트 수신 모드</b>로, 업체이관 시 실제 업체가 아니라 <b>지정한 테스트 주소</b>로 발송돼(메일 제목에 “[테스트]” 표시) 안전하게 점검하고, 개발 완료 후 해제하면 실제 업체로 발송됩니다.', author:'개발'},
   {date:'2026-10-06', team:'영업', kind:'수정', title:'제안서 화면 시인성 개선 (고급 가정값 글자 · 사업주 정보 분리)', body:'영업 “제안서” 화면의 두 가지 시인성 문제를 바로잡았습니다. ① <b>“고급 · 발전/금융 가정값”</b> 토글 글자가 <b>다크 모드</b>에서 거의 보이지 않던 것을 테마에 맞는 색(다크=골드)으로 바꿔 선명하게 했습니다. ② <b>“견적 설정”</b>과 <b>“사업주(신청인) 정보”</b>의 경계가 희미한 점선뿐이라 구분이 어려웠던 것을, 사업주 정보를 <b>테두리·배경이 있는 별도 박스</b>(좌측 골드 포인트)로 분리해 두 영역이 뚜렷이 구분되도록 했습니다.', author:'개발'},
   {date:'2026-10-06', team:'영업', kind:'추가', title:'제안서 — 견적 “원가 기준(프리셋)” 선택', body:'제안서 <b>견적 설정</b>에서 <b>원가 기준(프리셋)</b>을 골라 그 단가로 견적을 낼 수 있게 했습니다. <b>원가표</b>에 저장해 둔 단가 프리셋(최대 5개) 중 하나를 드롭다운에서 선택하면, 그 프리셋의 단가·가정값으로 <b>미리보기와 저장(버전)이 계산</b>됩니다. 선택은 <b>그 견적에만</b> 적용되고(전역 원가표는 바뀌지 않아 다른 견적에 영향 없음), 어떤 기준으로 냈는지 <b>협의 이력에 “단가:○○”</b>로 남아 추적됩니다. 편집으로 과거 버전을 불러오면 그때 쓴 프리셋이 자동 선택됩니다. 프리셋이 없으면 “현재 원가표 기준”으로 계산되며, 드롭다운 옆 <b>원가표</b> 링크에서 프리셋을 저장·관리할 수 있습니다.', author:'개발'},
   {date:'2026-10-06', team:'영업', kind:'추가', title:'제안서 — 협의 버전 관리 + “확정본만” 설계 이관', body:'고객과 협의하며 제안서가 여러 번 수정되는 과정을 그대로 담고, <b>고객과 합의된 최종 확정본만</b> 설계로 넘어가도록 바꿨습니다. 설계가 아직 확정 안 된 안으로 재작업하는 일을 막기 위한 것입니다. ① 영업 “제안서”에서 저장할 때마다 <b>협의 버전</b>(v1·v2·v3…)으로 쌓이고(덮어쓰기 아님), 버전마다 <b>메모</b>(예: 1차 제안·할인 반영·고객 최종 합의)와 총사업비가 남습니다. ② 각 현장 카드의 <b>협의 이력</b>에서 버전별 <b>📄 제안서 보기</b>·<b>✎ 편집</b>(불러와 새 버전으로)이 가능하고, 합의된 버전을 <b>⭐ 최종 확정</b>으로 지정합니다(사업주 성명·상호·전화가 입력된 버전만 확정 가능). ③ <b>공무팀 이관</b> 버튼은 <b>확정본이 지정돼야</b> 활성화되며, <b>확정본 스냅샷만</b> 설계로 전달됩니다. ④ 설계 “신규 현장 접수”에는 <b>✅ 영업 확정본 vN</b> 태그가 표시됩니다. ⑤ 이관 후 추가 협의로 <b>다른 버전을 확정하면</b> 버튼이 <b>“🔁 변경된 확정본 재이관”</b>으로 바뀌고, 재이관 시 설계에 <b>변경 알림(설비용량·총사업비 전/후)</b> 배너가 뜨며 신규접수로 되돌려 재검토하게 합니다. 기존 제안서는 자동으로 v1로 이어집니다.', author:'개발'},
