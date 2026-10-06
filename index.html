@@ -4510,10 +4510,10 @@ function seedPermits(){
    - 이메일(의뢰서+첨부, daum SMTP·맥미니 독립) + 문자(업체 담당자 확인요청)로 이관
    - 상태 추적: 대기 → 이관완료 → 승인/반려 (외주 회신 후 우리 담당이 기록)
    ============================================================ */
-// 외주 구조검토 업체 2곳 — 공개 소스엔 가상 placeholder만. 실제 상호·이메일·휴대폰은 서버(Vercel env)에서 런타임 로드(표시는 마스킹).
+// 외주 구조검토 업체 2곳 — 팀장님 지시로 실제 정보 표시(내부 업무툴). ※비밀번호 등 인증정보는 소스에 두지 않음(Vercel env).
 let STRUCT_VENDORS = [
-  {key:'A', name:'(업체A · 미설정)', person:'담당자', email:'', phone:'', field:'노지·지붕', configured:false},
-  {key:'B', name:'(업체B · 미설정)', person:'담당자', email:'', phone:'', field:'수상', configured:false},
+  {key:'A', name:'(주)다한구조기술사사무소', person:'이충남 건축구조기술사', email:'dahan1108@dahanestate.co.kr', phone:'010-9295-9817', tel:'062-372-5043', fax:'', addr:'광주 북구 버들로 29, 4층', field:'노지·지붕', configured:true},
+  {key:'B', name:'대연이엔지(주)', person:'', email:'dyeng@dymail.kr', phone:'', tel:'02-443-0226', fax:'02-6499-0236', addr:'서울 송파구 법원로 128, C동 10층 18호', field:'수상', configured:true},
 ];
 let structVendorsLoaded=false;
 function structVendor(key){ return STRUCT_VENDORS.find(v=>v.key===key)||null; }
@@ -4526,8 +4526,9 @@ async function loadStructVendors(){
     if(!r.ok) return;
     const j=await r.json().catch(()=>({}));
     if(j && Array.isArray(j.vendors) && j.vendors.length){
-      j.vendors.forEach(v=>{ const t=structVendor(v.key); if(t){ if(v.name)t.name=v.name; if(v.person)t.person=v.person; if(v.field)t.field=v.field; t.email=v.email||''; t.phone=v.phone||''; t.configured=!!v.configured; } });
-      refreshActive();
+      let any=false;
+      j.vendors.forEach(v=>{ if(!v.configured) return; any=true; const t=structVendor(v.key); if(t){ if(v.name)t.name=v.name; if(v.person)t.person=v.person; if(v.field)t.field=v.field; t.email=v.email||''; t.phone=v.phone||''; t.configured=true; } });
+      if(any) refreshActive();
     }
   }catch(e){}
 }
@@ -4667,7 +4668,10 @@ function renderStructHandoverInner(){
   const aggCard=`<div class="card pad"><div class="st-card-h"><h3 style="margin:0">📋 현장 종합 데이터</h3>${histBtn}</div>${aggHtml}${histHtml}</div>`;
   const attachHtml=`<div class="card pad"><div class="st-card-h"><h3 style="margin:0">📎 첨부파일</h3><label class="btn dark sm" style="cursor:pointer;margin:0">＋ 파일 추가<input type="file" multiple style="display:none" onchange="structAddFiles(this)"></label></div>${ structAttach.length? `<div class="st-attach">${structAttach.map((f,i)=>`<div class="st-att"><span>📄 ${esc(f.filename)} <span class="lr-s">(${(f.size/1024).toFixed(0)}KB)</span></span><button class="btn ghost sm" onclick="structDelAttach(${i})">삭제</button></div>`).join('')}</div>` : '<div class="lr-s" style="padding:6px 2px">도면·구조계산 기초자료 등을 첨부하세요. (미첨부 시 의뢰서 본문만 발송)</div>' }</div>`;
   const vendorHtml=`<div class="card pad"><div class="st-card-h"><h3 style="margin:0">🏢 외주 업체 선택 · 이관</h3><span class="lr-s">추천 업체: ${esc(structVendor(structSuggestVendor(d)).field)}</span></div>
-     <div class="st-vendors">${STRUCT_VENDORS.map(v=>`<label class="st-vendor ${v.key===structVendorSel?'sel':''}"><input type="radio" name="stvendor" value="${v.key}" ${v.key===structVendorSel?'checked':''} onchange="structPickVendor('${v.key}')"><div><b>${esc(v.name)}</b> <span class="lr-s">· ${esc(v.field)}</span><div class="lr-s">${esc(v.person||'담당자')} · ${v.configured?esc(v.email||'서버 등록'):'<span style="color:var(--risk-ink)">미설정</span>'}${v.phone?' · '+esc(v.phone):''}</div></div></label>`).join('')}</div>
+     <div class="st-vendors">${STRUCT_VENDORS.map(v=>{
+        const line2=[ v.email?'✉ '+esc(v.email):'', v.phone?'📱 '+esc(v.phone):(v.configured?'<span style="color:var(--risk-ink)">📱 휴대폰 미등록</span>':''), v.tel?'☎ '+esc(v.tel):'', v.fax?'팩스 '+esc(v.fax):'' ].filter(Boolean).join(' · ');
+        return `<label class="st-vendor ${v.key===structVendorSel?'sel':''}"><input type="radio" name="stvendor" value="${v.key}" ${v.key===structVendorSel?'checked':''} onchange="structPickVendor('${v.key}')"><div><b>${esc(v.name)}</b> <span class="lr-s">· ${esc(v.field)}</span><div class="lr-s" style="margin-top:3px">${v.person?esc(v.person):'<span style="color:var(--risk-ink)">담당자 미지정</span>'}${v.configured?'':' · <span style="color:var(--risk-ink)">미설정</span>'}</div><div class="lr-s">${line2}</div>${v.addr?`<div class="lr-s">📍 ${esc(v.addr)}</div>`:''}</div></label>`;
+      }).join('')}</div>
      <div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap"><button class="btn primary" onclick="openStructConfirm('${d.id}')">${sr.status==='대기'?'📧 업체이관 (메일+문자 발송)':'🔁 재이관'}</button>${sr.status!=='대기'?`<span class="lr-s">마지막 이관: ${esc(sr.sentAt)} → ${esc((structVendor(sr.vendorKey)||{}).name||'')}</span>`:''}</div></div>`;
   const preview = structPrevOpen ? `<div class="card pad"><h3 style="margin:0 0 8px">의뢰서 미리보기 (메일 본문)</h3><div style="border:1px solid var(--border-strong);border-radius:10px;background:#fff;padding:10px;overflow:auto;max-height:520px">${structMailHtml(d)}</div></div>` : '';
   return bar+info+aggCard+attachHtml+vendorHtml+structStatusCard(d,sr)+preview;
@@ -4719,8 +4723,8 @@ function openStructConfirm(id){
   document.getElementById('structConfirmBody').innerHTML=`
     <div class="st-cf-row"><span>수신 업체</span><b>${esc(v.name)} <span class="lr-s">(${esc(v.field)})</span></b></div>
     <div class="st-cf-row"><span>담당자</span><b>${esc(v.person||'담당자')}</b></div>
-    <div class="st-cf-row"><span>메일 →</span><b>${v.configured?esc(v.email||'서버 등록 주소'):'(미설정)'}</b></div>
-    <div class="st-cf-row"><span>문자 →</span><b>${v.phone?esc(v.phone):(v.configured?'서버 등록 번호':'(미설정)')}</b></div>
+    <div class="st-cf-row"><span>메일 →</span><b>${v.email?esc(v.email):(v.configured?'서버 등록 주소':'(미설정)')}</b></div>
+    <div class="st-cf-row"><span>문자 →</span><b>${v.phone?esc(v.phone):(v.configured?'<span style="color:var(--risk-ink)">휴대폰 미등록 · 문자 미발송</span>':'(미설정)')}</b></div>
     <div class="st-cf-row"><span>제목</span><b>${esc(structMailSubject(d))}</b></div>
     <div class="st-cf-row"><span>첨부</span><div style="text-align:right">${attLines}</div></div>${warn}`;
   document.getElementById('structConfirmGo').setAttribute('onclick', `structDoHandover('${id}')`);
@@ -5158,7 +5162,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
-  {date:'2026-10-06', team:'설계', kind:'추가', title:'구조검토 — 외주 업체 이메일 이관 + 현장 종합 데이터 취합', body:'설계 “구조검토”를 <b>외주 업체 이관</b> 방식으로 새로 만들었습니다. 구조검토는 내부가 아니라 외부 전문업체가 수행하므로, 현장 자료를 메일로 보내고 확인요청 문자를 보내는 흐름을 그대로 담았습니다. ① <b>현장 종합 데이터</b> — 그 현장이 거쳐온 단계(접수·실계약·제안서·실측)에서 쌓인 값을 <b>자동 취합</b>해 설비사양·부지/구조조건·실측정보를 한 화면에 보여주고(각 항목에 어디서 온 값인지 <b>출처 태그</b>), 협의 버전처럼 기록이 많으면 <b>전체 기록 불러오기</b>로 펼쳐 봅니다. ② <b>업체이관</b> — 외주 2곳 중 하나를 고르고 버튼을 누르면 확인창에서 수신처를 확인한 뒤, <b>구조검토 의뢰서가 업체 담당자 이메일로</b>, “메일 보냈으니 확인·처리 부탁” <b>문자가 담당자 휴대폰으로</b> 함께 발송됩니다(도면 등 파일 첨부 가능). ③ <b>맥미니(문자중계기)가 꺼져 있어도 메일은 발송</b>됩니다(서버에서 직접 발송). ④ 좌측 메뉴는 <b>“구조검토” 하나</b>이고 안에 <b>구조검토 현황 / 구조검토 이관</b> 두 탭으로 나뉩니다. <b>구조검토 현황</b>은 모든 현장을 <b>이관 전(대기) · 수신 대기(이관 후 회신 대기) · 이관 완료</b> 세 묶음으로 보여주고, 행을 누르면 그 현장의 이관 화면으로 이동합니다. ⑤ <b>승인서 수신 → 다음 프로세스 이관</b> — 업체가 구조검토 <b>승인서</b>를 회신하면 담당자가 그 파일을 <b>업로드</b>하고(상태가 자동으로 “완료”로 바뀜), <b>“다음 프로세스로 이관”</b> 버튼으로 다음 단계로 넘깁니다. 업체가 반려하면 <b>반려 처리</b> 후 <b>재이관</b>합니다. 업체의 실제 연락처와 발송 계정은 보안을 위해 <b>공개 소스에 두지 않고 서버에만</b> 보관합니다(화면엔 마스킹 표시).', author:'개발'},
+  {date:'2026-10-06', team:'설계', kind:'추가', title:'구조검토 — 외주 업체 이메일 이관 + 현장 종합 데이터 취합', body:'설계 “구조검토”를 <b>외주 업체 이관</b> 방식으로 새로 만들었습니다. 구조검토는 내부가 아니라 외부 전문업체가 수행하므로, 현장 자료를 메일로 보내고 확인요청 문자를 보내는 흐름을 그대로 담았습니다. ① <b>현장 종합 데이터</b> — 그 현장이 거쳐온 단계(접수·실계약·제안서·실측)에서 쌓인 값을 <b>자동 취합</b>해 설비사양·부지/구조조건·실측정보를 한 화면에 보여주고(각 항목에 어디서 온 값인지 <b>출처 태그</b>), 협의 버전처럼 기록이 많으면 <b>전체 기록 불러오기</b>로 펼쳐 봅니다. ② <b>업체이관</b> — 외주 2곳 중 하나를 고르고 버튼을 누르면 확인창에서 수신처를 확인한 뒤, <b>구조검토 의뢰서가 업체 담당자 이메일로</b>, “메일 보냈으니 확인·처리 부탁” <b>문자가 담당자 휴대폰으로</b> 함께 발송됩니다(도면 등 파일 첨부 가능). ③ <b>맥미니(문자중계기)가 꺼져 있어도 메일은 발송</b>됩니다(서버에서 직접 발송). ④ 좌측 메뉴는 <b>“구조검토” 하나</b>이고 안에 <b>구조검토 현황 / 구조검토 이관</b> 두 탭으로 나뉩니다. <b>구조검토 현황</b>은 모든 현장을 <b>이관 전(대기) · 수신 대기(이관 후 회신 대기) · 이관 완료</b> 세 묶음으로 보여주고, 행을 누르면 그 현장의 이관 화면으로 이동합니다. ⑤ <b>승인서 수신 → 다음 프로세스 이관</b> — 업체가 구조검토 <b>승인서</b>를 회신하면 담당자가 그 파일을 <b>업로드</b>하고(상태가 자동으로 “완료”로 바뀜), <b>“다음 프로세스로 이관”</b> 버튼으로 다음 단계로 넘깁니다. 업체가 반려하면 <b>반려 처리</b> 후 <b>재이관</b>합니다. 외주 업체 정보(상호·담당자·연락처·주소)는 화면에서 바로 확인되며, <b>발송 계정 비밀번호 등 인증정보만</b> 공개 소스에 두지 않고 서버(Vercel)에 보관합니다.', author:'개발'},
   {date:'2026-10-06', team:'영업', kind:'수정', title:'제안서 화면 시인성 개선 (고급 가정값 글자 · 사업주 정보 분리)', body:'영업 “제안서” 화면의 두 가지 시인성 문제를 바로잡았습니다. ① <b>“고급 · 발전/금융 가정값”</b> 토글 글자가 <b>다크 모드</b>에서 거의 보이지 않던 것을 테마에 맞는 색(다크=골드)으로 바꿔 선명하게 했습니다. ② <b>“견적 설정”</b>과 <b>“사업주(신청인) 정보”</b>의 경계가 희미한 점선뿐이라 구분이 어려웠던 것을, 사업주 정보를 <b>테두리·배경이 있는 별도 박스</b>(좌측 골드 포인트)로 분리해 두 영역이 뚜렷이 구분되도록 했습니다.', author:'개발'},
   {date:'2026-10-06', team:'영업', kind:'추가', title:'제안서 — 견적 “원가 기준(프리셋)” 선택', body:'제안서 <b>견적 설정</b>에서 <b>원가 기준(프리셋)</b>을 골라 그 단가로 견적을 낼 수 있게 했습니다. <b>원가표</b>에 저장해 둔 단가 프리셋(최대 5개) 중 하나를 드롭다운에서 선택하면, 그 프리셋의 단가·가정값으로 <b>미리보기와 저장(버전)이 계산</b>됩니다. 선택은 <b>그 견적에만</b> 적용되고(전역 원가표는 바뀌지 않아 다른 견적에 영향 없음), 어떤 기준으로 냈는지 <b>협의 이력에 “단가:○○”</b>로 남아 추적됩니다. 편집으로 과거 버전을 불러오면 그때 쓴 프리셋이 자동 선택됩니다. 프리셋이 없으면 “현재 원가표 기준”으로 계산되며, 드롭다운 옆 <b>원가표</b> 링크에서 프리셋을 저장·관리할 수 있습니다.', author:'개발'},
   {date:'2026-10-06', team:'영업', kind:'추가', title:'제안서 — 협의 버전 관리 + “확정본만” 설계 이관', body:'고객과 협의하며 제안서가 여러 번 수정되는 과정을 그대로 담고, <b>고객과 합의된 최종 확정본만</b> 설계로 넘어가도록 바꿨습니다. 설계가 아직 확정 안 된 안으로 재작업하는 일을 막기 위한 것입니다. ① 영업 “제안서”에서 저장할 때마다 <b>협의 버전</b>(v1·v2·v3…)으로 쌓이고(덮어쓰기 아님), 버전마다 <b>메모</b>(예: 1차 제안·할인 반영·고객 최종 합의)와 총사업비가 남습니다. ② 각 현장 카드의 <b>협의 이력</b>에서 버전별 <b>📄 제안서 보기</b>·<b>✎ 편집</b>(불러와 새 버전으로)이 가능하고, 합의된 버전을 <b>⭐ 최종 확정</b>으로 지정합니다(사업주 성명·상호·전화가 입력된 버전만 확정 가능). ③ <b>공무팀 이관</b> 버튼은 <b>확정본이 지정돼야</b> 활성화되며, <b>확정본 스냅샷만</b> 설계로 전달됩니다. ④ 설계 “신규 현장 접수”에는 <b>✅ 영업 확정본 vN</b> 태그가 표시됩니다. ⑤ 이관 후 추가 협의로 <b>다른 버전을 확정하면</b> 버튼이 <b>“🔁 변경된 확정본 재이관”</b>으로 바뀌고, 재이관 시 설계에 <b>변경 알림(설비용량·총사업비 전/후)</b> 배너가 뜨며 신규접수로 되돌려 재검토하게 합니다. 기존 제안서는 자동으로 v1로 이어집니다.', author:'개발'},
