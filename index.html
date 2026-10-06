@@ -444,6 +444,17 @@ button{font-family:inherit;cursor:pointer}
 /* 실측 반영 견적 수정 */
 .rv-opt{font-size:9px;font-weight:700;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:20px;padding:2px 7px;margin-left:auto}
 .rv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+/* 영업 제안서 협의 버전 이력 */
+.ver-list{margin-top:10px;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.ver-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 11px;border-bottom:1px solid var(--border)}
+.ver-row:last-child{border-bottom:none}
+.ver-row.conf{background:color-mix(in srgb,var(--accent) 9%,transparent)}
+.ver-main{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.ver-tag{font-weight:800;font-variant-numeric:tabular-nums;background:var(--surface-3);color:var(--ink-2);border-radius:6px;padding:1px 7px;font-size:11.5px}
+.ver-badge{font-size:10.5px;font-weight:800;color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,transparent);border-radius:20px;padding:1px 8px;white-space:nowrap}
+.ver-memo{font-weight:700;font-size:12.5px}
+.ver-meta{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ver-act{display:flex;gap:6px;flex-wrap:wrap;align-items:center;flex:none}
 .rv-sum{cursor:pointer;font-size:12.5px;font-weight:800;color:var(--accent);padding:5px 0;list-style:none}
 .rv-sum::-webkit-details-marker{display:none}
 .rv-sum::before{content:'▸ ';font-size:11px}
@@ -2577,6 +2588,133 @@ function buildProposal(d){
   };
 }
 
+/* ============================================================
+   영업 제안서 버전 관리 — 협의 버전 누적 + '확정본'만 설계로 이관
+   · d.versions = [{ver,memo,savedAt,savedBy,cfg,proposal}]
+       cfg = {site,rep,type,cap,quoteOpts,unitOverride,quoteParams,owner}
+   · d.confirmedVer = 고객 확정 버전 번호(없으면 null)  — 확정본만 이관 가능
+   · d.handedVer    = 설계로 이관한 버전 번호           — 재이관 변경 감지용
+   · d.proposal     = 확정본 스냅샷(설계가 실제로 보는 것, 기존 필드 재사용)
+   · d.reHandoverNote = 확정본 변경 재이관 시 설계에 보일 경고문
+   ============================================================ */
+function verStamp(){ return new Date().toISOString().slice(0,16).replace('T',' '); }
+function dealCfg(d){
+  return { site:d.site, rep:d.rep, type:d.type, cap:d.cap,
+    quoteOpts:d.quoteOpts?{...d.quoteOpts}:undefined, unitOverride:d.unitOverride,
+    quoteParams:d.quoteParams?{...d.quoteParams}:undefined, owner:d.owner?{...d.owner}:undefined };
+}
+function applyCfgToDeal(d, cfg){
+  if(!cfg) return;
+  if(cfg.site!=null) d.site=cfg.site; if(cfg.rep!=null) d.rep=cfg.rep;
+  if(cfg.type!=null) d.type=cfg.type; if(cfg.cap!=null) d.cap=cfg.cap;
+  if(cfg.quoteOpts) d.quoteOpts={...cfg.quoteOpts};
+  if(cfg.unitOverride!=null) d.unitOverride=cfg.unitOverride;
+  if(cfg.quoteParams) d.quoteParams={...cfg.quoteParams};
+  if(cfg.owner) d.owner={...cfg.owner};
+}
+// 하위호환: versions 없는 기존 딜은 현재 내용을 v1로 생성. 이미 이관된 딜(quote 외 단계)이면 v1을 확정·이관본으로.
+function ensureVersions(d){
+  if(!d || Array.isArray(d.versions)) return d;
+  const handed = !!(d.stage && d.stage!=='quote');
+  let prop = d.proposal || null;
+  if(!prop && d.cap!=null){ try{ prop=buildProposal(d); }catch(e){} }
+  d.versions=[{ ver:1, memo:'기존 견적', savedAt:(d.proposal&&d.proposal.generatedAt)||'', savedBy:d.rep||'영업', cfg:dealCfg(d), proposal:prop }];
+  if(handed){ d.confirmedVer=d.confirmedVer||1; d.handedVer=d.handedVer||1; if(!d.proposal&&prop) d.proposal=prop; }
+  else { d.confirmedVer=d.confirmedVer||null; }
+  return d;
+}
+function nextVer(d){ ensureVersions(d); return d.versions.reduce((m,v)=>Math.max(m,v.ver),0)+1; }
+function getVersion(d,ver){ ensureVersions(d); return d.versions.find(v=>v.ver===ver)||null; }
+function addVersion(d, cfg, memo, by){
+  ensureVersions(d);
+  const ver=nextVer(d);
+  let prop=null; try{ prop=buildProposal({id:d.id, ...cfg}); }catch(e){}
+  d.versions.push({ ver, memo:(memo||'').trim(), savedAt:verStamp(), savedBy:by||cfg.rep||'영업', cfg:{...cfg}, proposal:prop });
+  if(!d.confirmedVer) applyCfgToDeal(d, cfg);   // 확정 전엔 최신본을 딜 기본값으로(편집 연속성). 확정 후엔 확정본 유지.
+  return ver;
+}
+function confirmVersion(d, ver){
+  const v=getVersion(d,ver); if(!v) return false;
+  d.confirmedVer=ver;
+  applyCfgToDeal(d, v.cfg);
+  d.proposal = v.proposal || (()=>{ try{ return buildProposal(d); }catch(e){ return d.proposal; } })();
+  return true;
+}
+// 딜 상태(영업 제안서 뱃지·버튼 분기)
+function dealVerStatus(d){
+  ensureVersions(d);
+  if(!d.confirmedVer) return {key:'draft', label:'협의중', cls:'wait'};
+  if(d.stage==='quote') return {key:'confirmed', label:'✅ 확정 v'+d.confirmedVer, cls:'done'};
+  if(d.handedVer && d.confirmedVer!==d.handedVer)
+    return {key:'changed', label:'🔁 확정본 변경 (이관 v'+d.handedVer+' → 확정 v'+d.confirmedVer+')', cls:'risk'};
+  return {key:'handed', label:'✅ 이관됨 v'+(d.handedVer||d.confirmedVer), cls:'done'};
+}
+// 확정본 공무팀 이관(최초)
+function handoverConfirmed(id){
+  const d=DEALS.find(x=>x.id===id); if(!d) return; ensureVersions(d);
+  if(!d.confirmedVer){ toast('먼저 협의 이력에서 ⭐ 최종 확정 버전을 지정하세요'); return; }
+  const v=getVersion(d,d.confirmedVer);
+  d.proposal = (v&&v.proposal) || buildProposal(d);
+  d.handedVer=d.confirmedVer; d.handoverAt=verStamp(); d.reHandoverNote='';
+  d.stage='handover_design';
+  persistDeal(d);
+  toast(`${d.site} · v${d.handedVer} 확정본 공무팀 이관 완료 — 설계 신규접수로 전달`);
+  repaintQuote(); if(typeof refreshTabBadges==='function') refreshTabBadges();
+}
+// 확정본이 바뀐 뒤 재이관 — 설계에 변경 경고 전달
+function reHandoverConfirmed(id){
+  const d=DEALS.find(x=>x.id===id); if(!d) return; ensureVersions(d);
+  if(!d.confirmedVer){ toast('확정 버전을 먼저 지정하세요'); return; }
+  const prevV=getVersion(d,d.handedVer), newV=getVersion(d,d.confirmedVer);
+  d.proposal=(newV&&newV.proposal)||buildProposal(d);
+  const parts=[];
+  if(prevV&&prevV.proposal&&newV&&newV.proposal){
+    const capA=pNum(prevV.proposal.spec&&prevV.proposal.spec.cap), capB=pNum(newV.proposal.spec&&newV.proposal.spec.cap);
+    if(capA!==capB) parts.push(`설비용량 ${capA}→${capB}kW`);
+    const tA=pNum(prevV.proposal.total), tB=pNum(newV.proposal.total);
+    if(tA!==tB) parts.push(`총사업비 ₩${tA.toLocaleString()}→₩${tB.toLocaleString()}`);
+  }
+  d.reHandoverNote=`확정본이 v${d.handedVer}→v${d.confirmedVer}로 변경되어 재이관되었습니다${parts.length?' ('+parts.join(' · ')+')':''}. 확정 ${(newV&&newV.savedAt)||''}`;
+  d.handedVer=d.confirmedVer; d.handoverAt=verStamp();
+  d.stage='handover_design';   // 변경 확정본은 신규접수로 되돌려 설계가 변경 알림 확인·재검토
+  persistDeal(d);
+  toast(`${d.site} · 변경된 확정본(v${d.handedVer}) 재이관 — 설계에 변경 알림 표시`);
+  repaintQuote(); if(typeof refreshTabBadges==='function') refreshTabBadges();
+}
+// 설계: 확정본 변경 알림 확인(지우기)
+function ackReHandover(id){
+  const d=DEALS.find(x=>x.id===id); if(!d) return;
+  d.reHandoverNote=''; persistDeal(d);
+  toast('확정본 변경 알림을 확인했습니다');
+  if(typeof refreshActive==='function') refreshActive();
+}
+// 특정 버전 제안서 모달로 보기
+function openProposalVersion(id, ver){
+  const d=DEALS.find(x=>x.id===id); if(!d) return;
+  const v=getVersion(d,ver); if(!v||!v.proposal){ toast('이 버전의 제안서 정보가 없습니다'); return; }
+  _proposalId=id;
+  document.getElementById('proposalTitle').textContent = `${d.site} · v${ver} 제안서${d.confirmedVer===ver?' (✅확정본)':''}`;
+  document.getElementById('proposalSub').textContent = `${d.id} · 영업 ${d.rep} · v${ver}${v.memo?' — '+v.memo:''} · ${v.savedAt||''}`;
+  document.getElementById('proposalBody').innerHTML = handoverProposal(d, v.proposal);
+  document.getElementById('proposalScrim').classList.add('open');
+}
+function confirmVer(id, ver){
+  const d=DEALS.find(x=>x.id===id); if(!d) return;
+  const v=getVersion(d,ver); if(!v) return;
+  const o=(v.cfg&&v.cfg.owner)||{};
+  if(!(o.name&&o.bizname&&o.phone)){ toast('이 버전에 사업주(성명·상호·전화) 정보가 없습니다 — ✎편집에서 입력해 새 버전으로 저장한 뒤 확정하세요'); return; }
+  confirmVersion(d, ver); persistDeal(d);
+  toast(`v${ver}을(를) 고객 확정 최종본으로 지정했습니다 — 공무팀 이관 가능`);
+  repaintQuote();
+}
+function delVersion(id, ver){
+  const d=DEALS.find(x=>x.id===id); if(!d) return; ensureVersions(d);
+  if(d.confirmedVer===ver){ toast('확정 버전은 삭제할 수 없습니다 (다른 버전을 확정한 뒤 삭제하세요)'); return; }
+  if(d.versions.length<=1){ toast('최소 1개 버전은 남겨야 합니다'); return; }
+  d.versions=d.versions.filter(v=>v.ver!==ver); persistDeal(d);
+  toast(`v${ver} 삭제`); repaintQuote();
+}
+
 function quoteFull(d){
   const sp=dealSpec(d);
   const sub=(k,v)=>`<div class="quote-row"><span style="padding-left:12px;color:var(--ink-2)">${k}</span><span class="qv" style="font-weight:600">${v}</span></div>`;
@@ -2684,7 +2822,7 @@ function openProposal(id){
   const p = d.revisedProposal || d.proposal || (d.quoteOpts ? buildProposal(d) : null);
   const capLbl = (revised && d.reviseCfg) ? d.reviseCfg.cap : d.cap;
   document.getElementById('proposalTitle').textContent = d.site + ' · ' + capLbl.toLocaleString() + 'kW 제안서' + (revised?' (실측 반영 수정본)':'');
-  document.getElementById('proposalSub').textContent = d.id + ' · 영업 ' + d.rep + ' · 제안서(전체)' + (revised?` · 설계 수정 ${d.reviseAt||''}`:'');
+  document.getElementById('proposalSub').textContent = d.id + ' · 영업 ' + d.rep + ' · 제안서(전체)' + (d.confirmedVer?` · ✅확정 v${d.confirmedVer}`:'') + (revised?` · 설계 수정 ${d.reviseAt||''}`:'');
   document.getElementById('proposalBody').innerHTML = p ? handoverProposal(d, p)
     : `<div class="section-title" style="font-size:12px;margin:0 0 8px">이관 자료 · 고객 제공 제안서(전체)</div>${quoteFull(d)}
        <div class="section-title" style="font-size:12px;margin:16px 0 8px">배치도</div>${miniLayout(d.cap)}`;
@@ -2838,13 +2976,18 @@ function gotoWorkflowNode(el){
 
 // 신규 현장 접수 (설계) — 영업 이관 자료: 견적서 전체 + 배치도
 function renderIntake(){
-  const cards = DEALS.filter(d=>d.stage==='handover_design').map(d=>`
+  const cards = DEALS.filter(d=>d.stage==='handover_design').map(d=>{
+    ensureVersions(d);
+    const vtag = d.confirmedVer ? `<div style="margin-top:6px"><span class="pill done" style="margin:0"><span class="pd"></span>✅ 영업 확정본 v${d.handedVer||d.confirmedVer}${d.handoverAt?(' · 이관 '+esc(d.handoverAt)):''}</span></div>` : '';
+    const changeBanner = d.reHandoverNote ? `<div class="cred-warn" style="margin:10px 0 0;color:#b4532a;background:color-mix(in srgb,#c0612f 12%,transparent);border-color:color-mix(in srgb,#c0612f 34%,transparent)">🔁 <b>영업 확정본 변경 알림</b> — ${esc(d.reHandoverNote)} <button class="btn ghost sm" style="margin-left:6px" onclick="ackReHandover('${d.id}')">확인(알림 지우기)</button></div>` : '';
+    return `
     <div class="card pad" style="margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
         <div><div style="font-size:15px;font-weight:800">${esc(d.site)} · ${d.cap.toLocaleString()}kW <span class="type-chip">${d.type}</span></div>
-          <div class="lr-s" style="margin-top:4px">${d.id} · 영업 ${esc(d.rep)} 이관</div></div>
+          <div class="lr-s" style="margin-top:4px">${d.id} · 영업 ${esc(d.rep)} 이관</div>${vtag}</div>
         <span class="pill prog"><span class="pd"></span>신규 접수</span>
       </div>
+      ${changeBanner}
       ${d.proposal ? handoverProposal(d, null, true) : `<div style="display:grid;grid-template-columns:1fr 190px;gap:14px;margin-top:14px;align-items:start">
         <div>
           <div class="section-title" style="font-size:12px;margin:0 0 8px">이관 자료 · 고객 제공 제안서(전체)</div>
@@ -2860,7 +3003,8 @@ function renderIntake(){
         <button class="btn ghost sm" onclick="openProposal('${d.id}')">📄 제안서 전체 열기</button>
         <button class="btn primary sm" onclick="startFeasibility('${d.id}')">타당성검토 시작 →</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   const header = `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px;flex-wrap:wrap">
     <div class="wf-head"><h3 class="section-title" style="margin:0">신규 현장 접수</h3><div class="note" style="margin-top:5px">영업에서 이관된 현장(제안서 전체·배치도 포함)이 여기로 도착합니다. <b>영업 발굴·검토는 별도 모듈</b>이며, 여기서는 넘어온 자료만 받습니다.</div></div>
     <button class="btn dark sm" style="flex:none" onclick="receiveFromSales()">⇩ 영업 자료 수신 (가상)</button>
@@ -4728,6 +4872,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-02', team:'영업', kind:'추가', title:'제안서 — 협의 버전 관리 + “확정본만” 설계 이관', body:'고객과 협의하며 제안서가 여러 번 수정되는 과정을 그대로 담고, <b>고객과 합의된 최종 확정본만</b> 설계로 넘어가도록 바꿨습니다. 설계가 아직 확정 안 된 안으로 재작업하는 일을 막기 위한 것입니다. ① 영업 “제안서”에서 저장할 때마다 <b>협의 버전</b>(v1·v2·v3…)으로 쌓이고(덮어쓰기 아님), 버전마다 <b>메모</b>(예: 1차 제안·할인 반영·고객 최종 합의)와 총사업비가 남습니다. ② 각 현장 카드의 <b>협의 이력</b>에서 버전별 <b>📄 제안서 보기</b>·<b>✎ 편집</b>(불러와 새 버전으로)이 가능하고, 합의된 버전을 <b>⭐ 최종 확정</b>으로 지정합니다(사업주 성명·상호·전화가 입력된 버전만 확정 가능). ③ <b>공무팀 이관</b> 버튼은 <b>확정본이 지정돼야</b> 활성화되며, <b>확정본 스냅샷만</b> 설계로 전달됩니다. ④ 설계 “신규 현장 접수”에는 <b>✅ 영업 확정본 vN</b> 태그가 표시됩니다. ⑤ 이관 후 추가 협의로 <b>다른 버전을 확정하면</b> 버튼이 <b>“🔁 변경된 확정본 재이관”</b>으로 바뀌고, 재이관 시 설계에 <b>변경 알림(설비용량·총사업비 전/후)</b> 배너가 뜨며 신규접수로 되돌려 재검토하게 합니다. 기존 제안서는 자동으로 v1로 이어집니다.', author:'개발'},
   {date:'2026-10-02', team:'설계', kind:'수정', title:'현장 실측 — 실측 일시를 달력에서 선택', body:'설계 “현장 실측”의 <b>실측 일시</b>를 직접 타이핑하던 방식에서 <b>달력에서 날짜·시간을 선택</b>하는 방식으로 바꿨습니다(날짜 칸을 누르면 달력이 떠 날짜를 고르고 시간도 지정). 날짜 형식이 틀릴 일이 없어지고 입력이 간편해집니다. 저장·표시 형식(예: 2026-09-24 10:00)은 종전과 동일하게 유지됩니다.', author:'개발'},
   {date:'2026-10-02', team:'공통', kind:'변경', title:'발전사업 허가 — 바뀐 제안서 기준으로 자동연동 항목 재정리', body:'영업 “제안서”가 상세해진 만큼, 행정 <b>발전사업 허가</b>가 <b>제안서에서 가져올 수 있는 값</b>과 <b>가져올 수 없어 영업이 입력할 값</b>을 다시 정리했습니다. ① <b>제안서에서 자동으로 가져오는 값(읽기전용 유지·강화)</b> — 설비용량·총사업비·자금·모듈/인버터 스펙에 더해, <b>연간발전량</b>을 제안서 <b>발전공식(설비용량 × 발전시간 × 365)과 똑같이</b> 맞췄고(종전에는 고정 추정값이라 제안서와 달랐습니다), <b>입사각</b>을 새로 가져와 발전설비 개요·사업계획서에 표시하며, <b>설치방법</b>(노지형/건물형)은 유형에 따라 <b>자동</b>으로 채워 영업 손입력에서 뺐습니다. 모듈 제조사·모델·등급도 제안서 값으로 더 정확히 끌어옵니다. ② <b>제안서에 없어 영업 “실계약”에서 입력하는 값</b> — 주민/법인번호·주소 등 민감정보, 설치장소·접수관청, 공급전압·주파수·준비기간, 사용/전체/건축면적, 발전방식·전력수급방식, 대상 토지/건물 명세. ③ 행정 화면의 각 항목 <b>출처 태그</b>(제안서/실계약)와 안내문을 이 분류에 맞게 갱신했습니다. 제안서가 수정되면 설비·발전량이 발전사업 허가에 <b>자동 반영</b>됩니다.', author:'개발'},
   {date:'2026-10-02', team:'영업', kind:'수정', title:'제안서 보기 — 가로로 넓게(2단 눌림 해결)', body:'“제안서 보기” 창이 좁아 제안서가 세로로 눌리고 견적 표 글자가 줄바꿈되던 것을, <b>가로로 넓은 창</b>으로 바꿔 A3 출력물과 같은 모습으로 자연스럽게 보이도록 했습니다(좌: 견적·제품사양·유지관리비 / 우: 수익성·장기계약·정책자금·배치도 2단). 작은 화면에서는 자동으로 접혀 보기 편하게 표시됩니다.', author:'개발'},
@@ -4817,7 +4962,8 @@ function nextSalesId(){
 const _lbl = t => `<label style="font-size:11px;font-weight:700;color:var(--ink-2);display:block;margin-bottom:4px">${t}</label>`;
 function repaintQuote(){ const el=document.getElementById('sub-s-quote'); if(el){ el.innerHTML=renderSalesQuote(); initQuoteEditor(); } }
 function renderSalesQuote(){
-  const quotes = DEALS.filter(d=>d.stage==='quote');
+  const draftDeals = DEALS.filter(d=>d.stage==='quote');
+  const handedDeals = DEALS.filter(d=>['handover_design','feasibility'].includes(d.stage));
   const modOpts = Object.entries(COST_PRESET.modules).map(([k,v])=>`<option value="${k}">${esc(v.name)} · ${v.w}W</option>`).join('');
   const num = (t,id,ph)=>`<div>${_lbl(t)}<input class="tinput" id="${id}" type="number" oninput="recomputeQuotePreview()" placeholder="${ph||''}" style="padding:6px 8px"></div>`;
   const editor = `<div class="card pad" style="margin-bottom:16px">
@@ -4855,33 +5001,66 @@ function renderSalesQuote(){
       <div class="note" style="margin-top:6px">※ 주민/법인등록번호·주소 등 민감정보는 <b>실계약</b>에서 입력합니다.</div>
     </div>
     <div id="qx-result" style="margin-top:12px"></div>
-    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn primary sm" onclick="saveQuoteFromEditor(false)">💾 견적 저장</button>
-      <button class="btn dark sm" id="qxHandoverBtn" onclick="saveQuoteFromEditor(true)" disabled title="사업주(신청인) 정보(성명·상호·전화)를 모두 입력해야 이관할 수 있습니다">공무팀 이관 →</button>
-      <button class="btn ghost sm" onclick="qxNewQuote()">＋ 새 견적</button>
+    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <input class="tinput" id="qx-memo" placeholder="버전 메모 (예: 1차 제안 · 할인 반영 · 고객 최종 합의)" style="flex:1;min-width:200px">
+      <button class="btn primary sm" onclick="saveQuoteFromEditor()">💾 버전 저장</button>
+      <button class="btn ghost sm" onclick="qxNewQuote()">＋ 새 현장</button>
     </div>
+    <div class="note" style="margin-top:6px">저장할 때마다 <b>협의 버전</b>으로 쌓입니다(덮어쓰기 아님). 아래 “협의 이력”에서 고객과 합의된 버전을 <b>⭐ 최종 확정</b>한 뒤 <b>공무팀 이관</b>하세요 — <b>확정본만</b> 설계로 넘어갑니다.</div>
   </div>`;
-  const list = quotes.length ? `<div class="section-title" style="font-size:12px;margin:6px 0 8px">작성된 견적 (${quotes.length})</div>` + quotes.map(d=>{
-    const q = generateQuote(d);
-    return `<div class="card pad" style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
-        <div><div style="font-size:14.5px;font-weight:800">${esc(d.site)} · ${d.cap.toLocaleString()}kW <span class="type-chip">${d.type}</span></div>
-          <div class="lr-s" style="margin-top:4px">${d.id} · 영업 ${esc(d.rep)} · 총 사업비 ₩${q.displayTotal.toLocaleString()} <span style="color:var(--muted)">(백만절사·VAT별도)</span></div></div>
-        <span class="pill wait"><span class="pd"></span>견적 작성</span>
-      </div>
-      <div class="wf-actions" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn ghost sm" onclick="loadQuoteToEditor('${d.id}')">✎ 편집</button>
-        <button class="btn ghost sm" onclick="openProposal('${d.id}')">📄 제안서 보기</button>
-        <button class="btn primary sm" onclick="handoverQuote('${d.id}')">공무팀 이관 →</button>
-        <button class="btn ghost sm" onclick="deleteQuote('${d.id}')">삭제</button>
-      </div>
-    </div>`;
-  }).join('') : '';
+  const grp=(title,sub,arr)=> arr.length
+    ? `<div class="section-title" style="font-size:12px;margin:10px 0 8px">${title} (${arr.length})${sub?` <span class="lr-s" style="font-weight:500">— ${sub}</span>`:''}</div>`+arr.map(renderDealCard).join('')
+    : '';
+  const list = grp('협의중 제안서','고객과 협의하며 버전을 쌓고, 확정본을 지정해 이관', draftDeals)
+             + grp('이관됨 (재이관 가능)','설계로 넘어간 현장 — 재협의 시 새 버전 확정 후 재이관', handedDeals)
+             + (!draftDeals.length && !handedDeals.length ? emptyMsg('작성된 제안서가 없습니다. 위에서 모듈·수량을 넣고 “버전 저장”하세요.') : '');
   const header = `<div style="margin-bottom:14px">
     <h3 class="section-title" style="margin:0">제안서</h3>
-    <div class="note" style="margin-top:5px">모듈·수량을 넣으면 <b>원가표 기준</b>으로 견적 11공종·사업성·유지관리비가 실시간 계산됩니다. “공무팀 이관”하면 설계 신규접수로 넘어갑니다.</div>
+    <div class="note" style="margin-top:5px">고객과 협의하며 <b>버전을 쌓고</b>, 합의된 버전을 <b>⭐ 최종 확정</b>해 설계로 이관합니다. <b>확정본만</b> 설계로 넘어가 설계가 미확정안으로 재작업하는 일을 막습니다.</div>
   </div>`;
   return header + editor + list;
+}
+// 딜 카드 — 협의 이력(버전) + 확정 지정 + 이관/재이관 게이트
+function renderDealCard(d){
+  ensureVersions(d);
+  const st=dealVerStatus(d);
+  const vers=[...d.versions].sort((a,b)=>b.ver-a.ver);
+  const rows=vers.map(v=>{
+    const isConf=d.confirmedVer===v.ver;
+    const total=v.proposal?('₩'+pNum(v.proposal.total).toLocaleString()):'-';
+    return `<div class="ver-row${isConf?' conf':''}">
+      <div class="ver-main">
+        <span class="ver-tag">v${v.ver}</span>${isConf?'<span class="ver-badge">⭐ 고객 확정</span>':''}
+        <span class="ver-memo">${esc(v.memo||'(메모 없음)')}</span>
+        <span class="ver-meta">${total} · ${esc(v.savedAt||'')}${v.savedBy?(' · '+esc(v.savedBy)):''}</span>
+      </div>
+      <div class="ver-act">
+        <button class="btn ghost sm" onclick="openProposalVersion('${d.id}',${v.ver})">📄 보기</button>
+        ${isConf?'<span class="pill done" style="margin:0"><span class="pd"></span>확정</span>'
+                :`<button class="btn dark sm" onclick="confirmVer('${d.id}',${v.ver})">⭐ 최종 확정</button>`}
+        <button class="btn ghost sm" onclick="loadQuoteToEditor('${d.id}',${v.ver})">✎ 편집</button>
+        ${(!isConf && d.versions.length>1)?`<button class="btn ghost sm" onclick="delVersion('${d.id}',${v.ver})" title="버전 삭제">🗑</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+  let handoverBtn;
+  if(st.key==='draft') handoverBtn=`<button class="btn dark sm" disabled title="협의 이력에서 ⭐ 최종 확정 버전을 지정해야 이관할 수 있습니다">공무팀 이관 → (확정 필요)</button>`;
+  else if(st.key==='confirmed') handoverBtn=`<button class="btn primary sm" onclick="handoverConfirmed('${d.id}')">공무팀 이관 → (v${d.confirmedVer} 확정본)</button>`;
+  else if(st.key==='changed') handoverBtn=`<button class="btn primary sm" onclick="reHandoverConfirmed('${d.id}')">🔁 변경된 확정본 재이관 (v${d.confirmedVer})</button>`;
+  else handoverBtn=`<span class="lr-s" style="font-weight:700;color:var(--ok)">✅ v${d.handedVer} 확정본 이관됨 — 설계 진행 중</span>`;
+  return `<div class="card pad" style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+      <div><div style="font-size:14.5px;font-weight:800">${esc(d.site)} · ${d.cap.toLocaleString()}kW <span class="type-chip">${esc(d.type)}</span></div>
+        <div class="lr-s" style="margin-top:4px">${d.id} · 영업 ${esc(d.rep)} · 협의 ${d.versions.length}버전</div></div>
+      <span class="pill ${st.cls}"><span class="pd"></span>${st.label}</span>
+    </div>
+    <div class="ver-list">${rows}</div>
+    <div class="wf-actions" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      ${handoverBtn}
+      ${d.confirmedVer?`<button class="btn ghost sm" onclick="openProposal('${d.id}')">📄 확정본 보기</button>`:''}
+      ${d.stage==='quote'?`<button class="btn ghost sm" onclick="deleteQuote('${d.id}')">현장 삭제</button>`:''}
+    </div>
+  </div>`;
 }
 // 편집기 → 설정 cfg (미리보기/저장 공용)
 function buildEditorCfg(){
@@ -4928,56 +5107,49 @@ function qxNewQuote(){ repaintQuote(); }
 function qxOwnerFilled(){ const g=id=>document.getElementById(id);
   return !!(g('qx-ow-name')&&g('qx-ow-name').value.trim() && g('qx-ow-biz')&&g('qx-ow-biz').value.trim() && g('qx-ow-phone')&&g('qx-ow-phone').value.trim()); }
 function qxUpdateHandover(){ const b=document.getElementById('qxHandoverBtn'); if(b) b.disabled=!qxOwnerFilled(); }
-function saveQuoteFromEditor(handover){
+function saveQuoteFromEditor(){
   const cfg=buildEditorCfg();
   if(!cfg){ toast('모듈과 수량을 입력하세요'); return; }
   const g=id=>document.getElementById(id);
   const site=(g('qx-site').value||'').trim();
   if(!site){ toast('현장명을 입력하세요'); return; }
-  if(handover && !qxOwnerFilled()){ toast('사업주(신청인) 정보(성명·상호·전화)를 모두 입력해야 공무팀 이관할 수 있습니다'); return; }
+  cfg.site=site;
+  // 사업주(신청인) 정보 — 입력값 그대로(공란 허용). 완성 여부는 ⭐확정 시 검사.
+  cfg.owner={ name:(g('qx-ow-name').value||'').trim(), bizname:(g('qx-ow-biz').value||'').trim(), phone:(g('qx-ow-phone').value||'').trim() };
   const existingId=g('qx-id').value;
   let d = existingId ? DEALS.find(x=>x.id===existingId) : null;
-  if(!d){ d={ id:nextSalesId(), stage:'quote', rejectReason:'' }; DEALS.unshift(d); }
-  Object.assign(d, { site, rep:cfg.rep, type:cfg.type, cap:cfg.cap, quoteOpts:cfg.quoteOpts, unitOverride:cfg.unitOverride, quoteParams:cfg.quoteParams });
-  // 사업주(신청인) 정보 저장 — 발전사업 허가에서 견적서 원천으로 끌어감
-  const _ow=defaultOwner(d);
-  d.owner={ name:(g('qx-ow-name').value||'').trim()||_ow.name,
-    bizname:(g('qx-ow-biz').value||'').trim()||(site+' 태양광발전소'),
-    phone:(g('qx-ow-phone').value||'').trim()||_ow.phone };
-  if(handover){ d.proposal=buildProposal(d); d.stage='handover_design'; }
+  if(!d){ d={ id:nextSalesId(), stage:'quote', rejectReason:'', versions:[], confirmedVer:null }; DEALS.unshift(d); applyCfgToDeal(d, cfg); }
+  else ensureVersions(d);
+  const memo=(g('qx-memo')&&g('qx-memo').value||'').trim();
+  const ver=addVersion(d, cfg, memo, cfg.rep);
   persistDeal(d);
-  toast(handover ? `${d.site} · 공무팀 이관 완료 — 설계 신규접수로 전달` : `견적 저장 — ${d.site} (${d.id})`);
+  toast(`v${ver} 저장 — ${d.site} (${d.id})${memo?' · '+memo:''}`);
+  g('qx-id').value=d.id; if(g('qx-memo')) g('qx-memo').value='';
+  g('qx-editing').textContent='· 편집 중: '+d.id+' (v'+ver+' 저장됨)';
   repaintQuote();
-  if(handover && typeof refreshTabBadges==='function') refreshTabBadges();
 }
-function loadQuoteToEditor(id){
-  const d=DEALS.find(x=>x.id===id); if(!d) return;
+// 딜(기본) 또는 특정 버전을 편집기로 불러오기
+function loadQuoteToEditor(id, ver){
+  const d=DEALS.find(x=>x.id===id); if(!d) return; ensureVersions(d);
+  const src = (ver!=null && getVersion(d,ver)) ? getVersion(d,ver).cfg : dealCfg(d);
   const g=k=>document.getElementById(k);
-  g('qx-id').value=d.id; g('qx-site').value=d.site||''; g('qx-rep').value=d.rep||'';
-  g('qx-type').value=d.type||'노지';
-  g('qx-module').value=(d.quoteOpts&&d.quoteOpts.moduleKey)||'china_aiko';
+  g('qx-id').value=d.id; g('qx-site').value=src.site||''; g('qx-rep').value=src.rep||'';
+  g('qx-type').value=src.type||'노지';
+  g('qx-module').value=(src.quoteOpts&&src.quoteOpts.moduleKey)||'china_aiko';
   const W=(COST_PRESET.modules[g('qx-module').value]||{}).w||655;
-  g('qx-qty').value=Math.round((d.cap*1000)/W);
-  const qp=d.quoteParams||{};
+  g('qx-qty').value=Math.round(((src.cap||0)*1000)/W);
+  const qp=src.quoteParams||{};
   g('qx-apply').value=qp.apply??''; g('qx-hours').value=qp.hours??''; g('qx-rate').value=qp.rate??'';
   g('qx-defer').value=qp.defer??''; g('qx-repay').value=qp.repay??''; g('qx-loanpct').value=qp.loanpct??'';
-  const ow=getOwner(d);
+  const ow=src.owner||{};
   g('qx-ow-name').value=ow.name||''; g('qx-ow-biz').value=ow.bizname||''; g('qx-ow-phone').value=ow.phone||'';
-  const cap=d.cap;
-  g('qx-unit').value=d.unitOverride||quoteTierDefaultUnit(d.type,cap)||'';
-  g('qx-editing').textContent='· 편집 중: '+d.id;
+  const cap=src.cap;
+  g('qx-unit').value=src.unitOverride||quoteTierDefaultUnit(src.type,cap)||'';
+  g('qx-editing').textContent='· 편집 중: '+d.id+(ver!=null?` (v${ver} 불러옴 → 저장 시 새 버전)`:'');
+  if(g('qx-memo')) g('qx-memo').value='';
   g('qx-kw').value=cap?cap.toLocaleString()+' kW':'';
   recomputeQuotePreview(); qxUpdateHandover();
   window.scrollTo({top:0,behavior:'smooth'});
-}
-function handoverQuote(id){
-  const d = DEALS.find(x=>x.id===id); if(!d) return;
-  d.proposal = buildProposal(d);
-  d.stage = 'handover_design';
-  persistDeal(d);
-  toast(`${d.site} · 공무팀 이관 완료 — 설계 신규접수로 전달`);
-  repaintQuote();
-  if(typeof refreshTabBadges==='function') refreshTabBadges();
 }
 function deleteQuote(id){
   const i = DEALS.findIndex(x=>x.id===id); if(i<0) return;
