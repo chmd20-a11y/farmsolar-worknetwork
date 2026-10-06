@@ -4049,7 +4049,7 @@ function renderSurvey(){
       body=`<div class="section-title" style="font-size:12px;margin:14px 0 8px">실측 담당 배정 (담당자 + 설계팀원 1 · 시공팀원 1)</div>
         <div class="field-row">
           <div class="tfield"><label>담당자 (PIC)</label><input class="tinput" value="이도현" id="sp-${d.id}"></div>
-          <div class="tfield"><label>실측 일시</label><input class="tinput" value="2026-09-24 10:00" id="sd-${d.id}"></div>
+          <div class="tfield"><label>실측 일시</label><input class="tinput" type="datetime-local" style="color-scheme:light dark" value="${esc(((d.survey&&d.survey.date)||'2026-09-24 10:00').replace(' ','T'))}" id="sd-${d.id}"></div>
         </div>
         <div class="field-row" style="margin-top:10px">
           <div class="tfield"><label>설계팀원</label><input class="tinput" value="이도현" id="sg-${d.id}"></div>
@@ -4719,7 +4719,7 @@ function wfReject(id){
 }
 function wfSchedule(id){
   const d=DEALS.find(x=>x.id===id); if(!d) return;
-  d.survey={ pic:(document.getElementById('sp-'+id)||{}).value||'', date:(document.getElementById('sd-'+id)||{}).value||'', designer:(document.getElementById('sg-'+id)||{}).value||'', builder:(document.getElementById('sc-'+id)||{}).value||'' };
+  d.survey={ pic:(document.getElementById('sp-'+id)||{}).value||'', date:((document.getElementById('sd-'+id)||{}).value||'').replace('T',' '), designer:(document.getElementById('sg-'+id)||{}).value||'', builder:(document.getElementById('sc-'+id)||{}).value||'' };
   // 승인 적용 보류 — 결재 요청 없이 바로 실측 진행(결과 보고서 작성)으로 넘어감
   wfAction(id,'survey_progress','실측 스케줄 등록 — 실측 진행');
 }
@@ -4728,6 +4728,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-02', team:'설계', kind:'수정', title:'현장 실측 — 실측 일시를 달력에서 선택', body:'설계 “현장 실측”의 <b>실측 일시</b>를 직접 타이핑하던 방식에서 <b>달력에서 날짜·시간을 선택</b>하는 방식으로 바꿨습니다(날짜 칸을 누르면 달력이 떠 날짜를 고르고 시간도 지정). 날짜 형식이 틀릴 일이 없어지고 입력이 간편해집니다. 저장·표시 형식(예: 2026-09-24 10:00)은 종전과 동일하게 유지됩니다.', author:'개발'},
   {date:'2026-10-02', team:'공통', kind:'변경', title:'발전사업 허가 — 바뀐 제안서 기준으로 자동연동 항목 재정리', body:'영업 “제안서”가 상세해진 만큼, 행정 <b>발전사업 허가</b>가 <b>제안서에서 가져올 수 있는 값</b>과 <b>가져올 수 없어 영업이 입력할 값</b>을 다시 정리했습니다. ① <b>제안서에서 자동으로 가져오는 값(읽기전용 유지·강화)</b> — 설비용량·총사업비·자금·모듈/인버터 스펙에 더해, <b>연간발전량</b>을 제안서 <b>발전공식(설비용량 × 발전시간 × 365)과 똑같이</b> 맞췄고(종전에는 고정 추정값이라 제안서와 달랐습니다), <b>입사각</b>을 새로 가져와 발전설비 개요·사업계획서에 표시하며, <b>설치방법</b>(노지형/건물형)은 유형에 따라 <b>자동</b>으로 채워 영업 손입력에서 뺐습니다. 모듈 제조사·모델·등급도 제안서 값으로 더 정확히 끌어옵니다. ② <b>제안서에 없어 영업 “실계약”에서 입력하는 값</b> — 주민/법인번호·주소 등 민감정보, 설치장소·접수관청, 공급전압·주파수·준비기간, 사용/전체/건축면적, 발전방식·전력수급방식, 대상 토지/건물 명세. ③ 행정 화면의 각 항목 <b>출처 태그</b>(제안서/실계약)와 안내문을 이 분류에 맞게 갱신했습니다. 제안서가 수정되면 설비·발전량이 발전사업 허가에 <b>자동 반영</b>됩니다.', author:'개발'},
   {date:'2026-10-02', team:'영업', kind:'수정', title:'제안서 보기 — 가로로 넓게(2단 눌림 해결)', body:'“제안서 보기” 창이 좁아 제안서가 세로로 눌리고 견적 표 글자가 줄바꿈되던 것을, <b>가로로 넓은 창</b>으로 바꿔 A3 출력물과 같은 모습으로 자연스럽게 보이도록 했습니다(좌: 견적·제품사양·유지관리비 / 우: 수익성·장기계약·정책자금·배치도 2단). 작은 화면에서는 자동으로 접혀 보기 편하게 표시됩니다.', author:'개발'},
   {date:'2026-10-02', team:'영업', kind:'추가', title:'실계약 — 넘어온 도면·최종 수정제안서 A3 출력', body:'영업 “실계약”에서 설계로부터 넘어온 <b>최종 수정제안서</b>와 <b>설계 실측 도면</b>을 바로 출력(PDF 저장)할 수 있게 했습니다. ① <b>최종 수정제안서</b> 카드에 <b>“📄 제안서 출력 (A3 PDF)”</b> 버튼을 추가했습니다 — 설계가 실측을 반영해 수정한 <b>수정본 기준</b>으로 「태양광 발전사업 제안서」를 A3 1장으로 출력합니다(수정이 없으면 최초 제안서). ② <b>설계 실측 도면</b> 카드에 <b>“🖨 도면 출력 (A3 PDF)”</b> 버튼을 추가했습니다 — 넘어온 도면을 종류별(배치도·구조/단면도·전기 계통도 등) 시트로 A3에 출력합니다. <b>현재는 도면 이미지 자리표시</b>로 출력되며, 설계 업로드·<b>모듈 가배치</b> 연동이 끝나면 실제 도면 이미지가 그대로 담겨 출력됩니다. 둘 다 <b>A3 용지</b>로 깔끔하게 인쇄·PDF 저장됩니다.', author:'개발'},
