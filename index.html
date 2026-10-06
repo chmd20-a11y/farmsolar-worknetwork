@@ -481,6 +481,21 @@ button{font-family:inherit;cursor:pointer}
 .st-cf-row:last-child{border-bottom:none}
 .st-cf-row>span{color:var(--muted);white-space:nowrap}
 @media(max-width:700px){.st-grid{grid-template-columns:1fr}.st-vendors{grid-template-columns:1fr}}
+.st-tabs{display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--border)}
+.st-tab{appearance:none;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:13.5px;font-weight:700;padding:9px 14px;cursor:pointer;margin-bottom:-1px}
+.st-tab:hover{color:var(--ink-2)}
+.st-tab.on{color:var(--accent);border-bottom-color:var(--accent)}
+.sb-card{padding:14px 16px;margin-bottom:14px}
+.sb-card:last-child{margin-bottom:0}
+.sb-head{display:flex;align-items:center;gap:10px}
+.sb-count{margin-left:auto;font-weight:800;font-size:13px;color:var(--ink-2);background:var(--surface-2);border-radius:20px;padding:1px 10px;min-width:26px;text-align:center}
+.sb-desc{margin:6px 0 10px}
+.sb-list{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:9px;overflow:hidden}
+.sb-row{display:flex;align-items:center;gap:12px;background:var(--surface);padding:10px 13px;cursor:pointer;transition:background .12s}
+.sb-row:hover{background:var(--surface-2)}
+.sb-main{min-width:0;flex:none}
+.sb-meta{flex:1;text-align:right;font-size:11.5px;color:var(--muted);min-width:0}
+.sb-go{flex:none;font-size:11px;font-weight:700;color:var(--accent);white-space:nowrap}
 .rv-sum{cursor:pointer;font-size:12.5px;font-weight:800;color:var(--accent);padding:5px 0;list-style:none}
 .rv-sum::-webkit-details-marker{display:none}
 .rv-sum::before{content:'▸ ';font-size:11px}
@@ -2916,7 +2931,7 @@ const WF_NODES = [
   {id:'d_intake',lane:1, row:4, label:'신규 현장 접수',nav:"[data-wf='d-intake']"},
   {id:'d_feas',  lane:1, row:5, label:'타당성검토', type:'decision', nav:"[data-wf='d-feas']"},
   {id:'d_survey',lane:1, row:7, label:'현장 실측', sub:'설계1 · 시공1', nav:"[data-wf='d-survey']"},
-  {id:'d_struct',lane:1, row:9, label:'구조검토',      nav:"[data-stage='struct']"},
+  {id:'d_struct',lane:1, row:9, label:'구조검토',      nav:"[data-sub='d-check']"},
   {id:'a_intake',lane:2, row:8, label:'신규 현장 접수',nav:"[data-stage='admin_intake']"},
   {id:'a_biz',   lane:2, row:9, label:'발전사업 허가', nav:"[data-stage='permit_biz']"},
   {id:'a_dev',   lane:2, row:10, label:'개발행위 허가',nav:"[data-stage='permit_dev']"},
@@ -4520,7 +4535,7 @@ const STRUCT_SRC = {quote:{t:'제안서',c:'#2e8b63'}, contract:{t:'실계약',c
 function structSrcTag(s){ const m=STRUCT_SRC[s]; return m?`<span class="st-src" style="color:${m.c};border-color:${m.c}55">${m.t}</span>`:''; }
 
 // 이관 상태 레코드(딜에 누적 저장)
-function getStructReview(d){ if(!d.structReview) d.structReview={status:'대기', vendorKey:'', sentAt:'', mail:null, sms:null, result:'', resultAt:'', resultMemo:'', history:[]}; return d.structReview; }
+function getStructReview(d){ if(!d.structReview) d.structReview={status:'대기', vendorKey:'', sentAt:'', mail:null, sms:null, result:'', resultAt:'', approvalDoc:null, nextHandedAt:'', history:[]}; return d.structReview; }
 // 대상 현장 = 설계 이관 이후~시공 전(제안서 확정/실계약/실측 완료 등 구조검토가 필요한 현장)
 const STRUCT_STAGES = ['handover_design','approved','survey_sched','survey_progress','survey_done','done'];
 function structReviewList(){ return DEALS.filter(d=> d.structReview || d.permit || d.confirmedVer || STRUCT_STAGES.includes(d.stage)); }
@@ -4599,11 +4614,39 @@ function structAddFiles(input){ const files=[].slice.call(input.files||[]); let 
   files.forEach(f=>{ const rd=new FileReader(); rd.onload=()=>{ structAttach.push({filename:f.name, type:f.type||'application/octet-stream', size:f.size, dataUrl:rd.result}); if(--pend===0) refreshActive(); }; rd.onerror=()=>{ if(--pend===0) refreshActive(); }; rd.readAsDataURL(f); }); }
 function structDelAttach(i){ structAttach.splice(i,1); refreshActive(); }
 
+// 좌측 '구조검토' = 탭 2개(현황/이관) 래퍼
+let structTab='board';
+function structSetTab(t){ structTab=t; refreshActive(); }
+function structGoto(id){ structSel=id; structVendorSel=''; structAttach=[]; structHistOpen=false; structPrevOpen=false; structTab='handover'; refreshActive(); }
 function renderStructReview(){
   loadStructVendors();
+  const head=wfHead('구조검토','외주 구조검토 이관 현황과 개별 현장의 업체 이관을 관리합니다.');
+  const tabs=`<div class="st-tabs"><button class="st-tab ${structTab==='board'?'on':''}" onclick="structSetTab('board')">구조검토 현황</button><button class="st-tab ${structTab==='handover'?'on':''}" onclick="structSetTab('handover')">구조검토 이관</button></div>`;
+  const content = structTab==='handover' ? renderStructHandoverInner() : renderStructBoardInner();
+  return head+`<div class="st-wrap">`+tabs+content+`</div>`;
+}
+// 현황 탭 — 이관 상태별 목록(이관 전 / 수신 대기 / 완료)
+function renderStructBoardInner(){
   const list=structReviewList();
-  const head=wfHead('구조검토 이관','현장의 접수·실측·제안서까지 취합된 "종합 데이터"를 확인하고, 외주 구조검토 업체로 의뢰서를 메일·문자로 이관합니다. 메일은 맥미니가 꺼져 있어도 발송됩니다.');
-  if(!list.length) return head+emptyMsg('구조검토 대상 현장이 없습니다. 설계 이관(실측·제안서 확정) 이후 여기로 넘어옵니다.');
+  const groups=[
+    {key:'대기', label:'이관 전 (대기)', cls:'wait', desc:'아직 외주로 이관하지 않은 현장'},
+    {key:'수신대기', label:'수신 대기 (이관 후 회신 대기)', cls:'prog', desc:'업체로 이관 완료 · 승인서 회신 대기', extra:['반려']},
+    {key:'완료', label:'이관 완료 (승인서 수신)', cls:'done', desc:'구조검토 승인서 수신 완료'},
+  ];
+  const rowHtml=(d)=>{ const sr=getStructReview(d); const v=structVendor(sr.vendorKey);
+    const meta=[ sr.status==='반려'?'<span class="pill risk" style="transform:scale(.88)"><span class="pd"></span>반려</span>':'',
+      (v&&sr.vendorKey)?esc(v.name):'', sr.sentAt?('발송 '+esc(sr.sentAt)):'',
+      (sr.status==='완료'&&sr.approvalDoc)?('승인서 수신'+(sr.approvalDoc.uploadedAt?' '+esc(sr.approvalDoc.uploadedAt):'')):'',
+      sr.nextHandedAt?'✅ 다음 이관':'' ].filter(Boolean).join(' · ');
+    return `<div class="sb-row" onclick="structGoto('${d.id}')"><div class="sb-main"><b>${esc(d.site)}</b> <span class="lr-s">${d.id} · ${d.type} · ${d.cap}kW</span></div><div class="sb-meta">${meta||'<span class="lr-s">—</span>'}</div><span class="sb-go">이관 화면 →</span></div>`; };
+  const sections=groups.map(g=>{ const items=list.filter(d=>{ const s=getStructReview(d).status; return s===g.key || (g.extra&&g.extra.indexOf(s)>=0); });
+    return `<div class="card sb-card"><div class="sb-head"><span class="pill ${g.cls}"><span class="pd"></span>${esc(g.label)}</span><span class="sb-count">${items.length}</span></div><div class="sb-desc lr-s">${esc(g.desc)}</div><div class="sb-list">${ items.length? items.map(rowHtml).join('') : '<div class="lr-s" style="padding:10px 2px">해당 현장 없음</div>' }</div></div>`; }).join('');
+  return sections;
+}
+// 이관 탭 — 개별 현장 종합데이터 + 업체 이관 + 상태
+function renderStructHandoverInner(){
+  const list=structReviewList();
+  if(!list.length) return emptyMsg('구조검토 대상 현장이 없습니다. 설계 이관(실측·제안서 확정) 이후 여기로 넘어옵니다.');
   if(!structSel || !list.find(d=>d.id===structSel)) structSel=list[0].id;
   const d=DEALS.find(x=>x.id===structSel), sr=getStructReview(d);
   if(!structVendorSel) structVendorSel = sr.vendorKey || structSuggestVendor(d);
@@ -4627,15 +4670,47 @@ function renderStructReview(){
      <div class="st-vendors">${STRUCT_VENDORS.map(v=>`<label class="st-vendor ${v.key===structVendorSel?'sel':''}"><input type="radio" name="stvendor" value="${v.key}" ${v.key===structVendorSel?'checked':''} onchange="structPickVendor('${v.key}')"><div><b>${esc(v.name)}</b> <span class="lr-s">· ${esc(v.field)}</span><div class="lr-s">${esc(v.person||'담당자')} · ${v.configured?esc(v.email||'서버 등록'):'<span style="color:var(--risk-ink)">미설정</span>'}${v.phone?' · '+esc(v.phone):''}</div></div></label>`).join('')}</div>
      <div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap"><button class="btn primary" onclick="openStructConfirm('${d.id}')">${sr.status==='대기'?'📧 업체이관 (메일+문자 발송)':'🔁 재이관'}</button>${sr.status!=='대기'?`<span class="lr-s">마지막 이관: ${esc(sr.sentAt)} → ${esc((structVendor(sr.vendorKey)||{}).name||'')}</span>`:''}</div></div>`;
   const preview = structPrevOpen ? `<div class="card pad"><h3 style="margin:0 0 8px">의뢰서 미리보기 (메일 본문)</h3><div style="border:1px solid var(--border-strong);border-radius:10px;background:#fff;padding:10px;overflow:auto;max-height:520px">${structMailHtml(d)}</div></div>` : '';
-  return head+`<div class="st-wrap">`+bar+info+aggCard+attachHtml+vendorHtml+structStatusCard(d,sr)+preview+`</div>`;
+  return bar+info+aggCard+attachHtml+vendorHtml+structStatusCard(d,sr)+preview;
 }
 function structStatusCard(d,sr){
-  const stCls={'대기':'wait','이관완료':'prog','승인':'done','반려':'risk'}[sr.status]||'wait';
-  const resultBtns = (sr.status==='이관완료'||sr.status==='반려'||sr.status==='승인') ? `<button class="btn ghost sm" onclick="structSetResult('${d.id}','승인')">✅ 승인 처리</button><button class="btn ghost sm" onclick="structSetResult('${d.id}','반려')">⛔ 반려 처리</button>` : '';
+  const stCls={'대기':'wait','수신대기':'prog','완료':'done','반려':'risk'}[sr.status]||'wait';
+  const stLabel={'대기':'이관 전(대기)','수신대기':'수신 대기(회신 대기)','완료':'완료(승인서 수신)','반려':'반려'}[sr.status]||sr.status;
+  // 수신대기/반려 → 승인서 업로드·반려 / 완료 → 다음 프로세스 이관
+  let actions='';
+  if(sr.status==='수신대기' || sr.status==='반려'){
+    actions=`<label class="btn primary sm" style="cursor:pointer;margin:0">📎 구조검토 승인서 업로드<input type="file" style="display:none" onchange="structUploadApproval('${d.id}',this)"></label>`+
+      (sr.status!=='반려'?`<button class="btn ghost sm" onclick="structReject('${d.id}')">⛔ 반려 처리</button>`:'');
+  } else if(sr.status==='완료'){
+    actions = sr.nextHandedAt ? `<span class="pill done"><span class="pd"></span>✅ 다음 프로세스 이관됨 · ${esc(sr.nextHandedAt)}</span>` : `<button class="btn primary sm" onclick="structHandNext('${d.id}')">➡️ 다음 프로세스로 이관</button>`;
+  }
+  const doc = sr.approvalDoc ? `<div class="st-att" style="margin:6px 0 10px"><span>📄 승인서: ${esc(sr.approvalDoc.filename)} <span class="lr-s">· ${esc(sr.approvalDoc.uploadedAt||'')}${sr.approvalDoc.uploadedBy?' '+esc(sr.approvalDoc.uploadedBy):''}</span></span><button class="btn ghost sm" onclick="structDelApproval('${d.id}')">삭제</button></div>` : '';
   const hist=(sr.history||[]).slice().reverse();
-  const histHtml = hist.length? hist.map(h=>`<div class="st-hrow"><span class="pill ${ {이관:'prog',승인:'done',반려:'risk'}[h.action]||'wait'}"><span class="pd"></span>${esc(h.action)}</span> <span class="st-hmeta">${esc(h.at)}${h.vendor?' · '+esc(h.vendor):''}${h.note?' · '+esc(h.note):''}</span></div>`).join('') : '<div class="lr-s" style="padding:6px 2px">이관 이력이 없습니다.</div>';
-  return `<div class="card pad"><div class="st-card-h"><h3 style="margin:0">📌 이관 상태</h3><span class="pill ${stCls}"><span class="pd"></span>${esc(sr.status)}</span></div>${resultBtns?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 10px">${resultBtns}</div>`:''}${sr.result?`<div class="lr-s" style="margin-bottom:8px">검토결과: <b>${esc(sr.result)}</b> (${esc(sr.resultAt)})</div>`:''}<div class="st-hist">${histHtml}</div></div>`;
+  const histHtml = hist.length? hist.map(h=>`<div class="st-hrow"><span class="pill ${ {이관:'prog',완료:'done',다음이관:'done',반려:'risk'}[h.action]||'wait'}"><span class="pd"></span>${esc(h.action)}</span> <span class="st-hmeta">${esc(h.at)}${h.vendor?' · '+esc(h.vendor):''}${h.note?' · '+esc(h.note):''}</span></div>`).join('') : '<div class="lr-s" style="padding:6px 2px">이관 이력이 없습니다.</div>';
+  const guide = sr.status==='수신대기' ? '<div class="lr-s" style="margin:2px 0 8px">업체가 구조검토 승인서를 회신하면 파일을 업로드하세요 → 자동으로 “완료”가 되고 다음 프로세스로 이관할 수 있습니다.</div>' : '';
+  return `<div class="card pad"><div class="st-card-h"><h3 style="margin:0">📌 이관 상태</h3><span class="pill ${stCls}"><span class="pd"></span>${esc(stLabel)}</span></div>${guide}${actions?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 10px;align-items:center">${actions}</div>`:''}${doc}<div class="st-hist">${histHtml}</div></div>`;
 }
+// 승인서 업로드 → 완료 / 삭제 → 수신대기 / 다음 프로세스 이관 / 반려
+function structUploadApproval(id, input){
+  const f=(input&&input.files&&input.files[0]); if(!f) return;
+  const rd=new FileReader();
+  rd.onload=()=>{ const d=DEALS.find(x=>x.id===id); if(!d) return; const sr=getStructReview(d);
+    sr.approvalDoc={filename:f.name, size:f.size, dataUrl:rd.result, uploadedAt:verStamp(), uploadedBy:(typeof currentUser!=='undefined'&&currentUser&&currentUser.name)||'담당자'};
+    sr.status='완료'; sr.result='승인(승인서 수신)'; sr.resultAt=verStamp();
+    sr.history.push({at:verStamp(), action:'완료', note:'구조검토 승인서 업로드: '+f.name});
+    persistDeal(d); toast('구조검토 승인서 업로드 완료 — 상태: 완료'); refreshActive();
+  };
+  rd.readAsDataURL(f);
+}
+function structDelApproval(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; const sr=getStructReview(d);
+  sr.approvalDoc=null; sr.status='수신대기'; sr.result=''; sr.resultAt=''; sr.nextHandedAt='';
+  sr.history.push({at:verStamp(), action:'수정', note:'승인서 삭제 → 수신대기'}); persistDeal(d); toast('승인서를 삭제했습니다'); refreshActive(); }
+function structHandNext(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; const sr=getStructReview(d);
+  if(sr.status!=='완료'){ toast('승인서 업로드 후 이관할 수 있습니다'); return; }
+  sr.nextHandedAt=verStamp(); sr.history.push({at:verStamp(), action:'다음이관', note:'다음 프로세스로 이관'});
+  persistDeal(d); toast('다음 프로세스로 이관했습니다'); refreshActive(); }
+function structReject(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; const sr=getStructReview(d);
+  sr.status='반려'; sr.result='반려'; sr.resultAt=verStamp();
+  sr.history.push({at:verStamp(), action:'반려', note:'업체 반려 회신 — 재이관 필요'}); persistDeal(d); toast('반려 처리 — 재이관이 필요합니다'); refreshActive(); }
 function openStructConfirm(id){
   const d=DEALS.find(x=>x.id===id); if(!d) return;
   const v=structVendor(structVendorSel); if(!v){ toast('외주 업체를 선택하세요'); return; }
@@ -4666,20 +4741,13 @@ async function structDoHandover(id){
     else { const j=await r.json().catch(()=>({})); mailOk=!!(r.ok&&j.mailOk); smsOk=!!(r.ok&&j.smsOk); err=j.mailErr||j.error||''; }
   }catch(e){ if(!v.configured){ mailOk=true; smsOk=true; sim=true; } else err='메일서버 연결 실패'; }
   const sr=getStructReview(d);
-  sr.status='이관완료'; sr.vendorKey=v.key; sr.sentAt=verStamp();
+  sr.status='수신대기'; sr.vendorKey=v.key; sr.sentAt=verStamp();
   sr.mail={ok:mailOk,sim:sim,err:err}; sr.sms={ok:smsOk,sim:sim};
   sr.history.push({at:verStamp(), action:'이관', vendor:v.name, note:`메일 ${mailOk?(sim?'시뮬':'성공'):'실패'} · 문자 ${smsOk?(sim?'시뮬':'성공'):'실패'}`});
   persistDeal(d); closeStructConfirm();
   toast(`${v.name} 이관 — 메일 ${mailOk?(sim?'(시뮬)':'발송'):'실패('+(err||'오류')+')'} · 문자 ${smsOk?(sim?'(시뮬)':'발송'):'실패'}`);
   if(go){ go.disabled=false; go.textContent='발송'; }
   refreshActive();
-}
-function structSetResult(id, result){
-  const d=DEALS.find(x=>x.id===id); if(!d) return;
-  const sr=getStructReview(d);
-  sr.result=result; sr.resultAt=verStamp(); sr.status=result;
-  sr.history.push({at:verStamp(), action:result, note:'외주 회신 기록'});
-  persistDeal(d); toast(`구조검토 ${result} 처리`); refreshActive();
 }
 
 /* ---- 파생 계산(사업계획서 표/원가) ---- */
@@ -5090,7 +5158,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
-  {date:'2026-10-06', team:'설계', kind:'추가', title:'구조검토 — 외주 업체 이메일 이관 + 현장 종합 데이터 취합', body:'설계 “구조검토”를 <b>외주 업체 이관</b> 방식으로 새로 만들었습니다. 구조검토는 내부가 아니라 외부 전문업체가 수행하므로, 현장 자료를 메일로 보내고 확인요청 문자를 보내는 흐름을 그대로 담았습니다. ① <b>현장 종합 데이터</b> — 그 현장이 거쳐온 단계(접수·실계약·제안서·실측)에서 쌓인 값을 <b>자동 취합</b>해 설비사양·부지/구조조건·실측정보를 한 화면에 보여주고(각 항목에 어디서 온 값인지 <b>출처 태그</b>), 협의 버전처럼 기록이 많으면 <b>전체 기록 불러오기</b>로 펼쳐 봅니다. ② <b>업체이관</b> — 외주 2곳 중 하나를 고르고 버튼을 누르면 확인창에서 수신처를 확인한 뒤, <b>구조검토 의뢰서가 업체 담당자 이메일로</b>, “메일 보냈으니 확인·처리 부탁” <b>문자가 담당자 휴대폰으로</b> 함께 발송됩니다(도면 등 파일 첨부 가능). ③ <b>맥미니(문자중계기)가 꺼져 있어도 메일은 발송</b>됩니다(서버에서 직접 발송). ④ <b>상태 추적</b> — 대기 → 이관완료(발송일시) → 승인/반려를 기록하고, 추가 협의 시 <b>재이관</b>할 수 있습니다. 업체의 실제 연락처와 발송 계정은 보안을 위해 <b>공개 소스에 두지 않고 서버에만</b> 보관합니다(화면엔 마스킹 표시).', author:'개발'},
+  {date:'2026-10-06', team:'설계', kind:'추가', title:'구조검토 — 외주 업체 이메일 이관 + 현장 종합 데이터 취합', body:'설계 “구조검토”를 <b>외주 업체 이관</b> 방식으로 새로 만들었습니다. 구조검토는 내부가 아니라 외부 전문업체가 수행하므로, 현장 자료를 메일로 보내고 확인요청 문자를 보내는 흐름을 그대로 담았습니다. ① <b>현장 종합 데이터</b> — 그 현장이 거쳐온 단계(접수·실계약·제안서·실측)에서 쌓인 값을 <b>자동 취합</b>해 설비사양·부지/구조조건·실측정보를 한 화면에 보여주고(각 항목에 어디서 온 값인지 <b>출처 태그</b>), 협의 버전처럼 기록이 많으면 <b>전체 기록 불러오기</b>로 펼쳐 봅니다. ② <b>업체이관</b> — 외주 2곳 중 하나를 고르고 버튼을 누르면 확인창에서 수신처를 확인한 뒤, <b>구조검토 의뢰서가 업체 담당자 이메일로</b>, “메일 보냈으니 확인·처리 부탁” <b>문자가 담당자 휴대폰으로</b> 함께 발송됩니다(도면 등 파일 첨부 가능). ③ <b>맥미니(문자중계기)가 꺼져 있어도 메일은 발송</b>됩니다(서버에서 직접 발송). ④ 좌측 메뉴는 <b>“구조검토” 하나</b>이고 안에 <b>구조검토 현황 / 구조검토 이관</b> 두 탭으로 나뉩니다. <b>구조검토 현황</b>은 모든 현장을 <b>이관 전(대기) · 수신 대기(이관 후 회신 대기) · 이관 완료</b> 세 묶음으로 보여주고, 행을 누르면 그 현장의 이관 화면으로 이동합니다. ⑤ <b>승인서 수신 → 다음 프로세스 이관</b> — 업체가 구조검토 <b>승인서</b>를 회신하면 담당자가 그 파일을 <b>업로드</b>하고(상태가 자동으로 “완료”로 바뀜), <b>“다음 프로세스로 이관”</b> 버튼으로 다음 단계로 넘깁니다. 업체가 반려하면 <b>반려 처리</b> 후 <b>재이관</b>합니다. 업체의 실제 연락처와 발송 계정은 보안을 위해 <b>공개 소스에 두지 않고 서버에만</b> 보관합니다(화면엔 마스킹 표시).', author:'개발'},
   {date:'2026-10-06', team:'영업', kind:'수정', title:'제안서 화면 시인성 개선 (고급 가정값 글자 · 사업주 정보 분리)', body:'영업 “제안서” 화면의 두 가지 시인성 문제를 바로잡았습니다. ① <b>“고급 · 발전/금융 가정값”</b> 토글 글자가 <b>다크 모드</b>에서 거의 보이지 않던 것을 테마에 맞는 색(다크=골드)으로 바꿔 선명하게 했습니다. ② <b>“견적 설정”</b>과 <b>“사업주(신청인) 정보”</b>의 경계가 희미한 점선뿐이라 구분이 어려웠던 것을, 사업주 정보를 <b>테두리·배경이 있는 별도 박스</b>(좌측 골드 포인트)로 분리해 두 영역이 뚜렷이 구분되도록 했습니다.', author:'개발'},
   {date:'2026-10-06', team:'영업', kind:'추가', title:'제안서 — 견적 “원가 기준(프리셋)” 선택', body:'제안서 <b>견적 설정</b>에서 <b>원가 기준(프리셋)</b>을 골라 그 단가로 견적을 낼 수 있게 했습니다. <b>원가표</b>에 저장해 둔 단가 프리셋(최대 5개) 중 하나를 드롭다운에서 선택하면, 그 프리셋의 단가·가정값으로 <b>미리보기와 저장(버전)이 계산</b>됩니다. 선택은 <b>그 견적에만</b> 적용되고(전역 원가표는 바뀌지 않아 다른 견적에 영향 없음), 어떤 기준으로 냈는지 <b>협의 이력에 “단가:○○”</b>로 남아 추적됩니다. 편집으로 과거 버전을 불러오면 그때 쓴 프리셋이 자동 선택됩니다. 프리셋이 없으면 “현재 원가표 기준”으로 계산되며, 드롭다운 옆 <b>원가표</b> 링크에서 프리셋을 저장·관리할 수 있습니다.', author:'개발'},
   {date:'2026-10-06', team:'영업', kind:'추가', title:'제안서 — 협의 버전 관리 + “확정본만” 설계 이관', body:'고객과 협의하며 제안서가 여러 번 수정되는 과정을 그대로 담고, <b>고객과 합의된 최종 확정본만</b> 설계로 넘어가도록 바꿨습니다. 설계가 아직 확정 안 된 안으로 재작업하는 일을 막기 위한 것입니다. ① 영업 “제안서”에서 저장할 때마다 <b>협의 버전</b>(v1·v2·v3…)으로 쌓이고(덮어쓰기 아님), 버전마다 <b>메모</b>(예: 1차 제안·할인 반영·고객 최종 합의)와 총사업비가 남습니다. ② 각 현장 카드의 <b>협의 이력</b>에서 버전별 <b>📄 제안서 보기</b>·<b>✎ 편집</b>(불러와 새 버전으로)이 가능하고, 합의된 버전을 <b>⭐ 최종 확정</b>으로 지정합니다(사업주 성명·상호·전화가 입력된 버전만 확정 가능). ③ <b>공무팀 이관</b> 버튼은 <b>확정본이 지정돼야</b> 활성화되며, <b>확정본 스냅샷만</b> 설계로 전달됩니다. ④ 설계 “신규 현장 접수”에는 <b>✅ 영업 확정본 vN</b> 태그가 표시됩니다. ⑤ 이관 후 추가 협의로 <b>다른 버전을 확정하면</b> 버튼이 <b>“🔁 변경된 확정본 재이관”</b>으로 바뀌고, 재이관 시 설계에 <b>변경 알림(설비용량·총사업비 전/후)</b> 배너가 뜨며 신규접수로 되돌려 재검토하게 합니다. 기존 제안서는 자동으로 v1로 이어집니다.', author:'개발'},
@@ -5689,8 +5757,7 @@ const MENUS = {
     {group:'실측'},
     {wf:'d-survey', label:'현장 실측', ic:'camera'},
     {group:'구조검토'},
-    {stage:'struct', label:'구조검토 현황', ic:'cube'},
-    {sub:'d-check', label:'구조검토 이관', ic:'doc'},
+    {sub:'d-check', label:'구조검토', ic:'cube'},
   ]},
   construction:{title:'시공 세부업무', items:[
     {board:'시공', label:'시공 현황판', ic:'grid'},
