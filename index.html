@@ -4985,7 +4985,7 @@ function renderSalesQuote(){
       <div>${_lbl('kW당 설치단가 (원)')}<div style="display:flex;gap:5px"><input class="tinput" id="qx-unit" type="number" oninput="recomputeQuotePreview()" style="flex:1;min-width:0"><button class="btn ghost sm" style="flex:none;padding:4px 7px" title="표준단가로" onclick="qxResetUnit()">🔄</button></div></div>
     </div>
     <details style="margin-top:10px">
-      <summary style="cursor:pointer;font-size:12px;color:var(--accent-ink);font-weight:700">고급 · 발전/금융 가정값</summary>
+      <summary style="cursor:pointer;font-size:12px;color:var(--accent);font-weight:700">고급 · 발전/금융 가정값</summary>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:8px">
         ${num('적용단가 (원/kWh)','qx-apply',String(ASSUMP.applyNoji))}
         ${num('발전시간 (h/일)','qx-hours',String(ASSUMP.hours))}
