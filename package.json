@@ -1,0 +1,9 @@
+{
+  "name": "farmsolar-worknetwork",
+  "version": "1.0.0",
+  "private": true,
+  "description": "해피솔라그룹 파주지사 업무네트웍 — Vercel serverless (proxy/sms/struct-mail)",
+  "dependencies": {
+    "nodemailer": "^6.9.14"
+  }
+}
