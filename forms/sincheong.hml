@@ -1,0 +1,2517 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE HWPML>
+<HWPML Version="2.8" Style="embed" SubVersion="8.0.0.0">
+<HEAD>
+<DOCSUMMARY/>
+<DOCSETTING>
+<BEGINNUMBER Page="1" Footnote="1" Endnote="1" Picture="1" Table="1" Equation="1"/>
+<CARETPOS/>
+</DOCSETTING>
+<MAPPINGTABLE>
+<BINDATALIST Count="1">
+<BINITEM Type="Embedding" Format="png" BinData="1"/>
+</BINDATALIST>
+<FACENAMELIST>
+<FONTFACE Lang="Hangul" Count="4">
+<FONT Id="0" Type="ttf" Name="맑은 고딕">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+<FONT Id="1" Type="ttf" Name="굴림">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+<FONT Id="2" Type="ttf" Name="바탕">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+<FONT Id="3" Type="ttf" Name="돋움">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+</FONTFACE>
+<FONTFACE Lang="Latin" Count="4">
+<FONT Id="0" Type="ttf" Name="맑은 고딕">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+<FONT Id="1" Type="ttf" Name="굴림">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+<FONT Id="2" Type="ttf" Name="바탕">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+<FONT Id="3" Type="ttf" Name="돋움">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+</FONTFACE>
+<FONTFACE Lang="Hanja" Count="4">
+<FONT Id="0" Type="ttf" Name="맑은 고딕">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+<FONT Id="1" Type="ttf" Name="굴림">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+<FONT Id="2" Type="ttf" Name="바탕">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+<FONT Id="3" Type="ttf" Name="돋움">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+</FONTFACE>
+<FONTFACE Lang="Japanese" Count="4">
+<FONT Id="0" Type="ttf" Name="맑은 고딕">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+<FONT Id="1" Type="ttf" Name="굴림">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+<FONT Id="2" Type="ttf" Name="바탕">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+<FONT Id="3" Type="ttf" Name="돋움">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+</FONTFACE>
+<FONTFACE Lang="Other" Count="4">
+<FONT Id="0" Type="ttf" Name="맑은 고딕">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+<FONT Id="1" Type="ttf" Name="굴림">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+<FONT Id="2" Type="ttf" Name="바탕">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+<FONT Id="3" Type="ttf" Name="돋움">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+</FONTFACE>
+<FONTFACE Lang="Symbol" Count="4">
+<FONT Id="0" Type="ttf" Name="맑은 고딕">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+<FONT Id="1" Type="ttf" Name="굴림">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+<FONT Id="2" Type="ttf" Name="바탕">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+<FONT Id="3" Type="ttf" Name="돋움">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+</FONTFACE>
+<FONTFACE Lang="User" Count="4">
+<FONT Id="0" Type="ttf" Name="맑은 고딕">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+<FONT Id="1" Type="ttf" Name="굴림">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+<FONT Id="2" Type="ttf" Name="바탕">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+<FONT Id="3" Type="ttf" Name="돋움">
+<TYPEINFO FamilyType="2" SerifStyle="11" Weight="6" Proportion="0" Contrast="0" StrokeVariation="1" ArmStyle="1" LetterForm="1" MidLine="1" XHeight="1"/>
+</FONT>
+</FONTFACE>
+</FACENAMELIST>
+<BORDERFILLLIST Count="7">
+<BORDERFILL ThreeD="false" Shadow="false" Slash="0" BackSlash="0" CrookedSlash="0" CounterSlash="0" CounterBackSlash="0" BreakCellSeparateLine="0" Id="1">
+<LEFTBORDER Type="None" Width="0.1mm" Color="0"/>
+<RIGHTBORDER Type="None" Width="0.1mm" Color="0"/>
+<TOPBORDER Type="None" Width="0.1mm" Color="0"/>
+<BOTTOMBORDER Type="None" Width="0.1mm" Color="0"/>
+<DIAGONAL Type="None" Width="0.1mm" Color="0"/>
+</BORDERFILL>
+<BORDERFILL ThreeD="false" Shadow="false" Slash="0" BackSlash="0" CrookedSlash="0" CounterSlash="0" CounterBackSlash="0" BreakCellSeparateLine="0" Id="2">
+<LEFTBORDER Type="Solid" Width="0.12mm" Color="0"/>
+<RIGHTBORDER Type="Solid" Width="0.12mm" Color="0"/>
+<TOPBORDER Type="Solid" Width="0.12mm" Color="0"/>
+<BOTTOMBORDER Type="Solid" Width="0.12mm" Color="0"/>
+<DIAGONAL Type="Solid" Width="0.12mm" Color="0"/>
+</BORDERFILL>
+<BORDERFILL ThreeD="false" Shadow="false" Slash="0" BackSlash="0" CrookedSlash="0" CounterSlash="0" CounterBackSlash="0" BreakCellSeparateLine="0" Id="3">
+<LEFTBORDER Type="Solid" Width="0.25mm" Color="16777215"/>
+<RIGHTBORDER Type="Solid" Width="0.25mm" Color="0"/>
+<TOPBORDER Type="Solid" Width="0.25mm" Color="0"/>
+<BOTTOMBORDER Type="Solid" Width="0.25mm" Color="0"/>
+<DIAGONAL Type="Solid" Width="0.12mm" Color="0"/>
+<FILLBRUSH>
+<WINDOWBRUSH FaceColor="16777215" Alpha="0"/>
+</FILLBRUSH>
+</BORDERFILL>
+<BORDERFILL ThreeD="false" Shadow="false" Slash="0" BackSlash="0" CrookedSlash="0" CounterSlash="0" CounterBackSlash="0" BreakCellSeparateLine="0" Id="4">
+<LEFTBORDER Type="Solid" Width="0.25mm" Color="0"/>
+<RIGHTBORDER Type="Solid" Width="0.25mm" Color="0"/>
+<TOPBORDER Type="Solid" Width="0.25mm" Color="0"/>
+<BOTTOMBORDER Type="Solid" Width="0.25mm" Color="0"/>
+<DIAGONAL Type="Solid" Width="0.12mm" Color="0"/>
+<FILLBRUSH>
+<WINDOWBRUSH FaceColor="16777215" Alpha="0"/>
+</FILLBRUSH>
+</BORDERFILL>
+<BORDERFILL ThreeD="false" Shadow="false" Slash="0" BackSlash="0" CrookedSlash="0" CounterSlash="0" CounterBackSlash="0" BreakCellSeparateLine="0" Id="5">
+<LEFTBORDER Type="Solid" Width="0.25mm" Color="11184810"/>
+<RIGHTBORDER Type="Solid" Width="0.25mm" Color="16777215"/>
+<TOPBORDER Type="Solid" Width="0.25mm" Color="0"/>
+<BOTTOMBORDER Type="Solid" Width="0.25mm" Color="0"/>
+<DIAGONAL Type="Solid" Width="0.12mm" Color="0"/>
+<FILLBRUSH>
+<WINDOWBRUSH FaceColor="16777215" Alpha="0"/>
+</FILLBRUSH>
+</BORDERFILL>
+<BORDERFILL ThreeD="false" Shadow="false" Slash="0" BackSlash="0" CrookedSlash="0" CounterSlash="0" CounterBackSlash="0" BreakCellSeparateLine="0" Id="6">
+<LEFTBORDER Type="Solid" Width="0.25mm" Color="0"/>
+<RIGHTBORDER Type="Solid" Width="0.25mm" Color="16777215"/>
+<TOPBORDER Type="Solid" Width="0.25mm" Color="0"/>
+<BOTTOMBORDER Type="Solid" Width="0.25mm" Color="0"/>
+<DIAGONAL Type="Solid" Width="0.12mm" Color="0"/>
+<FILLBRUSH>
+<WINDOWBRUSH FaceColor="16777215" Alpha="0"/>
+</FILLBRUSH>
+</BORDERFILL>
+<BORDERFILL ThreeD="false" Shadow="false" Slash="0" BackSlash="0" CrookedSlash="0" CounterSlash="0" CounterBackSlash="0" BreakCellSeparateLine="0" Id="7">
+<LEFTBORDER Type="Solid" Width="0.25mm" Color="11184810"/>
+<RIGHTBORDER Type="Solid" Width="0.25mm" Color="11184810"/>
+<TOPBORDER Type="Solid" Width="0.25mm" Color="0"/>
+<BOTTOMBORDER Type="Solid" Width="0.25mm" Color="0"/>
+<DIAGONAL Type="Solid" Width="0.12mm" Color="0"/>
+<FILLBRUSH>
+<WINDOWBRUSH FaceColor="11711154" Alpha="0"/>
+</FILLBRUSH>
+</BORDERFILL>
+</BORDERFILLLIST>
+<CHARSHAPELIST Count="30">
+<CHARSHAPE Height="975" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="0">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="900" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="1">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="900" TextColor="16711680" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="2">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="1500" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="3">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<BOLD/>
+</CHARSHAPE>
+<CHARSHAPE Height="900" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="4">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<BOLD/>
+</CHARSHAPE>
+<CHARSHAPE Height="900" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="5">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="900" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="6">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="900" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="7">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="900" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="8">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="900" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="9">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="900" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="10">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="900" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="11">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="900" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="12">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="900" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="13">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="900" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="14">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="900" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="15">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="900" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="16">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="900" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="17">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="1200" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="18">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<BOLD/>
+</CHARSHAPE>
+<CHARSHAPE Height="900" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="19">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="800" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="20">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="900" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="21">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="900" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="22">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="900" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="23">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="900" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="24">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="900" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="25">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="1100" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="26">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="900" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="27">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="975" TextColor="16711680" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="28">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+<CHARSHAPE Height="900" TextColor="16711680" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="29">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE>
+</CHARSHAPELIST>
+<PARASHAPELIST Count="6">
+<PARASHAPE Align="Justify" VertAlign="Baseline" HeadingType="None" Level="0" BreakLatinWord="KeepWord" BreakNonLatinWord="true" Condense="0" WindowOrphan="false" KeepWithNext="false" KeepLines="false" PageBreakBefore="false" FontLineHeight="false" SnapToGrid="true" LineWrap="Break" AutoSpaceEAsianEng="true" AutoSpaceEAsianNum="true" Id="0">
+<PARAMARGIN Indent="0" Left="0" Right="0" Prev="0" Mext="0" LineSpacingType="Percent" LineSpacing="130"/>
+</PARASHAPE>
+<PARASHAPE Align="Center" VertAlign="Center" HeadingType="None" Level="0" BreakLatinWord="KeepWord" BreakNonLatinWord="true" Condense="0" WindowOrphan="false" KeepWithNext="false" KeepLines="false" PageBreakBefore="false" FontLineHeight="false" SnapToGrid="true" LineWrap="Keep" AutoSpaceEAsianEng="true" AutoSpaceEAsianNum="true" Id="1">
+<PARAMARGIN Indent="0" Left="0" Right="0" Prev="0" Mext="0" LineSpacingType="Percent" LineSpacing="130"/>
+</PARASHAPE>
+<PARASHAPE Align="Left" VertAlign="Center" HeadingType="None" Level="0" BreakLatinWord="KeepWord" BreakNonLatinWord="true" Condense="0" WindowOrphan="false" KeepWithNext="false" KeepLines="false" PageBreakBefore="false" FontLineHeight="false" SnapToGrid="true" LineWrap="Keep" AutoSpaceEAsianEng="true" AutoSpaceEAsianNum="true" Id="2">
+<PARAMARGIN Indent="0" Left="0" Right="0" Prev="0" Mext="0" LineSpacingType="Percent" LineSpacing="130"/>
+</PARASHAPE>
+<PARASHAPE Align="Center" VertAlign="Baseline" HeadingType="None" Level="0" BreakLatinWord="KeepWord" BreakNonLatinWord="true" Condense="0" WindowOrphan="false" KeepWithNext="false" KeepLines="false" PageBreakBefore="false" FontLineHeight="false" SnapToGrid="true" LineWrap="Break" AutoSpaceEAsianEng="true" AutoSpaceEAsianNum="true" Id="3">
+<PARAMARGIN Indent="0" Left="0" Right="0" Prev="0" Mext="0" LineSpacingType="Percent" LineSpacing="130"/>
+</PARASHAPE>
+<PARASHAPE Align="Center" VertAlign="Center" HeadingType="None" Level="0" BreakLatinWord="KeepWord" BreakNonLatinWord="true" Condense="0" WindowOrphan="false" KeepWithNext="false" KeepLines="false" PageBreakBefore="false" FontLineHeight="false" SnapToGrid="true" LineWrap="Break" AutoSpaceEAsianEng="true" AutoSpaceEAsianNum="true" Id="4">
+<PARAMARGIN Indent="0" Left="0" Right="0" Prev="0" Mext="0" LineSpacingType="Percent" LineSpacing="130"/>
+</PARASHAPE>
+<PARASHAPE Align="Right" VertAlign="Center" HeadingType="None" Level="0" BreakLatinWord="KeepWord" BreakNonLatinWord="true" Condense="0" WindowOrphan="false" KeepWithNext="false" KeepLines="false" PageBreakBefore="false" FontLineHeight="false" SnapToGrid="true" LineWrap="Keep" AutoSpaceEAsianEng="true" AutoSpaceEAsianNum="true" Id="5">
+<PARAMARGIN Indent="0" Left="0" Right="0" Prev="0" Mext="0" LineSpacingType="Percent" LineSpacing="130"/>
+</PARASHAPE>
+</PARASHAPELIST>
+</MAPPINGTABLE>
+</HEAD>
+<BODY>
+<SECTION Id="0">
+<P>
+<TEXT CharShape="0">
+<SECDEF TabStop="8000">
+<PAGEDEF Landscape="0" Width="59528" Height="84188" GutterType="LeftOnly">
+<PAGEMARGIN Left="0" Right="0" Top="0" Bottom="0" Header="0" Footer="0" Gutter="0"/>
+</PAGEDEF>
+</SECDEF>
+<COLDEF Type="Newspaper" Count="1" Layout="Left" SameSize="true" SameGap="0"/>
+<RECTANGLE X0="0" Y0="0" X1="1500" Y1="0" X2="1500" Y2="1275" X3="0" Y3="1275">
+<SHAPEOBJECT InstId="0">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="1500" Height="1275"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="3484" HorzOffset="3334" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<DRAWTEXT Editable="false">
+<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR>■</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</DRAWTEXT>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="1500" OriHeight="1275">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+<RECTANGLE X0="0" Y0="0" X1="15525" Y1="0" X2="15525" Y2="1275" X3="0" Y3="1275">
+<SHAPEOBJECT InstId="1">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="15525" Height="1275"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="3484" HorzOffset="4984" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<DRAWTEXT Editable="false">
+<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR>전기사업법 시행규칙 [별지 제1호서식]</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</DRAWTEXT>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="15525" OriHeight="1275">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+<RECTANGLE X0="0" Y0="0" X1="7799" Y1="0" X2="7799" Y2="1275" X3="0" Y3="1275">
+<SHAPEOBJECT InstId="2">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="7799" Height="1275"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="3484" HorzOffset="20809" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<DRAWTEXT Editable="false">
+<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="2">
+<CHAR>&lt;개정 2022.01.21&gt;</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</DRAWTEXT>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="7799" OriHeight="1275">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+<RECTANGLE X0="0" Y0="0" X1="14099" Y1="0" X2="14099" Y2="1875" X3="0" Y3="1875">
+<SHAPEOBJECT InstId="3">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="14099" Height="1875"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="4685" HorzOffset="25833" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<DRAWTEXT Editable="false">
+<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="3">
+<CHAR>전기사업 허가신청서</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</DRAWTEXT>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="14099" OriHeight="1875">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+<RECTANGLE X0="0" Y0="0" X1="1500" Y1="0" X2="1500" Y2="1349" X3="0" Y3="1349">
+<SHAPEOBJECT InstId="4">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="1500" Height="1349"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="6634" HorzOffset="3259" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<DRAWTEXT Editable="false">
+<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR>※</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</DRAWTEXT>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="1500" OriHeight="1349">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+<RECTANGLE X0="0" Y0="0" X1="20699" Y1="0" X2="20699" Y2="1349" X3="0" Y3="1349">
+<SHAPEOBJECT InstId="5">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="20699" Height="1349"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="6634" HorzOffset="4833" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<DRAWTEXT Editable="false">
+<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR>바탕색이 어두운 난은 신청인이 작성하지 않습니다.</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</DRAWTEXT>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="20699" OriHeight="1349">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+<RECTANGLE X0="0" Y0="0" X1="52650" Y1="0" X2="52650" Y2="1875" X3="0" Y3="1875">
+<SHAPEOBJECT InstId="6" ZOrder="0">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="52650" Height="1875"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="8284" HorzOffset="3484" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<FILLBRUSH>
+<WINDOWBRUSH FaceColor="11711154" Alpha="0"/>
+</FILLBRUSH>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="52650" OriHeight="1875">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+<LINE IsReverseHV="false" StartX="0" StartY="0" EndX="52650" EndY="1">
+<SHAPEOBJECT InstId="7" TextWrap="InFrontOfText">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="52650" Height="1"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="8284" HorzOffset="3484" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="83.33325" Style="Solid" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal" Color="0" Alpha="0"/>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="52650" OriHeight="1">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</LINE>
+<LINE IsReverseHV="false" StartX="0" StartY="0" EndX="52650" EndY="1">
+<SHAPEOBJECT InstId="8" TextWrap="InFrontOfText">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="52650" Height="1"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="10159" HorzOffset="3484" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="83.33325" Style="Solid" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal" Color="0" Alpha="0"/>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="52650" OriHeight="1">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</LINE>
+<RECTANGLE X0="0" Y0="0" X1="4275" Y1="0" X2="4275" Y2="1875" X3="0" Y3="1875">
+<SHAPEOBJECT InstId="9">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="4275" Height="1875"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="8367" HorzOffset="3484" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<DRAWTEXT Editable="false">
+<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="1">
+<CHAR>접수번호</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</DRAWTEXT>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="4275" OriHeight="1875">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+<RECTANGLE X0="0" Y0="0" X1="4275" Y1="0" X2="4275" Y2="1875" X3="0" Y3="1875">
+<SHAPEOBJECT InstId="10">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="4275" Height="1875"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="8367" HorzOffset="20659" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<DRAWTEXT Editable="false">
+<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="1">
+<CHAR>접수일자</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</DRAWTEXT>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="4275" OriHeight="1875">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+<RECTANGLE X0="0" Y0="0" X1="4500" Y1="0" X2="4500" Y2="1875" X3="0" Y3="1875">
+<SHAPEOBJECT InstId="11">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="4500" Height="1875"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="8367" HorzOffset="36634" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<DRAWTEXT Editable="false">
+<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="1">
+<CHAR>처리기간</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</DRAWTEXT>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="4500" OriHeight="1875">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+<RECTANGLE X0="0" Y0="0" X1="2924" Y1="0" X2="2924" Y2="1875" X3="0" Y3="1875">
+<SHAPEOBJECT InstId="12">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="2924" Height="1875"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="8367" HorzOffset="50583" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<DRAWTEXT Editable="false">
+<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="1">
+<CHAR>60일</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</DRAWTEXT>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="2924" OriHeight="1875">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="3" ColCount="3">
+<SHAPEOBJECT InstId="13">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="52650" Height="7608"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="10458" HorzOffset="3484" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="3" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="6329" Height="7500" BorderFill="3">
+<PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="5">
+<RECTANGLE X0="0" Y0="0" X1="2926" Y1="0" X2="2926" Y2="1333" X3="0" Y3="1333">
+<SHAPEOBJECT InstId="14">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="2926" Height="1333"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="13595" HorzOffset="5221" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<DRAWTEXT Editable="false">
+<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="4">
+<CHAR>신청인</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</DRAWTEXT>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="2926" OriHeight="1333">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="1" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="23134" Height="2850" BorderFill="4">
+<PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="6">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="1" ColCount="4">
+<SHAPEOBJECT InstId="15">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="23025" Height="2775"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="10542" HorzOffset="9885" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="6300" Height="2775">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="4">
+<CHAR>대표자 성명</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="1" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="1800" Height="2775">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="2" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="14100" Height="2775">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="4">
+<TEXT CharShape="29">
+<CHAR>§FULLNAME§</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="3" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="false" Protect="false" Editable="false" Dirty="false" Width="825" Height="2775">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="2" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="23187" Height="2850" BorderFill="5">
+<PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="7">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="1" ColCount="4">
+<SHAPEOBJECT InstId="16">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="23099" Height="2775"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="10542" HorzOffset="32982" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="7425" Height="2775">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="0">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="3" ColCount="1">
+<SHAPEOBJECT InstId="17">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="7125" Height="2775"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="10542" HorzOffset="32982" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="7125" Height="1350">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="4">
+<CHAR>주민등록번호</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+<ROW>
+<CELL ColAddr="0" RowAddr="1" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="7125" Height="1350">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="4">
+<CHAR>(법인등록번호)</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+<ROW>
+<CELL ColAddr="0" RowAddr="2" ColSpan="1" RowSpan="1" Header="false" HasMargin="false" Protect="false" Editable="false" Dirty="false" Width="7125" Height="75">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="1" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="1425" Height="2775">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="2" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="1500" Height="2775">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="3" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="false" Protect="false" Editable="false" Dirty="false" Width="13875" Height="2775">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="28">
+<CHAR>§IDNO§</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+<ROW>
+<CELL ColAddr="1" RowAddr="1" ColSpan="2" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="46321" Height="2325" BorderFill="6">
+<PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="8">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="1" ColCount="4">
+<SHAPEOBJECT InstId="18">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="46199" Height="2250"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="13400" HorzOffset="9885" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="6300" Height="2250">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="4">
+<CHAR>주소</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="1" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="1800" Height="2250">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="2" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="1500" Height="2250">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="3" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="false" Protect="false" Editable="false" Dirty="false" Width="37725" Height="2250">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="28">
+<CHAR>§ADDR§</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+<ROW>
+<CELL ColAddr="1" RowAddr="2" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="23134" Height="2325" BorderFill="4">
+<PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="9">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="1" ColCount="4">
+<SHAPEOBJECT InstId="19">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="23025" Height="2250"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="15733" HorzOffset="9885" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="6300" Height="2250">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="4">
+<CHAR>상호</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="1" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="1800" Height="2250">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="2" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="14100" Height="2250">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="4">
+<TEXT CharShape="29">
+<CHAR>§BIZNAME§</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="3" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="false" Protect="false" Editable="false" Dirty="false" Width="825" Height="2250">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="2" RowAddr="2" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="23187" Height="2325" BorderFill="5">
+<PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="10">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="1" ColCount="4">
+<SHAPEOBJECT InstId="20">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="23099" Height="2250"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="15733" HorzOffset="32982" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="7800" Height="2250">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="4">
+<CHAR>전화번호</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="1" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="1800" Height="2250">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="2" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="1500" Height="2250">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="3" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="false" Protect="false" Editable="false" Dirty="false" Width="13125" Height="2250">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="28">
+<CHAR>§PHONE§</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+</TABLE>
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="6" ColCount="2">
+<SHAPEOBJECT InstId="21">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="52650" Height="11849"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="18333" HorzOffset="3484" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="6" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="6318" Height="11775" BorderFill="3">
+<PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="11">
+<RECTANGLE X0="0" Y0="0" X1="3901" Y1="0" X2="3901" Y2="1333" X3="0" Y3="1333">
+<SHAPEOBJECT InstId="22">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="3901" Height="1333"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="23591" HorzOffset="4729" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<DRAWTEXT Editable="false">
+<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="4">
+<CHAR>신청내용</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</DRAWTEXT>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="3901" OriHeight="1333">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="1" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="46332" Height="1950" BorderFill="6">
+<PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="12">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="1" ColCount="4">
+<SHAPEOBJECT InstId="23">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="46199" Height="1875"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="18418" HorzOffset="9875" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="10425" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="4">
+<CHAR>사업의 종류 발전사업</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="1" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="1050" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="2" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="5850" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR>(태양광발전)</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="3" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="false" Protect="false" Editable="false" Dirty="false" Width="28875" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+<ROW>
+<CELL ColAddr="1" RowAddr="1" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="46332" Height="1950" BorderFill="6">
+<PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="13">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="1" ColCount="5">
+<SHAPEOBJECT InstId="24">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="46199" Height="1875"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="20379" HorzOffset="9875" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="4875" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="4">
+<CHAR>설치장소</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="1" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="2850" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="2" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="1500" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="3" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="1500" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="4" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="false" Protect="false" Editable="false" Dirty="false" Width="37350" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="28">
+<CHAR>§PLACE§</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+<ROW>
+<CELL ColAddr="1" RowAddr="2" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="46332" Height="1950" BorderFill="6">
+<PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="14">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="1" ColCount="2">
+<SHAPEOBJECT InstId="25">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="46199" Height="1875"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="22340" HorzOffset="9875" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="14700" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="4">
+<CHAR>사업구역 또는 특정한 공급구역</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="1" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="false" Protect="false" Editable="false" Dirty="false" Width="31500" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+<ROW>
+<CELL ColAddr="1" RowAddr="3" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="46332" Height="1950" BorderFill="6">
+<PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="15">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="1" ColCount="2">
+<SHAPEOBJECT InstId="26">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="46199" Height="1875"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="24301" HorzOffset="9875" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="15675" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="4">
+<CHAR>전기사용업 전기설비에 관한 사항</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="1" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="false" Protect="false" Editable="false" Dirty="false" Width="30525" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+<ROW>
+<CELL ColAddr="1" RowAddr="4" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="46332" Height="1950" BorderFill="6">
+<PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="16">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="1" ColCount="12">
+<SHAPEOBJECT InstId="27">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="46199" Height="1875"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="26262" HorzOffset="9875" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="7800" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="4">
+<CHAR>원동력의 종류 : </CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="1" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="4050" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR>태양광</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="2" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="6000" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="5">
+<TEXT CharShape="4">
+<CHAR>설비용량 : </CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="3" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="1500" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="29">
+<CHAR>§CAPN§</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="4" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="1875" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR>KW</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="5" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="5625" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="5">
+<TEXT CharShape="4">
+<CHAR>공급전압 :</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="6" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="2325" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR>380</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="7" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="1800" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR>V</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="8" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="4650" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="5">
+<TEXT CharShape="4">
+<CHAR>주파수 : </CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="9" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="1725" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR>60</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="10" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="1500" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR>Hz</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="11" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="false" Protect="false" Editable="false" Dirty="false" Width="8100" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+<ROW>
+<CELL ColAddr="1" RowAddr="5" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="46332" Height="1950" BorderFill="6">
+<PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="17">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="1" ColCount="4">
+<SHAPEOBJECT InstId="28">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="46199" Height="1875"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="28223" HorzOffset="9875" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="12300" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR>사업에 필요한 준비기간 : </CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="1" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="1050" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="2" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="9600" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR>허가일로부터 18개월</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="3" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="false" Protect="false" Editable="false" Dirty="false" Width="23250" Height="1875">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+</TABLE>
+<LINE IsReverseHV="false" StartX="0" StartY="0" EndX="52650" EndY="1">
+<SHAPEOBJECT InstId="29" TextWrap="InFrontOfText">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="52650" Height="1"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="40458" HorzOffset="3484" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="166.6665" Style="Solid" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal" Color="9671571" Alpha="0"/>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="52650" OriHeight="1">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</LINE>
+<RECTANGLE X0="0" Y0="0" X1="50025" Y1="0" X2="50025" Y2="2174" X3="0" Y3="2174">
+<SHAPEOBJECT InstId="30">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="50025" Height="2174"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="30484" HorzOffset="4609" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<DRAWTEXT Editable="false">
+<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR>「전기사업법」 제7조제1항 및 같은 법 시행규칙 제4조에 따라 위와 같이 전기사업의 허가를 신청합니다.</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</DRAWTEXT>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="50025" OriHeight="2174">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+<RECTANGLE X0="0" Y0="0" X1="7949" Y1="0" X2="7949" Y2="1349" X3="0" Y3="1349">
+<SHAPEOBJECT InstId="31">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="7949" Height="1349"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="33033" HorzOffset="46684" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<DRAWTEXT Editable="false">
+<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR>§DATE§</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</DRAWTEXT>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="7949" OriHeight="1349">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+<RECTANGLE X0="0" Y0="0" X1="4275" Y1="0" X2="4275" Y2="1424" X3="0" Y3="1424">
+<SHAPEOBJECT InstId="32">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="4275" Height="1424"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="35358" HorzOffset="31083" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<DRAWTEXT Editable="false">
+<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="0">
+<CHAR>신청인 : </CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</DRAWTEXT>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="4275" OriHeight="1424">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+<RECTANGLE X0="0" Y0="0" X1="12000" Y1="0" X2="12000" Y2="1424" X3="0" Y3="1424">
+<SHAPEOBJECT InstId="33">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="12000" Height="1424"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="35358" HorzOffset="35659" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<DRAWTEXT Editable="false">
+<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
+<P ParaShape="4">
+<TEXT CharShape="28">
+<CHAR>§FULLNAME§</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</DRAWTEXT>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="12000" OriHeight="1424">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+<RECTANGLE X0="0" Y0="0" X1="6674" Y1="0" X2="6674" Y2="1424" X3="0" Y3="1424">
+<SHAPEOBJECT InstId="34">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="6674" Height="1424"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="35358" HorzOffset="47958" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<DRAWTEXT Editable="false">
+<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="0">
+<CHAR>(서명 또는 인)</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</DRAWTEXT>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="6674" OriHeight="1424">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+<RECTANGLE X0="0" Y0="0" X1="15525" Y1="0" X2="15525" Y2="1574" X3="0" Y3="1574">
+<SHAPEOBJECT InstId="35">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="15525" Height="1574"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="37983" HorzOffset="4609" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<DRAWTEXT Editable="false">
+<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="18">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+</DRAWTEXT>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="15525" OriHeight="1574">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+<RECTANGLE X0="0" Y0="0" X1="5025" Y1="0" X2="5025" Y2="1275" X3="0" Y3="1275">
+<SHAPEOBJECT InstId="36">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="5025" Height="1275"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="38283" HorzOffset="20434" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<DRAWTEXT Editable="false">
+<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR>귀하</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</DRAWTEXT>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="5025" OriHeight="1275">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="3" ColCount="3">
+<SHAPEOBJECT InstId="37">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="52650" Height="21250"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="40759" HorzOffset="3484" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="8639" Height="15075" BorderFill="3">
+<PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="19">
+<RECTANGLE X0="0" Y0="0" X1="8549" Y1="0" X2="8549" Y2="15000" X3="0" Y3="15000">
+<SHAPEOBJECT InstId="38">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="8549" Height="15000"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="40842" HorzOffset="3568" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<DRAWTEXT Editable="false">
+<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR>첨부서류</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</DRAWTEXT>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="8549" OriHeight="15000">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="1" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="35371" Height="15075" BorderFill="4">
+<PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="21">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="12" ColCount="1">
+<SHAPEOBJECT InstId="39">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="35250" Height="15000"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="40842" HorzOffset="12193" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="35250" Height="1350">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="0">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="1" ColCount="2">
+<SHAPEOBJECT InstId="40">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="35250" Height="1199"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="40842" HorzOffset="12193" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="33300" Height="1200">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="20">
+<CHAR>1. 「전기사업법 시행규칙」 별표 1의 작성방법에 따라 작성한 사업계획서(별표 1의2에</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="1" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="false" Protect="false" Editable="false" Dirty="false" Width="1950" Height="1200">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+<ROW>
+<CELL ColAddr="0" RowAddr="1" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="35250" Height="1350">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="0">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="1" ColCount="1">
+<SHAPEOBJECT InstId="41">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="35250" Height="1199"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="42191" HorzOffset="12193" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="35550" Height="1200">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="0">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="1" ColCount="2">
+<SHAPEOBJECT InstId="42">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="35250" Height="1199"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="42191" HorzOffset="12193" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="14100" Height="1200">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="20">
+<CHAR>따른 서류를 첨부 하여 제출합니다)</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="1" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="false" Protect="false" Editable="false" Dirty="false" Width="21150" Height="1200">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+<ROW>
+<CELL ColAddr="0" RowAddr="2" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="35250" Height="1350">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="0">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="1" ColCount="2">
+<SHAPEOBJECT InstId="43">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="35250" Height="1199"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="43542" HorzOffset="12193" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="34950" Height="1200">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="20">
+<CHAR>2. 정관 및 직전 사업연도말의 재무상태표ㆍ손익계산서(신청인이 법인인 경우만 해당하며</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="1" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="false" Protect="false" Editable="false" Dirty="false" Width="300" Height="1200">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+<ROW>
+<CELL ColAddr="0" RowAddr="3" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="35250" Height="1350">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="0">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="1" ColCount="2">
+<SHAPEOBJECT InstId="44">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="35250" Height="1199"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="44892" HorzOffset="12193" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="22950" Height="1200">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="20">
+<CHAR>, 신청인이 설립 중인 법인인 경우에는 정관만 제출합니다)</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="1" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="false" Protect="false" Editable="false" Dirty="false" Width="12300" Height="1200">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+<ROW>
+<CELL ColAddr="0" RowAddr="4" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="35250" Height="1350">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="0">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="1" ColCount="1">
+<SHAPEOBJECT InstId="45">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="35250" Height="1199"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="46242" HorzOffset="12193" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="35325" Height="1200">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="20">
+<CHAR>3. 신청자(발전설비용량이 3천킬로와트 이하인 신청자는 제외합니다)의 주주명부(신청자가</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+<ROW>
+<CELL ColAddr="0" RowAddr="5" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="35250" Height="1350">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="0">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="1" ColCount="2">
+<SHAPEOBJECT InstId="46">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="35250" Height="1199"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="47592" HorzOffset="12193" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="34575" Height="1200">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="20">
+<CHAR>재무능력을 평가할 수 없는 신설법인인 경우에는 신청자의 최대주주를 신청자로 봅니다)</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="1" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="false" Protect="false" Editable="false" Dirty="false" Width="675" Height="1200">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+<ROW>
+<CELL ColAddr="0" RowAddr="6" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="35250" Height="1350">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="0">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="1" ColCount="2">
+<SHAPEOBJECT InstId="47">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="35250" Height="1199"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="48941" HorzOffset="12193" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="34200" Height="1200">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="20">
+<CHAR>4. 「전기사업법 시행령」 제4조의2에 따른 의견수렴 결과(「신에너지 및 재생에너지 개발</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="1" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="false" Protect="false" Editable="false" Dirty="false" Width="1050" Height="1200">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+<ROW>
+<CELL ColAddr="0" RowAddr="7" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="35250" Height="1350">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="0">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="1" ColCount="2">
+<SHAPEOBJECT InstId="48">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="35250" Height="1199"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="50292" HorzOffset="12193" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="33075" Height="1200">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="20">
+<CHAR>촉진법」 제2조에 따른 태양에너지 중 태양광, 풍력, 연료전지를 이용하는 발전사업인</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="1" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="false" Protect="false" Editable="false" Dirty="false" Width="2175" Height="1200">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+<ROW>
+<CELL ColAddr="0" RowAddr="8" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="35250" Height="1350">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="20">
+<CHAR>경우만 해당합니다)</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+<ROW>
+<CELL ColAddr="0" RowAddr="9" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="35250" Height="1350">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="0">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="1" ColCount="2">
+<SHAPEOBJECT InstId="49">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="35250" Height="1199"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="52992" HorzOffset="12193" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="31875" Height="1200">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="20">
+<CHAR>5. 「전기사업법」 제7조의3제1항에 따라 의제받으려는 인ㆍ허가등에 관하여 해당 </CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="1" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="false" Protect="false" Editable="false" Dirty="false" Width="3375" Height="1200">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+<ROW>
+<CELL ColAddr="0" RowAddr="10" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="35250" Height="1350">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="0">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="1" ColCount="2">
+<SHAPEOBJECT InstId="50">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="35250" Height="1199"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="54342" HorzOffset="12193" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="10950" Height="1200">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="20">
+<CHAR>법률에서 정하는 관련 서류</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="1" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="false" Protect="false" Editable="false" Dirty="false" Width="24300" Height="1200">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+<ROW>
+<CELL ColAddr="0" RowAddr="11" ColSpan="1" RowSpan="1" Header="false" HasMargin="false" Protect="false" Editable="false" Dirty="false" Width="35250" Height="150">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="0">
+<CHAR/>
+</TEXT>
+</P>
+</PARALIST>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="2" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="8639" Height="15075" BorderFill="6">
+<PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="22">
+<RECTANGLE X0="0" Y0="0" X1="8602" Y1="0" X2="8602" Y2="15030" X3="0" Y3="15030">
+<SHAPEOBJECT InstId="51">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="8602" Height="15030"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="40828" HorzOffset="47482" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<DRAWTEXT Editable="false">
+<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR>수수료</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</DRAWTEXT>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="8602" OriHeight="15030">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+<ROW>
+<CELL ColAddr="0" RowAddr="1" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="8639" Height="4200" BorderFill="3">
+<PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="23">
+<TABLE PageBreak="Cell" RepeatHeader="true" CellSpacing="0" BorderFill="2" RowCount="3" ColCount="1">
+<SHAPEOBJECT InstId="52">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="8549" Height="4125"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="55926" HorzOffset="3568" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<INSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<ROW>
+<CELL ColAddr="0" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="8550" Height="1275">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR>산업통상자원부장관</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+<ROW>
+<CELL ColAddr="0" RowAddr="1" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="8550" Height="1275">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR>또는 시도지사 확인</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+<ROW>
+<CELL ColAddr="0" RowAddr="2" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="8550" Height="1275">
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR>사항</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+</TABLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+<CELL ColAddr="1" RowAddr="1" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="35371" Height="4200" BorderFill="4">
+<PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="24">
+<RECTANGLE X0="0" Y0="0" X1="35250" Y1="0" X2="35250" Y2="4125" X3="0" Y3="4125">
+<SHAPEOBJECT InstId="53">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="35250" Height="4125"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="55926" HorzOffset="12193" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<DRAWTEXT Editable="false">
+<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="2">
+<TEXT CharShape="1">
+<CHAR>법인 등기사항증명서</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</DRAWTEXT>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="35250" OriHeight="4125">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="375" Right="375" Top="375" Bottom="375"/>
+</CELL>
+<CELL ColAddr="2" RowAddr="1" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="8639" Height="4200" BorderFill="6">
+<PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="25">
+<RECTANGLE X0="0" Y0="0" X1="8549" Y1="0" X2="8549" Y2="4125" X3="0" Y3="4125">
+<SHAPEOBJECT InstId="54">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="8549" Height="4125"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="55926" HorzOffset="47508" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<DRAWTEXT Editable="false">
+<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="1">
+<CHAR>없음</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</DRAWTEXT>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="8549" OriHeight="4125">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+<ROW>
+<CELL ColAddr="0" RowAddr="2" ColSpan="3" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="52649" Height="1875" BorderFill="7">
+<PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
+<P ParaShape="3">
+<TEXT CharShape="27">
+<RECTANGLE X0="0" Y0="0" X1="4500" Y1="0" X2="4500" Y2="1500" X3="0" Y3="1500">
+<SHAPEOBJECT InstId="55">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="4500" Height="1500"/>
+<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="60280" HorzOffset="27559" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<DRAWINGOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<DRAWTEXT Editable="false">
+<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
+<P ParaShape="1">
+<TEXT CharShape="26">
+<CHAR>처리절차</CHAR>
+</TEXT>
+</P>
+</PARALIST>
+</DRAWTEXT>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="4500" OriHeight="1500">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</DRAWINGOBJECT>
+</RECTANGLE>
+</TEXT>
+</P>
+</PARALIST>
+<CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</CELL>
+</ROW>
+</TABLE>
+<PICTURE>
+<SHAPEOBJECT InstId="56" ZOrder="1" NumberingType="Figure" TextWrap="Square" Lock="false">
+<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="52650" Height="16875"/>
+<POSITION TreatAsChar="false" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="62284" HorzOffset="3484" FlowWidthText="true" AllowOverlap="true"/>
+<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
+</SHAPEOBJECT>
+<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
+<IMAGERECT X0="0" Y0="0" X1="52650" Y1="0" X2="52650" Y2="16875" X3="0" Y3="16875"/>
+<IMAGECLIP Left="0" Top="0" Right="0" Bottom="0"/>
+<IMAGE Bright="0" Contrast="0" Effect="RealPic" BinItem="1"/>
+<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="52650" OriHeight="16875">
+<RENDERINGINFO>
+<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
+</RENDERINGINFO>
+</SHAPECOMPONENT>
+</PICTURE>
+</TEXT>
+</P>
+</SECTION>
+</BODY>
+<TAIL>
+<BINDATASTORAGE>
+<BINDATA Encoding="Base64" Id="1" Size="11400">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</BINDATA>
+</BINDATASTORAGE>
+</TAIL>
+</HWPML>

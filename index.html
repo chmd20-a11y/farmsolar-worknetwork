@@ -5083,7 +5083,7 @@ function openPermitModal(id){
       <div class="pm-modal-head">
         <span class="pm-m-ttl">🔍 양식 미리보기 — ${esc(d.site)} <span style="opacity:.65;font-weight:500">(${esc(d.id)})</span></span>
         <div class="pm-m-btns">
-          <button class="pm-mbtn primary" onclick="printPermit('${d.id}')">📄 접수 PDF 출력</button>
+          <button class="pm-mbtn primary" onclick="printPermit('${d.id}')">📥 접수서류(HWP) 다운로드</button>
           <button class="pm-mbtn" onclick="closePermitModal()">✕ 닫기</button>
         </div>
       </div>
@@ -5117,7 +5117,7 @@ function renderPermitBiz(){
       <span class="lr-s">🏢 계약 법인</span>
       <select class="pm-datepick" onchange="setPermit('${d.id}','vendorIdx',+this.value);refreshActive()" title="공사 협력 의향서 하단 '회사명'에 들어갈 계약 법인 선택 (그룹 3개 법인)">${PERMIT_VENDORS.map((v,i)=>`<option value="${i}" ${i===(p.vendorIdx|0)?'selected':''}>${esc(v.label)}</option>`).join('')}</select>
       <button class="btn ghost sm" onclick="openPermitModal('${d.id}')">🔍 양식 미리보기</button>
-      <button class="btn primary sm" onclick="printPermit('${d.id}')">📄 접수 PDF 출력</button>
+      <button class="btn primary sm" onclick="printPermit('${d.id}')">📥 접수서류(HWP) 다운로드</button>
     </div>`;
   const info = `<div class="cred-warn" style="color:var(--ink-2);background:color-mix(in srgb,var(--brand) 9%,transparent);border-color:color-mix(in srgb,var(--brand) 26%,transparent)">🔗 아래 신청정보는 각 원천에서 <b>자동으로 가져온 읽기전용</b>입니다 — <b style="color:#2e8b63">제안서</b>(설비·금액·사업주 성명·상호·전화·설치방법·연간발전량·경사각/입사각) / <b style="color:#9a6f16">실계약</b>(민감정보·설치장소·접수관청·전압·주파수·면적·발전방식·수급방식·부지 명세). 제안서가 바뀌면 설비·발전량이 <b>자동 반영</b>됩니다. 각 항목의 출처 태그를 누르면 그 원천 화면으로 이동해 수정할 수 있습니다. 행정은 <b>첨부서류 발급·준비</b>와 <b>접수 PDF 출력</b>을 담당합니다.</div>`;
   return head + bar + info + renderPermitForm(d,'admin') + renderPermitDocs(d) + permitNotes();
@@ -5409,55 +5409,65 @@ function renderPermitPrint(d){
   // 순서: 1.신청서 → 2.의향서 → 3.동의서 → 4.송전관계 일람도 → 5.사업계획서
   return `<div class="pp-doc">${applForm}${uihyangForm}${donguiForm}${ilramdoForm}${planFull}</div>`;
 }
-// 접수 PDF 출력 — 앱 DOM/다크모드와 분리된 '인쇄 전용 창'에서 출력.
-//  (앱 화면 안에서 숨긴 인쇄영역을 출력하면 Safari 등 일부 브라우저가 뒷장(일람도·사업계획서)을
-//   통째로 누락시키는 문제가 있어, 문서만 담은 깨끗한 창에서 이미지 로딩 완료 후 인쇄 → 모든 브라우저 동일.)
-const PERMIT_PRINT_CSS = `
-*{box-sizing:border-box}
-html,body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-body{margin:0;background:#7d7d7d;padding:18px 0;font-family:"Malgun Gothic","맑은 고딕",sans-serif}
-.pp-doc{color:#111}
-.pp-page{width:190mm;min-height:277mm;padding:12mm;margin:0 auto 16px;background:#fff;box-shadow:0 2px 14px rgba(0,0,0,.35)}
-.pp-h1{text-align:center;font-size:19px;font-weight:800;margin:2mm 0 3mm;letter-spacing:4px}
-.pp-formtop{font-size:10.5px;margin-bottom:1mm}
-.pp-note{font-size:10px;color:#444;margin:1mm 0}
-.pp-t{width:100%;border-collapse:collapse;font-size:11px;margin:1mm 0 3mm}
-.pp-t th,.pp-t td{border:1px solid #333;padding:3px 6px;vertical-align:middle;color:#111}
-.pp-t th{background:#eef1f5;font-weight:700;text-align:center}
-.pp-t .lbl{background:#f3f5f8;font-weight:700;text-align:center;white-space:nowrap;color:#111}
-.pp-t .ctr{text-align:center}
-.pp-sec{font-size:13px;font-weight:800;margin:4mm 0 2mm;border-left:4px solid #333;padding-left:7px}
-.pp-sub{font-size:11.5px;font-weight:700;margin:3mm 0 1mm}
-.pp-li{font-size:11px;margin:1mm 0 1mm 4mm;line-height:1.7}
-.pp-li b{display:inline-block;min-width:36mm}
-.pp-sign{text-align:right;font-size:11px;margin:3mm 2mm 2mm 0;line-height:2}
-.pp-photos{display:flex;gap:10px;flex-wrap:wrap;margin:2mm 0 4mm}
-.pp-photos figure{margin:0;border:1px solid #333;padding:4px;background:#fff}
-.pp-photos img{display:block;width:300px;max-width:100%;height:auto}
-.pp-photos figcaption{text-align:center;font-size:10px;color:#333;margin-top:3px}
-.pp-diagram{display:flex;align-items:center;justify-content:center;gap:12px;margin:7mm 0;flex-wrap:wrap}
-.ppd-box{border:1.5px solid #111;border-radius:7px;padding:11px 18px;text-align:center;font-size:12px;line-height:1.7;min-width:130px}
-.ppd-box b{font-size:14px}
-.ppd-line{font-size:18px;color:#111;letter-spacing:-2px;font-weight:700}
-@media print{
-  @page{size:A4;margin:12mm 10mm}
-  body{background:#fff;padding:0}
-  .pp-page{width:auto;min-height:0;padding:0;margin:0;box-shadow:none;page-break-after:always;break-after:page}
-  .pp-page:last-child{page-break-after:auto;break-after:auto}
-  tr{page-break-inside:avoid;break-inside:avoid}
-  .pp-photos figure,.pp-diagram{page-break-inside:avoid;break-inside:avoid}
-}`;
-function permitPrintDocument(d){
-  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>발전사업 허가 접수서류 — ${esc((d&&d.site)||'')}<\/title><style>${PERMIT_PRINT_CSS}<\/style><\/head><body>${renderPermitPrint(d)}<scr`+`ipt>
-window.addEventListener('load',function(){var imgs=[].slice.call(document.images);Promise.all(imgs.map(function(im){return im.complete?1:new Promise(function(r){im.onload=im.onerror=r;});})).then(function(){setTimeout(function(){try{window.focus();window.print();}catch(e){}},200);});});
-<\/scr`+`ipt><\/body><\/html>`;
+/* ===== 접수서류 HWP(.hml) 자동 생성 — 원본 양식(토큰 템플릿)에 현장 데이터만 치환해 다운로드 =====
+   forms/*.hml = 원본 HWPML 양식의 빈칸을 §토큰§으로 치환한 파라미터 템플릿(양식 100% 원본·한글 편집가능).
+   양식 자체는 바꾸지 않고 §토큰§만 현장 값으로 치환해 내려받습니다. */
+const PERMIT_FORM_FILES=[
+  {url:'forms/sincheong.hml', out:'1. 발전사업허가_신청서.hwp', label:'전기사업 허가신청서'},
+  {url:'forms/uihyang.hml',   out:'태양광_공사_협력_의향서.hml', label:'공사 협력 의향서'},
+  {url:'forms/dongui.hml',    out:'행정정보_공동이용_사전동의서.hml', label:'행정정보 공동이용 사전동의서'},
+  {url:'forms/ilramdo.hml',   out:'송전관계_일람도.hml', label:'송전관계 일람도'},
+  {url:'forms/saup.hml',      out:'1-1. 발전사업 허가신청 - 허가사업계획서.hwp', label:'허가사업계획서'},
+];
+function hwpXmlEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function permitTokenMap(d){
+  const p=resolvePermit(d), c=permitCalc(d), eq=p.equip||{};
+  const L=(p.lands&&p.lands[0])||{};
+  const inv=String(eq.invIn||'').split('~');
+  const it=(p.applicant&&p.applicant.idType)||'주민등록증';
+  const ck=(v)=> it===v?'■ ':'□ ';
+  const S=(v)=> (v==null?'':String(v));
+  return {
+    '§CAP§':pComma(c.cap), '§CAPN§':S(Math.round(pNum(c.cap))),
+    '§FULLNAME§':applicantFullName(p), '§NAME§':S(p.applicant.name), '§IDNO§':S(p.applicant.idno),
+    '§ADDR§':S(p.applicant.addr), '§BIZNAME§':S(p.applicant.bizname), '§PHONE§':S(p.applicant.phone),
+    '§PLACE§':S(p.biz.place), '§PLANTNAME§':S(p.outline.plantName), '§OFFICE§':S(p.office),
+    '§VENDOR§':permitVendor(d).full, '§DATE§':fmtKDate(permitApplyDate(d)),
+    '§POLE§':S(d.survey&&d.survey.poleNo),
+    '§INV_IN§':S(eq.invIn), '§INV_OUT§':S(eq.invOut), '§INV_KW§':S(eq.invKW), '§INV_QTY§':S(eq.invQty),
+    '§MOD_W§':S(eq.modW), '§MOD_QTY§':pComma(eq.modQty),
+    '§BIRTH§':donguiBirth(p)||'년 월 일', '§DONGUI_NO§':donguiPersonNo(p),
+    '§CK_JUMIN§':ck('주민등록증'), '§CK_YEOGWON§':ck('여권'), '§CK_WAEGUK§':ck('외국인등록증'), '§CK_MYEON§':ck('운전면허증'),
+    '§SP_INVTOT§':pComma((pNum(eq.invKW)||0)*(pNum(eq.invQty)||0)), '§SP_INVKW§':S(eq.invKW), '§SP_INVQTY§':S(eq.invQty),
+    '§SP_FREQ§':S(p.biz.freq), '§SP_VINLO§':S((inv[0]||'').trim()), '§SP_VINHI§':inv[1]?pComma(inv[1]):'', '§SP_VOLT§':S(p.biz.volt),
+    '§SP_TOTCOST§':pComma(p.outline.totalCost), '§SP_LANDNO§':'1',
+    '§SP_LANDADDR§':S(L.addr), '§SP_JIBUN§':S(L.jibun), '§SP_JIMOK§':S(L.jimok),
+    '§SP_AREA§':pComma(L.area), '§SP_OWNER§':S(L.owner)||'(토지주)', '§SP_ZONE§':S(L.zone),
+    '§SP_NAME§':S(p.outline.plantName), '§SP_LOC§':S(p.biz.place), '§SP_METHOD§':S(p.outline.method),
+    '§SP_USEAREA§':pComma(p.outline.useArea), '§SP_TOTAREA§':pComma(p.outline.totalArea),
+    '§SP_UNITCOST§':pComma(p.outline.unitCost), '§SP_ANNUAL§':pComma(p.outline.annual),
+  };
 }
-function printPermit(id){
-  const d=DEALS.find(x=>x.id===id); if(!d) return;
-  const w=window.open('','_blank','width=920,height=1200');
-  if(!w){ toast('팝업이 차단되어 출력 창을 열 수 없습니다. 이 사이트의 팝업을 허용한 뒤 다시 눌러주세요.'); return; }
-  w.document.open(); w.document.write(permitPrintDocument(d)); w.document.close();
+function fillPermitTemplate(xml, map){ for(const k in map){ xml=xml.split(k).join(hwpXmlEsc(map[k])); } return xml; }
+async function genPermitForms(id){
+  const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d);
+  const map=permitTokenMap(d); toast('접수서류(HWP) 생성 중…');
+  let ok=0; const fail=[];
+  for(const f of PERMIT_FORM_FILES){
+    try{
+      const res=await fetch(f.url,{cache:'no-store'}); if(!res.ok) throw new Error('HTTP '+res.status);
+      const xml=fillPermitTemplate(await res.text(), map);
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(new Blob([xml],{type:'application/octet-stream'})); a.download=f.out;
+      document.body.appendChild(a); a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },2000);
+      ok++; await new Promise(r=>setTimeout(r,300));
+    }catch(e){ fail.push(f.label); }
+  }
+  toast(fail.length ? ('일부 실패: '+fail.join(', ')+' (팝업/다운로드 허용 후 재시도)') : ('접수서류 '+ok+'종 다운로드 — 한글에서 열어 확인하세요'));
 }
+// 모드바·모달의 기존 버튼이 호출하는 이름 유지 → HWP 자동생성으로 연결
+function printPermit(id){ genPermitForms(id); }
 
 const WF_SCREENS = {
   'd-intake':{el:'sub-d-intake', fn:renderIntake},
