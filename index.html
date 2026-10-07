@@ -4530,6 +4530,13 @@ function idnoLabel(p){ return (p.applicant&&p.applicant.corp) ? '법인등록번
 // 신청일자 — 달력으로 선택(딜별 저장). 각 서류(신청서·의향서·동의서)에 기입.
 function permitApplyDate(d){ const p=getPermit(d); return p.applyDate || '2026-10-02'; }
 function fmtKDate(iso){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso||'')); return m ? `${m[1]}년 ${+m[2]}월 ${+m[3]}일` : String(iso||''); }
+// 계약 법인(시공사) — 그룹 3개 법인 중 선택. 의향서 하단 "회사명"에만 반영(대표자·주소·전화는 공통).
+const PERMIT_VENDORS=[
+  {label:'(주)해피솔라에너지', full:'주식회사 해피솔라에너지'},
+  {label:'(주)팜솔라',       full:'주식회사 팜솔라'},
+  {label:'(주)스마트솔라',    full:'주식회사 스마트솔라'},
+];
+function permitVendor(d){ const p=getPermit(d); const i=Math.max(0,Math.min(PERMIT_VENDORS.length-1, p.vendorIdx|0)); return PERMIT_VENDORS[i]; }
 function setPermitCorp(id, isCorp){ setPermit(id,'applicant.corp',!!isCorp); refreshActive(); }
 // 사업자등록증 첨부(영업 실계약) — 유료 스토리지 연동 전까지 자리표시
 function bizLicenseUpload(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d); p.applicant=p.applicant||{};
@@ -5048,6 +5055,8 @@ function renderPermitBiz(){
       <div style="flex:1"></div>
       <span class="lr-s">📅 신청일자</span>
       <input type="date" class="pm-datepick" value="${permitApplyDate(d)}" onchange="setPermit('${d.id}','applyDate',this.value);refreshActive()" title="각 서류(신청서·의향서·동의서)에 기입될 신청일자">
+      <span class="lr-s">🏢 계약 법인</span>
+      <select class="pm-datepick" onchange="setPermit('${d.id}','vendorIdx',+this.value);refreshActive()" title="공사 협력 의향서 하단 '회사명'에 들어갈 계약 법인 선택 (그룹 3개 법인)">${PERMIT_VENDORS.map((v,i)=>`<option value="${i}" ${i===(p.vendorIdx|0)?'selected':''}>${esc(v.label)}</option>`).join('')}</select>
       <button class="btn ghost sm" onclick="openPermitModal('${d.id}')">🔍 양식 미리보기</button>
       <button class="btn primary sm" onclick="printPermit('${d.id}')">📄 접수 PDF 출력</button>
     </div>`;
@@ -5271,7 +5280,7 @@ function renderPermitPrint(d){
     </table>
     <div class="pp-note" style="margin:6mm 0;line-height:1.9">당사는 위 공사에 대하여 적극 협력하여 태양광발전소설치공사를 진행할 것을 확인하며, 본 공사 협력 의향서를 제출합니다.</div>
     <table class="pp-t">
-      <tr><td class="lbl" style="width:24%">회 사 명</td><td>주식회사 해피솔라에너지</td></tr>
+      <tr><td class="lbl" style="width:24%">회 사 명</td><td>${esc(permitVendor(d).full)}</td></tr>
       <tr><td class="lbl">주 소</td><td>경기 파주시 교하로875번길 23, 2층</td></tr>
       <tr><td class="lbl">전화번호</td><td>010-7335-4745</td></tr>
       <tr><td class="lbl">대 표 자</td><td>조종률 (인)</td></tr>
