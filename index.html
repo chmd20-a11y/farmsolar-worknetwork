@@ -4445,7 +4445,7 @@ function defaultPermit(d){
     office: '○○시청',
     applicant:{ name:'홍길동', idno:'●●●●●●-●●●●●●●', corp:false, corpName:'',
       addr:'경기도 파주시 ○○로 00', bizname:d.site+' 태양광발전소', phone:'010-0000-0000',
-      idType:'주민등록증', idDoc:null, idDocNo:'' },
+      idType:'주민등록증', idDoc:null, idDocNo:'', repRRN:'' },
     biz:{ kind:'발전사업(태양광발전)', place:'경기도 ○○시 ○○면 ○○리 000-0'+(isBld?' (건물 지붕)':' 외 ○필지 (노지형)'),
       cap, volt:380, freq:60, prep:18 },
     outline:{ plantName:d.site+' 태양광발전소', method:isBld?'건물형(지붕)':'노지형', genType:'고정식',
@@ -4579,11 +4579,11 @@ function rrnToBirth(rrn){
   return {y:cen+yy, m:mm, d:dd};
 }
 function fmtBirth(rrn){ const b=rrnToBirth(rrn); return b?`${b.y}년 ${b.m}월 ${b.d}일`:''; }
-// 동의서 대상자 본인 = 대표자 개인. 개인사업자=주민번호(idno), 법인=대표자 주민번호 미보유(공란).
+// 동의서 대상자 본인 = 대표자 개인. 대표자 주민번호 = 개인사업자는 idno, 법인은 repRRN(대표자 주민번호).
+function donguiRRN(p){ const a=p.applicant||{}; return a.corp ? (a.repRRN||'') : (a.idno||''); }
 function donguiPersonNo(p){ const a=p.applicant||{}; const t=a.idType||'주민등록증';
-  if(t==='주민등록증') return a.corp ? '' : (a.idno||'');   // 주민번호는 개인만 보유
-  return a.idDocNo||''; }                                    // 여권·면허·외국인 번호는 입력값(개인·법인 공통)
-function donguiBirth(p){ const a=p.applicant||{}; if(a.corp) return ''; return fmtBirth(a.idno); }
+  return t==='주민등록증' ? donguiRRN(p) : (a.idDocNo||''); } // 주민등록증=대표자 주민번호 / 그 외=입력 번호
+function donguiBirth(p){ return fmtBirth(donguiRRN(p)); }     // 생년월일 = 대표자 주민번호 앞자리
 function setPermitCorp(id, isCorp){ setPermit(id,'applicant.corp',!!isCorp); refreshActive(); }
 // 사업자등록증 첨부(영업 실계약) — 유료 스토리지 연동 전까지 자리표시
 function bizLicenseUpload(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d); p.applicant=p.applicant||{};
@@ -4978,6 +4978,7 @@ function renderPermitForm(d, origin){
       ${pr('상호(발전소명)','applicant.bizname',p.applicant.bizname)}
       ${pr('전화번호','applicant.phone',p.applicant.phone)}
       ${pr(idnoLabel(p),'applicant.idno',p.applicant.idno)}
+      ${p.applicant.corp ? pr('대표자 주민등록번호','applicant.repRRN',p.applicant.repRRN,{ph:'결격사유 조회 동의서용'}) : ''}
       ${renderBizLicense(d, origin)}
       ${renderIdType(d, origin)}
       ${renderIdDoc(d, origin)}
@@ -5119,9 +5120,8 @@ function permitNotes(){
     <div class="pm-notes-h">📌 참고 · 추후 보완 예정</div>
     <ul class="pm-notes-l">
       <li><b>신분증 번호 자동 읽기(추후)</b> — 현재는 <b>여권·운전면허·외국인등록증</b> 번호를 영업 「실계약」에서 <b>직접 입력</b>하면 「행정정보 공동이용 사전동의서」의 <b>번호란에 자동</b>으로 들어갑니다(<b>주민등록증</b>은 주민번호가 자동). 첨부한 신분증 <b>사진에서 번호를 자동으로 읽어오는 기능(OCR)</b>은 추후 추가할 수 있습니다(신분증 파일 보관 + 자동판독 기능이 함께 필요).</li>
-      <li><b>법인사업자 대표자 주민번호</b> — 동의서의 ‘대상자 본인’은 <b>대표자 개인</b>이라 대표자 주민등록번호가 필요합니다. 현재 데이터에는 법인등록번호만 있어, <b>법인은 번호·생년월일이 비어</b> 출력됩니다. 필요하시면 <b>‘대표자 주민번호’ 입력칸</b>을 추가해 드리겠습니다.</li>
       <li><b>신분증 사본 보관</b> — 지금은 ‘첨부함 ✓’ 표시만 되고, <b>실제 파일 저장</b>은 추후(저장소 연동 시) 지원됩니다.</li>
-      <li><b>생년월일</b> — 신분증 종류와 관계없이 <b>주민등록번호 앞자리</b>로 자동 계산됩니다(주민번호 미입력·법인은 공란).</li>
+      <li><b>생년월일</b> — 신분증 종류와 관계없이 <b>주민등록번호 앞자리</b>(법인은 <b>대표자 주민번호</b>)로 자동 계산됩니다(미입력 시 공란).</li>
     </ul>
   </div>`;
 }
