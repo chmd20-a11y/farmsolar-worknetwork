@@ -5181,7 +5181,44 @@ function renderPermitPrint(d){
       <tr><td class="ctr">${esc(p.rep.title)}</td><td class="ctr">${esc(p.rep.name)}</td><td class="ctr">${esc(p.rep.idno)}</td><td>${esc(p.rep.addr)}</td><td class="ctr">${esc(p.rep.relation)}</td></tr></table>
     <div class="pp-note" style="margin-top:6mm">※ 본 양식은 팜솔라그룹 업무네트웍에서 입력한 신청정보로 생성된 접수용 출력본입니다. 실제 접수 전 관할 관청 요구사항을 확인하세요.</div>
   </div>`;
-  return `<div class="pp-doc">${applForm}${plan1}${plan2}</div>`;
+  // 2) 태양광 공사 협력 의향서 (시공사=㈜해피솔라에너지 → 허가신청용)
+  const uihyangForm = `<div class="pp-page">
+    <div class="pp-h1" style="letter-spacing:2px">태양광발전소 공사 협력 의향서</div>
+    <table class="pp-t" style="margin-top:4mm">
+      <tr><td class="lbl" style="width:24%">▣ 공 사 명</td><td>${esc(p.outline.plantName)} 설치공사</td></tr>
+      <tr><td class="lbl">▣ 현 장 주 소</td><td>${esc(p.biz.place)}</td></tr>
+      <tr><td class="lbl">▣ 시공용량(kW)</td><td>${pComma(c.cap)}</td></tr>
+      <tr><td class="lbl">▣ 대 표 자</td><td>${esc(p.applicant.name)}</td></tr>
+    </table>
+    <div class="pp-note" style="margin:6mm 0;line-height:1.9">당사는 위 공사에 대하여 적극 협력하여 태양광발전소설치공사를 진행할 것을 확인하며, 본 공사 협력 의향서를 제출합니다.</div>
+    <table class="pp-t">
+      <tr><td class="lbl" style="width:24%">회 사 명</td><td>주식회사 해피솔라에너지</td></tr>
+      <tr><td class="lbl">주 소</td><td>경기 파주시 교하로875번길 23, 2층</td></tr>
+      <tr><td class="lbl">전화번호</td><td>010-7335-4745</td></tr>
+      <tr><td class="lbl">대 표 자</td><td>조종률 (인)</td></tr>
+    </table>
+    <div class="pp-sign">${today}</div>
+    <div class="pp-note" style="margin-top:5mm;font-size:9.5px;line-height:1.7">· 이 확인서는 태양광발전사업 허가신청을 위한 목적으로 허가기관에 제출하는 용도에 한합니다.<br>· 본 의향서는 공사계약서가 아니며, 신청자의 의사에 따라 변경될 수 있습니다.</div>
+  </div>`;
+  // 3) 행정정보 공동이용 사전동의서
+  const donguiForm = `<div class="pp-page">
+    <div class="pp-formtop">■ 「전자정부법」 시행규칙 [별지 서식]</div>
+    <div class="pp-h1" style="font-size:17px">행정정보 공동이용 사전동의서</div>
+    <div class="pp-note" style="line-height:1.85">「전자정부법」 제36조제1항 및 「개인정보 보호법」 제15조·제24조에 따라, 담당 공무원이 전기사업 허가 신청의 처리를 위하여 아래 행정정보를 공동이용하는 것에 동의합니다.</div>
+    <table class="pp-t">
+      <tr><td class="lbl" style="width:24%">이용목적</td><td>전기사업(발전사업·태양광) 허가 신청</td></tr>
+      <tr><td class="lbl">동의 대상 행정정보</td><td style="text-align:left;font-size:10px;line-height:1.7">① 건축물대장　② 토지(임야)대장　③ 지적(임야)도　④ 토지이용계획확인서　⑤ 토지·건물 등기사항전부증명서</td></tr>
+    </table>
+    <div class="pp-sub">○ 동의자 (신청인)</div>
+    <table class="pp-t">
+      <tr><td class="lbl" style="width:24%">성명</td><td>${esc(p.applicant.name)}</td><td class="lbl" style="width:24%">주민등록번호</td><td>${esc(p.applicant.idno)}</td></tr>
+      <tr><td class="lbl">주소</td><td colspan="3">${esc(p.applicant.addr)}</td></tr>
+    </table>
+    <div class="pp-note" style="margin-top:5mm">위와 같이 행정정보의 공동이용에 동의합니다.</div>
+    <div class="pp-sign">${today}<br>동의자 : ${esc(p.applicant.name)} (서명 또는 인)</div>
+  </div>`;
+  // 순서: 1.신청서 → 2.의향서 → 3.동의서 → 4.사업계획서
+  return `<div class="pp-doc">${applForm}${uihyangForm}${donguiForm}${plan1}${plan2}</div>`;
 }
 function printPermit(id){
   const d=DEALS.find(x=>x.id===id); if(!d) return;
