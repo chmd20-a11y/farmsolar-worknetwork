@@ -5409,14 +5409,54 @@ function renderPermitPrint(d){
   // 순서: 1.신청서 → 2.의향서 → 3.동의서 → 4.송전관계 일람도 → 5.사업계획서
   return `<div class="pp-doc">${applForm}${uihyangForm}${donguiForm}${ilramdoForm}${planFull}</div>`;
 }
+// 접수 PDF 출력 — 앱 DOM/다크모드와 분리된 '인쇄 전용 창'에서 출력.
+//  (앱 화면 안에서 숨긴 인쇄영역을 출력하면 Safari 등 일부 브라우저가 뒷장(일람도·사업계획서)을
+//   통째로 누락시키는 문제가 있어, 문서만 담은 깨끗한 창에서 이미지 로딩 완료 후 인쇄 → 모든 브라우저 동일.)
+const PERMIT_PRINT_CSS = `
+*{box-sizing:border-box}
+html,body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{margin:0;background:#7d7d7d;padding:18px 0;font-family:"Malgun Gothic","맑은 고딕",sans-serif}
+.pp-doc{color:#111}
+.pp-page{width:190mm;min-height:277mm;padding:12mm;margin:0 auto 16px;background:#fff;box-shadow:0 2px 14px rgba(0,0,0,.35)}
+.pp-h1{text-align:center;font-size:19px;font-weight:800;margin:2mm 0 3mm;letter-spacing:4px}
+.pp-formtop{font-size:10.5px;margin-bottom:1mm}
+.pp-note{font-size:10px;color:#444;margin:1mm 0}
+.pp-t{width:100%;border-collapse:collapse;font-size:11px;margin:1mm 0 3mm}
+.pp-t th,.pp-t td{border:1px solid #333;padding:3px 6px;vertical-align:middle;color:#111}
+.pp-t th{background:#eef1f5;font-weight:700;text-align:center}
+.pp-t .lbl{background:#f3f5f8;font-weight:700;text-align:center;white-space:nowrap;color:#111}
+.pp-t .ctr{text-align:center}
+.pp-sec{font-size:13px;font-weight:800;margin:4mm 0 2mm;border-left:4px solid #333;padding-left:7px}
+.pp-sub{font-size:11.5px;font-weight:700;margin:3mm 0 1mm}
+.pp-li{font-size:11px;margin:1mm 0 1mm 4mm;line-height:1.7}
+.pp-li b{display:inline-block;min-width:36mm}
+.pp-sign{text-align:right;font-size:11px;margin:3mm 2mm 2mm 0;line-height:2}
+.pp-photos{display:flex;gap:10px;flex-wrap:wrap;margin:2mm 0 4mm}
+.pp-photos figure{margin:0;border:1px solid #333;padding:4px;background:#fff}
+.pp-photos img{display:block;width:300px;max-width:100%;height:auto}
+.pp-photos figcaption{text-align:center;font-size:10px;color:#333;margin-top:3px}
+.pp-diagram{display:flex;align-items:center;justify-content:center;gap:12px;margin:7mm 0;flex-wrap:wrap}
+.ppd-box{border:1.5px solid #111;border-radius:7px;padding:11px 18px;text-align:center;font-size:12px;line-height:1.7;min-width:130px}
+.ppd-box b{font-size:14px}
+.ppd-line{font-size:18px;color:#111;letter-spacing:-2px;font-weight:700}
+@media print{
+  @page{size:A4;margin:12mm 10mm}
+  body{background:#fff;padding:0}
+  .pp-page{width:auto;min-height:0;padding:0;margin:0;box-shadow:none;page-break-after:always;break-after:page}
+  .pp-page:last-child{page-break-after:auto;break-after:auto}
+  tr{page-break-inside:avoid;break-inside:avoid}
+  .pp-photos figure,.pp-diagram{page-break-inside:avoid;break-inside:avoid}
+}`;
+function permitPrintDocument(d){
+  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>발전사업 허가 접수서류 — ${esc((d&&d.site)||'')}<\/title><style>${PERMIT_PRINT_CSS}<\/style><\/head><body>${renderPermitPrint(d)}<scr`+`ipt>
+window.addEventListener('load',function(){var imgs=[].slice.call(document.images);Promise.all(imgs.map(function(im){return im.complete?1:new Promise(function(r){im.onload=im.onerror=r;});})).then(function(){setTimeout(function(){try{window.focus();window.print();}catch(e){}},200);});});
+<\/scr`+`ipt><\/body><\/html>`;
+}
 function printPermit(id){
   const d=DEALS.find(x=>x.id===id); if(!d) return;
-  const area=document.getElementById('permitPrintArea'); if(!area){ toast('인쇄 영역이 없습니다'); return; }
-  area.innerHTML = renderPermitPrint(d);
-  const clean=()=>{ document.body.classList.remove('printing-permit'); window.removeEventListener('afterprint',clean); };
-  window.addEventListener('afterprint', clean);
-  document.body.classList.add('printing-permit');
-  setTimeout(()=>{ try{ window.print(); }catch(e){ clean(); } }, 60);
+  const w=window.open('','_blank','width=920,height=1200');
+  if(!w){ toast('팝업이 차단되어 출력 창을 열 수 없습니다. 이 사이트의 팝업을 허용한 뒤 다시 눌러주세요.'); return; }
+  w.document.open(); w.document.write(permitPrintDocument(d)); w.document.close();
 }
 
 const WF_SCREENS = {
