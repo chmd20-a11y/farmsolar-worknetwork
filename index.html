@@ -4440,7 +4440,7 @@ function defaultPermit(d){
     office: '○○시청',
     applicant:{ name:'홍길동', idno:'●●●●●●-●●●●●●●', corp:false, corpName:'',
       addr:'경기도 파주시 ○○로 00', bizname:d.site+' 태양광발전소', phone:'010-0000-0000',
-      idType:'주민등록증', idDoc:null },
+      idType:'주민등록증', idDoc:null, idDocNo:'' },
     biz:{ kind:'발전사업(태양광발전)', place:'경기도 ○○시 ○○면 ○○리 000-0'+(isBld?' (건물 지붕)':' 외 ○필지 (노지형)'),
       cap, volt:380, freq:60, prep:18 },
     outline:{ plantName:d.site+' 태양광발전소', method:isBld?'건물형(지붕)':'노지형', genType:'고정식',
@@ -4555,6 +4555,15 @@ function renderIdDoc(d, origin){
   if(origin!=='sales') return `<div class="pi-row"><label>신분증 사본</label><div class="pi-inwrap"><input class="pi-in ro" readonly value="${has?'첨부됨 ✓':'미첨부'}"></div></div>`;
   return `<div class="pi-row"><label>신분증 사본</label><div class="pi-inwrap"><button class="btn ghost sm bizlic-btn${has?' on':''}" type="button" onclick="idDocUpload('${d.id}')">${has?'✓ 첨부됨 (취소)':'📎 신분증 첨부'}</button></div></div>`;
 }
+// 여권/면허/외국인등록증 번호 — 첨부한 신분증을 보고 입력(주민등록증은 주민번호 자동이라 숨김)
+function idDocNoLabel(t){ return t==='여권'?'여권번호' : t==='외국인등록증'?'외국인등록번호' : t==='운전면허증'?'운전면허번호' : '신분증 번호'; }
+function renderIdDocNo(d, origin){
+  const p=getPermit(d), a=p.applicant||{}, t=a.idType||'주민등록증';
+  if(t==='주민등록증') return '';                       // 번호=주민등록번호 자동
+  const label=idDocNoLabel(t);
+  if(origin!=='sales') return `<div class="pi-row"><label>${esc(label)}</label><div class="pi-inwrap"><input class="pi-in ro" readonly value="${esc(a.idDocNo||'')}" placeholder="(미입력)"></div></div>`;
+  return `<div class="pi-row"><label>${esc(label)}</label><div class="pi-inwrap"><input class="pi-in" value="${esc(a.idDocNo||'')}" placeholder="첨부한 ${esc(t)} 번호 입력" oninput="setPermit('${d.id}','applicant.idDocNo',this.value)"></div></div>`;
+}
 // 주민등록번호 앞자리 → 생년월일(성별자리로 세기 판정). 마스킹(●)·법인등록번호 등 비정상 입력은 ''.
 function rrnToBirth(rrn){
   const s=String(rrn||'').replace(/[^0-9]/g,'');
@@ -4566,7 +4575,9 @@ function rrnToBirth(rrn){
 }
 function fmtBirth(rrn){ const b=rrnToBirth(rrn); return b?`${b.y}년 ${b.m}월 ${b.d}일`:''; }
 // 동의서 대상자 본인 = 대표자 개인. 개인사업자=주민번호(idno), 법인=대표자 주민번호 미보유(공란).
-function donguiPersonNo(p){ const a=p.applicant||{}; if(a.corp) return ''; return (a.idType||'주민등록증')==='주민등록증' ? (a.idno||'') : ''; }
+function donguiPersonNo(p){ const a=p.applicant||{}; const t=a.idType||'주민등록증';
+  if(t==='주민등록증') return a.corp ? '' : (a.idno||'');   // 주민번호는 개인만 보유
+  return a.idDocNo||''; }                                    // 여권·면허·외국인 번호는 입력값(개인·법인 공통)
 function donguiBirth(p){ const a=p.applicant||{}; if(a.corp) return ''; return fmtBirth(a.idno); }
 function setPermitCorp(id, isCorp){ setPermit(id,'applicant.corp',!!isCorp); refreshActive(); }
 // 사업자등록증 첨부(영업 실계약) — 유료 스토리지 연동 전까지 자리표시
@@ -4965,6 +4976,7 @@ function renderPermitForm(d, origin){
       ${renderBizLicense(d, origin)}
       ${renderIdType(d, origin)}
       ${renderIdDoc(d, origin)}
+      ${renderIdDocNo(d, origin)}
       ${pr('주소','applicant.addr',p.applicant.addr)}
     </div>`);
   const biz = sec('#2e8b63','⚡','신청내용 · 접수관청',
