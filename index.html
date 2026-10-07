@@ -1007,6 +1007,11 @@ button{font-family:inherit;cursor:pointer}
 .pp-doc .pp-photos figure{margin:0;border:1px solid #333;padding:4px;background:#fff}
 .pp-doc .pp-photos img{display:block;width:300px;max-width:100%;height:auto}
 .pp-doc .pp-photos figcaption{text-align:center;font-size:10px;color:#333;margin-top:3px}
+.pm-seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:8px;overflow:hidden}
+.pm-seg-b{border:none;background:var(--surface);color:var(--ink-2);font-size:12.5px;font-weight:700;padding:6px 14px;cursor:pointer}
+.pm-seg-b+.pm-seg-b{border-left:1px solid var(--border)}
+.pm-seg-b.on{background:var(--accent);color:var(--accent-ink)}
+.bizlic-btn.on{background:var(--ok-bg);color:var(--ok-ink);border-color:var(--ok)}
 .pp-page{width:190mm;padding:4mm 0;margin:0 auto}
 .pp-h1{text-align:center;font-size:19px;font-weight:800;margin:2mm 0 3mm;letter-spacing:4px}
 .pp-formtop{font-size:10.5px;margin-bottom:1mm}
@@ -4432,7 +4437,7 @@ function defaultPermit(d){
   return {
     installType: isBld ? '건물' : '토지',
     office: '○○시청',
-    applicant:{ name:'홍길동', idno:'●●●●●●-●●●●●●●', corp:false,
+    applicant:{ name:'홍길동', idno:'●●●●●●-●●●●●●●', corp:false, corpName:'',
       addr:'경기도 파주시 ○○로 00', bizname:d.site+' 태양광발전소', phone:'010-0000-0000' },
     biz:{ kind:'발전사업(태양광발전)', place:'경기도 ○○시 ○○면 ○○리 000-0'+(isBld?' (건물 지붕)':' 외 ○필지 (노지형)'),
       cap, volt:380, freq:60, prep:18 },
@@ -4518,6 +4523,28 @@ function resolvePermit(d){
   return p;
 }
 function getPermit(d){ if(!d.permit) d.permit = defaultPermit(d); return d.permit; }
+// 개인/법인 사업자 구분에 따른 표기 — 법인: 법인명+대표자명 / 개인: 대표자명
+function applicantFullName(p){ const a=p.applicant||{}; if(a.corp){ const cn=(a.corpName||'').trim(); return cn ? cn+' 대표 '+(a.name||'') : (a.name||''); } return a.name||''; }
+function idnoLabel(p){ return (p.applicant&&p.applicant.corp) ? '법인등록번호' : '주민등록번호'; }
+function setPermitCorp(id, isCorp){ setPermit(id,'applicant.corp',!!isCorp); refreshActive(); }
+// 사업자등록증 첨부(영업 실계약) — 유료 스토리지 연동 전까지 자리표시
+function bizLicenseUpload(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d); p.applicant=p.applicant||{};
+  if(p.applicant.bizLicense) delete p.applicant.bizLicense; else p.applicant.bizLicense={name:'사업자등록증',url:null,uploadedAt:null};
+  persistDeal(d); refreshActive(); }
+function renderBizLicense(d, origin){
+  const p=getPermit(d), has=!!(p.applicant&&p.applicant.bizLicense);
+  if(origin!=='sales') return `<div class="pi-row"><label>사업자등록증</label><div class="pi-inwrap"><input class="pi-in ro" readonly value="${has?'첨부됨 ✓':'미첨부'}"></div></div>`;
+  return `<div class="pi-row"><label>사업자등록증</label><div class="pi-inwrap"><button class="btn ghost sm bizlic-btn${has?' on':''}" type="button" onclick="bizLicenseUpload('${d.id}')">${has?'✓ 첨부됨 (취소)':'📎 파일 첨부'}</button></div></div>`;
+}
+// 사업자 구분 토글 행(영업=선택 / 행정=읽기전용 표시)
+function corpToggleRow(d, origin){
+  const p=getPermit(d), corp=!!(p.applicant&&p.applicant.corp);
+  if(origin!=='sales') return `<div class="pi-row"><label>사업자 구분</label><div class="pi-inwrap"><input class="pi-in ro" readonly value="${corp?'법인사업자':'개인사업자'}"></div></div>`;
+  return `<div class="pi-row"><label>사업자 구분</label><div class="pi-inwrap"><div class="pm-seg">
+    <button type="button" class="pm-seg-b${!corp?' on':''}" onclick="setPermitCorp('${d.id}',false)">개인사업자</button>
+    <button type="button" class="pm-seg-b${corp?' on':''}" onclick="setPermitCorp('${d.id}',true)">법인사업자</button>
+  </div></div></div>`;
+}
 // 도트경로 저장 (예: 'applicant.name', 'lands.0.area')
 function setPermit(id, path, val){
   const d = DEALS.find(x=>x.id===id); if(!d) return;
@@ -4887,10 +4914,13 @@ function renderPermitForm(d, origin){
   const sec=(kc,ic,title,inner)=> inner.indexOf('pi-row')>=0 ? piSec(kc,ic,title,badge,inner) : '';
   const applicant = sec('#3f77a8','👤','신청인(사업주) 정보',
     `<div class="pm-grid">
+      ${corpToggleRow(d, origin)}
+      ${p.applicant.corp ? pr('법인명','applicant.corpName',p.applicant.corpName) : ''}
       ${pr('대표자 성명','applicant.name',p.applicant.name)}
       ${pr('상호(발전소명)','applicant.bizname',p.applicant.bizname)}
       ${pr('전화번호','applicant.phone',p.applicant.phone)}
-      ${pr('주민/법인등록번호','applicant.idno',p.applicant.idno)}
+      ${pr(idnoLabel(p),'applicant.idno',p.applicant.idno)}
+      ${renderBizLicense(d, origin)}
       ${pr('주소','applicant.addr',p.applicant.addr)}
     </div>`);
   const biz = sec('#2e8b63','⚡','신청내용 · 접수관청',
@@ -5124,7 +5154,7 @@ function renderPermitPrint(d){
     <div class="pp-note">※ 바탕색이 어두운 난은 신청인이 작성하지 않습니다.</div>
     <table class="pp-t">
       <tr><td class="lbl" style="width:16%">접수번호</td><td style="width:34%"></td><td class="lbl" style="width:16%">접수일자</td><td style="width:16%"></td><td class="lbl" style="width:9%">처리기간</td><td class="ctr" style="width:9%">60일</td></tr>
-      <tr><td class="lbl" rowspan="4">신청인</td><td class="lbl">대표자 성명</td><td>${esc(p.applicant.name)}</td><td class="lbl">주민등록번호<br>(법인등록번호)</td><td colspan="2">${esc(p.applicant.idno)}</td></tr>
+      <tr><td class="lbl" rowspan="4">신청인</td><td class="lbl">${p.applicant.corp?'법인명 · 대표자 성명':'대표자 성명'}</td><td>${esc(applicantFullName(p))}</td><td class="lbl">${idnoLabel(p)}</td><td colspan="2">${esc(p.applicant.idno)}</td></tr>
       <tr><td class="lbl">주소</td><td colspan="4">${esc(p.applicant.addr)}</td></tr>
       <tr><td class="lbl">상호</td><td colspan="4">${esc(p.applicant.bizname)}</td></tr>
       <tr><td class="lbl">전화번호</td><td colspan="4">${esc(p.applicant.phone)}</td></tr>
@@ -5135,7 +5165,7 @@ function renderPermitPrint(d){
       <tr><td class="lbl">사업에 필요한 준비기간</td><td colspan="4">허가일로부터 ${esc(p.biz.prep)}개월</td></tr>
     </table>
     <div class="pp-note">「전기사업법」 제7조제1항 및 같은 법 시행규칙 제4조에 따라 위와 같이 전기사업의 허가를 신청합니다.</div>
-    <div class="pp-sign">${today}<br>신청인 : ${esc(p.applicant.name)} (서명 또는 인)<br><b>${esc(p.office)}</b> 귀하</div>
+    <div class="pp-sign">${today}<br>신청인 : ${esc(applicantFullName(p))} (서명 또는 인)<br><b>${esc(p.office)}</b> 귀하</div>
     <table class="pp-t"><tr><td class="lbl" style="width:16%">첨부서류</td><td style="font-size:10px;text-align:left;line-height:1.6">1. 사업계획서(별표 1의2) 1부　2. 발전설비 개요 및 송전관계 일람도　3. 발전소부지 확보 서류(토지·건물 등기부등본, 대장, 지적도, 토지이용계획확인서 등)　4. 발전원가 명세서　5. 기타 관계 법령에 따른 서류</td></tr></table>
   </div>`;
   // 2) 사업계획서 — 전체 양식 재현(개요·공급계획·건설량·투입자금·설비·공정표·공사비·원가·인력·부지·용도·임원·사진)
