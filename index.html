@@ -1013,16 +1013,16 @@ button{font-family:inherit;cursor:pointer}
 .pp-t .lbl{background:#f3f5f8;font-weight:700;text-align:center;white-space:nowrap}
 .pp-t .ctr{text-align:center}
 /* 양식 미리보기 팝업(모달) — 큰 화면으로 입력내용 확인 */
-.pm-modal-ov{position:fixed;inset:0;z-index:4000;background:rgba(8,16,18,.66);display:flex;align-items:flex-start;justify-content:center;padding:26px 14px;overflow-y:auto;animation:pmfade .15s ease}
+.pm-modal-ov{position:fixed;inset:0;z-index:4000;background:rgba(8,16,18,.66);overflow-y:auto;overflow-x:hidden;padding:26px 14px;animation:pmfade .15s ease}
 @keyframes pmfade{from{opacity:0}to{opacity:1}}
-.pm-modal-box{width:min(1040px,96vw);margin:auto;background:#fff;border-radius:14px;box-shadow:0 26px 80px rgba(0,0,0,.55);display:flex;flex-direction:column;overflow:hidden;color-scheme:light}
-.pm-modal-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;background:#1b2b2e;color:#fff;font-size:14px;font-weight:700}
+.pm-modal-box{width:min(1040px,96vw);margin:0 auto;background:#fff;border-radius:14px;box-shadow:0 26px 80px rgba(0,0,0,.55);color-scheme:light}
+.pm-modal-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;background:#1b2b2e;color:#fff;font-size:14px;font-weight:700;border-radius:14px 14px 0 0}
 .pm-modal-head .pm-m-ttl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pm-modal-head .pm-m-btns{display:flex;gap:8px;flex-shrink:0}
 .pm-modal-head .pm-mbtn{padding:7px 12px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.12);color:#fff}
 .pm-modal-head .pm-mbtn.primary{background:#d7a24b;color:#2c2006;border-color:transparent}
 .pm-modal-head .pm-mbtn:hover{filter:brightness(1.1)}
-.pm-modal-body{overflow-y:auto;max-height:calc(100vh - 130px);padding:22px 26px 32px;background:#fff;color-scheme:light}
+.pm-modal-body{padding:22px 26px 32px;background:#fff;color-scheme:light;border-radius:0 0 14px 14px}
 .pm-modal-body .pp-page{width:100%;max-width:900px}
 .pm-modal-body .pp-t{font-size:12px}
 .pm-modal-body .pp-h1{font-size:21px}
