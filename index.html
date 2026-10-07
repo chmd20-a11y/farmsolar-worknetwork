@@ -1013,6 +1013,10 @@ button{font-family:inherit;cursor:pointer}
 .pp-doc .pp-photos figure{margin:0;border:1px solid #333;padding:4px;background:#fff}
 .pp-doc .pp-photos img{display:block;width:300px;max-width:100%;height:auto}
 .pp-doc .pp-photos figcaption{text-align:center;font-size:10px;color:#333;margin-top:3px}
+.pp-doc .pp-diagram{display:flex;align-items:center;justify-content:center;gap:12px;margin:7mm 0;flex-wrap:wrap}
+.pp-doc .ppd-box{border:1.5px solid #111;border-radius:7px;padding:11px 18px;text-align:center;font-size:12px;line-height:1.7;min-width:130px}
+.pp-doc .ppd-box b{font-size:14px}
+.pp-doc .ppd-line{font-size:18px;color:#111;letter-spacing:-2px;font-weight:700}
 .pm-seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:8px;overflow:hidden}
 .pm-seg-b{border:none;background:var(--surface);color:var(--ink-2);font-size:12.5px;font-weight:700;padding:6px 14px;cursor:pointer}
 .pm-seg-b+.pm-seg-b{border-left:1px solid var(--border)}
@@ -4035,6 +4039,7 @@ const SURVEY_FORM = [
     {k:'예정 위치'},
     {k:'설치 공간', wh:true},
     {k:'인입 경로', optm:['가공','지중','트레이','기타']},
+    {k:'전주번호', poleNo:true},   // 수급지점 — 송전관계 일람도에 자동 연동
     {k:'담당자 확인', sign:true},
   ]},
 ];
@@ -4102,7 +4107,10 @@ function trySurveyDone(id){ const t=svTotals(id);
     if(t.dwgReqDone<t.dwgReq) m.push(`필수 도면(배치도) 미첨부`);
     toast('실측 완료 불가 — '+m.join(' · ')); svRecount(id); return; }
   wfAction(id,'survey_done','실측 완료 — 영업팀 실계약으로 이관'); }
+function setSurveyPole(id,val){ const d=DEALS.find(x=>x.id===id); if(!d) return; d.survey=d.survey||{}; d.survey.poleNo=val; persistDeal(d); }
 function svRowContent(r,d){
+  if(r.poleNo){ const v=(d.survey&&d.survey.poleNo)||'';   // 수급지점 전주번호 → 송전관계 일람도 자동 연동(저장)
+    return `<div class="sv-inpwrap"><input class="tinput sv-sm2" value="${esc(v)}" placeholder="예: 1234-A5 (한전 전주 전산화번호)" oninput="setSurveyPole('${d.id}',this.value)"><span class="sv-unit">송전관계 일람도 연동</span></div>`; }
   if(r.src){ const v=r.src(d), val=(v==null?'':String(v)), ro=val!==''?' readonly':'';
     return `<div class="sv-inpwrap"><input class="tinput sv-sm2${ro?' sv-auto':''}" value="${esc(val)}"${ro}>${r.unit?`<span class="sv-unit">${esc(r.unit)}</span>`:''}</div>`; }
   if(r.wh)   return `<div class="sv-wh"><span>가로</span><input class="tinput sv-sm"><span>m</span><em>×</em><span>세로</span><input class="tinput sv-sm"><span>m</span></div>`;
@@ -5379,8 +5387,27 @@ function renderPermitPrint(d){
       <tr><td class="lbl">전화번호</td><td>${esc(p.applicant.phone||'')}</td></tr>
     </table>
   </div>`;
-  // 순서: 1.신청서 → 2.의향서 → 3.동의서 → 4.사업계획서
-  return `<div class="pp-doc">${applForm}${uihyangForm}${donguiForm}${planFull}</div>`;
+  // 4) 송전관계 일람도 — 시공용량·수급지점(전주번호)·모듈/인버터·총 발전용량
+  const poleNo=(d.survey&&d.survey.poleNo)||'';
+  const ilramdoForm = `<div class="pp-page">
+    <div class="pp-h1" style="letter-spacing:3px">송전관계 일람도</div>
+    <div class="pp-sub">가. 한국전력설비 연계도면</div>
+    <div class="pp-note" style="line-height:1.95">본 태양광 발전설비는 <b>${pComma(c.cap)}</b>KW급 태양전지를 이용하여 발생된 전력을 저압선로에 연계 운전을 하고자 하는 발전설비로서 배전선로 일람 관계는 다음과 같다.</div>
+    <div class="pp-diagram">
+      <div class="ppd-box">태양광발전소<br><b>( ${pComma(c.cap)} )</b> KW</div>
+      <div class="ppd-line">──────▶</div>
+      <div class="ppd-box">수급지점<br><b>${esc(poleNo)||'&nbsp;'}</b></div>
+    </div>
+    <div class="pp-sub">나. 발전소 내선설비도</div>
+    <table class="pp-t">
+      <tr><td class="lbl" style="width:24%">인버터</td><td style="text-align:left">DC ${esc(eq.invIn)}V / AC ${esc(eq.invOut)}V　${esc(eq.invKW)}KVA × ${esc(eq.invQty)}대</td></tr>
+      <tr><td class="lbl">모듈</td><td style="text-align:left">${esc(eq.modW)}WP × ${pComma(eq.modQty)} 장(매)</td></tr>
+      <tr><td class="lbl">총 발전용량</td><td style="text-align:left"><b>( ${pComma(c.cap)} kW )</b></td></tr>
+    </table>
+    <div class="pp-note" style="margin-top:5mm;font-size:9.5px;line-height:1.7">· 수급지점(전주번호)은 설계 「현장 실측 → 전기실 위치 → 전주번호」에서 입력한 값입니다.</div>
+  </div>`;
+  // 순서: 1.신청서 → 2.의향서 → 3.동의서 → 4.송전관계 일람도 → 5.사업계획서
+  return `<div class="pp-doc">${applForm}${uihyangForm}${donguiForm}${ilramdoForm}${planFull}</div>`;
 }
 function printPermit(id){
   const d=DEALS.find(x=>x.id===id); if(!d) return;
