@@ -4439,7 +4439,8 @@ function defaultPermit(d){
     installType: isBld ? '건물' : '토지',
     office: '○○시청',
     applicant:{ name:'홍길동', idno:'●●●●●●-●●●●●●●', corp:false, corpName:'',
-      addr:'경기도 파주시 ○○로 00', bizname:d.site+' 태양광발전소', phone:'010-0000-0000' },
+      addr:'경기도 파주시 ○○로 00', bizname:d.site+' 태양광발전소', phone:'010-0000-0000',
+      idType:'주민등록증', idDoc:null },
     biz:{ kind:'발전사업(태양광발전)', place:'경기도 ○○시 ○○면 ○○리 000-0'+(isBld?' (건물 지붕)':' 외 ○필지 (노지형)'),
       cap, volt:380, freq:60, prep:18 },
     outline:{ plantName:d.site+' 태양광발전소', method:isBld?'건물형(지붕)':'노지형', genType:'고정식',
@@ -4537,6 +4538,36 @@ const PERMIT_VENDORS=[
   {label:'(주)스마트솔라',    full:'주식회사 스마트솔라'},
 ];
 function permitVendor(d){ const p=getPermit(d); const i=Math.max(0,Math.min(PERMIT_VENDORS.length-1, p.vendorIdx|0)); return PERMIT_VENDORS[i]; }
+// 신분증 종류 — 영업 실계약에서 선택·첨부 → 행정정보 공동이용 사전동의서([별지 제8호])의 신분증 체크·번호·생년월일에 반영
+const PERMIT_ID_TYPES=['주민등록증','여권','외국인등록증','운전면허증'];
+function setPermitIdType(id,t){ setPermit(id,'applicant.idType',t); refreshActive(); }
+function idDocUpload(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d); p.applicant=p.applicant||{};
+  if(p.applicant.idDoc) p.applicant.idDoc=null; else p.applicant.idDoc={name:(p.applicant.idType||'신분증')+' 사본',url:null,uploadedAt:null};
+  persistDeal(d); refreshActive(); }
+function renderIdType(d, origin){
+  const p=getPermit(d), cur=(p.applicant&&p.applicant.idType)||'주민등록증';
+  if(origin!=='sales') return `<div class="pi-row"><label>신분증 종류</label><div class="pi-inwrap"><input class="pi-in ro" readonly value="${esc(cur)}"></div></div>`;
+  const opts=PERMIT_ID_TYPES.map(v=>`<option value="${esc(v)}" ${v===cur?'selected':''}>${esc(v)}</option>`).join('');
+  return `<div class="pi-row"><label>신분증 종류</label><div class="pi-inwrap"><select class="pi-in" onchange="setPermitIdType('${d.id}',this.value)">${opts}</select></div></div>`;
+}
+function renderIdDoc(d, origin){
+  const p=getPermit(d), has=!!(p.applicant&&p.applicant.idDoc);
+  if(origin!=='sales') return `<div class="pi-row"><label>신분증 사본</label><div class="pi-inwrap"><input class="pi-in ro" readonly value="${has?'첨부됨 ✓':'미첨부'}"></div></div>`;
+  return `<div class="pi-row"><label>신분증 사본</label><div class="pi-inwrap"><button class="btn ghost sm bizlic-btn${has?' on':''}" type="button" onclick="idDocUpload('${d.id}')">${has?'✓ 첨부됨 (취소)':'📎 신분증 첨부'}</button></div></div>`;
+}
+// 주민등록번호 앞자리 → 생년월일(성별자리로 세기 판정). 마스킹(●)·법인등록번호 등 비정상 입력은 ''.
+function rrnToBirth(rrn){
+  const s=String(rrn||'').replace(/[^0-9]/g,'');
+  if(s.length<7) return null;
+  const yy=+s.slice(0,2), mm=+s.slice(2,4), dd=+s.slice(4,6), g=+s.slice(6,7);
+  const cen=(g===1||g===2||g===5||g===6)?1900:(g===3||g===4||g===7||g===8)?2000:(g===9||g===0)?1800:0;
+  if(!cen||mm<1||mm>12||dd<1||dd>31) return null;
+  return {y:cen+yy, m:mm, d:dd};
+}
+function fmtBirth(rrn){ const b=rrnToBirth(rrn); return b?`${b.y}년 ${b.m}월 ${b.d}일`:''; }
+// 동의서 대상자 본인 = 대표자 개인. 개인사업자=주민번호(idno), 법인=대표자 주민번호 미보유(공란).
+function donguiPersonNo(p){ const a=p.applicant||{}; if(a.corp) return ''; return (a.idType||'주민등록증')==='주민등록증' ? (a.idno||'') : ''; }
+function donguiBirth(p){ const a=p.applicant||{}; if(a.corp) return ''; return fmtBirth(a.idno); }
 function setPermitCorp(id, isCorp){ setPermit(id,'applicant.corp',!!isCorp); refreshActive(); }
 // 사업자등록증 첨부(영업 실계약) — 유료 스토리지 연동 전까지 자리표시
 function bizLicenseUpload(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d); p.applicant=p.applicant||{};
@@ -4932,6 +4963,8 @@ function renderPermitForm(d, origin){
       ${pr('전화번호','applicant.phone',p.applicant.phone)}
       ${pr(idnoLabel(p),'applicant.idno',p.applicant.idno)}
       ${renderBizLicense(d, origin)}
+      ${renderIdType(d, origin)}
+      ${renderIdDoc(d, origin)}
       ${pr('주소','applicant.addr',p.applicant.addr)}
     </div>`);
   const biz = sec('#2e8b63','⚡','신청내용 · 접수관청',
@@ -5288,22 +5321,34 @@ function renderPermitPrint(d){
     <div class="pp-sign">${today}</div>
     <div class="pp-note" style="margin-top:5mm;font-size:9.5px;line-height:1.7">· 이 확인서는 태양광발전사업 허가신청을 위한 목적으로 허가기관에 제출하는 용도에 한합니다.<br>· 본 의향서는 공사계약서가 아니며, 신청자의 의사에 따라 변경될 수 있습니다.</div>
   </div>`;
-  // 3) 행정정보 공동이용 사전동의서
+  // 3) 행정정보 공동이용 사전동의서 [별지 제8호 서식] — 결격사유·범죄 유무 조회
+  //    신분증 종류=실계약 선택 → 체크(■) / 번호=주민등록증일 때 주민번호 자동 / 생년월일=주민번호 앞자리 파생 / 전화=연락처 / 이용기관=접수관청
+  const itype=(p.applicant.idType)||'주민등록증';
+  const ck=(v)=> itype===v ? '■' : '□';
+  const personNo=donguiPersonNo(p), birthStr=donguiBirth(p), agency=(p.office||'').trim();
   const donguiForm = `<div class="pp-page">
-    <div class="pp-formtop">■ 「전자정부법」 시행규칙 [별지 서식]</div>
+    <div class="pp-formtop" style="text-align:right">[별지 제8호 서식]</div>
     <div class="pp-h1" style="font-size:17px">행정정보 공동이용 사전동의서</div>
-    <div class="pp-note" style="line-height:1.85">「전자정부법」 제36조제1항 및 「개인정보 보호법」 제15조·제24조에 따라, 담당 공무원이 전기사업 허가 신청의 처리를 위하여 아래 행정정보를 공동이용하는 것에 동의합니다.</div>
-    <table class="pp-t">
-      <tr><td class="lbl" style="width:24%">이용목적</td><td>전기사업(발전사업·태양광) 허가 신청</td></tr>
-      <tr><td class="lbl">동의 대상 행정정보</td><td style="text-align:left;font-size:10px;line-height:1.7">① 건축물대장　② 토지(임야)대장　③ 지적(임야)도　④ 토지이용계획확인서　⑤ 토지·건물 등기사항전부증명서</td></tr>
+    <table class="pp-t" style="margin-top:4mm">
+      <tr><td class="lbl" style="width:30%">1. 이용기관 명칭</td><td style="text-align:left">${esc(agency)}</td></tr>
+      <tr><td class="lbl">2. 이용사무(이용목적)</td><td style="text-align:left">전기사업의 허가 신청에 따른 결격사유·범죄 유무 조회</td></tr>
     </table>
-    <div class="pp-sub">○ 동의자 (신청인)</div>
+    <div class="pp-sub">3. 공동이용 행정정보(구비서류)</div>
     <table class="pp-t">
-      <tr><td class="lbl" style="width:24%">성명</td><td>${esc(p.applicant.name)}</td><td class="lbl" style="width:24%">주민등록번호</td><td>${esc(p.applicant.idno)}</td></tr>
-      <tr><td class="lbl">주소</td><td colspan="3">${esc(p.applicant.addr)}</td></tr>
+      <tr><td class="lbl" style="width:14%">연번</td><td class="lbl">행정정보명</td></tr>
+      <tr><td>1</td><td style="text-align:left">결격사유·범죄 유무 조회</td></tr>
     </table>
-    <div class="pp-note" style="margin-top:5mm">위와 같이 행정정보의 공동이용에 동의합니다.</div>
-    <div class="pp-sign">${today}<br>동의자 : ${esc(p.applicant.name)} (서명 또는 인)</div>
+    <div class="pp-note" style="font-size:9px;line-height:1.6;margin-top:3mm">※ 이용기관은 본인이 동의한 위 공동이용 행정정보를 확인하기 위해 「개인정보 보호법」 시행령 제19조에 따라 주민등록번호, 여권번호, 운전면허의 면허번호 또는 외국인등록번호가 포함된 행정정보를 처리할 수 있습니다. 이용기관이 요청하는 경우 기재하여 주십시오.(필요시 기재사항)</div>
+    <div style="margin:3mm 0 1mm;font-size:11.5px;letter-spacing:.3px">( <b>${ck('주민등록증')}</b> 주민등록　<b>${ck('여권')}</b> 여권　<b>${ck('외국인등록증')}</b> 외국인등록　<b>${ck('운전면허증')}</b> 운전면허 )　　번호 : <b>${esc(personNo)}</b></div>
+    <div class="pp-sub">정보주체(본인) 동의사항</div>
+    <div class="pp-note" style="line-height:1.85">○ 본인은 위 사무의 처리를 위하여 「전자정부법」 제36조에 따른 행정정보 공동이용을 통해 이용기관의 업무처리담당자가 전자적으로 본인의 구비서류(공동이용 행정정보)를 확인하는 것에 동의합니다.<br>※ 만일, 본인이 위 행정정보 이용에 대해 동의를 하지 아니할 경우에도 불이익은 없습니다. 다만, 동의하지 아니한 경우에는 본인이 해당 구비서류를 제출하여야 합니다.</div>
+    <div class="pp-sign">${today}</div>
+    <div class="pp-sub">대상자 본인</div>
+    <table class="pp-t">
+      <tr><td class="lbl" style="width:24%">성 명</td><td>${esc(p.applicant.name)} (서명 또는 인)</td></tr>
+      <tr><td class="lbl">생년월일</td><td>${esc(birthStr)}</td></tr>
+      <tr><td class="lbl">전화번호</td><td>${esc(p.applicant.phone||'')}</td></tr>
+    </table>
   </div>`;
   // 순서: 1.신청서 → 2.의향서 → 3.동의서 → 4.사업계획서
   return `<div class="pp-doc">${applForm}${uihyangForm}${donguiForm}${planFull}</div>`;
