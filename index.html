@@ -958,6 +958,11 @@ button{font-family:inherit;cursor:pointer}
 /* ===== 발전사업 허가 (행정) ===== */
 .pm-modebar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
 .pm-datepick{border:1px solid var(--border-strong);background:var(--surface);color:var(--ink);border-radius:8px;padding:5px 9px;font-size:12.5px;font-weight:700;color-scheme:light dark;cursor:pointer}
+.pm-notes{margin-top:16px;border:1px solid color-mix(in srgb,var(--brand) 28%,transparent);background:color-mix(in srgb,var(--brand) 7%,transparent);border-radius:11px;padding:13px 15px}
+.pm-notes-h{font-weight:800;font-size:13px;color:var(--ink);margin-bottom:7px}
+.pm-notes-l{margin:0;padding-left:18px;color:var(--ink-2);font-size:12px;line-height:1.75}
+.pm-notes-l li{margin:5px 0}
+.pm-notes-l b{color:var(--ink)}
 .pm-dealsel{min-width:220px;padding:9px 12px;border:1px solid var(--border-strong);border-radius:9px;background:var(--surface);color:var(--ink);font-size:13px;font-weight:700}
 .pm-typetag{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;padding:5px 11px;border-radius:999px}
 .pm-typetag.land{background:color-mix(in srgb,#2e8b63 15%,transparent);color:#2e8b63}
@@ -5106,7 +5111,19 @@ function renderPermitBiz(){
       <button class="btn primary sm" onclick="printPermit('${d.id}')">📄 접수 PDF 출력</button>
     </div>`;
   const info = `<div class="cred-warn" style="color:var(--ink-2);background:color-mix(in srgb,var(--brand) 9%,transparent);border-color:color-mix(in srgb,var(--brand) 26%,transparent)">🔗 아래 신청정보는 각 원천에서 <b>자동으로 가져온 읽기전용</b>입니다 — <b style="color:#2e8b63">제안서</b>(설비·금액·사업주 성명·상호·전화·설치방법·연간발전량·경사각/입사각) / <b style="color:#9a6f16">실계약</b>(민감정보·설치장소·접수관청·전압·주파수·면적·발전방식·수급방식·부지 명세). 제안서가 바뀌면 설비·발전량이 <b>자동 반영</b>됩니다. 각 항목의 출처 태그를 누르면 그 원천 화면으로 이동해 수정할 수 있습니다. 행정은 <b>첨부서류 발급·준비</b>와 <b>접수 PDF 출력</b>을 담당합니다.</div>`;
-  return head + bar + info + renderPermitForm(d,'admin') + renderPermitDocs(d);
+  return head + bar + info + renderPermitForm(d,'admin') + renderPermitDocs(d) + permitNotes();
+}
+// 📌 참고·추후 보완 메모 — 팀장님이 나중에 다시 확인하실 수 있도록 상시 표시(발전사업 허가 화면)
+function permitNotes(){
+  return `<div class="pm-notes">
+    <div class="pm-notes-h">📌 참고 · 추후 보완 예정</div>
+    <ul class="pm-notes-l">
+      <li><b>신분증 번호 자동 읽기(추후)</b> — 현재는 <b>여권·운전면허·외국인등록증</b> 번호를 영업 「실계약」에서 <b>직접 입력</b>하면 「행정정보 공동이용 사전동의서」의 <b>번호란에 자동</b>으로 들어갑니다(<b>주민등록증</b>은 주민번호가 자동). 첨부한 신분증 <b>사진에서 번호를 자동으로 읽어오는 기능(OCR)</b>은 추후 추가할 수 있습니다(신분증 파일 보관 + 자동판독 기능이 함께 필요).</li>
+      <li><b>법인사업자 대표자 주민번호</b> — 동의서의 ‘대상자 본인’은 <b>대표자 개인</b>이라 대표자 주민등록번호가 필요합니다. 현재 데이터에는 법인등록번호만 있어, <b>법인은 번호·생년월일이 비어</b> 출력됩니다. 필요하시면 <b>‘대표자 주민번호’ 입력칸</b>을 추가해 드리겠습니다.</li>
+      <li><b>신분증 사본 보관</b> — 지금은 ‘첨부함 ✓’ 표시만 되고, <b>실제 파일 저장</b>은 추후(저장소 연동 시) 지원됩니다.</li>
+      <li><b>생년월일</b> — 신분증 종류와 관계없이 <b>주민등록번호 앞자리</b>로 자동 계산됩니다(주민번호 미입력·법인은 공란).</li>
+    </ul>
+  </div>`;
 }
 
 /* ---- 첨부서류 발급 섹션 ---- */
