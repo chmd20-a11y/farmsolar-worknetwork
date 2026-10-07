@@ -999,7 +999,10 @@ button{font-family:inherit;cursor:pointer}
 /* ===== 인쇄(PDF) 전용 ===== */
 #permitPrintArea{display:none}
 #proposalPrintArea{display:none}
-.pp-doc{font-family:"Malgun Gothic","맑은 고딕",sans-serif;color:#111;background:#fff}
+.pp-doc{font-family:"Malgun Gothic","맑은 고딕",sans-serif;color:#111;background:#fff;color-scheme:light}
+/* 미리보기는 '종이 문서' — 브라우저/OS 강제 다크모드가 글자를 뭉개지 않도록 셀 글자색을 명시 고정 */
+.pp-doc .pp-t th,.pp-doc .pp-t td,.pp-doc .pp-t .lbl,.pp-doc .pp-t .ctr{color:#111}
+.pp-doc .pp-note{color:#444}
 .pp-page{width:190mm;padding:4mm 0;margin:0 auto}
 .pp-h1{text-align:center;font-size:19px;font-weight:800;margin:2mm 0 3mm;letter-spacing:4px}
 .pp-formtop{font-size:10.5px;margin-bottom:1mm}
@@ -4969,7 +4972,7 @@ function renderPermitBiz(){
       <button class="btn primary sm" onclick="printPermit('${d.id}')">📄 접수 PDF 출력</button>
     </div>`;
   const info = `<div class="cred-warn" style="color:var(--ink-2);background:color-mix(in srgb,var(--brand) 9%,transparent);border-color:color-mix(in srgb,var(--brand) 26%,transparent)">🔗 아래 신청정보는 각 원천에서 <b>자동으로 가져온 읽기전용</b>입니다 — <b style="color:#2e8b63">제안서</b>(설비·금액·사업주 성명·상호·전화·설치방법·연간발전량·경사각/입사각) / <b style="color:#9a6f16">실계약</b>(민감정보·설치장소·접수관청·전압·주파수·면적·발전방식·수급방식·부지 명세). 제안서가 바뀌면 설비·발전량이 <b>자동 반영</b>됩니다. 각 항목의 출처 태그를 누르면 그 원천 화면으로 이동해 수정할 수 있습니다. 행정은 <b>첨부서류 발급·준비</b>와 <b>접수 PDF 출력</b>을 담당합니다.</div>`;
-  const preview = permitPrevOpen ? `<div style="margin:14px 0;border:1px solid var(--border-strong);border-radius:12px;overflow:auto;max-height:620px;background:#fff;padding:6px">${renderPermitPrint(d)}</div>` : '';
+  const preview = permitPrevOpen ? `<div style="margin:14px 0;border:1px solid var(--border-strong);border-radius:12px;overflow:auto;max-height:620px;background:#fff;padding:6px;color-scheme:light">${renderPermitPrint(d)}</div>` : '';
   return head + bar + info + renderPermitForm(d,'admin') + preview + renderPermitDocs(d);
 }
 
