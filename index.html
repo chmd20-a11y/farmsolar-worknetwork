@@ -5425,7 +5425,7 @@ function permitTokenMap(d){
   const L=(p.lands&&p.lands[0])||{};
   const inv=String(eq.invIn||'').split('~');
   const it=(p.applicant&&p.applicant.idType)||'주민등록증';
-  const ck=(v)=> it===v?'■ ':'□ ';
+  const ckimg=(v)=> it===v?'2':'1';  // 동의서 체크박스: 선택=☑이미지(BinData 2) / 미선택=□(BinData 1)
   const S=(v)=> (v==null?'':String(v));
   return {
     '§CAP§':pComma(c.cap), '§CAPN§':S(Math.round(pNum(c.cap))),
@@ -5437,7 +5437,7 @@ function permitTokenMap(d){
     '§INV_IN§':S(eq.invIn), '§INV_OUT§':S(eq.invOut), '§INV_KW§':S(eq.invKW), '§INV_QTY§':S(eq.invQty),
     '§MOD_W§':S(eq.modW), '§MOD_QTY§':pComma(eq.modQty),
     '§BIRTH§':donguiBirth(p)||'년 월 일', '§DONGUI_NO§':donguiPersonNo(p),
-    '§CK_JUMIN§':ck('주민등록증'), '§CK_YEOGWON§':ck('여권'), '§CK_WAEGUK§':ck('외국인등록증'), '§CK_MYEON§':ck('운전면허증'),
+    '§CKIMG_JUMIN§':ckimg('주민등록증'), '§CKIMG_YEOGWON§':ckimg('여권'), '§CKIMG_WAEGUK§':ckimg('외국인등록증'), '§CKIMG_MYEON§':ckimg('운전면허증'),
     '§SP_INVTOT§':pComma((pNum(eq.invKW)||0)*(pNum(eq.invQty)||0)), '§SP_INVKW§':S(eq.invKW), '§SP_INVQTY§':S(eq.invQty),
     '§SP_FREQ§':S(p.biz.freq), '§SP_VINLO§':S((inv[0]||'').trim()), '§SP_VINHI§':inv[1]?pComma(inv[1]):'', '§SP_VOLT§':S(p.biz.volt),
     '§SP_TOTCOST§':pComma(p.outline.totalCost), '§SP_LANDNO§':'1',
