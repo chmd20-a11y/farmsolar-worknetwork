@@ -3086,7 +3086,7 @@ function renderIntake(){
       </div>
       <div class="wf-actions">
         <button class="btn ghost sm" onclick="openProposal('${d.id}')">📄 제안서 전체 열기</button>
-        <button class="btn primary sm" onclick="startFeasibility('${d.id}')">타당성검토 시작 →</button>
+        <button class="btn primary sm" onclick="startFeasibility('${d.id}')">설계-타당성검토로 이관</button>
       </div>
     </div>`;
   }).join('');
@@ -4816,12 +4816,17 @@ function structStatusCard(d,sr){
     const finalBox = hasDoc
       ? `<div class="st-finalbox has"><div class="st-fb-main"><b>📄 업체 수신 최종 자료</b><div class="lr-s">${esc(sr.approvalDoc.filename)} · ${(sr.approvalDoc.size/1024).toFixed(0)}KB · ${esc(sr.approvalDoc.uploadedAt||'')}${sr.approvalDoc.uploadedBy?' · '+esc(sr.approvalDoc.uploadedBy):''}</div></div><button class="btn ghost sm" onclick="structDelApproval('${d.id}')">삭제</button></div>`
       : `<label class="st-finalbox empty"><input type="file" style="display:none" onchange="structUploadApproval('${d.id}',this)"><div class="st-fb-main"><b>📎 업체 수신 최종 자료 첨부</b><div class="lr-s">업체가 회신한 구조검토 최종 자료(승인서·구조계산서 등)를 여기에 첨부하세요. 첨부하면 아래 “다음 프로세스로 이관”이 활성화됩니다.</div></div><span class="btn dark sm" style="flex:none">파일 선택</span></label>`;
-    const nextBtn = nextDone
-      ? `<span class="pill done"><span class="pd"></span>✅ 다음 프로세스 이관됨 · ${esc(sr.nextHandedAt)}</span>`
-      : `<button class="btn primary" ${hasDoc?'':'disabled'} onclick="structHandNext('${d.id}')">➡️ 행정-개발행위 허가로 이관</button>${hasDoc?'':'<span class="lr-s">최종 자료를 첨부하면 활성화됩니다</span>'}`;
     const rejectBtn = (sr.status==='수신대기') ? `<button class="btn ghost sm" onclick="structReject('${d.id}')">⛔ 반려 처리</button>` : '';
-    body = finalBox + `<div class="st-nextrow">${nextBtn}${rejectBtn}</div>`;
+    body = finalBox + (rejectBtn?`<div class="st-nextrow">${rejectBtn}</div>`:'');
   }
+  // 다음 단계(행정-개발행위 허가) 이관 — 항상 표시, 구조검토 완료(최종 자료 수신) 후 활성화
+  const _hint = sr.status==='대기' ? '외주 업체이관 → 최종 자료(승인서) 수신 후 활성화됩니다'
+              : sr.status==='반려' ? '재이관 → 최종 자료(승인서) 수신 후 활성화됩니다'
+              : '최종 자료를 첨부하면 활성화됩니다';
+  const nextRow = nextDone
+    ? `<span class="pill done"><span class="pd"></span>✅ 행정-개발행위 허가로 이관됨 · ${esc(sr.nextHandedAt)}</span>`
+    : `<button class="btn primary" ${hasDoc?'':'disabled'} onclick="structHandNext('${d.id}')">➡️ 행정-개발행위 허가로 이관</button>${hasDoc?'':`<span class="lr-s">${_hint}</span>`}`;
+  body += `<div class="st-nextrow" style="margin-top:10px">${nextRow}</div>`;
   const hist=(sr.history||[]).slice().reverse();
   const histHtml = hist.length? hist.map(h=>`<div class="st-hrow"><span class="pill ${ {이관:'prog',완료:'done',다음이관:'done',반려:'risk'}[h.action]||'wait'}"><span class="pd"></span>${esc(h.action)}</span> <span class="st-hmeta">${esc(h.at)}${h.vendor?' · '+esc(h.vendor):''}${h.note?' · '+esc(h.note):''}</span></div>`).join('') : '<div class="lr-s" style="padding:6px 2px">이관 이력이 없습니다.</div>';
   return `<div class="card pad"><div class="st-card-h"><h3 style="margin:0">📌 이관 상태 · 최종 자료</h3><span class="pill ${stCls}"><span class="pd"></span>${esc(stLabel)}</span></div>${body}<div class="st-hist" style="margin-top:13px">${histHtml}</div></div>`;
