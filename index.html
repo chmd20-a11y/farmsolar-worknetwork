@@ -5449,22 +5449,49 @@ function permitTokenMap(d){
   };
 }
 function fillPermitTemplate(xml, map){ for(const k in map){ xml=xml.split(k).join(hwpXmlEsc(map[k])); } return xml; }
+// 순수 JS ZIP(무압축 STORE) — 외부 라이브러리 없이. UTF-8 파일명(공사명 폴더) 지원.
+function _crc32(b){
+  if(!_crc32.T){ _crc32.T=[]; for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); _crc32.T[n]=c>>>0; } }
+  let crc=0xFFFFFFFF; for(let i=0;i<b.length;i++) crc=(crc>>>8)^_crc32.T[(crc^b[i])&0xFF];
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function makePermitZip(files){ // files=[{name, data:Uint8Array}]
+  const enc=new TextEncoder();
+  const u16=n=>[n&0xFF,(n>>8)&0xFF], u32=n=>[n&0xFF,(n>>8)&0xFF,(n>>16)&0xFF,(n>>24)&0xFF];
+  const DT=0, DD=((2026-1980)<<9)|(10<<5)|8; // 고정 날짜(2026-10-08)
+  const parts=[], central=[]; let offset=0;
+  for(const f of files){
+    const nameB=enc.encode(f.name), data=f.data, crc=_crc32(data);
+    const lh=[0x50,0x4b,0x03,0x04, ...u16(20), ...u16(0x0800), ...u16(0), ...u16(DT),...u16(DD), ...u32(crc), ...u32(data.length),...u32(data.length), ...u16(nameB.length),...u16(0)];
+    const local=new Uint8Array(lh.length+nameB.length+data.length);
+    local.set(lh,0); local.set(nameB,lh.length); local.set(data,lh.length+nameB.length); parts.push(local);
+    const ch=[0x50,0x4b,0x01,0x02, ...u16(20),...u16(20), ...u16(0x0800), ...u16(0), ...u16(DT),...u16(DD), ...u32(crc), ...u32(data.length),...u32(data.length), ...u16(nameB.length),...u16(0),...u16(0),...u16(0),...u16(0), ...u32(0), ...u32(offset)];
+    const cen=new Uint8Array(ch.length+nameB.length); cen.set(ch,0); cen.set(nameB,ch.length); central.push(cen);
+    offset+=local.length;
+  }
+  const cdSize=central.reduce((s,c)=>s+c.length,0);
+  const eocd=new Uint8Array([0x50,0x4b,0x05,0x06, ...u16(0),...u16(0), ...u16(files.length),...u16(files.length), ...u32(cdSize), ...u32(offset), ...u16(0)]);
+  return new Blob([...parts,...central,eocd], {type:'application/zip'});
+}
 async function genPermitForms(id){
   const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d);
+  const p=resolvePermit(d);
+  const folder=(String((p.outline&&p.outline.plantName)||'접수서류').trim()||'접수서류').replace(/[\/\\:*?"<>|]/g,'_');
   const map=permitTokenMap(d); toast('접수서류(HWP) 생성 중…');
-  let ok=0; const fail=[];
+  const enc=new TextEncoder(); const files=[]; const fail=[];
   for(const f of PERMIT_FORM_FILES){
     try{
       const res=await fetch(f.url,{cache:'no-store'}); if(!res.ok) throw new Error('HTTP '+res.status);
       const xml=fillPermitTemplate(await res.text(), map);
-      const a=document.createElement('a');
-      a.href=URL.createObjectURL(new Blob([xml],{type:'application/octet-stream'})); a.download=f.out;
-      document.body.appendChild(a); a.click();
-      setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },2000);
-      ok++; await new Promise(r=>setTimeout(r,300));
+      files.push({name: folder+'/'+f.out, data: enc.encode(xml)});
     }catch(e){ fail.push(f.label); }
   }
-  toast(fail.length ? ('일부 실패: '+fail.join(', ')+' (팝업/다운로드 허용 후 재시도)') : ('접수서류 '+ok+'종 다운로드 — 한글에서 열어 확인하세요'));
+  if(!files.length){ toast('생성 실패 — 새로고침 후 다시 시도해주세요'); return; }
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(makePermitZip(files)); a.download=folder+'.zip';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },3000);
+  toast(fail.length ? ('일부 실패: '+fail.join(', ')+' — 생성된 '+files.length+'종만 포함') : ('“'+folder+'” 폴더로 '+files.length+'종 다운로드 — 압축 풀어 한글에서 여세요'));
 }
 // 모드바·모달의 기존 버튼이 호출하는 이름 유지 → HWP 자동생성으로 연결
 function printPermit(id){ genPermitForms(id); }
