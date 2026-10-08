@@ -5518,6 +5518,81 @@ async function genPermitForms(id){
 // 모드바·모달의 기존 버튼이 호출하는 이름 유지 → HWP 자동생성으로 연결
 function printPermit(id){ genPermitForms(id); }
 
+/* ===== 개발행위 허가 — 신청서+사업계획서 토큰 템플릿 자동생성 (발전허가와 동일 방식) ===== */
+const DEVPERMIT_FORM_FILES=[
+  {url:'forms/dev_sincheong.hml', out:'2. 개발행위(변경) 허가신청서.hml', label:'개발행위 허가신청서'},
+  {url:'forms/dev_saup.hml',      out:'2-1. 개발행위허가 사업계획서.hml', label:'개발행위 사업계획서'},
+];
+function devPermitTokenMap(d){
+  const p=resolvePermit(d), eq=p.equip||{};
+  const L=(p.lands&&p.lands[0])||{};
+  const S=(v)=>(v==null?'':String(v));
+  const loc=[S(L.addr),S(L.jibun)].filter(Boolean).join(' ') || S(p.biz.place);
+  return {
+    '§NAME§':applicantFullName(p), '§FULLNAME§':applicantFullName(p), '§IDNO§':S(p.applicant.idno),
+    '§ADDR§':S(p.applicant.addr), '§PHONE§':S(p.applicant.phone), '§DATE§':fmtKDate(permitApplyDate(d)),
+    '§LOC§':loc, '§JIMOK§':S(L.jimok), '§ZONE§':S(L.zone), '§ZONE2§':'',
+    '§AREA_FAC§':pComma(p.outline.useArea), '§AREA_LAND§':pComma(p.outline.totalArea),
+    '§MOD_QTY§':pComma(eq.modQty),
+  };
+}
+async function genDevPermitForms(id){
+  const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d);
+  const p=resolvePermit(d);
+  const folder=((String((p.outline&&p.outline.plantName)||'개발행위허가').trim()||'개발행위허가')+' 개발행위허가').replace(/[\/\\:*?"<>|]/g,'_');
+  const map=devPermitTokenMap(d); toast('개발행위 접수서류(HWP) 생성 중…');
+  const enc=new TextEncoder(); const files=[]; const fail=[];
+  for(const f of DEVPERMIT_FORM_FILES){
+    try{ const res=await fetch(f.url,{cache:'no-store'}); if(!res.ok) throw new Error('HTTP '+res.status);
+      const xml=fillPermitTemplate(await res.text(), map);
+      files.push({name: folder+'/'+f.out, data: enc.encode(xml)});
+    }catch(e){ fail.push(f.label); }
+  }
+  if(!files.length){ toast('생성 실패 — 새로고침 후 다시 시도해주세요'); return; }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(makePermitZip(files)); a.download=folder+'.zip';
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },3000);
+  toast(fail.length ? ('일부 실패: '+fail.join(', ')) : ('“'+folder+'” 폴더로 '+files.length+'종 다운로드 — 압축 풀어 한글에서 여세요'));
+}
+function printDevPermit(id){ genDevPermitForms(id); }
+
+/* ---- 행정: 개발행위 허가 전용화면 (발전허가와 동일 UX) ---- */
+let devPermitSel=null;
+function selectDevPermitDeal(id){ devPermitSel=id; refreshActive(); }
+function devPermitHandNext(id){ const d=DEALS.find(x=>x.id===id); if(!d) return;
+  const first=!d.devPermitHandedAt;
+  if(first){ d.devPermitHandedAt=verStamp(); persistDeal(d); toast(`${d.site} · 개발행위 허가 완료 — PPA신청으로 이관`); }
+  switchTab('admin');
+  const b=document.querySelector("#ssNav .ss-item[data-stage='ppa']");
+  if(b) activateItem('admin', b); else refreshActive();
+}
+function devPermitHandoffFooter(d){
+  const handed=d.devPermitHandedAt;
+  const inner = handed
+    ? `<span class="pill done"><span class="pd"></span>✅ 행정-PPA신청으로 이관됨 · ${esc(handed)}</span><button class="btn ghost sm" onclick="devPermitHandNext('${d.id}')">PPA신청 화면 열기 →</button>`
+    : `<button class="btn primary" onclick="devPermitHandNext('${d.id}')">➡️ 행정-PPA신청으로 이관</button><span class="lr-s">개발행위 허가 서류 준비가 끝나면 다음 단계(PPA신청)로 넘깁니다.</span>`;
+  return `<div class="card pad" style="margin-top:14px;border-top:3px solid var(--brand)"><div class="st-card-h"><h3 style="margin:0">➡️ 다음 단계</h3></div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px">${inner}</div></div>`;
+}
+function renderDevPermitBiz(){
+  const list = permitBizList();
+  const head = wfHead('개발행위 허가','영업 실계약·발전사업 허가에서 입력된 신청정보를 끌어와 「개발행위(변경) 허가신청서」와 사업계획서를 완성해 접수용 한글파일로 다운로드합니다. 토지(노지·수상)/건물(지붕) 두 유형을 지원합니다.');
+  if(!list.length) return head + emptyMsg('개발행위 허가 대상(실계약 완료) 현장이 없습니다. 영업 “실계약”에서 신청정보를 입력하면 여기로 넘어옵니다.');
+  if(!devPermitSel || !list.find(d=>d.id===devPermitSel)) devPermitSel = list[0].id;
+  const d = DEALS.find(x=>x.id===devPermitSel), p=getPermit(d);
+  const opts = list.map(x=>`<option value="${x.id}" ${x.id===devPermitSel?'selected':''}>${esc(x.site)} (${x.id})</option>`).join('');
+  const tag = p.installType==='건물' ? '<span class="pm-typetag bld">🏭 건물형(지붕)</span>' : '<span class="pm-typetag land">🌾 토지형(노지)</span>';
+  const bar = `<div class="pm-modebar">
+      <span class="lr-s">대상 현장</span>
+      <select class="pm-dealsel" onchange="selectDevPermitDeal(this.value)">${opts}</select>
+      ${tag}
+      <div style="flex:1"></div>
+      <span class="lr-s">📅 신청일자</span>
+      <input type="date" class="pm-datepick" value="${permitApplyDate(d)}" onchange="setPermit('${d.id}','applyDate',this.value);refreshActive()" title="개발행위 신청서에 기입될 신청일자">
+      <button class="btn primary sm" onclick="printDevPermit('${d.id}')">📥 개발행위 서류(HWP) 다운로드</button>
+    </div>`;
+  const info = `<div class="cred-warn" style="color:var(--ink-2);background:color-mix(in srgb,var(--brand) 9%,transparent);border-color:color-mix(in srgb,var(--brand) 26%,transparent)">🔗 아래 신청정보는 <b>제안서·실계약</b>에서 <b>자동 연동된 읽기전용</b>입니다. 개발행위 <b>신청서·사업계획서</b>의 신청인(성명·주민/법인번호·주소·전화)·위치(지번)·지목·용도지역·신청면적·토지면적·모듈 수량에 자동 기입됩니다. <b>사업기간·용도지구 등 데이터가 없는 항목과 위치도(지도)는 한글에서 직접 기재·삽입</b>하세요.</div>`;
+  return head + bar + info + renderPermitForm(d,'admin') + devPermitHandoffFooter(d);
+}
+
 const WF_SCREENS = {
   'd-intake':{el:'sub-d-intake', fn:renderIntake},
   'd-feas':{el:'sub-d-feas', fn:renderFeasibility},
@@ -6277,6 +6352,9 @@ function activateItem(tab, btn){
     if(tab==='admin' && btn.dataset.stage==='permit_biz'){   // 발전사업 허가 = 전용 신청·출력 화면
       document.getElementById('sub-a-permit').innerHTML = renderPermitBiz();
       view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-a-permit'));
+    } else if(tab==='admin' && btn.dataset.stage==='permit_dev'){   // 개발행위 허가 = 전용 신청·출력 화면
+      document.getElementById('sub-a-stage').innerHTML = renderDevPermitBiz();
+      view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-a-stage'));
     } else {
       const target = tab==='construction' ? 'c-stage' : tab==='design' ? 'd-stage' : 'a-stage';
       document.getElementById('sub-'+target).innerHTML = renderStageBoard(btn.dataset.stage);
