@@ -4398,6 +4398,8 @@ function renderRealContract(){
    ============================================================ */
 function pNum(v){ return Number(String(v==null?'':v).replace(/[^0-9.-]/g,''))||0; }
 function pComma(n){ return Math.round(pNum(n)).toLocaleString(); }
+// MWh 표기 — 소수 3자리 반올림 + 끝자리 0 생략 + 천단위 콤마(실제 접수샘플 표기와 동일: 355.744 / 99.91 / 1,761.022)
+function fmtMWh(v){ const r=Math.round(pNum(v)*1000)/1000; return r.toLocaleString('en-US',{maximumFractionDigits:3}); }
 
 // ── 견적서(제안서) 연동 — 발전사업 허가 신청정보 중 견적서에 들어가는 값은 견적서에서 끌어온다 ──
 // 딜의 제안서 결과에서 설비·금액 추출 — 실측 반영 수정본(d.revisedProposal)이 있으면 우선(수정해서 계약)
@@ -4909,8 +4911,8 @@ function permitCalc(d){
   // 소요자금 내역(천원): 설비47% 부대21% 구조물30% 기타2%
   const eq=Math.round(costK*0.47), aux=Math.round(costK*0.21), str=Math.round(costK*0.30), etc=costK-eq-aux-str;
   // 5년 공급계획(완만 감소 0.5%/년)
-  const yrs=[]; let g=annual/1000; for(let i=0;i<5;i++){ yrs.push(Math.round(g*1000)/1000); g=g*0.995; }
-  const sum5=Math.round(yrs.reduce((a,b)=>a+b,0)*1000)/1000;
+  const yrs=[], rawY=[]; let g=annual/1000; for(let i=0;i<5;i++){ rawY.push(g); yrs.push(Math.round(g*1000)/1000); g=g*0.995; }
+  const sum5=Math.round(rawY.reduce((a,b)=>a+b,0)*1000)/1000;   // 계 = 반올림 전 원값 합의 반올림(실제 접수샘플과 일치)
   return {cap,costK,ownK,loanK,annual,genCost,eq,aux,str,etc,yrs,sum5};
 }
 
@@ -5276,7 +5278,7 @@ function renderPermitPrint(d){
     <table class="pp-t"><tr><td class="lbl" style="width:16%">첨부서류</td><td style="font-size:10px;text-align:left;line-height:1.6">1. 사업계획서(별표 1의2) 1부　2. 발전설비 개요 및 송전관계 일람도　3. 발전소부지 확보 서류(토지·건물 등기부등본, 대장, 지적도, 토지이용계획확인서 등)　4. 발전원가 명세서　5. 기타 관계 법령에 따른 서류</td></tr></table>
   </div>`;
   // 2) 사업계획서 — 전체 양식 재현(개요·공급계획·건설량·투입자금·설비·공정표·공사비·원가·인력·부지·용도·임원·사진)
-  const yrCells=c.yrs.map(v=>`<td class="ctr">${v.toFixed(3)}</td>`).join('');
+  const yrCells=c.yrs.map(v=>`<td class="ctr">${fmtMWh(v)}</td>`).join('');
   const yrNames=['1차년도','2차년도','3차년도','4차년도','5차년도'];
   const naeja=c.costK, oeja=0;                                  // 내자(국내자본) 전액 / 외자 0
   const invTot=(pNum(eq.invKW)||0)*(pNum(eq.invQty)||0);        // 인버터 총용량
@@ -5302,13 +5304,13 @@ function renderPermitPrint(d){
     <div class="pp-li"><b>다. 사업개시 예정일</b> 허가일로부터 ${esc(p.outline.startMonths)}개월 이내</div>
     <div class="pp-sub">라. 전기사업 개시일로부터 5년간 연도별 공급계획 (MWh)</div>
     <table class="pp-t"><tr><th rowspan="2">구분</th><th colspan="5">연도별</th><th rowspan="2">계</th></tr><tr>${yrNames.map(n=>`<th>${n}</th>`).join('')}</tr>
-      <tr><td class="lbl">발전량</td>${yrCells}<td class="ctr">${c.sum5.toFixed(3)}</td></tr>
-      <tr><td class="lbl">송전량</td>${yrCells}<td class="ctr">${c.sum5.toFixed(3)}</td></tr></table>
+      <tr><td class="lbl">발전량</td>${yrCells}<td class="ctr">${fmtMWh(c.sum5)}</td></tr>
+      <tr><td class="lbl">송전량</td>${yrCells}<td class="ctr">${fmtMWh(c.sum5)}</td></tr></table>
     <div class="pp-sub">○ 연도별 건설 예정량</div>
     <table class="pp-t"><tr><th>연도별</th><th>건설 예정량</th><th>년간 발전량</th><th>비고</th></tr>
-      <tr><td class="lbl">1차년도</td><td class="ctr">${pComma(c.cap)} kWp</td><td class="ctr">${(c.annual/1000).toFixed(3)} MWh</td><td></td></tr>
+      <tr><td class="lbl">1차년도</td><td class="ctr">${pComma(c.cap)} kWp</td><td class="ctr">${fmtMWh(c.annual/1000)} MWh</td><td></td></tr>
       <tr><td class="lbl">2차년도</td><td class="ctr">─</td><td class="ctr">─</td><td></td></tr>
-      <tr><td class="lbl">계</td><td class="ctr">${pComma(c.cap)} kWp</td><td class="ctr">${(c.annual/1000).toFixed(3)} MWh</td><td></td></tr></table>
+      <tr><td class="lbl">계</td><td class="ctr">${pComma(c.cap)} kWp</td><td class="ctr">${fmtMWh(c.annual/1000)} MWh</td><td></td></tr></table>
     <div class="pp-sub">○ 연도별 투입자금 (천원)</div>
     <table class="pp-t"><tr><th>연도별</th><th>투입자금</th><th>비고</th></tr>
       <tr><td class="lbl">1차년도</td><td class="ctr">${pComma(c.costK)}</td><td>착공~준공</td></tr>
@@ -5468,6 +5470,7 @@ function permitTokenMap(d){
     '§SP_NAME§':S(p.outline.plantName), '§SP_LOC§':S(p.biz.place), '§SP_METHOD§':S(p.outline.method),
     '§SP_USEAREA§':pComma(p.outline.useArea), '§SP_TOTAREA§':pComma(p.outline.totalArea),
     '§SP_UNITCOST§':pComma(p.outline.unitCost), '§SP_ANNUAL§':pComma(p.outline.annual),
+    '§Y1§':fmtMWh(c.yrs[0]), '§Y2§':fmtMWh(c.yrs[1]), '§Y3§':fmtMWh(c.yrs[2]), '§Y4§':fmtMWh(c.yrs[3]), '§Y5§':fmtMWh(c.yrs[4]), '§YSUM§':fmtMWh(c.sum5),
   };
 }
 function fillPermitTemplate(xml, map){ for(const k in map){ xml=xml.split(k).join(hwpXmlEsc(map[k])); } return xml; }
