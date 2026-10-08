@@ -5120,7 +5120,24 @@ function renderPermitBiz(){
       <button class="btn primary sm" onclick="printPermit('${d.id}')">📥 접수서류(HWP) 다운로드</button>
     </div>`;
   const info = `<div class="cred-warn" style="color:var(--ink-2);background:color-mix(in srgb,var(--brand) 9%,transparent);border-color:color-mix(in srgb,var(--brand) 26%,transparent)">🔗 아래 신청정보는 각 원천에서 <b>자동으로 가져온 읽기전용</b>입니다 — <b style="color:#2e8b63">제안서</b>(설비·금액·사업주 성명·상호·전화·설치방법·연간발전량·경사각/입사각) / <b style="color:#9a6f16">실계약</b>(민감정보·설치장소·접수관청·전압·주파수·면적·발전방식·수급방식·부지 명세). 제안서가 바뀌면 설비·발전량이 <b>자동 반영</b>됩니다. 각 항목의 출처 태그를 누르면 그 원천 화면으로 이동해 수정할 수 있습니다. 행정은 <b>첨부서류 발급·준비</b>와 <b>접수 PDF 출력</b>을 담당합니다.</div>`;
-  return head + bar + info + renderPermitForm(d,'admin') + renderPermitDocs(d) + permitNotes();
+  return head + bar + info + renderPermitForm(d,'admin') + renderPermitDocs(d) + permitBizHandoffFooter(d) + permitNotes();
+}
+// 발전사업 허가 완료 → 다음 단계(설계 구조검토)로 이관 — 플래그 기록 + 구조검토 이관 화면으로 이동
+function permitBizHandNext(id){ const d=DEALS.find(x=>x.id===id); if(!d) return;
+  const first=!d.permitBizHandedAt;
+  if(first){ d.permitBizHandedAt=verStamp(); persistDeal(d); }
+  structSel=id; structVendorSel=''; structAttach=[]; structHistOpen=false; structPrevOpen=false; structTab='handover';
+  if(first) toast(`${d.site} · 발전사업 허가 완료 — 설계 구조검토로 이관`);
+  switchTab('design');
+  const b=document.querySelector("#ssNav .ss-item[data-sub='d-check']");
+  if(b) activateItem('design', b); else refreshActive();
+}
+function permitBizHandoffFooter(d){
+  const handed=d.permitBizHandedAt;
+  const inner = handed
+    ? `<span class="pill done"><span class="pd"></span>✅ 설계-구조검토로 이관됨 · ${esc(handed)}</span><button class="btn ghost sm" onclick="permitBizHandNext('${d.id}')">구조검토 화면 열기 →</button>`
+    : `<button class="btn primary" onclick="permitBizHandNext('${d.id}')">➡️ 설계-구조검토로 이관</button><span class="lr-s">발전사업 허가 서류 준비가 끝나면 다음 단계(설계 구조검토)로 넘깁니다.</span>`;
+  return `<div class="card pad" style="margin-top:14px;border-top:3px solid var(--brand)"><div class="st-card-h"><h3 style="margin:0">➡️ 다음 단계</h3></div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px">${inner}</div></div>`;
 }
 // 📌 참고·추후 보완 메모 — 팀장님이 나중에 다시 확인하실 수 있도록 상시 표시(발전사업 허가 화면)
 function permitNotes(){
