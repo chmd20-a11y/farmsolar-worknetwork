@@ -4526,9 +4526,10 @@ function resolvePermit(d){
   { const _capN=pNum(p.biz.cap)||0;
     p.outline.totalCost = Math.floor(_capN*10)*100;                      // 천원: floor(cap×1000 / 100)×100
     p.outline.unitCost  = _capN ? Math.round(p.outline.totalCost/_capN) : 0; }
-  if(q.ownK!=null) p.fund.own=q.ownK;
-  if(q.loanK!=null) p.fund.loan=q.loanK;
-  if(q.ownK!=null && q.loanK!=null){ const t=q.ownK+q.loanK; if(t){ p.fund.ownPct=Math.round(q.ownK/t*100); p.fund.loanPct=100-p.fund.ownPct; } }
+  // 내자(자기자금) 15% / 외자(타인자금) 85% — 실제 접수샘플 기준 고정(총사업비 기준)
+  p.fund.own  = Math.round(p.outline.totalCost*0.15);
+  p.fund.loan = p.outline.totalCost - p.fund.own;
+  p.fund.ownPct = 15; p.fund.loanPct = 85;
   if(q.modW) p.equip.modW=q.modW;
   if(q.modQty) p.equip.modQty=q.modQty;
   if(q.modType) p.equip.modType=q.modType;
@@ -5283,7 +5284,7 @@ function renderPermitPrint(d){
   // 2) 사업계획서 — 전체 양식 재현(개요·공급계획·건설량·투입자금·설비·공정표·공사비·원가·인력·부지·용도·임원·사진)
   const yrCells=c.yrs.map(v=>`<td class="ctr">${fmtMWh(v)}</td>`).join('');
   const yrNames=['1차년도','2차년도','3차년도','4차년도','5차년도'];
-  const naeja=c.costK, oeja=0;                                  // 내자(국내자본) 전액 / 외자 0
+  const naeja=c.ownK, oeja=c.loanK;                             // 내자 15% / 외자 85%(총사업비 기준)
   const invTot=(pNum(eq.invKW)||0)*(pNum(eq.invQty)||0);        // 인버터 총용량
   const landRows = isBld
     ? (p.builds||[]).map((B,i)=>`<tr><td class="ctr">${i+1}</td><td>${esc(B.addr||'')}</td><td class="ctr">${esc(B.jibun||'')}</td><td class="ctr">${pComma(B.bldArea||0)}</td><td class="ctr">${esc(B.struct||'')}</td><td>${esc(B.use||'')}</td><td class="ctr">${esc(B.owner||'')}</td></tr>`).join('')
