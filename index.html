@@ -5529,7 +5529,7 @@ function devPermitTokenMap(d){
   const S=(v)=>(v==null?'':String(v));
   const loc=[S(L.addr),S(L.jibun)].filter(Boolean).join(' ') || S(p.biz.place);
   return {
-    '§NAME§':applicantFullName(p), '§FULLNAME§':applicantFullName(p), '§IDNO§':S(p.applicant.idno),
+    '§NAME§':applicantFullName(p), '§FULLNAME§':applicantFullName(p), '§SIGN§':S(p.applicant.name), '§IDNO§':S(p.applicant.idno),
     '§ADDR§':S(p.applicant.addr), '§PHONE§':S(p.applicant.phone), '§DATE§':fmtKDate(permitApplyDate(d)),
     '§LOC§':loc, '§JIMOK§':S(L.jimok), '§ZONE§':S(L.zone), '§ZONE2§':'',
     '§AREA_FAC§':pComma(p.outline.useArea), '§AREA_LAND§':pComma(p.outline.totalArea),
