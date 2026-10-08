@@ -5587,10 +5587,84 @@ function renderDevPermitBiz(){
       <div style="flex:1"></div>
       <span class="lr-s">📅 신청일자</span>
       <input type="date" class="pm-datepick" value="${permitApplyDate(d)}" onchange="setPermit('${d.id}','applyDate',this.value);refreshActive()" title="개발행위 신청서에 기입될 신청일자">
+      <button class="btn ghost sm" onclick="openDevPermitModal('${d.id}')">🔍 양식 미리보기</button>
       <button class="btn primary sm" onclick="printDevPermit('${d.id}')">📥 개발행위 서류(HWP) 다운로드</button>
     </div>`;
   const info = `<div class="cred-warn" style="color:var(--ink-2);background:color-mix(in srgb,var(--brand) 9%,transparent);border-color:color-mix(in srgb,var(--brand) 26%,transparent)">🔗 아래 신청정보는 <b>제안서·실계약</b>에서 <b>자동 연동된 읽기전용</b>입니다. 개발행위 <b>신청서·사업계획서</b>의 신청인(성명·주민/법인번호·주소·전화)·위치(지번)·지목·용도지역·신청면적·토지면적·모듈 수량에 자동 기입됩니다. <b>사업기간·용도지구 등 데이터가 없는 항목과 위치도(지도)는 한글에서 직접 기재·삽입</b>하세요.</div>`;
   return head + bar + info + renderPermitForm(d,'admin') + devPermitHandoffFooter(d);
+}
+// 개발행위 허가 — 양식 미리보기(신청서+사업계획서 재현, 라이브값)
+function renderDevPermitPrint(d){
+  const p=resolvePermit(d), eq=p.equip||{}, L=(p.lands&&p.lands[0])||{};
+  const today=fmtKDate(permitApplyDate(d));
+  const S=(v)=>esc(v==null?'':String(v));
+  const loc=[p.lands&&L.addr?L.addr:'', L.jibun?L.jibun:''].filter(Boolean).join(' ') || S(p.biz.place);
+  const areaFac=pComma(p.outline.useArea), areaLand=pComma(p.outline.totalArea), modQty=pComma(eq.modQty);
+  // 1) 개발행위(변경) 허가신청서 (별지 제5호서식)
+  const applForm=`<div class="pp-page">
+    <div class="pp-formtop">■ 국토의 계획 및 이용에 관한 법률 시행규칙 [별지 제5호서식]</div>
+    <div class="pp-h1" style="letter-spacing:2px">개발행위(변경) 허가신청서</div>
+    <table class="pp-t">
+      <tr><td class="lbl" rowspan="3" style="width:11%">신청인</td><td class="lbl" style="width:27%">성명(법인명 및 대표자 성명)</td><td style="width:27%">${S(applicantFullName(p))}</td><td class="lbl" style="width:17%">생년월일(법인등록번호)</td><td>${S(p.applicant.idno)}</td></tr>
+      <tr><td class="lbl">주소</td><td colspan="3">${S(p.applicant.addr)}　(전화번호 : ${S(p.applicant.phone)})</td></tr>
+      <tr><td class="lbl">전자우편 송달동의</td><td colspan="3">□ 동의함　　□ 동의하지 않음　　/　전자우편 주소 : </td></tr>
+    </table>
+    <div class="pp-sub">(변경) 허가신청 사항</div>
+    <table class="pp-t">
+      <tr><td class="lbl" style="width:16%">위치(지번)</td><td>${loc}</td><td class="lbl" style="width:12%">지목</td><td class="ctr" style="width:14%">${S(L.jimok)}</td></tr>
+      <tr><td class="lbl">용도지역</td><td>${S(L.zone)}</td><td class="lbl">용도지구</td><td class="ctr"></td></tr>
+    </table>
+    <div class="pp-sub">신청내용</div>
+    <table class="pp-t"><tr><th style="width:22%">구분</th><th>신청면적(㎡)</th><th>형식(구조)</th><th>비고</th></tr>
+      <tr><td class="lbl">공작물 설치</td><td class="ctr">${areaFac}</td><td class="ctr">태양광 철구조물</td><td></td></tr>
+      <tr><td class="lbl">토지형질변경</td><td class="ctr">${areaLand}</td><td class="ctr">─</td><td></td></tr></table>
+    <div class="pp-li"><b>개발행위 목적</b> 태양광발전시설 설치</div>
+    <div class="pp-li"><b>사업기간</b> 착공 _______ ~ 준공 _______ <span style="color:#888">(실제 접수 시 기재)</span></div>
+    <div class="pp-note">「국토의 계획 및 이용에 관한 법률」 제57조제1항 및 같은 법 시행규칙 제9조제1항에 따라 위와 같이 개발행위허가를 신청합니다.</div>
+    <div class="pp-sign">${today}<br>신청인 : ${S(applicantFullName(p))} (서명 또는 인)<br><b>${S(p.office)||'○○시장·군수·구청장'}</b> 귀하</div>
+  </div>`;
+  // 2) 사업계획서
+  const planForm=`<div class="pp-page">
+    <div class="pp-h1" style="letter-spacing:4px">사 업 계 획 서</div>
+    <div class="pp-li"><b>1. 사업의 위치</b> ${loc}</div>
+    <div class="pp-li"><b>2. 사업의 명칭</b> 공작물 설치 (태양광 발전시설)</div>
+    <div class="pp-li"><b>3. 사업의 목적</b> 본 사업부지(공부상 ${S(L.jimok)||'─'})에 태양광 모듈을 설치하여 무공해 대체에너지의 활용성을 증대시키고, 효율적인 국토이용과 지역경제 발전에 기여하고자 함.</div>
+    <div class="pp-sub">4. 사업의 개요 — 공작물 설치 계획</div>
+    <table class="pp-t"><tr><th>구분</th><th>규모</th><th>단위</th><th>형식(구조)</th><th>비고</th></tr>
+      <tr><td class="lbl">토지면적</td><td class="ctr">${areaLand}</td><td class="ctr">㎡</td><td></td><td></td></tr>
+      <tr><td class="lbl">공작물(태양광 모듈)</td><td class="ctr">${areaFac}</td><td class="ctr">㎡</td><td class="ctr">태양광모듈 ${modQty}장</td><td></td></tr></table>
+    <div class="pp-sub">○ 관리운영자</div>
+    <table class="pp-t"><tr><th style="width:34%">시설물</th><th>주소</th><th style="width:18%">성명</th></tr>
+      <tr><td class="ctr">공작물설치(태양광 발전시설)</td><td>${S(p.applicant.addr)}</td><td class="ctr">${S(applicantFullName(p))}</td></tr></table>
+    <div class="pp-sub">○ 신청 명세</div>
+    <table class="pp-t">
+      <tr><td class="lbl" style="width:22%">토지 소재지</td><td>${loc}</td></tr>
+      <tr><td class="lbl">지목</td><td>${S(L.jimok)}</td></tr>
+      <tr><td class="lbl">신청면적</td><td>${areaFac} ㎡</td></tr>
+      <tr><td class="lbl">전용(사업) 목적</td><td>태양광 발전시설 공작물 설치</td></tr></table>
+    <div class="pp-note" style="margin-top:6mm">※ 위치도(지도), 위해방지·경관 검토 체크리스트, 사업기간 등은 다운로드한 한글 양식에서 직접 작성·삽입합니다. 본 미리보기는 입력된 신청정보 기준 요약 재현입니다.</div>
+  </div>`;
+  return `<div class="pp-doc">${applForm}${planForm}</div>`;
+}
+function openDevPermitModal(id){
+  const d=DEALS.find(x=>x.id===id); if(!d) return;
+  closePermitModal();
+  const ov=document.createElement('div'); ov.className='pm-modal-ov'; ov.id='permitModal';
+  ov.onclick=(e)=>{ if(e.target===ov) closePermitModal(); };
+  ov.innerHTML=`<div class="pm-modal-box" role="dialog" aria-modal="true">
+      <div class="pm-modal-head">
+        <span class="pm-m-ttl">🔍 개발행위 양식 미리보기 — ${esc(d.site)} <span style="opacity:.65;font-weight:500">(${esc(d.id)})</span></span>
+        <div class="pm-m-btns">
+          <button class="pm-mbtn primary" onclick="printDevPermit('${d.id}')">📥 개발행위 서류(HWP) 다운로드</button>
+          <button class="pm-mbtn" onclick="closePermitModal()">✕ 닫기</button>
+        </div>
+      </div>
+      <div class="pm-modal-body">${renderDevPermitPrint(d)}</div>
+    </div>`;
+  document.body.appendChild(ov);
+  document.body.style.overflow='hidden';
+  permitEscHandler=(e)=>{ if(e.key==='Escape') closePermitModal(); };
+  document.addEventListener('keydown',permitEscHandler);
 }
 
 const WF_SCREENS = {
