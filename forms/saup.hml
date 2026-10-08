@@ -8016,7 +8016,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>- 태양전지방식:</CHAR>
+<CHAR>- 태양전지방식: §SP_MODCELL§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -8178,7 +8178,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>kwp</CHAR>
+<CHAR>§SP_MODW§ kwp</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -8313,7 +8313,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>V /</CHAR>
+<CHAR>§SP_MODVOC§ V /</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -8367,7 +8367,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>V</CHAR>
+<CHAR>§SP_MODVMP§ V</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -8448,7 +8448,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>A /</CHAR>
+<CHAR>§SP_MODISC§ A /</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -8502,7 +8502,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>A</CHAR>
+<CHAR>§SP_MODIMP§ A</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -8853,7 +8853,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>Kg</CHAR>
+<CHAR>§SP_MODWEIGHT§ Kg</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -10248,7 +10248,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="418">
-<CHAR>§SP_VOLT§</CHAR>
+<CHAR>§SP_INVVDC§</CHAR>
 </TEXT>
 </P>
 </PARALIST>

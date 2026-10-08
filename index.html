@@ -5396,7 +5396,10 @@ function renderPermitPrint(d){
       <tr><td class="lbl">형식</td><td>${esc(eq.modType)}</td><td class="lbl">형식</td><td>${esc(eq.invType)}</td></tr>
       <tr><td class="lbl">경사각 / 입사각</td><td>${esc(eq.modTilt)}° / ${esc(eq.modInc!=null?eq.modInc:25)}°</td><td class="lbl">주파수</td><td>${esc(eq.invFreq)} Hz</td></tr>
       <tr><td class="lbl">외형크기</td><td>${esc(eq.modSize)} mm</td><td class="lbl">입력전압</td><td>${esc(eq.invIn)} V</td></tr>
-      <tr><td class="lbl">개방전압/단락전류</td><td>${esc(eq.modVoc)} V / ${esc(eq.modIsc)} A</td><td class="lbl">출력전압</td><td>${esc(eq.invOut)} V</td></tr></table>
+      <tr><td class="lbl">개방전압/단락전류</td><td>${esc(eq.modVoc)} V / ${esc(eq.modIsc)} A</td><td class="lbl">출력전압</td><td>${esc(eq.invOut)} V</td></tr>
+      <tr><td class="lbl">정격전압/정격전류</td><td>${esc(eq.modVmp||'—')} V / ${esc(eq.modImp||'—')} A</td><td class="lbl">정격전압</td><td>${esc(eq.invVdc||'—')} V</td></tr>
+      <tr><td class="lbl">모듈 무게</td><td>${esc(eq.modWeight||'—')} kg</td><td class="lbl">무게</td><td>${esc(eq.invWeight||'—')} kg</td></tr>
+      <tr><td class="lbl">제조사</td><td>${esc(eq.modMaker||'—')}</td><td class="lbl">제조사</td><td>${esc(eq.invMaker||'—')}</td></tr></table>
     <div class="pp-sub">○ 건설 공정표 (총 공사기간 ${esc(p.outline.startMonths)}개월)</div>
     <table class="pp-t"><tr><th>공정</th><th>1~3개월</th><th>4~6개월</th><th>7~12개월</th><th>13~16개월</th><th>17~18개월</th></tr>
       <tr><td class="lbl">인허가 · 설계</td><td class="ctr">■</td><td class="ctr">■</td><td></td><td></td><td></td></tr>
@@ -5537,6 +5540,9 @@ function permitTokenMap(d){
     '§CKIMG_JUMIN§':ckimg('주민등록증'), '§CKIMG_YEOGWON§':ckimg('여권'), '§CKIMG_WAEGUK§':ckimg('외국인등록증'), '§CKIMG_MYEON§':ckimg('운전면허증'),
     '§SP_INVTOT§':pComma((pNum(eq.invKW)||0)*(pNum(eq.invQty)||0)), '§SP_INVKW§':S(eq.invKW), '§SP_INVQTY§':S(eq.invQty),
     '§SP_FREQ§':S(p.biz.freq), '§SP_VINLO§':S((inv[0]||'').trim()), '§SP_VINHI§':inv[1]?pComma(inv[1]):'', '§SP_VOLT§':S(p.biz.volt),
+    // 모듈 상세 사양(원가표 종류 연동) + 인버터 정격전압
+    '§SP_MODW§':S(eq.modW), '§SP_MODCELL§':S(eq.modType), '§SP_MODVOC§':S(eq.modVoc), '§SP_MODVMP§':S(eq.modVmp),
+    '§SP_MODISC§':S(eq.modIsc), '§SP_MODIMP§':S(eq.modImp), '§SP_MODWEIGHT§':S(eq.modWeight), '§SP_INVVDC§':S(eq.invVdc),
     '§SP_TOTCOST§':pComma(p.outline.totalCost), '§SP_LANDNO§':'1',
     '§SP_LANDADDR§':S(L.addr), '§SP_JIBUN§':S(L.jibun), '§SP_JIMOK§':S(L.jimok),
     '§SP_AREA§':pComma(L.area), '§SP_OWNER§':S(L.owner)||'(토지주)', '§SP_ZONE§':S(L.zone),
