@@ -3413,7 +3413,7 @@ function renderFeasibility(){
         <div class="wf-actions">
           ${proposalBtn(d)}
           <button class="btn danger sm" onclick="wfReject('${d.id}')">반려 (영업 리턴)</button>
-          <button class="btn ok sm" onclick="wfAction('${d.id}','approved','타당성 승인 — 영업팀에 알림 전송 · 가계약 진행')">승인 →</button>
+          <button class="btn ok sm" onclick="wfAction('${d.id}','approved','타당성 승인 — 영업팀에 알림 전송 · 가계약 진행')">영업-가계약으로 이관</button>
         </div>
       </div>
     </div>`;
@@ -3533,8 +3533,8 @@ function renderPreContract(){
           ? `<span class="pill done"><span class="pd"></span>✅ 안내문자 발송됨 · ${esc(d.gaSms.receiver)}${d.gaSms.sim?' (시뮬)':''}</span>`
           : `<button class="btn dark sm" id="gaSendBtn-${d.id}" onclick="sendGaSms('${d.id}')">📩 안내문자 발송</button>`}
         ${sent
-          ? `<button class="btn primary sm" onclick="wfAction('${d.id}','survey_handover','가계약 완료 — 설계팀 실측으로 이관')">가계약 완료 처리 →</button>`
-          : `<button class="btn primary sm" disabled style="opacity:.45;cursor:not-allowed" title="사업주 안내문자 발송 후 활성화">가계약 완료 처리 →</button>`}
+          ? `<button class="btn primary sm" onclick="wfAction('${d.id}','survey_handover','가계약 완료 — 설계팀 실측으로 이관')">설계-현장 실측으로 이관</button>`
+          : `<button class="btn primary sm" disabled style="opacity:.45;cursor:not-allowed" title="사업주 안내문자 발송 후 활성화">설계-현장 실측으로 이관</button>`}
       </div>
     </div>`;
   }).join('');
@@ -4297,7 +4297,7 @@ function renderSurvey(){
         ${renderSurveyDrawings(d)}
         ${renderReviseQuote(d)}
         <textarea id="rep-${d.id}" class="ta" placeholder="종합 의견 · 특이사항(선택) — 전반적인 현장 상황, 리스크, 추가 확인이 필요한 사항 등 · 공란 가능"></textarea>
-        <div class="wf-actions"><button class="btn primary sm" id="svdone-${d.id}" onclick="trySurveyDone('${d.id}')" disabled title="모든 항목 입력 + 사진 전부 첨부 + 배치도(필수 도면) 첨부 시 활성화">실측 완료 처리 →</button><span class="lr-s">모든 항목 입력 + 사진 전부 첨부 + 배치도(필수 도면) 첨부 시 완료할 수 있습니다 (종합 의견은 공란 가능)</span></div>`;
+        <div class="wf-actions"><button class="btn primary sm" id="svdone-${d.id}" onclick="trySurveyDone('${d.id}')" disabled title="모든 항목 입력 + 사진 전부 첨부 + 배치도(필수 도면) 첨부 시 활성화">영업-실계약으로 이관</button><span class="lr-s">모든 항목 입력 + 사진 전부 첨부 + 배치도(필수 도면) 첨부 시 완료할 수 있습니다 (종합 의견은 공란 가능)</span></div>`;
       pill=['prog','실측 진행'];
     }
     return `<div class="card pad" style="margin-bottom:14px">
@@ -4383,7 +4383,7 @@ function renderRealContract(){
       <div class="wf-actions" style="margin-top:14px">
         ${proposalBtn(d)}
         <button class="btn ghost sm">실계약서 PDF</button>
-        <button class="btn primary sm" id="rcDoneBtn-${d.id}" onclick="tryRealDone('${d.id}')" ${rcMissing(d)>0?'disabled':''} title="신청정보(주민번호·주소·현장·부지 등)를 모두 입력해야 완료할 수 있습니다">실계약 완료 처리 ✓</button>
+        <button class="btn primary sm" id="rcDoneBtn-${d.id}" onclick="tryRealDone('${d.id}')" ${rcMissing(d)>0?'disabled':''} title="신청정보(주민번호·주소·현장·부지 등)를 모두 입력해야 완료할 수 있습니다">행정-신규 현장 접수로 이관</button>
         <span class="lr-s">미기재 항목이 있으면 완료할 수 없습니다</span>
       </div>
     </div>`).join('');
@@ -4818,7 +4818,7 @@ function structStatusCard(d,sr){
       : `<label class="st-finalbox empty"><input type="file" style="display:none" onchange="structUploadApproval('${d.id}',this)"><div class="st-fb-main"><b>📎 업체 수신 최종 자료 첨부</b><div class="lr-s">업체가 회신한 구조검토 최종 자료(승인서·구조계산서 등)를 여기에 첨부하세요. 첨부하면 아래 “다음 프로세스로 이관”이 활성화됩니다.</div></div><span class="btn dark sm" style="flex:none">파일 선택</span></label>`;
     const nextBtn = nextDone
       ? `<span class="pill done"><span class="pd"></span>✅ 다음 프로세스 이관됨 · ${esc(sr.nextHandedAt)}</span>`
-      : `<button class="btn primary" ${hasDoc?'':'disabled'} onclick="structHandNext('${d.id}')">➡️ 다음 프로세스로 이관</button>${hasDoc?'':'<span class="lr-s">최종 자료를 첨부하면 활성화됩니다</span>'}`;
+      : `<button class="btn primary" ${hasDoc?'':'disabled'} onclick="structHandNext('${d.id}')">➡️ 행정-개발행위 허가로 이관</button>${hasDoc?'':'<span class="lr-s">최종 자료를 첨부하면 활성화됩니다</span>'}`;
     const rejectBtn = (sr.status==='수신대기') ? `<button class="btn ghost sm" onclick="structReject('${d.id}')">⛔ 반려 처리</button>` : '';
     body = finalBox + `<div class="st-nextrow">${nextBtn}${rejectBtn}</div>`;
   }
@@ -5716,9 +5716,9 @@ function renderDealCard(d){
     </div>`;
   }).join('');
   let handoverBtn;
-  if(st.key==='draft') handoverBtn=`<button class="btn dark sm" disabled title="협의 이력에서 ⭐ 최종 확정 버전을 지정해야 이관할 수 있습니다">공무팀 이관 → (확정 필요)</button>`;
-  else if(st.key==='confirmed') handoverBtn=`<button class="btn primary sm" onclick="handoverConfirmed('${d.id}')">공무팀 이관 → (v${d.confirmedVer} 확정본)</button>`;
-  else if(st.key==='changed') handoverBtn=`<button class="btn primary sm" onclick="reHandoverConfirmed('${d.id}')">🔁 변경된 확정본 재이관 (v${d.confirmedVer})</button>`;
+  if(st.key==='draft') handoverBtn=`<button class="btn dark sm" disabled title="협의 이력에서 ⭐ 최종 확정 버전을 지정해야 이관할 수 있습니다">설계-신규 현장 접수로 이관 (확정 필요)</button>`;
+  else if(st.key==='confirmed') handoverBtn=`<button class="btn primary sm" onclick="handoverConfirmed('${d.id}')">설계-신규 현장 접수로 이관 (v${d.confirmedVer} 확정본)</button>`;
+  else if(st.key==='changed') handoverBtn=`<button class="btn primary sm" onclick="reHandoverConfirmed('${d.id}')">🔁 설계-신규 현장 접수로 재이관 (v${d.confirmedVer})</button>`;
   else handoverBtn=`<span class="lr-s" style="font-weight:700;color:var(--ok)">✅ v${d.handedVer} 확정본 이관됨 — 설계 진행 중</span>`;
   return `<div class="card pad" style="margin-bottom:12px">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
@@ -6327,7 +6327,10 @@ function renderStageBoard(stageKey){
     const owner = stageOwner(site, stage) + (stageKey==='line_fee' ? ' · 영업 확인' : '');
     const note = (st==='risk' && site.note) ? `<div class="lr-s" style="color:var(--risk-ink);font-weight:600">⚠ ${esc(site.note)}</div>` : '';
     const canAdv = (st==='active' || st==='risk');
-    const advBtn = canAdv ? `<button class="btn ok sm" onclick="event.stopPropagation();advanceSite('${site.id}')">완료 →</button>` : '';
+    let advLabel = '완료 →';
+    if(canAdv){ let nx=gi+1; while(nx<STAGES.length && site.na.includes(STAGES[nx].key)) nx++;
+      advLabel = nx<STAGES.length ? `${STAGES[nx].team}-${STAGES[nx].name}로 이관` : '준공 완료 →'; }
+    const advBtn = canAdv ? `<button class="btn ok sm" onclick="event.stopPropagation();advanceSite('${site.id}')">${advLabel}</button>` : '';
     rows.push(`<div class="list-row" onclick="openDrawer('${site.id}')">
       <div class="step-ic ${st}">${gl}</div>
       <div class="lr-main"><div class="lr-t">${esc(site.name)} · ${site.cap.toLocaleString()}kW <span class="type-chip">${site.type}</span></div>
