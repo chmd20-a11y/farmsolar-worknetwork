@@ -4522,7 +4522,10 @@ function resolvePermit(d){
   p.rep.name=o.name; p.rep.idno=p.applicant.idno; p.rep.addr=p.applicant.addr;
   p.outline.plantName=o.bizname;
   if(q.cap) p.biz.cap=q.cap;
-  if(q.totalCostK){ p.outline.totalCost=q.totalCostK; p.outline.unitCost=Math.round(q.totalCostK/((pNum(p.biz.cap))||1)); }
+  // 총사업비 = 설비용량 × 1,000,000원(=1,000천원) 고정 기준 · 10만원(=100천원) 단위 이하 절사 (제안서 견적 금액과 무관하게 통일)
+  { const _capN=pNum(p.biz.cap)||0;
+    p.outline.totalCost = Math.floor(_capN*10)*100;                      // 천원: floor(cap×1000 / 100)×100
+    p.outline.unitCost  = _capN ? Math.round(p.outline.totalCost/_capN) : 0; }
   if(q.ownK!=null) p.fund.own=q.ownK;
   if(q.loanK!=null) p.fund.loan=q.loanK;
   if(q.ownK!=null && q.loanK!=null){ const t=q.ownK+q.loanK; if(t){ p.fund.ownPct=Math.round(q.ownK/t*100); p.fund.loanPct=100-p.fund.ownPct; } }
