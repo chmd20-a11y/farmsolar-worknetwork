@@ -195,7 +195,7 @@
 </FILLBRUSH>
 </BORDERFILL>
 </BORDERFILLLIST>
-<CHARSHAPELIST Count="447">
+<CHARSHAPELIST Count="448">
 <CHARSHAPE Height="975" TextColor="0" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="0">
 <FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
 <RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
@@ -3294,6 +3294,12 @@
 <RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
 <CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
 </CHARSHAPE><CHARSHAPE Height="900" TextColor="16711680" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="446">
+<FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+<RELSIZE Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
+<CHAROFFSET Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
+</CHARSHAPE><CHARSHAPE Height="900" TextColor="16711680" ShadeColor="4294967295" UseFontSpace="false" UseKerning="false" SymMark="0" Id="447">
 <FONTID Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
 <RATIO Hangul="100" Latin="100" Hanja="100" Japanese="100" Other="100" Symbol="100" User="100"/>
 <CHARSPACING Hangul="0" Latin="0" Hanja="0" Japanese="0" Other="0" Symbol="0" User="0"/>
@@ -6631,7 +6637,7 @@
 <P ParaShape="1">
 <TEXT CharShape="3">
 <CHAR>(1) 소요자금 ⇒ </CHAR>
-</TEXT>
+</TEXT><TEXT CharShape="447"><CHAR>§SP_TOTCOST§</CHAR></TEXT>
 </P>
 </PARALIST>
 </DRAWTEXT>
@@ -6737,9 +6743,7 @@
 <TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
-<TEXT CharShape="3">
-<CHAR>0</CHAR>
-</TEXT>
+<TEXT CharShape="447"><CHAR>§SP_DEV§</CHAR></TEXT>
 </P>
 </PARALIST>
 </DRAWTEXT>
@@ -6818,9 +6822,7 @@
 <TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
-<TEXT CharShape="3">
-<CHAR>0</CHAR>
-</TEXT>
+<TEXT CharShape="447"><CHAR>§SP_AUX§</CHAR></TEXT>
 </P>
 </PARALIST>
 </DRAWTEXT>
@@ -6899,9 +6901,7 @@
 <TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
-<TEXT CharShape="3">
-<CHAR>0</CHAR>
-</TEXT>
+<TEXT CharShape="447"><CHAR>§SP_STR§</CHAR></TEXT>
 </P>
 </PARALIST>
 </DRAWTEXT>
@@ -6980,9 +6980,7 @@
 <TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
-<TEXT CharShape="3">
-<CHAR>0</CHAR>
-</TEXT>
+<TEXT CharShape="447"><CHAR>§SP_ETC§</CHAR></TEXT>
 </P>
 </PARALIST>
 </DRAWTEXT>
@@ -7196,9 +7194,7 @@
 <TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
-<TEXT CharShape="3">
-<CHAR>0</CHAR>
-</TEXT>
+<TEXT CharShape="447"><CHAR>§SP_OWN§</CHAR></TEXT>
 </P>
 </PARALIST>
 </DRAWTEXT>
@@ -7358,9 +7354,7 @@
 <TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
-<TEXT CharShape="3">
-<CHAR>0</CHAR>
-</TEXT>
+<TEXT CharShape="447"><CHAR>§SP_LOAN§</CHAR></TEXT>
 </P>
 </PARALIST>
 </DRAWTEXT>
@@ -7665,35 +7659,7 @@
 <CELL ColAddr="1" RowAddr="1" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="17550" Height="1425" BorderFill="4">
 <PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
 <P ParaShape="4">
-<TEXT CharShape="79">
-<RECTANGLE X0="0" Y0="0" X1="7500" Y1="0" X2="7500" Y2="1333" X3="0" Y3="1333">
-<SHAPEOBJECT InstId="165">
-<SIZE WidthRelTo="Absolute" HeightRelTo="Absolute" Protect="false" Width="7500" Height="1333"/>
-<POSITION TreatAsChar="true" VertRelTo="Paper" HorzRelTo="Paper" VertAlign="Top" HorzAlign="Left" VertOffset="25095" HorzOffset="26077" FlowWidthText="true" AllowOverlap="true"/>
-<OUTSIDEMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
-</SHAPEOBJECT>
-<DRAWINGOBJECT>
-<LINESHAPE Width="33" Style="None" EndCap="Flat" HeadStyle="Normal" TailStyle="Normal" HeadSize="SmallSmall" TailSize="SmallSmall" OutlineStyle="Normal"/>
-<DRAWTEXT Editable="false">
-<TEXTMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
-<PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
-<P ParaShape="1">
-<TEXT CharShape="3">
-<CHAR/>
-</TEXT>
-</P>
-</PARALIST>
-</DRAWTEXT>
-<SHAPECOMPONENT XPos="0" YPos="0" GroupLevel="0" HorzFlip="false" VertFlip="false" OriWidth="7500" OriHeight="1333">
-<RENDERINGINFO>
-<TRANSMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
-<SCAMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
-<ROTMATRIX E1="1" E2="0" E3="0" E4="0" E5="1" E6="0"/>
-</RENDERINGINFO>
-</SHAPECOMPONENT>
-</DRAWINGOBJECT>
-</RECTANGLE>
-</TEXT>
+<TEXT CharShape="447"><CHAR>§SP_TOTCOST§</CHAR></TEXT>
 </P>
 </PARALIST>
 <CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>

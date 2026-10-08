@@ -5475,6 +5475,9 @@ function permitTokenMap(d){
     '§SP_USEAREA§':pComma(p.outline.useArea), '§SP_TOTAREA§':pComma(p.outline.totalArea),
     '§SP_UNITCOST§':pComma(p.outline.unitCost), '§SP_ANNUAL§':pComma(p.outline.annual),
     '§Y1§':fmtMWh(c.yrs[0]), '§Y2§':fmtMWh(c.yrs[1]), '§Y3§':fmtMWh(c.yrs[2]), '§Y4§':fmtMWh(c.yrs[3]), '§Y5§':fmtMWh(c.yrs[4]), '§YSUM§':fmtMWh(c.sum5),
+    // 마. 소요자금 및 그 조달방법 — 구성(발전설비47/부대21/구조물30/기타2) · 조달(자기15/타인85)
+    '§SP_DEV§':pComma(c.eq), '§SP_AUX§':pComma(c.aux), '§SP_STR§':pComma(c.str), '§SP_ETC§':pComma(c.etc),
+    '§SP_OWN§':pComma(c.ownK), '§SP_LOAN§':pComma(c.loanK),
   };
 }
 function fillPermitTemplate(xml, map){ for(const k in map){ xml=xml.split(k).join(hwpXmlEsc(map[k])); } return xml; }
