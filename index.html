@@ -916,6 +916,14 @@ button{font-family:inherit;cursor:pointer}
 .cs-sub{font-size:12px;font-weight:800;color:var(--ink-2);margin:16px 0 8px;display:flex;align-items:center;gap:6px}
 .cs-specph{margin-top:10px;padding:10px 12px;border:1px dashed var(--border-strong);border-radius:8px;font-size:12px;line-height:1.6;color:var(--muted);background:color-mix(in srgb,var(--accent) 5%,transparent)}
 .cs-specph b{color:var(--ink-2)}
+.cs-spec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px;margin-top:10px}
+.cs-spec-card{border:1px solid var(--border);border-left:3px solid var(--kc,var(--accent));border-radius:10px;padding:12px 13px;background:color-mix(in srgb,var(--surface-2) 45%,transparent)}
+.cs-spec-ttl{font-size:12.5px;font-weight:800;color:var(--ink-2);margin-bottom:10px}
+.cs-sf-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
+.cs-sf{display:flex;flex-direction:column;gap:3px;min-width:0}
+.cs-sfl{font-size:10.5px;color:var(--muted);font-weight:600;white-space:nowrap}
+.cs-sf .tinput{width:100%;box-sizing:border-box;padding:5px 7px;font-size:12px}
+.cs-inp-t{text-align:left !important}
 .cs-sub:first-child{margin-top:0}
 .cs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px 14px}
 .cs-f label{display:block;font-size:11px;font-weight:600;color:var(--ink-2);margin-bottom:5px}
@@ -2362,19 +2370,21 @@ function dealSpec(d){
    ============================================================ */
 const COST_DEFAULT = {
   // ---- 모듈 원가 (원가 시트 D5:F6 · 견적 = 원가 + ₩20/W) ----
+  // 모듈: 단가(priceW)·정격출력(w)은 기존, 그 외 사양은 발전허가 사업계획서 2페이지에서 끌어쓸 마스터값(한 번 입력해두면 재사용·자주 안 바뀜)
   modules: {
-    china_aiko:    {name:'아이코 655W (중국산 무등급)',  w:655, priceW:195},
-    china_ja:      {name:'JA솔라 650W (중국산 무등급)',  w:650, priceW:185},
-    korea_hyundai: {name:'현대 645W (국산 2등급)',      w:645, priceW:270},
-    korea_hanhwa:  {name:'한화 645W (국산 2등급)',      w:645, priceW:270},
+    china_aiko:    {name:'아이코 655W (중국산 무등급)',  w:655, priceW:195, maker:'아이코',   model:'', cell:'단결정 N형 TOPCon', voc:58.92, vmp:48.79, isc:15.61, imp:14.92, size:'2,382 x 1,134 x 30', weight:32.5},
+    china_ja:      {name:'JA솔라 650W (중국산 무등급)',  w:650, priceW:185, maker:'JA솔라',   model:'', cell:'단결정 N형 TOPCon', voc:58.60, vmp:48.50, isc:15.40, imp:14.70, size:'2,382 x 1,134 x 30', weight:32.5},
+    korea_hyundai: {name:'현대 645W (국산 2등급)',      w:645, priceW:270, maker:'현대에너지솔루션', model:'', cell:'단결정 PERC', voc:58.30, vmp:48.30, isc:15.30, imp:14.60, size:'2,382 x 1,134 x 30', weight:32.5},
+    korea_hanhwa:  {name:'한화 645W (국산 2등급)',      w:645, priceW:270, maker:'한화큐셀',   model:'', cell:'단결정 PERC', voc:58.30, vmp:48.30, isc:15.30, imp:14.60, size:'2,382 x 1,134 x 30', weight:32.5},
   },
   moduleMarkupW: 20,
+  // 인버터: 단가(price)·용량(kw)은 기존, 그 외 사양은 발전허가 사업계획서 2페이지에서 끌어쓸 마스터값
   inverters: {
-    growatt_36:  {name:'그로와트 36kW',   kw:36,  price:2500000},
-    growatt_50:  {name:'그로와트 50kW',   kw:50,  price:3800000},
-    growatt_125: {name:'그로와트 125kW',  kw:125, price:5600000},
-    huawei_50:   {name:'화훼이 50kW',     kw:50,  price:3200000},
-    huawei_110:  {name:'화훼이 110kW',    kw:110, price:5100000},
+    growatt_36:  {name:'그로와트 36kW',   kw:36,  price:2500000, maker:'그로와트', model:'', phase:'3상 4선식', freq:60, vin:'180~1000', vdc:620,  vac:'220/380', weight:45},
+    growatt_50:  {name:'그로와트 50kW',   kw:50,  price:3800000, maker:'그로와트', model:'', phase:'3상 4선식', freq:60, vin:'180~1000', vdc:720,  vac:'220/380', weight:62},
+    growatt_125: {name:'그로와트 125kW',  kw:125, price:5600000, maker:'그로와트', model:'', phase:'3상 4선식', freq:60, vin:'180~1000', vdc:916,  vac:'220/380', weight:84},
+    huawei_50:   {name:'화훼이 50kW',     kw:50,  price:3200000, maker:'화웨이',   model:'', phase:'3상 4선식', freq:60, vin:'200~1000', vdc:720,  vac:'220/380', weight:62},
+    huawei_110:  {name:'화훼이 110kW',    kw:110, price:5100000, maker:'화웨이',   model:'', phase:'3상 4선식', freq:60, vin:'200~1000', vdc:900,  vac:'220/380', weight:79},
   },
   inverterMarkupEach: 1000000,
   meterBoxesQuote: [
@@ -2414,11 +2424,22 @@ let COST_PRESET = JSON.parse(JSON.stringify(COST_DEFAULT));  // 견적 함수가
 let ASSUMP = Object.assign({}, ASSUMP_DEFAULT);              // 발전/금융 가정값
 let COST_PRESETS = [];                                       // 이름붙인 단가 프리셋 (최대 5)
 const COST_LS_KEY = 'fsnet_cost_v1';
+// 저장/프리셋 cost를 기본값 위에 병합 — modules/inverters는 종류별 깊은 병합으로 새 사양필드(voc·vin 등) 보존(기존 저장값이 priceW만 있어도 사양 유실 안 됨)
+function mergeCost(saved){
+  const c = Object.assign(JSON.parse(JSON.stringify(COST_DEFAULT)), saved||{});
+  ['modules','inverters'].forEach(grp=>{
+    const base=COST_DEFAULT[grp]||{}, sv=(saved&&saved[grp])||{}, out={};
+    Object.keys(base).forEach(k=>{ out[k]=Object.assign({}, base[k], sv[k]||{}); });   // 기본 종류: 기본사양 위에 저장값 덮기
+    Object.keys(sv).forEach(k=>{ if(!out[k]) out[k]=sv[k]; });                          // 저장본에만 있는 종류 유지
+    c[grp]=out;
+  });
+  return c;
+}
 function loadCostSettings(){
   try{
     const s = JSON.parse(localStorage.getItem(COST_LS_KEY)||'null');
     if(s){
-      if(s.cost)   COST_PRESET = Object.assign(JSON.parse(JSON.stringify(COST_DEFAULT)), s.cost);
+      if(s.cost)   COST_PRESET = mergeCost(s.cost);
       if(s.assump) ASSUMP = Object.assign({}, ASSUMP_DEFAULT, s.assump);
       if(Array.isArray(s.presets)) COST_PRESETS = s.presets;
     }
@@ -6044,7 +6065,7 @@ function qxPresetSnap(){ const sel=document.getElementById('qx-preset'); if(!sel
 function withCostPreset(snap, fn){
   if(!snap||!snap.cost) return fn();
   const sc=COST_PRESET, sa=ASSUMP;
-  try{ COST_PRESET=Object.assign(JSON.parse(JSON.stringify(COST_DEFAULT)), snap.cost); ASSUMP=Object.assign({},ASSUMP_DEFAULT,snap.assump||{}); return fn(); }
+  try{ COST_PRESET=mergeCost(snap.cost); ASSUMP=Object.assign({},ASSUMP_DEFAULT,snap.assump||{}); return fn(); }
   finally{ COST_PRESET=sc; ASSUMP=sa; }
 }
 function qxApplyPreset(){
@@ -6149,6 +6170,10 @@ function collectCostEditor(){
     if(inp.dataset.pct) n=n/100;
     setCostPath(inp.dataset.cx, n);
   });
+  // 텍스트 사양(제조사·모델·셀타입·외형크기·방식·입력전압·출력전압 등)
+  document.querySelectorAll('#sub-s-costsheet [data-cxt]').forEach(inp=>{
+    setCostPath(inp.dataset.cxt, String(inp.value).trim());
+  });
 }
 function saveCostEditor(){ collectCostEditor(); saveCostSettings(); toast('원가·단가 저장 완료 — 이후 견적에 반영됩니다'); const el=document.getElementById('sub-s-costsheet'); if(el) el.innerHTML=renderCostSheet(); }
 function resetCostEditor(){ resetCostSettings(); toast('기본값으로 복원했습니다'); const el=document.getElementById('sub-s-costsheet'); if(el) el.innerHTML=renderCostSheet(); }
@@ -6163,7 +6188,7 @@ function costPresetAdd(){
 }
 function costPresetLoad(i){
   const p=COST_PRESETS[i]; if(!p) return;
-  COST_PRESET=Object.assign(JSON.parse(JSON.stringify(COST_DEFAULT)), p.cost);
+  COST_PRESET=mergeCost(p.cost);
   ASSUMP=Object.assign({},ASSUMP_DEFAULT,p.assump);
   saveCostSettings(); toast('프리셋 불러옴 — '+p.name);
   const el=document.getElementById('sub-s-costsheet'); if(el) el.innerHTML=renderCostSheet();
@@ -6215,8 +6240,40 @@ function renderCostSheet(){
     + tile('인버터 마크업','원/대',ci('inverterMarkupEach',P.inverterMarkupEach),null,'⚙️','#6b8299')
     + tile('일반관리비율','%',ci('managementRate',P.managementRate,{pct:1}),null,'📊','#6b8299')
   );
-  const modTiles = tiles(Object.entries(P.modules).map(([k,m])=>tile(m.name,'원가 원/W',ci('modules.'+k+'.priceW', m.priceW),null,'☀️','#c9902f')).join(''));
-  const invTiles = tiles(Object.entries(P.inverters).map(([k,v])=>tile(v.name,'원가 원',ci('inverters.'+k+'.price', v.price),null,'⚡','#5b86c4')).join(''));
+  // 텍스트 사양 입력(data-cxt) — 제조사·모델·셀타입·외형크기·방식·입력/출력전압
+  const cit=(path,val)=>`<input class="tinput cs-inp cs-inp-t" data-cxt="${path}" value="${esc(val==null?'':String(val))}">`;
+  const specRow=(label,input)=>`<div class="cs-sf"><span class="cs-sfl">${label}</span>${input}</div>`;
+  const modSpecCard=(k,m)=>`<div class="cs-spec-card" data-tone="1" style="--kc:#c9902f">
+    <div class="cs-spec-ttl">☀️ ${esc(m.name)}</div>
+    <div class="cs-sf-grid">
+      ${specRow('원가 (원/W)', ci('modules.'+k+'.priceW', m.priceW))}
+      ${specRow('정격출력 (W)', ci('modules.'+k+'.w', m.w))}
+      ${specRow('제조사', cit('modules.'+k+'.maker', m.maker))}
+      ${specRow('모델', cit('modules.'+k+'.model', m.model))}
+      ${specRow('셀 타입', cit('modules.'+k+'.cell', m.cell))}
+      ${specRow('개방전압 (V)', ci('modules.'+k+'.voc', m.voc))}
+      ${specRow('정격전압 (V)', ci('modules.'+k+'.vmp', m.vmp))}
+      ${specRow('단락전류 (A)', ci('modules.'+k+'.isc', m.isc))}
+      ${specRow('정격전류 (A)', ci('modules.'+k+'.imp', m.imp))}
+      ${specRow('외형크기 (mm)', cit('modules.'+k+'.size', m.size))}
+      ${specRow('무게 (kg)', ci('modules.'+k+'.weight', m.weight))}
+    </div></div>`;
+  const invSpecCard=(k,v)=>`<div class="cs-spec-card" data-tone="1" style="--kc:#5b86c4">
+    <div class="cs-spec-ttl">⚡ ${esc(v.name)}</div>
+    <div class="cs-sf-grid">
+      ${specRow('원가 (원)', ci('inverters.'+k+'.price', v.price))}
+      ${specRow('용량 (kW)', ci('inverters.'+k+'.kw', v.kw))}
+      ${specRow('제조사', cit('inverters.'+k+'.maker', v.maker))}
+      ${specRow('모델', cit('inverters.'+k+'.model', v.model))}
+      ${specRow('방식', cit('inverters.'+k+'.phase', v.phase))}
+      ${specRow('주파수 (Hz)', ci('inverters.'+k+'.freq', v.freq))}
+      ${specRow('입력전압 (V)', cit('inverters.'+k+'.vin', v.vin))}
+      ${specRow('정격전압 (V)', ci('inverters.'+k+'.vdc', v.vdc))}
+      ${specRow('출력전압 (V)', cit('inverters.'+k+'.vac', v.vac))}
+      ${specRow('무게 (kg)', ci('inverters.'+k+'.weight', v.weight))}
+    </div></div>`;
+  const modCards = `<div class="cs-spec-grid">${Object.entries(P.modules).map(([k,m])=>modSpecCard(k,m)).join('')}</div>`;
+  const invCards = `<div class="cs-spec-grid">${Object.entries(P.inverters).map(([k,v])=>invSpecCard(k,v)).join('')}</div>`;
   const mbTiles = tiles(P.meterBoxesQuote.map((m,i)=>tile(m.label,'견적 원',ci('meterBoxesQuote.'+i+'.price', m.price),'구간 ~'+(m.maxKW===9999?'1000':m.maxKW)+'kW','🔌','#5b9e6f')).join(''));
   const TYPE_C = {'노지':'#6f9e5b','지붕':'#5b86c4','수상':'#3fa9a0'};
   const capHdr = P.constructionTier.tiers.map(t=>`<th>~${t}</th>`).join('');
@@ -6273,8 +6330,8 @@ function renderCostSheet(){
   const specPH = txt => `<div class="cs-specph">🧩 ${txt}</div>`;
   const matPanel = `<div class="cst-panel" data-tab="material"${_costTab==='material'?'':' style="display:none"'}>
       <div class="card pad">${sub('⚙️ 기본 마크업 · 관리비율')+basicTiles}</div>
-      <div class="card pad cs-mat-sec" style="margin-top:12px">${sub('☀️ 모듈 — 원가 · 사양')+modTiles+specPH('가격 외 모듈 사양(정격출력·개방/정격전압·단락전류·외형크기·무게 등)은 <b>발전사업 허가 사업계획서 2페이지</b>에 자동 기입될 예정입니다. 입력란은 다음 단계에서 추가합니다.')}</div>
-      <div class="card pad cs-mat-sec" style="margin-top:12px">${sub('⚡ 인버터 — 원가 · 사양')+invTiles+specPH('가격 외 인버터 사양(용량·주파수·입력/정격/출력전압·무게 등)은 <b>발전사업 허가 사업계획서 2페이지</b>에 자동 기입될 예정입니다. 입력란은 다음 단계에서 추가합니다.')}</div>
+      <div class="card pad cs-mat-sec" style="margin-top:12px">${sub('☀️ 모듈 — 원가 · 사양')+specPH('종류별 <b>단가·사양을 한 번 입력해두면</b> 발전사업 허가 사업계획서 2페이지에서 종류 선택 시 자동으로 끌어옵니다(행정 연동은 2단계). 자주 바뀌지 않는 마스터 값입니다.')+modCards}</div>
+      <div class="card pad cs-mat-sec" style="margin-top:12px">${sub('⚡ 인버터 — 원가 · 사양')+specPH('종류별 <b>단가·사양을 한 번 입력해두면</b> 발전사업 허가 사업계획서 2페이지에서 종류 선택 시 자동으로 끌어옵니다(행정 연동은 2단계).')+invCards}</div>
       <div class="card pad" style="margin-top:12px">${sub('🔌 계량기함 · 원')+mbTiles}</div>
     </div>`;
   const panels =
