@@ -924,6 +924,12 @@ button{font-family:inherit;cursor:pointer}
 .cs-sfl{font-size:10.5px;color:var(--muted);font-weight:600;white-space:nowrap}
 .cs-sf .tinput{width:100%;box-sizing:border-box;padding:5px 7px;font-size:12px}
 .cs-inp-t{text-align:left !important}
+.pm-keyrow{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin-bottom:12px;padding:11px 12px;border:1px solid var(--border-strong);border-radius:9px;background:color-mix(in srgb,#3f77a8 8%,transparent)}
+.pm-keycell{display:flex;align-items:center;gap:7px}
+.pm-keylbl{font-size:12px;font-weight:700;color:var(--ink-2);white-space:nowrap}
+.pm-keysel{padding:6px 9px;border-radius:7px;border:1px solid var(--border-strong);background:var(--surface);color:var(--ink);font-size:12.5px;font-weight:600;max-width:220px}
+.pm-keynote{flex-basis:100%;font-size:11.5px;color:var(--muted);line-height:1.5}
+.pm-keynote b{color:var(--ink-2)}
 .cs-sub:first-child{margin-top:0}
 .cs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px 14px}
 .cs-f label{display:block;font-size:11px;font-weight:600;color:var(--ink-2);margin-bottom:5px}
@@ -4564,6 +4570,34 @@ function resolvePermit(d){
   p.outline.method = (p.installType==='건물') ? '건물형(지붕)' : '노지형';
   // 연간발전량 = 제안서 발전공식(설비용량 × 발전시간 × 365) 우선, 없으면 종전 추정
   p.outline.annual = q.annual || Math.round(pNum(p.biz.cap)*1460);
+  // ── 모듈·인버터 종류 → 원가표 저장 사양을 설비 개요에 반영 ──
+  // 모듈: 발전허가서 선택(p.moduleKey) > 제안서 선택 > 기본. 인버터: 발전허가서 명시 선택 시만(미선택=기존 유지)
+  const _mk = p.moduleKey || (d.quoteOpts&&d.quoteOpts.moduleKey);
+  const _msp = _mk && COST_PRESET.modules[_mk];
+  if(_msp){ const e=p.equip;
+    if(_msp.w) e.modW=_msp.w;
+    if(_msp.maker) e.modMaker=_msp.maker;
+    if(_msp.model) e.modModel=_msp.model;
+    if(_msp.cell) e.modType=_msp.cell;
+    if(_msp.voc!=null) e.modVoc=String(_msp.voc);
+    if(_msp.isc!=null) e.modIsc=String(_msp.isc);
+    if(_msp.vmp!=null) e.modVmp=String(_msp.vmp);
+    if(_msp.imp!=null) e.modImp=String(_msp.imp);
+    if(_msp.size) e.modSize=_msp.size;
+    if(_msp.weight!=null) e.modWeight=String(_msp.weight);
+  }
+  const _isp = p.inverterKey && COST_PRESET.inverters[p.inverterKey];
+  if(_isp){ const e=p.equip;
+    if(_isp.kw){ e.invKW=_isp.kw; e.invQty=Math.max(1,Math.round((pNum(p.biz.cap)||pNum(d.cap))/1.15/pNum(_isp.kw))); }
+    if(_isp.maker) e.invMaker=_isp.maker;
+    if(_isp.model) e.invModel=_isp.model;
+    if(_isp.phase) e.invPhase=_isp.phase;
+    if(_isp.freq!=null){ p.biz.freq=String(_isp.freq); e.invFreq=_isp.freq; }
+    if(_isp.vin) e.invIn=_isp.vin;
+    if(_isp.vac) e.invOut=_isp.vac;
+    if(_isp.vdc!=null) e.invVdc=String(_isp.vdc);
+    if(_isp.weight!=null) e.invWeight=String(_isp.weight);
+  }
   return p;
 }
 function getPermit(d){ if(!d.permit) d.permit = defaultPermit(d); return d.permit; }
@@ -4580,6 +4614,9 @@ const PERMIT_VENDORS=[
   {label:'(주)스마트솔라',    full:'주식회사 스마트솔라'},
 ];
 function permitVendor(d){ const p=getPermit(d); const i=Math.max(0,Math.min(PERMIT_VENDORS.length-1, p.vendorIdx|0)); return PERMIT_VENDORS[i]; }
+// 발전허가 — 모듈/인버터 종류 선택(원가표 저장 사양 연동). 종류만 저장하면 resolvePermit이 사양을 파생
+function setPermitModuleKey(id,mk){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d).moduleKey=mk; persistDeal(d); refreshActive(); }
+function setPermitInverterKey(id,ik){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d).inverterKey=ik||''; persistDeal(d); refreshActive(); }
 // 신분증 종류 — 영업 실계약에서 선택·첨부 → 행정정보 공동이용 사전동의서([별지 제8호])의 신분증 체크·번호·생년월일에 반영
 const PERMIT_ID_TYPES=['주민등록증','여권','외국인등록증','운전면허증'];
 function setPermitIdType(id,t){ setPermit(id,'applicant.idType',t); refreshActive(); }
@@ -5058,8 +5095,17 @@ function renderPermitForm(d, origin){
       ${pr('타인자금','fund.loan',p.fund.loan,{unit:'천원'})}
     </div>`);
   const eq=p.equip;
+  const _curMk = p.moduleKey || (d.quoteOpts&&d.quoteOpts.moduleKey) || 'china_aiko';
+  const _modKeyOpts = Object.entries(COST_PRESET.modules).map(([k,m])=>`<option value="${k}"${k===_curMk?' selected':''}>${esc(m.name)}</option>`).join('');
+  const _curIk = p.inverterKey||'';
+  const _invKeyOpts = `<option value=""${_curIk===''?' selected':''}>자동 (제안서 용량 기준)</option>`+Object.entries(COST_PRESET.inverters).map(([k,v])=>`<option value="${k}"${k===_curIk?' selected':''}>${esc(v.name)}</option>`).join('');
+  const _keyRow = adminRO ? `<div class="pm-keyrow">
+      <div class="pm-keycell"><span class="pm-keylbl">☀️ 모듈 종류</span><select class="pm-keysel" onchange="setPermitModuleKey('${id}',this.value)">${_modKeyOpts}</select></div>
+      <div class="pm-keycell"><span class="pm-keylbl">⚡ 인버터 종류</span><select class="pm-keysel" onchange="setPermitInverterKey('${id}',this.value)">${_invKeyOpts}</select></div>
+      <div class="pm-keynote">🔗 원가표(영업 › 자재 단가)에 저장한 <b>종류별 사양</b>이 아래 설비 개요와 발전허가 사업계획서 2페이지에 자동 반영됩니다. 사양 수정은 원가표에서 하세요.</div>
+    </div>` : '';
   const equip = sec('#3f77a8','🔧','발전설비 개요',
-    `<div class="pm-grid">
+    _keyRow + `<div class="pm-grid">
       ${pr('모듈 정격출력','equip.modW',eq.modW,{unit:'W'})}
       ${pr('모듈 수량','equip.modQty',eq.modQty,{unit:'매'})}
       ${pr('모듈 형식','equip.modType',eq.modType)}
