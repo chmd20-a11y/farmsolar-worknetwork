@@ -5168,12 +5168,16 @@ function openPermitModal(id){
           <button class="pm-mbtn" onclick="closePermitModal()">✕ 닫기</button>
         </div>
       </div>
-      <div class="pm-modal-body">${renderPermitPrint(d)}</div>
+      <div class="pm-modal-body" style="background:#eef0f4">
+        <div id="permitPrintFrame_ld" style="padding:48px;text-align:center;color:#888;font-size:14px">양식 미리보기를 불러오는 중…</div>
+        <iframe id="permitPrintFrame" title="양식 미리보기" style="width:210mm;max-width:100%;border:0;background:#fff;display:block;margin:0 auto;box-shadow:0 1px 8px rgba(0,0,0,.14);min-height:70vh;visibility:hidden"></iframe>
+      </div>
     </div>`;
   document.body.appendChild(ov);
   document.body.style.overflow='hidden';
   permitEscHandler=(e)=>{ if(e.key==='Escape') closePermitModal(); };
   document.addEventListener('keydown',permitEscHandler);
+  getPermit(d); fillPreviewIframe('permitPrintFrame', PERMIT_PRINT_FILES, permitTokenMap(d), false);
 }
 function closePermitModal(){
   const ov=document.getElementById('permitModal'); if(ov) ov.remove();
@@ -5743,12 +5747,16 @@ function openDevPermitModal(id){
           <button class="pm-mbtn" onclick="closePermitModal()">✕ 닫기</button>
         </div>
       </div>
-      <div class="pm-modal-body">${renderDevPermitPrint(d)}</div>
+      <div class="pm-modal-body" style="background:#eef0f4">
+        <div id="devPrintFrame_ld" style="padding:48px;text-align:center;color:#888;font-size:14px">양식 미리보기를 불러오는 중…</div>
+        <iframe id="devPrintFrame" title="개발행위 양식 미리보기" style="width:210mm;max-width:100%;border:0;background:#fff;display:block;margin:0 auto;box-shadow:0 1px 8px rgba(0,0,0,.14);min-height:70vh;visibility:hidden"></iframe>
+      </div>
     </div>`;
   document.body.appendChild(ov);
   document.body.style.overflow='hidden';
   permitEscHandler=(e)=>{ if(e.key==='Escape') closePermitModal(); };
   document.addEventListener('keydown',permitEscHandler);
+  getPermit(d); fillPreviewIframe('devPrintFrame', DEVPERMIT_PRINT_FILES, devPermitTokenMap(d), false);
 }
 
 /* ============ 행정: PPA신청 (사업용 전력구입계약 신청서 + 전기사용신청서) — 발전허가·개발행위와 동일 토큰방식 ============ */
@@ -5815,8 +5823,8 @@ const PPA_PRINT_FILES=[
   {url:'forms/ppa_apply.print.html', label:'PPA 신청서'},
   {url:'forms/ppa_use.print.html',   label:'전기사용신청서'},
 ];
-async function buildAndPrintForms(FILES, map, title, flow){
-  toast(title+' PDF 생성 중… 인쇄창에서 “대상: PDF로 저장”을 선택하세요');
+// 템플릿들을 토큰 치환해 '하나의 인쇄/미리보기 문서'로 병합 (미리보기·PDF가 동일 문서 공유)
+async function buildFormsDoc(FILES, map, flow){
   let style='', bodies=[], fail=[];
   for(const f of FILES){
     try{
@@ -5826,10 +5834,15 @@ async function buildAndPrintForms(FILES, map, title, flow){
       const bm=html.match(/<body[^>]*>([\s\S]*?)<\/body>/i); bodies.push(bm?bm[1]:html);
     }catch(e){ fail.push(f.label); }
   }
-  if(!bodies.length){ toast('PDF 생성 실패 — 새로고침 후 다시 시도해주세요'); return; }
   // 흐름 양식은 양식 사이에 강제 페이지나눔(절대좌표 양식은 .page가 이미 페이지를 나눔 → sep 불필요)
   const sep = flow ? '<div style="break-after:page;page-break-after:always;"></div>' : '';
-  const doc='<!doctype html><html><head><meta charset="utf-8"><title>'+esc(title)+'</title><style>'+style+'</style></head><body>'+bodies.join(sep)+'</body></html>';
+  const doc = bodies.length ? ('<!doctype html><html><head><meta charset="utf-8"><style>'+style+' html,body{margin:0}</style></head><body>'+bodies.join(sep)+'</body></html>') : '';
+  return {doc, fail};
+}
+async function buildAndPrintForms(FILES, map, title, flow){
+  toast(title+' PDF 생성 중… 인쇄창에서 “대상: PDF로 저장”을 선택하세요');
+  const {doc, fail} = await buildFormsDoc(FILES, map, flow);
+  if(!doc){ toast('PDF 생성 실패 — 새로고침 후 다시 시도해주세요'); return; }
   const ifr=document.createElement('iframe');
   ifr.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
   document.body.appendChild(ifr);
@@ -5837,6 +5850,19 @@ async function buildAndPrintForms(FILES, map, title, flow){
   const go=()=>{ try{ ifr.contentWindow.focus(); ifr.contentWindow.print(); }catch(e){} setTimeout(()=>{ try{ifr.remove();}catch(e){} },60000); };
   if(idoc.readyState==='complete') setTimeout(go,450); else ifr.onload=()=>setTimeout(go,450);
   if(fail.length) setTimeout(()=>toast('일부 제외: '+fail.join(', ')),1200);
+}
+// 미리보기 모달의 iframe에 '실제 양식(=PDF/HWP 출력물과 동일한 문서)'을 채워 보여줌
+async function fillPreviewIframe(frameId, FILES, map, flow){
+  const ifr=document.getElementById(frameId); if(!ifr) return;
+  const {doc} = await buildFormsDoc(FILES, map, flow);
+  const ld=document.getElementById(frameId+'_ld');
+  if(!doc){ if(ld) ld.innerHTML='<span style="color:#b00">양식을 불러오지 못했습니다 — 닫고 다시 열어주세요</span>'; return; }
+  const idoc=ifr.contentWindow.document; idoc.open(); idoc.write(doc); idoc.close();
+  try{ const st=idoc.createElement('style'); st.textContent='.page{margin:0 auto 14px;box-shadow:0 1px 10px rgba(0,0,0,.18)}'; if(idoc.head) idoc.head.appendChild(st); }catch(e){}  // 미리보기 전용 페이지 간격(인쇄엔 미적용)
+  const fit=()=>{ try{ ifr.style.height=(idoc.body.scrollHeight+24)+'px'; }catch(e){} };
+  const done=()=>{ fit(); if(ld){ ld.remove(); } ifr.style.visibility='visible'; };
+  if(idoc.readyState==='complete') setTimeout(done,120); else ifr.onload=()=>setTimeout(done,120);
+  setTimeout(fit,500); setTimeout(fit,1300);   // 폰트·이미지 로딩 후 높이 재측정
 }
 function genPermitFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(PERMIT_PRINT_FILES, permitTokenMap(d), '발전허가 접수서류', false); }
 function genDevFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(DEVPERMIT_PRINT_FILES, devPermitTokenMap(d), '개발행위 접수서류', false); }
@@ -5902,12 +5928,16 @@ function openPpaModal(id){
           <button class="pm-mbtn" onclick="closePermitModal()">✕ 닫기</button>
         </div>
       </div>
-      <div class="pm-modal-body">${renderPpaPrint(d)}</div>
+      <div class="pm-modal-body" style="background:#eef0f4">
+        <div id="ppaPrintFrame_ld" style="padding:48px;text-align:center;color:#888;font-size:14px">양식 미리보기를 불러오는 중…</div>
+        <iframe id="ppaPrintFrame" title="PPA 양식 미리보기" style="width:210mm;max-width:100%;border:0;background:#fff;display:block;margin:0 auto;box-shadow:0 1px 8px rgba(0,0,0,.14);min-height:70vh;visibility:hidden"></iframe>
+      </div>
     </div>`;
   document.body.appendChild(ov);
   document.body.style.overflow='hidden';
   permitEscHandler=(e)=>{ if(e.key==='Escape') closePermitModal(); };
   document.addEventListener('keydown',permitEscHandler);
+  getPermit(d); fillPreviewIframe('ppaPrintFrame', PPA_PRINT_FILES, ppaTokenMap(d), true);
 }
 
 const WF_SCREENS = {
@@ -5946,7 +5976,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
-  {date:'2026-10-12', team:'행정', kind:'추가', title:'발전허가·개발행위·PPA — 접수서류 “PDF 다운로드” 추가 (한글파일 다운로드는 그대로 유지)', body:'기존 <b>한글파일(HWP) 다운로드</b>는 그대로 두고, 바로 옆에 <b>“📄 PDF 다운로드”</b> 버튼을 새로 추가했습니다. ① 버튼을 누르면 그 현장의 양식들이 <b>원본과 똑같은 모양</b>으로 채워진 뒤 <b>인쇄창</b>이 뜹니다. 인쇄창에서 <b>“대상 → PDF로 저장”</b>을 고르면 PDF 파일로 받아집니다. ② 여러 양식이 <b>하나의 PDF로 합쳐져</b> 나옵니다 — 발전허가는 <b>신청서 → 사업계획서 → 송전관계 일람도 → 행정정보 동의서 → 공사 협력 의향서</b> 순서(개인/법인 구비서류 리스트 기준)로 이어집니다. ③ 양식의 표·줄·레이아웃이 <b>한글파일과 동일하게</b> 보이도록 만들었습니다. (글꼴은 PC에 설치된 글꼴을 따릅니다 — 행정 업무용 윈도우 PC에서는 맑은고딕·굴림 등 기본 글꼴로 원본과 동일하게 나옵니다.) ④ 토지대장·지적도 등 <b>조회·발급 서류</b>와 배치도·측면도 등 <b>설계팀 작성 도면</b>, 신분증 사본 등 <b>원본 첨부서류</b>는 이 PDF에 포함되지 않습니다(각자 준비분).', author:'개발'},
+  {date:'2026-10-12', team:'행정', kind:'추가', title:'발전허가·개발행위·PPA — 접수서류 “PDF 다운로드” 추가 (한글파일 다운로드는 그대로 유지)', body:'기존 <b>한글파일(HWP) 다운로드</b>는 그대로 두고, 바로 옆에 <b>“📄 PDF 다운로드”</b> 버튼을 새로 추가했습니다. ① 버튼을 누르면 그 현장의 양식들이 <b>원본과 똑같은 모양</b>으로 채워진 뒤 <b>인쇄창</b>이 뜹니다. 인쇄창에서 <b>“대상 → PDF로 저장”</b>을 고르면 PDF 파일로 받아집니다. ② 여러 양식이 <b>하나의 PDF로 합쳐져</b> 나옵니다 — 발전허가는 <b>신청서 → 사업계획서 → 송전관계 일람도 → 행정정보 동의서 → 공사 협력 의향서</b> 순서(개인/법인 구비서류 리스트 기준)로 이어집니다. ③ 양식의 표·줄·레이아웃이 <b>한글파일과 동일하게</b> 보이도록 만들었습니다. (글꼴은 PC에 설치된 글꼴을 따릅니다 — 행정 업무용 윈도우 PC에서는 맑은고딕·굴림 등 기본 글꼴로 원본과 동일하게 나옵니다.) ④ 토지대장·지적도 등 <b>조회·발급 서류</b>와 배치도·측면도 등 <b>설계팀 작성 도면</b>, 신분증 사본 등 <b>원본 첨부서류</b>는 이 PDF에 포함되지 않습니다(각자 준비분). ⑤ <b>미리보기 화면</b>도 이제 실제 내려받는 양식(PDF·HWP)과 <b>똑같은 모습</b>으로 보이도록 바꿨습니다 — 화면에서 본 그대로 출력됩니다.', author:'개발'},
   {date:'2026-10-08', team:'공통', kind:'추가', title:'영업 원가표 모듈·인버터 사양 → 발전사업 허가 사업계획서까지 자동 연동', body:'영업 <b>원가표(자재단가)</b>와 행정 <b>발전사업 허가</b>를 모듈·인버터 기준으로 연결했습니다. ① 원가표에서 모듈·인버터를 각각 <b>독립된 카드</b>로 분리해 종류별 단가를 더 보기 쉽게 정리했습니다. ② 모듈·인버터 <b>종류별 규격</b>을 입력해 저장할 수 있습니다. ③ 원가표에서 고른 모듈·인버터 종류가 행정 발전사업 허가의 <b>저장 사양</b>에 자동으로 넘어갑니다. ④ 사업계획서 미리보기의 <b>설비 사양 표</b>에도 그 규격이 그대로 채워져, 영업에서 고른 자재가 서류까지 끊김 없이 이어집니다.', author:'개발'},
   {date:'2026-10-08', team:'행정', kind:'추가', title:'발전사업 허가 사업계획서 — 공급계획·투입자금란 자동 계산', body:'허가사업계획서의 숫자 계산 항목을 실제 접수서류 기준에 맞춰 자동화했습니다. ① <b>5년 공급계획표·건설예정량표</b>가 접수 샘플과 같은 방식으로 자동 채워집니다. ② <b>총사업비</b>는 설비용량 1kW당 100만원 기준(10만원 단위 이하는 버림)으로 통일해 계산합니다. ③ 조달 비율은 <b>내자 15% · 외자 85%</b>로 통일했습니다. ④ 이 값들을 바탕으로 <b>“마. 소요자금 및 조달방법”</b>란이 자동으로 채워진 상태로 다운로드됩니다.', author:'개발'},
   {date:'2026-10-08', team:'행정', kind:'추가', title:'PPA(전력구매계약) 신청 — 서류 자동작성 추가', body:'발전사업 허가·개발행위 허가와 같은 방식으로, <b>PPA 신청서</b>도 현장 정보를 불러와 빈칸이 채워진 상태로 자동 작성·다운로드할 수 있게 되었습니다.', author:'개발'},
