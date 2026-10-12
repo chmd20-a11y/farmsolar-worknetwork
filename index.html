@@ -5825,18 +5825,27 @@ const PPA_PRINT_FILES=[
 ];
 // 템플릿들을 토큰 치환해 '하나의 인쇄/미리보기 문서'로 병합 (미리보기·PDF가 동일 문서 공유)
 async function buildFormsDoc(FILES, map, flow){
-  let style='', bodies=[], fail=[];
+  let styles=[], bodies=[], fail=[];
   for(const f of FILES){
     try{
       const res=await fetch(f.url,{cache:'no-store'}); if(!res.ok) throw new Error('HTTP '+res.status);
       const html=fillPermitTemplate(await res.text(), map);           // .hml과 동일 토큰 치환
-      if(!style){ const sm=html.match(/<style>([\s\S]*?)<\/style>/i); style=sm?sm[1]:''; }
+      const sm=html.match(/<style>([\s\S]*?)<\/style>/i); const st=sm?sm[1]:'';
+      if(st && !styles.includes(st)) styles.push(st);                  // 혼합(절대+흐름) 양식은 서로 다른 스타일 → 모두 수집·중복제거
       const bm=html.match(/<body[^>]*>([\s\S]*?)<\/body>/i); bodies.push(bm?bm[1]:html);
     }catch(e){ fail.push(f.label); }
   }
-  // 흐름 양식은 양식 사이에 강제 페이지나눔(절대좌표 양식은 .page가 이미 페이지를 나눔 → sep 불필요)
-  const sep = flow ? '<div style="break-after:page;page-break-after:always;"></div>' : '';
-  const doc = bodies.length ? ('<!doctype html><html><head><meta charset="utf-8"><style>'+style+' html,body{margin:0}</style></head><body>'+bodies.join(sep)+'</body></html>') : '';
+  // 양식 사이 페이지나눔: 흐름양식(.flow-paper) 뒤에만 강제 sep. 절대양식(.page)은 스스로 page-break-after → sep 넣으면 빈 페이지 생김
+  const SEP='<div style="break-after:page;page-break-after:always;"></div>';
+  let joined='';
+  for(let k=0;k<bodies.length;k++){
+    joined+=bodies[k];
+    const last=(k===bodies.length-1);
+    if(flow && !last && /class=["']flow-paper["']/.test(bodies[k])) joined+=SEP;
+  }
+  // 용지여백 통일(@page 0 + 흐름양식은 .flow-paper padding으로 여백). 절대·흐름·혼합 모두 동일하게 동작(기존 그룹 역호환: 결과 여백 불변)
+  const unify = '@page{size:210mm 297mm;margin:0}@media print{.flow-paper{padding:12mm 10mm;box-shadow:none;margin:0}}';
+  const doc = bodies.length ? ('<!doctype html><html><head><meta charset="utf-8"><style>'+styles.join('\n')+'\n'+unify+' html,body{margin:0}</style></head><body>'+joined+'</body></html>') : '';
   return {doc, fail};
 }
 async function buildAndPrintForms(FILES, map, title, flow){
@@ -5857,15 +5866,17 @@ async function buildAndPrintForms(FILES, map, title, flow){
 function paginateFlow(idoc){
   const PX=96/25.4;                 // mm→px(96dpi)
   const CONTENT_H=262*PX;           // A4 1장에 담는 콘텐츠 높이(297-여백, 블록 margin 감안해 보수적)
-  const papers=Array.from(idoc.querySelectorAll('.flow-paper'));
-  if(!papers.length) return;
+  // 처리 대상 = body 직속의 흐름양식(.flow-paper) + 절대양식(.page). 혼합 그룹(한전수급계약)도 순서대로 종이로 나눔
+  const blocks=Array.from(idoc.body.children).filter(el=>el.classList&&(el.classList.contains('flow-paper')||el.classList.contains('page')));
+  if(!blocks.length) return;
   const mkPage=()=>{ const d=idoc.createElement('div');
     d.style.cssText='width:210mm;min-height:297mm;background:#fff;box-sizing:border-box;padding:12mm 10mm;margin:0 auto 16px;box-shadow:0 1px 10px rgba(0,0,0,.18)';
     return d; };
   const pages=[];
-  papers.forEach(paper=>{                       // 양식별(.flow-paper)로 페이지 분할 → 양식 사이도 새 종이
-    let page=mkPage(), h=0;
-    Array.from(paper.children).forEach(b=>{
+  blocks.forEach(blk=>{
+    if(blk.classList.contains('page')){ pages.push(blk); return; }   // 절대양식 .page는 이미 한 장 → 그대로 유지
+    let page=mkPage(), h=0;                      // 흐름양식(.flow-paper)은 A4 한 장 단위로 분할
+    Array.from(blk.children).forEach(b=>{
       const bh=b.getBoundingClientRect().height; // flow-paper(콘텐츠폭 190mm)에서 측정 = 새 page 폭과 동일
       if(h>0 && h+bh>CONTENT_H){ pages.push(page); page=mkPage(); h=0; }
       page.appendChild(b); h+=bh;
@@ -6080,6 +6091,124 @@ function openConstPlanModal(id){
   getPermit(d); fillPreviewIframe('constPrintFrame', CONST_PRINT_FILES, constPlanTokenMap(d), false);
 }
 
+/* ============ 행정: 한전수급계약 (계좌이체약정서 + 인버터 현장설정 확인서 2종 + 전압제어 동의서 2종) — 동일 토큰방식·혼합(절대+흐름) ============ */
+const KEPCO_FORM_FILES=[
+  {url:'forms/kepco_account.hml',  out:'5. 계좌이체거래 약정서(한전).hml', label:'계좌이체약정서'},
+  {url:'forms/kepco_inv_grid.hml', out:'5-1. 인버터 현장설정 확인서(계통연계 유지기능).hml', label:'인버터 확인서(계통연계)'},
+  {url:'forms/kepco_inv_pf.hml',   out:'5-2. 인버터 현장설정 확인서(역률제어 기능).hml', label:'인버터 확인서(역률제어)'},
+  {url:'forms/kepco_avc.hml',      out:'5-3. 능동전압제어장치 동의서(특고압).hml', label:'능동전압제어 동의서(특고압)'},
+  {url:'forms/kepco_pf.hml',       out:'5-4. 역률제어 인버터 동의서(저압).hml', label:'역률제어 동의서(저압)'},
+];
+const KEPCO_PRINT_FILES=[
+  {url:'forms/kepco_account.print.html',  label:'계좌이체약정서'},
+  {url:'forms/kepco_inv_grid.print.html', label:'인버터 확인서(계통연계)'},
+  {url:'forms/kepco_inv_pf.print.html',   label:'인버터 확인서(역률제어)'},
+  {url:'forms/kepco_avc.print.html',      label:'능동전압제어 동의서(특고압)'},
+  {url:'forms/kepco_pf.print.html',       label:'역률제어 동의서(저압)'},
+];
+function kepcoTokenMap(d){
+  const p=resolvePermit(d), c=permitCalc(d), eq=p.equip||{};
+  const L=(p.lands&&p.lands[0])||{};
+  const S=(v)=>(v==null?'':String(v));
+  const loc=[S(L.addr),S(L.jibun)].filter(Boolean).join(' ') || S(p.biz.place);
+  const plantName=S(p.outline.plantName)||S(d.site);
+  const dm=String(permitApplyDate(d)||'').split('-');   // YYYY-MM-DD
+  return {
+    '§PLANT§':plantName, '§LOC§':loc,
+    '§NAME§':applicantFullName(p), '§SIGN§':S(p.applicant.name),
+    '§ADDR§':S(p.applicant.addr), '§PHONE§':S(p.applicant.phone),
+    '§CAP§':pComma(c.cap), '§VOLT§':S(p.biz.volt)||'22,900 V',
+    '§INV_KW§':pComma(eq.invKW), '§INV_QTY§':pComma(eq.invQty),
+    '§INV_MAKER§':'', '§INV_MODEL§':'',              // 인버터 제조사·모델은 설치 실물 기준 → 한글서 직접(설정치도 동일)
+    '§DATE§':fmtKDate(permitApplyDate(d)),
+    '§BIZNAME§':S(p.applicant.bizname)||plantName, '§DAEPYO§':S(p.applicant.name),
+    '§YYYY§':dm[0]||'', '§MM§':dm[1]?String(parseInt(dm[1],10)):'', '§DD§':dm[2]?String(parseInt(dm[2],10)):'',
+    '§MANAGER§':'',                                   // 계좌약정 담당자·계좌번호 등 금융정보는 공란(직접)
+  };
+}
+async function genKepcoForms(id){
+  const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d);
+  const p=resolvePermit(d);
+  const folder=((String((p.outline&&p.outline.plantName)||'한전수급계약').trim()||'한전수급계약')+' 한전수급계약').replace(/[\/\\:*?"<>|]/g,'_');
+  const map=kepcoTokenMap(d); toast('한전수급계약 서류(HWP) 생성 중…');
+  const enc=new TextEncoder(); const files=[]; const fail=[];
+  for(const f of KEPCO_FORM_FILES){
+    try{ const res=await fetch(f.url,{cache:'no-store'}); if(!res.ok) throw new Error('HTTP '+res.status);
+      const xml=fillPermitTemplate(await res.text(), map);
+      files.push({name: folder+'/'+f.out, data: enc.encode(xml)});
+    }catch(e){ fail.push(f.label); }
+  }
+  if(!files.length){ toast('생성 실패 — 새로고침 후 다시 시도해주세요'); return; }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(makePermitZip(files)); a.download=folder+'.zip';
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },3000);
+  toast(fail.length ? ('일부 실패: '+fail.join(', ')) : ('“'+folder+'” 폴더로 '+files.length+'종 다운로드 — 압축 풀어 한글에서 여세요'));
+}
+function printKepco(id){ genKepcoForms(id); }
+function genKepcoFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(KEPCO_PRINT_FILES, kepcoTokenMap(d), '한전수급계약 서류', true); }
+let kepcoSel=null;
+function selectKepcoDeal(id){ kepcoSel=id; refreshActive(); }
+function kepcoHandNext(id){ const d=DEALS.find(x=>x.id===id); if(!d) return;
+  const first=!d.kepcoHandedAt;
+  if(first){ d.kepcoHandedAt=verStamp(); persistDeal(d); toast(`${d.site} · 한전수급계약 완료 — 준공검사로 이관`); }
+  switchTab('admin');
+  const b=document.querySelector("#ssNav .ss-item[data-stage='completion']");
+  if(b) activateItem('admin', b); else refreshActive();
+}
+function kepcoHandoffFooter(d){
+  const handed=d.kepcoHandedAt;
+  const inner = handed
+    ? `<span class="pill done"><span class="pd"></span>✅ 행정-준공검사로 이관됨 · ${esc(handed)}</span><button class="btn ghost sm" onclick="kepcoHandNext('${d.id}')">준공검사 화면 열기 →</button>`
+    : `<button class="btn primary" onclick="kepcoHandNext('${d.id}')">➡️ 행정-준공검사로 이관</button><span class="lr-s">한전수급계약 서류 준비가 끝나면 다음 단계(준공검사)로 넘깁니다.</span>`;
+  return `<div class="card pad" style="margin-top:14px;border-top:3px solid var(--brand)"><div class="st-card-h"><h3 style="margin:0">➡️ 다음 단계</h3></div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px">${inner}</div></div>`;
+}
+function renderKepcoBiz(){
+  const list = permitBizList();
+  const head = wfHead('한전수급계약','영업 실계약·발전사업 허가에서 입력된 신청정보를 끌어와 「계좌이체약정서」·「인버터 현장설정 확인서(2종)」·「전압제어 동의서(2종)」를 완성해 접수용 서류(PDF·한글)로 다운로드합니다.');
+  if(!list.length) return head + emptyMsg('한전수급계약 대상(실계약 완료) 현장이 없습니다. 영업 “실계약”에서 신청정보를 입력하면 여기로 넘어옵니다.');
+  if(!kepcoSel || !list.find(d=>d.id===kepcoSel)) kepcoSel = list[0].id;
+  const d = DEALS.find(x=>x.id===kepcoSel), p=getPermit(d);
+  const opts = list.map(x=>`<option value="${x.id}" ${x.id===kepcoSel?'selected':''}>${esc(x.site)} (${x.id})</option>`).join('');
+  const tag = p.installType==='건물' ? '<span class="pm-typetag bld">🏭 건물형(지붕)</span>' : '<span class="pm-typetag land">🌾 토지형(노지)</span>';
+  const bar = `<div class="pm-modebar">
+      <span class="lr-s">대상 현장</span>
+      <select class="pm-dealsel" onchange="selectKepcoDeal(this.value)">${opts}</select>
+      ${tag}
+      <div style="flex:1"></div>
+      <span class="lr-s">📅 작성일자</span>
+      <input type="date" class="pm-datepick" value="${permitApplyDate(d)}" onchange="setPermit('${d.id}','applyDate',this.value);refreshActive()" title="한전수급계약 서류에 기입될 작성일자">
+      <button class="btn ghost sm" onclick="openKepcoModal('${d.id}')">🔍 양식 미리보기</button>
+      <button class="btn primary sm" onclick="genKepcoFormsPDF('${d.id}')">📄 한전수급계약 서류(PDF) 다운로드</button>
+      <button class="btn primary sm" onclick="printKepco('${d.id}')">📥 한전수급계약 서류(HWP) 다운로드</button>
+    </div>`;
+  const info = `<div class="cred-warn" style="color:var(--ink-2);background:color-mix(in srgb,var(--brand) 9%,transparent);border-color:color-mix(in srgb,var(--brand) 26%,transparent)">🔗 아래 신청정보는 <b>제안서·실계약·발전허가</b>에서 <b>자동 연동된 읽기전용</b>입니다. 계좌이체약정서의 사업자(상호·대표자·주소), 인버터 확인서·동의서의 발전소명·주소·사업자·발전용량·연계전압·인버터 정격용량/설치수량에 자동 기입됩니다. <b>계좌번호·은행 등 금융정보, 인버터 제조사·모델명·보호설정치, 안전관리자 정보</b>는 보안·실물 확인 항목이라 <b>공란</b>이니 한글에서 직접 기재하세요. <b>전압제어 동의서는 특고압(22.9kV)·저압(380V) 두 가지</b>가 들어 있으니 현장 연계전압에 맞는 1종만 제출하면 됩니다.</div>`;
+  return head + bar + info + renderPermitForm(d,'admin') + kepcoHandoffFooter(d);
+}
+function openKepcoModal(id){
+  const d=DEALS.find(x=>x.id===id); if(!d) return;
+  closePermitModal();
+  const ov=document.createElement('div'); ov.className='pm-modal-ov'; ov.id='permitModal';
+  ov.onclick=(e)=>{ if(e.target===ov) closePermitModal(); };
+  ov.innerHTML=`<div class="pm-modal-box" role="dialog" aria-modal="true">
+      <div class="pm-modal-head">
+        <span class="pm-m-ttl">🔍 한전수급계약 양식 미리보기 — ${esc(d.site)} <span style="opacity:.65;font-weight:500">(${esc(d.id)})</span></span>
+        <div class="pm-m-btns">
+          <button class="pm-mbtn primary" onclick="genKepcoFormsPDF('${d.id}')">📄 한전수급계약 서류(PDF) 다운로드</button>
+          <button class="pm-mbtn primary" onclick="printKepco('${d.id}')">📥 한전수급계약 서류(HWP) 다운로드</button>
+          <button class="pm-mbtn" onclick="closePermitModal()">✕ 닫기</button>
+        </div>
+      </div>
+      <div class="pm-modal-body" style="background:#eef0f4">
+        <div id="kepcoPrintFrame_ld" style="padding:48px;text-align:center;color:#888;font-size:14px">양식 미리보기를 불러오는 중…</div>
+        <iframe id="kepcoPrintFrame" title="한전수급계약 양식 미리보기" scrolling="no" style="width:210mm;max-width:100%;border:0;background:#fff;display:block;margin:0 auto;box-shadow:0 1px 8px rgba(0,0,0,.14);min-height:70vh;visibility:hidden"></iframe>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  document.body.style.overflow='hidden';
+  permitEscHandler=(e)=>{ if(e.key==='Escape') closePermitModal(); };
+  document.addEventListener('keydown',permitEscHandler);
+  getPermit(d); fillPreviewIframe('kepcoPrintFrame', KEPCO_PRINT_FILES, kepcoTokenMap(d), true);
+}
+
 const WF_SCREENS = {
   'd-intake':{el:'sub-d-intake', fn:renderIntake},
   'd-feas':{el:'sub-d-feas', fn:renderFeasibility},
@@ -6116,6 +6245,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-12', team:'행정', kind:'추가', title:'한전수급계약 — 계좌이체약정서·인버터 확인서·전압제어 동의서(5종) 자동작성 + 미리보기·PDF·한글파일', body:'발전허가·개발행위·PPA·공사계획신고와 <b>똑같은 방식</b>으로 <b>한전수급계약</b> 서류도 자동화했습니다. ① 좌측 <b>행정 → 한전수급계약</b> 메뉴가 전용 화면으로 바뀌어, 대상 현장을 고르면 <b>계좌이체거래 약정서</b>, <b>인버터 현장설정 확인서 2종</b>(계통연계 유지기능·역률제어 기능), <b>전압제어 동의서 2종</b>(능동전압제어 특고압·역률제어 저압) — 모두 <b>5종</b>이 한 번에 채워집니다. ② 발전소명·사업자(상호·대표자·주소)·발전용량·연계전압·인버터 정격용량/설치수량·작성일자가 <b>자동 기입</b>됩니다. ③ <b>계좌번호·은행 등 금융정보, 인버터 제조사·모델명·보호설정치, 안전관리자 정보</b>는 보안·실물 확인 항목이라 <b>빈칸</b>으로 둡니다(한글에서 직접). ④ <b>전압제어 동의서는 특고압(22.9kV)·저압(380V) 두 가지</b>가 모두 들어 있으니 현장 연계전압에 맞는 <b>1종만 제출</b>하면 됩니다. ⑤ <b>🔍미리보기·📄PDF·📥한글파일(HWP)</b> 모두 지원(원본 양식과 동일). ⑥ 서류 준비가 끝나면 <b>“준공검사로 이관”</b> 버튼으로 다음 단계에 넘깁니다.', author:'개발'},
   {date:'2026-10-12', team:'행정', kind:'추가', title:'공사계획신고 — 신고서·감리배치요청서 자동작성 + 미리보기·PDF·한글파일 다운로드 추가', body:'발전허가·개발행위·PPA와 <b>똑같은 방식</b>으로 <b>공사계획신고</b> 서류도 자동화했습니다. ① 좌측 <b>행정 → 공사계획신고</b> 메뉴가 전용 화면으로 바뀌어, 대상 현장을 고르면 그 현장 정보로 <b>「공사계획 신고서」</b>와 <b>「감리배치요청서」</b> 두 양식이 채워집니다. ② <b>신고서</b>의 공사명·신고인(대표자·상호·주소·전화), <b>감리배치요청서</b>의 발주처(사업주)·현장주소·용량·산출내역(모듈 W×장, 인버터 kW×EA)이 <b>자동 기입</b>됩니다. ③ <b>시공업체는 (주)해피솔라·☎062-575-4745</b>로 자동으로 채워집니다(주소·대표자는 직접 기재). ④ <b>총공사비·감리용역비·공사기간</b> 등 금액·일정 항목은 아직 정해지지 않았으므로 <b>빈칸</b>으로 두었습니다 — 한글에서 직접 적어 넣으세요. ⑤ <b>🔍미리보기</b>로 화면에서 바로 확인하고, <b>📄PDF</b> 또는 <b>📥한글파일(HWP)</b>로 받을 수 있습니다(미리보기·PDF·한글파일 모두 원본 양식과 동일). ⑥ 서류 준비가 끝나면 <b>“한전수급계약으로 이관”</b> 버튼으로 다음 단계에 넘깁니다.', author:'개발'},
   {date:'2026-10-12', team:'행정', kind:'추가', title:'발전허가·개발행위·PPA — 접수서류 “PDF 다운로드” 추가 (한글파일 다운로드는 그대로 유지)', body:'기존 <b>한글파일(HWP) 다운로드</b>는 그대로 두고, 바로 옆에 <b>“📄 PDF 다운로드”</b> 버튼을 새로 추가했습니다. ① 버튼을 누르면 그 현장의 양식들이 <b>원본과 똑같은 모양</b>으로 채워진 뒤 <b>인쇄창</b>이 뜹니다. 인쇄창에서 <b>“대상 → PDF로 저장”</b>을 고르면 PDF 파일로 받아집니다. ② 여러 양식이 <b>하나의 PDF로 합쳐져</b> 나옵니다 — 발전허가는 <b>신청서 → 사업계획서 → 송전관계 일람도 → 행정정보 동의서 → 공사 협력 의향서</b> 순서(개인/법인 구비서류 리스트 기준)로 이어집니다. ③ 양식의 표·줄·레이아웃이 <b>한글파일과 동일하게</b> 보이도록 만들었습니다. (글꼴은 PC에 설치된 글꼴을 따릅니다 — 행정 업무용 윈도우 PC에서는 맑은고딕·굴림 등 기본 글꼴로 원본과 동일하게 나옵니다.) ④ 토지대장·지적도 등 <b>조회·발급 서류</b>와 배치도·측면도 등 <b>설계팀 작성 도면</b>, 신분증 사본 등 <b>원본 첨부서류</b>는 이 PDF에 포함되지 않습니다(각자 준비분). ⑤ <b>미리보기 화면</b>도 이제 실제 내려받는 양식(PDF·HWP)과 <b>똑같은 모습</b>으로 보이도록 바꿨습니다 — 화면에서 본 그대로 출력됩니다.', author:'개발'},
   {date:'2026-10-08', team:'공통', kind:'추가', title:'영업 원가표 모듈·인버터 사양 → 발전사업 허가 사업계획서까지 자동 연동', body:'영업 <b>원가표(자재단가)</b>와 행정 <b>발전사업 허가</b>를 모듈·인버터 기준으로 연결했습니다. ① 원가표에서 모듈·인버터를 각각 <b>독립된 카드</b>로 분리해 종류별 단가를 더 보기 쉽게 정리했습니다. ② 모듈·인버터 <b>종류별 규격</b>을 입력해 저장할 수 있습니다. ③ 원가표에서 고른 모듈·인버터 종류가 행정 발전사업 허가의 <b>저장 사양</b>에 자동으로 넘어갑니다. ④ 사업계획서 미리보기의 <b>설비 사양 표</b>에도 그 규격이 그대로 채워져, 영업에서 고른 자재가 서류까지 끊김 없이 이어집니다.', author:'개발'},
@@ -6899,6 +7029,9 @@ function activateItem(tab, btn){
       view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-a-stage'));
     } else if(tab==='admin' && btn.dataset.stage==='const_plan'){   // 공사계획신고 = 전용 신청·출력 화면
       document.getElementById('sub-a-stage').innerHTML = renderConstPlanBiz();
+      view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-a-stage'));
+    } else if(tab==='admin' && btn.dataset.stage==='kepco'){   // 한전수급계약 = 전용 신청·출력 화면
+      document.getElementById('sub-a-stage').innerHTML = renderKepcoBiz();
       view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-a-stage'));
     } else {
       const target = tab==='construction' ? 'c-stage' : tab==='design' ? 'd-stage' : 'a-stage';
