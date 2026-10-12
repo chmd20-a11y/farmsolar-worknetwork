@@ -5163,6 +5163,7 @@ function openPermitModal(id){
       <div class="pm-modal-head">
         <span class="pm-m-ttl">🔍 양식 미리보기 — ${esc(d.site)} <span style="opacity:.65;font-weight:500">(${esc(d.id)})</span></span>
         <div class="pm-m-btns">
+          <button class="pm-mbtn primary" onclick="genPermitFormsPDF('${d.id}')">📄 접수서류(PDF) 다운로드</button>
           <button class="pm-mbtn primary" onclick="printPermit('${d.id}')">📥 접수서류(HWP) 다운로드</button>
           <button class="pm-mbtn" onclick="closePermitModal()">✕ 닫기</button>
         </div>
@@ -5197,6 +5198,7 @@ function renderPermitBiz(){
       <span class="lr-s">🏢 계약 법인</span>
       <select class="pm-datepick" onchange="setPermit('${d.id}','vendorIdx',+this.value);refreshActive()" title="공사 협력 의향서 하단 '회사명'에 들어갈 계약 법인 선택 (그룹 3개 법인)">${PERMIT_VENDORS.map((v,i)=>`<option value="${i}" ${i===(p.vendorIdx|0)?'selected':''}>${esc(v.label)}</option>`).join('')}</select>
       <button class="btn ghost sm" onclick="openPermitModal('${d.id}')">🔍 양식 미리보기</button>
+      <button class="btn primary sm" onclick="genPermitFormsPDF('${d.id}')">📄 접수서류(PDF) 다운로드</button>
       <button class="btn primary sm" onclick="printPermit('${d.id}')">📥 접수서류(HWP) 다운로드</button>
     </div>`;
   const info = `<div class="cred-warn" style="color:var(--ink-2);background:color-mix(in srgb,var(--brand) 9%,transparent);border-color:color-mix(in srgb,var(--brand) 26%,transparent)">🔗 아래 신청정보는 각 원천에서 <b>자동으로 가져온 읽기전용</b>입니다 — <b style="color:#2e8b63">제안서</b>(설비·금액·사업주 성명·상호·전화·설치방법·연간발전량·경사각/입사각) / <b style="color:#9a6f16">실계약</b>(민감정보·설치장소·접수관청·전압·주파수·면적·발전방식·수급방식·부지 명세). 제안서가 바뀌면 설비·발전량이 <b>자동 반영</b>됩니다. 각 항목의 출처 태그를 누르면 그 원천 화면으로 이동해 수정할 수 있습니다. 행정은 <b>첨부서류 발급·준비</b>와 <b>접수 PDF 출력</b>을 담당합니다.</div>`;
@@ -5673,6 +5675,7 @@ function renderDevPermitBiz(){
       <span class="lr-s">📅 신청일자</span>
       <input type="date" class="pm-datepick" value="${permitApplyDate(d)}" onchange="setPermit('${d.id}','applyDate',this.value);refreshActive()" title="개발행위 신청서에 기입될 신청일자">
       <button class="btn ghost sm" onclick="openDevPermitModal('${d.id}')">🔍 양식 미리보기</button>
+      <button class="btn primary sm" onclick="genDevFormsPDF('${d.id}')">📄 개발행위 서류(PDF) 다운로드</button>
       <button class="btn primary sm" onclick="printDevPermit('${d.id}')">📥 개발행위 서류(HWP) 다운로드</button>
     </div>`;
   const info = `<div class="cred-warn" style="color:var(--ink-2);background:color-mix(in srgb,var(--brand) 9%,transparent);border-color:color-mix(in srgb,var(--brand) 26%,transparent)">🔗 아래 신청정보는 <b>제안서·실계약</b>에서 <b>자동 연동된 읽기전용</b>입니다. 개발행위 <b>신청서·사업계획서</b>의 신청인(성명·주민/법인번호·주소·전화)·위치(지번)·지목·용도지역·신청면적·토지면적·모듈 수량에 자동 기입됩니다. <b>사업기간·용도지구 등 데이터가 없는 항목과 위치도(지도)는 한글에서 직접 기재·삽입</b>하세요.</div>`;
@@ -5735,6 +5738,7 @@ function openDevPermitModal(id){
       <div class="pm-modal-head">
         <span class="pm-m-ttl">🔍 개발행위 양식 미리보기 — ${esc(d.site)} <span style="opacity:.65;font-weight:500">(${esc(d.id)})</span></span>
         <div class="pm-m-btns">
+          <button class="pm-mbtn primary" onclick="genDevFormsPDF('${d.id}')">📄 개발행위 서류(PDF) 다운로드</button>
           <button class="pm-mbtn primary" onclick="printDevPermit('${d.id}')">📥 개발행위 서류(HWP) 다운로드</button>
           <button class="pm-mbtn" onclick="closePermitModal()">✕ 닫기</button>
         </div>
@@ -5790,6 +5794,53 @@ async function genPpaForms(id){
   toast(fail.length ? ('일부 실패: '+fail.join(', ')) : ('“'+folder+'” 폴더로 '+files.length+'종 다운로드 — 압축 풀어 한글에서 여세요'));
 }
 function printPpa(id){ genPpaForms(id); }
+
+/* ===== 접수서류 PDF 다운로드 (HWP 다운로드와 별개·양쪽 유지) =====
+   .hml과 동일한 §토큰§을 가진 '인쇄용 HTML 템플릿(forms/*.print.html)'을 현장 값으로 채워,
+   브라우저 네이티브 인쇄(“PDF로 저장”)로 내려받습니다. 양식(표·레이아웃)은 HWP와 동일하게 재현됩니다.
+   한 그룹의 양식은 같은 레이아웃 모드(발전허가·개발행위=절대좌표 / PPA=흐름)라 하나의 PDF로 병합됩니다.
+   서류 순서 = 개인/법인 구비서류 리스트 기준(우리가 생성하는 양식만; 조회·설계도면·원본첨부는 범위 밖). */
+const PERMIT_PRINT_FILES=[
+  {url:'forms/sincheong.print.html', label:'전기사업 허가신청서'},
+  {url:'forms/saup.print.html',      label:'허가사업계획서'},
+  {url:'forms/ilramdo.print.html',   label:'송전관계 일람도'},
+  {url:'forms/dongui.print.html',    label:'행정정보 공동이용 사전동의서'},
+  {url:'forms/uihyang.print.html',   label:'공사 협력 의향서'},
+];
+const DEVPERMIT_PRINT_FILES=[
+  {url:'forms/dev_sincheong.print.html', label:'개발행위 허가신청서'},
+  {url:'forms/dev_saup.print.html',      label:'개발행위 사업계획서'},
+];
+const PPA_PRINT_FILES=[
+  {url:'forms/ppa_apply.print.html', label:'PPA 신청서'},
+  {url:'forms/ppa_use.print.html',   label:'전기사용신청서'},
+];
+async function buildAndPrintForms(FILES, map, title, flow){
+  toast(title+' PDF 생성 중… 인쇄창에서 “대상: PDF로 저장”을 선택하세요');
+  let style='', bodies=[], fail=[];
+  for(const f of FILES){
+    try{
+      const res=await fetch(f.url,{cache:'no-store'}); if(!res.ok) throw new Error('HTTP '+res.status);
+      const html=fillPermitTemplate(await res.text(), map);           // .hml과 동일 토큰 치환
+      if(!style){ const sm=html.match(/<style>([\s\S]*?)<\/style>/i); style=sm?sm[1]:''; }
+      const bm=html.match(/<body[^>]*>([\s\S]*?)<\/body>/i); bodies.push(bm?bm[1]:html);
+    }catch(e){ fail.push(f.label); }
+  }
+  if(!bodies.length){ toast('PDF 생성 실패 — 새로고침 후 다시 시도해주세요'); return; }
+  // 흐름 양식은 양식 사이에 강제 페이지나눔(절대좌표 양식은 .page가 이미 페이지를 나눔 → sep 불필요)
+  const sep = flow ? '<div style="break-after:page;page-break-after:always;"></div>' : '';
+  const doc='<!doctype html><html><head><meta charset="utf-8"><title>'+esc(title)+'</title><style>'+style+'</style></head><body>'+bodies.join(sep)+'</body></html>';
+  const ifr=document.createElement('iframe');
+  ifr.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+  document.body.appendChild(ifr);
+  const idoc=ifr.contentWindow.document; idoc.open(); idoc.write(doc); idoc.close();
+  const go=()=>{ try{ ifr.contentWindow.focus(); ifr.contentWindow.print(); }catch(e){} setTimeout(()=>{ try{ifr.remove();}catch(e){} },60000); };
+  if(idoc.readyState==='complete') setTimeout(go,450); else ifr.onload=()=>setTimeout(go,450);
+  if(fail.length) setTimeout(()=>toast('일부 제외: '+fail.join(', ')),1200);
+}
+function genPermitFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(PERMIT_PRINT_FILES, permitTokenMap(d), '발전허가 접수서류', false); }
+function genDevFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(DEVPERMIT_PRINT_FILES, devPermitTokenMap(d), '개발행위 접수서류', false); }
+function genPpaFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(PPA_PRINT_FILES, ppaTokenMap(d), 'PPA 신청서류', true); }
 let ppaSel=null;
 function selectPpaDeal(id){ ppaSel=id; refreshActive(); }
 function ppaHandNext(id){ const d=DEALS.find(x=>x.id===id); if(!d) return;
@@ -5822,6 +5873,7 @@ function renderPpaBiz(){
       <span class="lr-s">📅 신청일자</span>
       <input type="date" class="pm-datepick" value="${permitApplyDate(d)}" onchange="setPermit('${d.id}','applyDate',this.value);refreshActive()" title="PPA·전기사용 신청서에 기입될 신청일자">
       <button class="btn ghost sm" onclick="openPpaModal('${d.id}')">🔍 양식 미리보기</button>
+      <button class="btn primary sm" onclick="genPpaFormsPDF('${d.id}')">📄 PPA 신청서류(PDF) 다운로드</button>
       <button class="btn primary sm" onclick="printPpa('${d.id}')">📥 PPA 신청서류(HWP) 다운로드</button>
     </div>`;
   const info = `<div class="cred-warn" style="color:var(--ink-2);background:color-mix(in srgb,var(--brand) 9%,transparent);border-color:color-mix(in srgb,var(--brand) 26%,transparent)">🔗 아래 신청정보는 <b>제안서·실계약·발전허가</b>에서 <b>자동 연동된 읽기전용</b>입니다. PPA·전기사용 <b>신청서</b>의 신청인(성명·주민/법인번호·주소·전화)·설치장소(지번)·허가용량·시설용량·공급전압·주파수에 자동 기입됩니다. <b>발전사업허가번호·상업운전 희망일·이메일 등 아직 발급·입력 전 항목은 회색</b>으로 표시되며, 자료가 들어오면 자동으로 채워집니다. 현장약도·공사업체·날인은 한글에서 직접 기재하세요.</div>`;
@@ -5845,6 +5897,7 @@ function openPpaModal(id){
       <div class="pm-modal-head">
         <span class="pm-m-ttl">🔍 PPA 양식 미리보기 — ${esc(d.site)} <span style="opacity:.65;font-weight:500">(${esc(d.id)})</span></span>
         <div class="pm-m-btns">
+          <button class="pm-mbtn primary" onclick="genPpaFormsPDF('${d.id}')">📄 PPA 신청서류(PDF) 다운로드</button>
           <button class="pm-mbtn primary" onclick="printPpa('${d.id}')">📥 PPA 신청서류(HWP) 다운로드</button>
           <button class="pm-mbtn" onclick="closePermitModal()">✕ 닫기</button>
         </div>
@@ -5893,6 +5946,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-12', team:'행정', kind:'추가', title:'발전허가·개발행위·PPA — 접수서류 “PDF 다운로드” 추가 (한글파일 다운로드는 그대로 유지)', body:'기존 <b>한글파일(HWP) 다운로드</b>는 그대로 두고, 바로 옆에 <b>“📄 PDF 다운로드”</b> 버튼을 새로 추가했습니다. ① 버튼을 누르면 그 현장의 양식들이 <b>원본과 똑같은 모양</b>으로 채워진 뒤 <b>인쇄창</b>이 뜹니다. 인쇄창에서 <b>“대상 → PDF로 저장”</b>을 고르면 PDF 파일로 받아집니다. ② 여러 양식이 <b>하나의 PDF로 합쳐져</b> 나옵니다 — 발전허가는 <b>신청서 → 사업계획서 → 송전관계 일람도 → 행정정보 동의서 → 공사 협력 의향서</b> 순서(개인/법인 구비서류 리스트 기준)로 이어집니다. ③ 양식의 표·줄·레이아웃이 <b>한글파일과 동일하게</b> 보이도록 만들었습니다. (글꼴은 PC에 설치된 글꼴을 따릅니다 — 행정 업무용 윈도우 PC에서는 맑은고딕·굴림 등 기본 글꼴로 원본과 동일하게 나옵니다.) ④ 토지대장·지적도 등 <b>조회·발급 서류</b>와 배치도·측면도 등 <b>설계팀 작성 도면</b>, 신분증 사본 등 <b>원본 첨부서류</b>는 이 PDF에 포함되지 않습니다(각자 준비분).', author:'개발'},
   {date:'2026-10-08', team:'공통', kind:'추가', title:'영업 원가표 모듈·인버터 사양 → 발전사업 허가 사업계획서까지 자동 연동', body:'영업 <b>원가표(자재단가)</b>와 행정 <b>발전사업 허가</b>를 모듈·인버터 기준으로 연결했습니다. ① 원가표에서 모듈·인버터를 각각 <b>독립된 카드</b>로 분리해 종류별 단가를 더 보기 쉽게 정리했습니다. ② 모듈·인버터 <b>종류별 규격</b>을 입력해 저장할 수 있습니다. ③ 원가표에서 고른 모듈·인버터 종류가 행정 발전사업 허가의 <b>저장 사양</b>에 자동으로 넘어갑니다. ④ 사업계획서 미리보기의 <b>설비 사양 표</b>에도 그 규격이 그대로 채워져, 영업에서 고른 자재가 서류까지 끊김 없이 이어집니다.', author:'개발'},
   {date:'2026-10-08', team:'행정', kind:'추가', title:'발전사업 허가 사업계획서 — 공급계획·투입자금란 자동 계산', body:'허가사업계획서의 숫자 계산 항목을 실제 접수서류 기준에 맞춰 자동화했습니다. ① <b>5년 공급계획표·건설예정량표</b>가 접수 샘플과 같은 방식으로 자동 채워집니다. ② <b>총사업비</b>는 설비용량 1kW당 100만원 기준(10만원 단위 이하는 버림)으로 통일해 계산합니다. ③ 조달 비율은 <b>내자 15% · 외자 85%</b>로 통일했습니다. ④ 이 값들을 바탕으로 <b>“마. 소요자금 및 조달방법”</b>란이 자동으로 채워진 상태로 다운로드됩니다.', author:'개발'},
   {date:'2026-10-08', team:'행정', kind:'추가', title:'PPA(전력구매계약) 신청 — 서류 자동작성 추가', body:'발전사업 허가·개발행위 허가와 같은 방식으로, <b>PPA 신청서</b>도 현장 정보를 불러와 빈칸이 채워진 상태로 자동 작성·다운로드할 수 있게 되었습니다.', author:'개발'},
