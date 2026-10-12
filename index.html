@@ -5852,17 +5852,40 @@ async function buildAndPrintForms(FILES, map, title, flow){
   if(fail.length) setTimeout(()=>toast('일부 제외: '+fail.join(', ')),1200);
 }
 // 미리보기 모달의 iframe에 '실제 양식(=PDF/HWP 출력물과 동일한 문서)'을 채워 보여줌
+// 흐름(flow) 양식 미리보기: 긴 내용을 A4 한 장 단위의 흰 종이로 나눠 사이를 띄움
+// (어디까지가 한 페이지인지 보이도록. 인쇄/PDF의 실제 페이지 분할은 @page가 담당 — 미리보기는 근사)
+function paginateFlow(idoc){
+  const PX=96/25.4;                 // mm→px(96dpi)
+  const CONTENT_H=262*PX;           // A4 1장에 담는 콘텐츠 높이(297-여백, 블록 margin 감안해 보수적)
+  const papers=Array.from(idoc.querySelectorAll('.flow-paper'));
+  if(!papers.length) return;
+  const mkPage=()=>{ const d=idoc.createElement('div');
+    d.style.cssText='width:210mm;min-height:297mm;background:#fff;box-sizing:border-box;padding:12mm 10mm;margin:0 auto 16px;box-shadow:0 1px 10px rgba(0,0,0,.18)';
+    return d; };
+  const pages=[];
+  papers.forEach(paper=>{                       // 양식별(.flow-paper)로 페이지 분할 → 양식 사이도 새 종이
+    let page=mkPage(), h=0;
+    Array.from(paper.children).forEach(b=>{
+      const bh=b.getBoundingClientRect().height; // flow-paper(콘텐츠폭 190mm)에서 측정 = 새 page 폭과 동일
+      if(h>0 && h+bh>CONTENT_H){ pages.push(page); page=mkPage(); h=0; }
+      page.appendChild(b); h+=bh;
+    });
+    pages.push(page);
+  });
+  idoc.body.innerHTML=''; idoc.body.style.background='#eef0f4';
+  pages.forEach(p=>idoc.body.appendChild(p));
+}
 async function fillPreviewIframe(frameId, FILES, map, flow){
   const ifr=document.getElementById(frameId); if(!ifr) return;
   const {doc} = await buildFormsDoc(FILES, map, flow);
   const ld=document.getElementById(frameId+'_ld');
   if(!doc){ if(ld) ld.innerHTML='<span style="color:#b00">양식을 불러오지 못했습니다 — 닫고 다시 열어주세요</span>'; return; }
   const idoc=ifr.contentWindow.document; idoc.open(); idoc.write(doc); idoc.close();
-  try{ const st=idoc.createElement('style'); st.textContent='.page{margin:0 auto 14px;box-shadow:0 1px 10px rgba(0,0,0,.18)}'; if(idoc.head) idoc.head.appendChild(st); }catch(e){}  // 미리보기 전용 페이지 간격(인쇄엔 미적용)
+  try{ const st=idoc.createElement('style'); st.textContent='.page{margin:0 auto 16px;box-shadow:0 1px 10px rgba(0,0,0,.18)}'; if(idoc.head) idoc.head.appendChild(st); }catch(e){}  // 절대양식 페이지 간격(인쇄엔 미적용)
   const fit=()=>{ try{ ifr.style.height=(idoc.body.scrollHeight+24)+'px'; }catch(e){} };
-  const done=()=>{ fit(); if(ld){ ld.remove(); } ifr.style.visibility='visible'; };
-  if(idoc.readyState==='complete') setTimeout(done,120); else ifr.onload=()=>setTimeout(done,120);
-  setTimeout(fit,500); setTimeout(fit,1300);   // 폰트·이미지 로딩 후 높이 재측정
+  const done=()=>{ if(flow){ try{ paginateFlow(idoc); }catch(e){} } fit(); if(ld){ ld.remove(); } ifr.style.visibility='visible'; };
+  if(idoc.readyState==='complete') setTimeout(done,150); else ifr.onload=()=>setTimeout(done,150);
+  setTimeout(fit,600); setTimeout(fit,1400);   // 폰트·이미지 로딩 후 높이 재측정
 }
 function genPermitFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(PERMIT_PRINT_FILES, permitTokenMap(d), '발전허가 접수서류', false); }
 function genDevFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(DEVPERMIT_PRINT_FILES, devPermitTokenMap(d), '개발행위 접수서류', false); }
