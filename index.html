@@ -5038,6 +5038,7 @@ const ADMIN_FORM_FIELDS = {
   constPlan: new Set(['corp','applicant.corpName','applicant.name','applicant.bizname','applicant.phone','applicant.addr','biz.cap','outline.plantName','equip.modW','equip.modQty','equip.invKW','equip.invQty','site']),
   kepco: new Set(['corp','applicant.corpName','applicant.name','applicant.bizname','applicant.phone','applicant.addr','biz.cap','biz.volt','outline.plantName','equip.invKW','equip.invQty','site']),
   commercial: new Set(['corp','applicant.corpName','applicant.name','applicant.bizname','applicant.phone','applicant.addr','biz.cap','site']),
+  completion: new Set(['corp','applicant.corpName','applicant.name','applicant.phone','applicant.addr','outline.useArea','outline.totalArea','site']),
 };
 function renderPermitForm(d, origin, fields){
   const id=d.id, p=resolvePermit(d), isBld=p.installType==='건물';
@@ -6221,6 +6222,109 @@ function openKepcoModal(id){
   getPermit(d); fillPreviewIframe('kepcoPrintFrame', KEPCO_PRINT_FILES, kepcoTokenMap(d), true);
 }
 
+/* ============ 행정: 준공검사 (개발행위준공검사신청서) — 동일 토큰방식·절대양식 ============ */
+const COMPLETION_FORM_FILES=[
+  {url:'forms/completion_report.hml', out:'6. 개발행위준공검사신청서.hml', label:'개발행위준공검사신청서'},
+];
+const COMPLETION_PRINT_FILES=[
+  {url:'forms/completion_report.print.html', label:'개발행위준공검사신청서'},
+];
+function completionTokenMap(d){
+  const p=resolvePermit(d), c=permitCalc(d);
+  const L=(p.lands&&p.lands[0])||{};
+  const S=(v)=>(v==null?'':String(v));
+  const loc=[S(L.addr),S(L.jibun)].filter(Boolean).join(' ') || S(p.biz.place);
+  return {
+    '§NAME§':applicantFullName(p), '§SIGN§':S(p.applicant.name),
+    '§ADDR§':S(p.applicant.addr), '§PHONE§':S(p.applicant.phone), '§LOC§':loc,
+    '§AREA_LAND§':pComma(p.outline.totalArea), '§AREA_FAC§':pComma(p.outline.useArea),
+    '§DATE§':fmtKDate(permitApplyDate(d)),
+    // 생년월일(개인정보)·허가일자·사업기간·우편번호·시설란(도로/급수/배수/기타)은 공란(직접)
+  };
+}
+async function genCompletionForms(id){
+  const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d);
+  const p=resolvePermit(d);
+  const folder=((String((p.outline&&p.outline.plantName)||'개발행위준공검사').trim()||'개발행위준공검사')+' 개발행위준공검사').replace(/[\/\\:*?"<>|]/g,'_');
+  const map=completionTokenMap(d); toast('개발행위준공검사 서류(HWP) 생성 중…');
+  const enc=new TextEncoder(); const files=[]; const fail=[];
+  for(const f of COMPLETION_FORM_FILES){
+    try{ const res=await fetch(f.url,{cache:'no-store'}); if(!res.ok) throw new Error('HTTP '+res.status);
+      const xml=fillPermitTemplate(await res.text(), map);
+      files.push({name: folder+'/'+f.out, data: enc.encode(xml)});
+    }catch(e){ fail.push(f.label); }
+  }
+  if(!files.length){ toast('생성 실패 — 새로고침 후 다시 시도해주세요'); return; }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(makePermitZip(files)); a.download=folder+'.zip';
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },3000);
+  toast(fail.length ? ('일부 실패: '+fail.join(', ')) : ('“'+folder+'” 폴더로 '+files.length+'종 다운로드 — 압축 풀어 한글에서 여세요'));
+}
+function printCompletion(id){ genCompletionForms(id); }
+function genCompletionFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(COMPLETION_PRINT_FILES, completionTokenMap(d), '개발행위준공검사 서류', false); }
+let completionSel=null;
+function selectCompletionDeal(id){ completionSel=id; refreshActive(); }
+function completionHandNext(id){ const d=DEALS.find(x=>x.id===id); if(!d) return;
+  const first=!d.completionHandedAt;
+  if(first){ d.completionHandedAt=verStamp(); persistDeal(d); toast(`${d.site} · 준공검사 완료 — 사업개시로 이관`); }
+  switchTab('admin');
+  const b=document.querySelector("#ssNav .ss-item[data-stage='commercial']");
+  if(b) activateItem('admin', b); else refreshActive();
+}
+function completionHandoffFooter(d){
+  const handed=d.completionHandedAt;
+  const inner = handed
+    ? `<span class="pill done"><span class="pd"></span>✅ 행정-사업개시로 이관됨 · ${esc(handed)}</span><button class="btn ghost sm" onclick="completionHandNext('${d.id}')">사업개시 화면 열기 →</button>`
+    : `<button class="btn primary" onclick="completionHandNext('${d.id}')">➡️ 행정-사업개시로 이관</button><span class="lr-s">준공검사 서류 준비가 끝나면 다음 단계(사업개시)로 넘깁니다.</span>`;
+  return `<div class="card pad" style="margin-top:14px;border-top:3px solid var(--brand)"><div class="st-card-h"><h3 style="margin:0">➡️ 다음 단계</h3></div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px">${inner}</div></div>`;
+}
+function renderCompletionBiz(){
+  const list = permitBizList();
+  const head = wfHead('준공검사','영업 실계약·발전사업 허가·개발행위 허가에서 입력된 신청정보를 끌어와 「개발행위준공검사신청서」를 완성해 접수용 서류(PDF·한글)로 다운로드합니다.');
+  if(!list.length) return head + emptyMsg('준공검사 대상(실계약 완료) 현장이 없습니다. 영업 “실계약”에서 신청정보를 입력하면 여기로 넘어옵니다.');
+  if(!completionSel || !list.find(d=>d.id===completionSel)) completionSel = list[0].id;
+  const d = DEALS.find(x=>x.id===completionSel), p=getPermit(d);
+  const opts = list.map(x=>`<option value="${x.id}" ${x.id===completionSel?'selected':''}>${esc(x.site)} (${x.id})</option>`).join('');
+  const tag = p.installType==='건물' ? '<span class="pm-typetag bld">🏭 건물형(지붕)</span>' : '<span class="pm-typetag land">🌾 토지형(노지)</span>';
+  const bar = `<div class="pm-modebar">
+      <span class="lr-s">대상 현장</span>
+      <select class="pm-dealsel" onchange="selectCompletionDeal(this.value)">${opts}</select>
+      ${tag}
+      <div style="flex:1"></div>
+      <span class="lr-s">📅 신청일자</span>
+      <input type="date" class="pm-datepick" value="${permitApplyDate(d)}" onchange="setPermit('${d.id}','applyDate',this.value);refreshActive()" title="준공검사신청서에 기입될 신청일자">
+      <button class="btn ghost sm" onclick="openCompletionModal('${d.id}')">🔍 양식 미리보기</button>
+      <button class="btn primary sm" onclick="genCompletionFormsPDF('${d.id}')">📄 준공검사 서류(PDF) 다운로드</button>
+      <button class="btn primary sm" onclick="printCompletion('${d.id}')">📥 준공검사 서류(HWP) 다운로드</button>
+    </div>`;
+  const info = `<div class="cred-warn" style="color:var(--ink-2);background:color-mix(in srgb,var(--brand) 9%,transparent);border-color:color-mix(in srgb,var(--brand) 26%,transparent)">🔗 아래 신청정보는 <b>제안서·실계약·발전허가</b>에서 <b>자동 연동된 읽기전용</b>입니다. 개발행위준공검사신청서의 신청인(성명·주소·전화)·위치·허가면적·준공면적·신청일에 자동 기입됩니다. <b>생년월일(개인정보)·허가일자·사업기간(착공·준공)·우편번호·시설란(도로/급수/배수/기타)</b>은 준공 후 확정·현장별 기재 항목이라 <b>공란</b>이니 한글에서 직접 기재하세요. (이 양식은 <b>건물형(지붕)</b> 기준입니다)</div>`;
+  return head + bar + info + renderPermitForm(d,'admin',ADMIN_FORM_FIELDS.completion) + completionHandoffFooter(d);
+}
+function openCompletionModal(id){
+  const d=DEALS.find(x=>x.id===id); if(!d) return;
+  closePermitModal();
+  const ov=document.createElement('div'); ov.className='pm-modal-ov'; ov.id='permitModal';
+  ov.onclick=(e)=>{ if(e.target===ov) closePermitModal(); };
+  ov.innerHTML=`<div class="pm-modal-box" role="dialog" aria-modal="true">
+      <div class="pm-modal-head">
+        <span class="pm-m-ttl">🔍 준공검사 양식 미리보기 — ${esc(d.site)} <span style="opacity:.65;font-weight:500">(${esc(d.id)})</span></span>
+        <div class="pm-m-btns">
+          <button class="pm-mbtn primary" onclick="genCompletionFormsPDF('${d.id}')">📄 준공검사 서류(PDF) 다운로드</button>
+          <button class="pm-mbtn primary" onclick="printCompletion('${d.id}')">📥 준공검사 서류(HWP) 다운로드</button>
+          <button class="pm-mbtn" onclick="closePermitModal()">✕ 닫기</button>
+        </div>
+      </div>
+      <div class="pm-modal-body" style="background:#eef0f4">
+        <div id="completionPrintFrame_ld" style="padding:48px;text-align:center;color:#888;font-size:14px">양식 미리보기를 불러오는 중…</div>
+        <iframe id="completionPrintFrame" title="준공검사 양식 미리보기" scrolling="no" style="width:210mm;max-width:100%;border:0;background:#fff;display:block;margin:0 auto;box-shadow:0 1px 8px rgba(0,0,0,.14);min-height:70vh;visibility:hidden"></iframe>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  document.body.style.overflow='hidden';
+  permitEscHandler=(e)=>{ if(e.key==='Escape') closePermitModal(); };
+  document.addEventListener('keydown',permitEscHandler);
+  getPermit(d); fillPreviewIframe('completionPrintFrame', COMPLETION_PRINT_FILES, completionTokenMap(d), false);
+}
+
 /* ============ 행정: 사업개시 (사업개시신고서) — 동일 토큰방식·절대양식 ============ */
 const COMMERCIAL_FORM_FILES=[
   {url:'forms/commercial_report.hml', out:'7. 사업개시신고서.hml', label:'사업개시신고서'},
@@ -6361,6 +6465,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-13', team:'행정', kind:'추가', title:'준공검사 — 개발행위준공검사신청서 자동작성 + 미리보기·PDF·한글파일 다운로드 추가', body:'발전허가·개발행위·PPA·공사계획신고·한전수급계약·사업개시와 <b>똑같은 방식</b>으로 <b>준공검사</b> 서류도 자동화했습니다. ① 좌측 <b>행정 → 준공검사</b> 메뉴가 전용 화면으로 바뀌어, 대상 현장을 고르면 <b>「개발행위준공검사신청서」</b>가 채워집니다. ② <b>신청인(성명·주소·전화)·위치·허가면적·준공면적·신청일</b>이 자동 기입됩니다. ③ <b>생년월일(개인정보)·허가일자·사업기간(착공·준공)·우편번호·시설란(도로/급수/배수/기타)</b>은 준공 후 확정·현장별로 적는 항목이라 <b>빈칸</b>으로 둡니다(한글에서 직접). ④ 이 양식은 <b>건물형(지붕)</b> 기준입니다(토지형 양식은 추후 추가). ⑤ <b>🔍미리보기·📄PDF·📥한글파일(HWP)</b> 모두 지원(원본 양식과 동일). ⑥ 서류 준비가 끝나면 <b>“사업개시로 이관”</b> 버튼으로 다음 단계에 넘깁니다.', author:'개발'},
   {date:'2026-10-13', team:'행정', kind:'수정', title:'행정 서류 메뉴 — 각 서류에 “실제 들어가는 항목만” 표시(화면 간결화)', body:'행정의 양식 작성 메뉴에서 그 서류에 <b>실제로 기입되는 항목만</b> 남기고, 나머지 연동정보는 화면에서 숨겼습니다. 예전에는 <b>개발행위·PPA·공사계획신고·한전수급계약·사업개시</b> 메뉴가 모두 똑같이 신청인·설비·자금·면적·토지 등 <b>전체 정보를 길게</b> 보여줘, 그 서류와 무관한 항목이 많아 헷갈렸습니다. 이제 예를 들어 <b>사업개시</b> 메뉴에는 사업개시신고서에 들어가는 <b>신청인(대표자·상호·전화·주소)·설비용량·발전소 소재지</b>만 뜨고, <b>발전설비 사양·소요자금·사업계획 개요·대표자 인적사항</b> 등은 사라집니다. 메뉴별로 ▸개발행위=면적·모듈수량, ▸PPA=설비용량·전압·주파수, ▸공사계획신고·한전수급계약=발전소명·설비용량·모듈/인버터 등 <b>각 서류가 쓰는 값만</b> 표시됩니다. ★<b>발전사업 허가만은 예외로 전체 항목을 그대로</b> 둡니다 — 허가사업계획서가 설비·면적·자금·부지·사양 등 거의 모든 값을 쓰기 때문입니다. (숨긴 것은 <b>화면 표시</b>일 뿐, 실제 서류 자동작성·다운로드 내용은 전혀 바뀌지 않습니다.)', author:'개발'},
   {date:'2026-10-13', team:'행정', kind:'추가', title:'사업개시 — 사업개시신고서 자동작성 + 미리보기·PDF·한글파일 다운로드 추가', body:'발전허가·개발행위·PPA·공사계획신고·한전수급계약과 <b>똑같은 방식</b>으로 <b>사업개시신고서</b>도 자동화했습니다. ① 좌측 <b>행정 → 사업개시</b> 메뉴가 전용 화면으로 바뀌어, 대상 현장을 고르면 신고서가 채워집니다. ② 신고인(대표자·상호·주소·전화)·발전소 소재지·사업내용(용량)·신고일이 <b>자동 기입</b>됩니다. ③ <b>생년월일(개인정보), 사업개시 연월일·최초 전력거래일</b>은 준공·상업운전 후 확정되는 항목이라 <b>빈칸</b>으로 둡니다(한글에서 직접). ④ <b>🔍미리보기·📄PDF·📥한글파일(HWP)</b> 모두 지원(원본 양식과 동일). ⑤ 서류 준비가 끝나면 <b>“설비확인으로 이관”</b> 버튼으로 다음 단계에 넘깁니다.', author:'개발'},
   {date:'2026-10-12', team:'행정', kind:'수정', title:'서류 미리보기 — 스크롤바 2중 표시 수정', body:'발전허가·개발행위·PPA <b>서류 미리보기 창</b>을 열었을 때 바깥 창 스크롤바에 더해 <b>안쪽 화면에도 스크롤바가 하나 더 생겨 2개가 겹쳐 보이던 문제</b>를 고쳤습니다. 이제는 <b>바깥 창 스크롤바 하나만</b> 남아 더 깔끔하게 스크롤됩니다. (양식 내용·보이는 모습은 그대로입니다)', author:'개발'},
@@ -7152,6 +7257,9 @@ function activateItem(tab, btn){
       view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-a-stage'));
     } else if(tab==='admin' && btn.dataset.stage==='kepco'){   // 한전수급계약 = 전용 신청·출력 화면
       document.getElementById('sub-a-stage').innerHTML = renderKepcoBiz();
+      view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-a-stage'));
+    } else if(tab==='admin' && btn.dataset.stage==='completion'){   // 준공검사 = 전용 신청·출력 화면
+      document.getElementById('sub-a-stage').innerHTML = renderCompletionBiz();
       view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-a-stage'));
     } else if(tab==='admin' && btn.dataset.stage==='commercial'){   // 사업개시 = 전용 신청·출력 화면
       document.getElementById('sub-a-stage').innerHTML = renderCommercialBiz();
