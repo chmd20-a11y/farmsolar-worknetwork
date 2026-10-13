@@ -2378,10 +2378,10 @@ const COST_DEFAULT = {
   // ---- 모듈 원가 (원가 시트 D5:F6 · 견적 = 원가 + ₩20/W) ----
   // 모듈: 단가(priceW)·정격출력(w)은 기존, 그 외 사양은 발전허가 사업계획서 2페이지에서 끌어쓸 마스터값(한 번 입력해두면 재사용·자주 안 바뀜)
   modules: {
-    china_aiko:    {name:'아이코 655W (중국산 무등급)',  w:655, priceW:195, maker:'아이코',   model:'', cell:'단결정 N형 TOPCon', voc:58.92, vmp:48.79, isc:15.61, imp:14.92, size:'2,382 x 1,134 x 30', weight:32.5},
-    china_ja:      {name:'JA솔라 650W (중국산 무등급)',  w:650, priceW:185, maker:'JA솔라',   model:'', cell:'단결정 N형 TOPCon', voc:58.60, vmp:48.50, isc:15.40, imp:14.70, size:'2,382 x 1,134 x 30', weight:32.5},
-    korea_hyundai: {name:'현대 645W (국산 2등급)',      w:645, priceW:270, maker:'현대에너지솔루션', model:'', cell:'단결정 PERC', voc:58.30, vmp:48.30, isc:15.30, imp:14.60, size:'2,382 x 1,134 x 30', weight:32.5},
-    korea_hanhwa:  {name:'한화 645W (국산 2등급)',      w:645, priceW:270, maker:'한화큐셀',   model:'', cell:'단결정 PERC', voc:58.30, vmp:48.30, isc:15.30, imp:14.60, size:'2,382 x 1,134 x 30', weight:32.5},
+    china_aiko:    {name:'아이코 (중국산 무등급)',  w:655, priceW:195, maker:'아이코',   model:'', cell:'단결정 N형 TOPCon', eff:24.2, voc:58.92, vmp:48.79, isc:15.61, imp:14.92, maxV:'DC1500V', size:'2,382 x 1,134 x 30', weight:32.5},
+    china_ja:      {name:'JA솔라 (중국산 무등급)',  w:650, priceW:185, maker:'JA솔라',   model:'', cell:'단결정 N형 TOPCon', eff:24.1, voc:58.60, vmp:48.50, isc:15.40, imp:14.70, maxV:'DC1500V', size:'2,382 x 1,134 x 30', weight:32.5},
+    korea_hyundai: {name:'현대 (국산 2등급)',      w:645, priceW:270, maker:'현대에너지솔루션', model:'', cell:'단결정 PERC', eff:23.9, voc:58.30, vmp:48.30, isc:15.30, imp:14.60, maxV:'DC1500V', size:'2,382 x 1,134 x 30', weight:32.5},
+    korea_hanhwa:  {name:'한화솔루션 주식회사 (국산 2등급)', w:645, priceW:270, maker:'한화큐셀', model:'', cell:'단결정 PERC', eff:23.9, voc:58.30, vmp:48.30, isc:15.30, imp:14.60, maxV:'DC1500V', size:'2,382 x 1,134 x 30', weight:32.5},
   },
   moduleMarkupW: 20,
   // 인버터: 단가(price)·용량(kw)은 기존, 그 외 사양은 발전허가 사업계획서 2페이지에서 끌어쓸 마스터값
@@ -2860,7 +2860,7 @@ function handoverProposal(d, p, showCost){
   p = p || d.proposal || (d.cap!=null ? buildProposal(d) : null); if(!p) return quoteFull(d);
   p = ensureProposalFields(d, p);
   const e=p.econ||{}, sr=p.specRaw||{};
-  const modClean=(sr.modName||'').replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim();   // 등급 괄호 제거(예: "현대 645W (국산 2등급)" → "현대 645W")
+  const modClean=((sr.modName||'').replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim()+(sr.w?' '+sr.w+'W':'')).trim();   // 등급 괄호 제거 + 용량(W) 재조합(원가표 이름엔 용량 없음 → 제안서엔 "현대 645W"로 표시)
   // 견적 원가 열(설계·신규 현장 접수 전용) — 딜 기준 재계산, 공종명 매칭
   let costMap={}, costTotal=0, anyCost=false;
   if(showCost){ try{ generateQuote(d).rows.forEach(r=>{ costMap[r[0]]=r[5]; if(r[5]!=null){ costTotal+=r[5]; anyCost=true; } }); }catch(ex){ showCost=false; } }
@@ -4448,7 +4448,7 @@ function permitFromQuote(d){
   // 모듈 — 정밀값(제안서 specRaw) 우선, 없으면 견적 스펙 문자열 파싱
   if(sr.w){ out.modW=pNum(sr.w); } else { const mW=/(\d[\d,]*)\s*W/.exec(sp.module||''); if(mW) out.modW=pNum(mW[1]); }
   if(sr.qty){ out.modQty=pNum(sr.qty); } else { const mQ=pNum(sp.qty); if(mQ) out.modQty=mQ; }
-  if(sr.modName){ const mn=String(sr.modName).replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim(); out.modType=(sr.grade?sr.grade+' / ':'')+mn; } else if(sp.module){ out.modType=sp.module; }
+  if(sr.modName){ const mn=(String(sr.modName).replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim()+(sr.w?' '+sr.w+'W':'')).trim(); out.modType=(sr.grade?sr.grade+' / ':'')+mn; } else if(sp.module){ out.modType=sp.module; }
   // 인버터 — specRaw 우선
   if(sr.invLabel){ const iK=/([\d.]+)\s*kW/.exec(sr.invLabel); if(iK) out.invKW=pNum(iK[1]); }
   if(out.invKW==null){ const iK=/([\d.]+)\s*kW/.exec(sp.inverter||''); if(iK) out.invKW=pNum(iK[1]); }
@@ -6473,6 +6473,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-13', team:'영업', kind:'수정', title:'원가표 — 모듈 카드 정리(이름 간결화) + 사양 항목 보강', body:'영업 <b>원가표</b>의 <b>모듈 카드</b>를 정리했습니다. ① 카드 제목에서 <b>용량(655W 등)을 빼고 회사명+등급</b>만 남겼습니다(예: “아이코 (중국산 무등급)”). <b>한화</b>는 정식 법인명 <b>“한화솔루션 주식회사”</b>로 표기했습니다. ② “외형크기”를 <b>“모듈크기”</b>로 바꿨습니다. ③ 사양 항목을 보강했습니다 — <b>정격효율(%)·최대전압(V)</b>을 새로 추가하고, 기존 “모델/셀 타입/정격전압/정격전류”를 데이터시트 용어에 맞춰 <b>모델명·결정질·최대동작전압·최대동작전류</b>로 정리했습니다(값은 그대로). ④ 제안서·발전사업 허가 사업계획서의 <b>모듈 표기에는 용량(예: “655W”)이 그대로 유지</b>되도록 했습니다(원가표 이름에서 뺀 용량을 자동으로 붙여 표시).', author:'개발'},
   {date:'2026-10-13', team:'시공', kind:'추가', title:'시공 — 기초공사·자재입고·구조물·모듈설치·전기공사·사용전검사 전용 화면 추가', body:'시공 세부업무를 각 단계별 <b>전용 작업 화면</b>으로 새로 만들었습니다. ① <b>기초공사</b> — 설계팀 구조검토 도면 수신, 체크리스트(안전관리자 선임필증 요청·주변 민원 미팅·개발행위 도면 일치·안전시설물·기둥간격), 외주업체 정보(상호·대표자/현장소장·연락처). ② <b>자재입고 확인</b> — 설계 수신 BOM(모듈·인버터 종류/수량), 자재 파손 점검 + 파손 사진(전체·근접·시리얼넘버). ③ <b>구조물·모듈 설치</b> — 기존 “구조물 설치”와 “모듈 설치”를 <b>하나로 통합</b>, 체크리스트(원자재·크레인 안전/파손·기둥높이·거더길이·퍼린간격·모듈높이). ④ <b>전기 공사</b> — 행정(PPA·공사계획신고) 전기도면 수신, 어레이도면·계량기함 설계도면/성적서 첨부, <b>계량기함 규격 입력(분전반·ACB반·수배전반 탭)</b> — 탭별 메인차단기·인버터차단기·소내전원·콘센트 규격. ⑤ <b>사용전 검사</b> — 모듈 시리얼넘버 정리 체크 + 검사 양식(수검자 서식·사용자검사 신청서) <b>자리만</b> 잡아둠(양식 확정 후 자동작성 연동 예정). 각 화면에서 <b>“다음 단계로 이관”</b>으로 진행하며, 체크·입력·첨부는 현장별로 저장·공유됩니다. ※ <b>모듈 설치는 구조물 설치에 합쳐져</b> 메뉴에서 빠졌습니다.', author:'개발'},
   {date:'2026-10-13', team:'행정', kind:'수정', title:'접수서류 미리보기·PDF — 자동으로 채운 값을 “파란색”으로 표시', body:'행정 양식의 <b>미리보기·PDF</b>에서, 시스템이 <b>자동으로 채워 넣은 값만 파란색</b>으로 표시됩니다. 양식에 원래 인쇄돼 있는 <b>고정 문구(항목명·법조문·안내문 등)는 검정 그대로</b>여서, 담당자가 <b>“어디가 자동으로 들어갔고, 어디를 직접 써야 하는지”</b>를 한눈에 구분할 수 있습니다. <b>발전허가·개발행위·PPA·공사계획신고·한전수급계약·사업개시·준공검사 모든 양식</b>에 적용됩니다. ※ <b>한글파일(HWP) 다운로드본은 기존처럼 검정</b>으로 나옵니다(실제 접수·제출용). 파란색은 화면·PDF에서 작성 확인을 돕기 위한 표시입니다.', author:'개발'},
   {date:'2026-10-13', team:'행정', kind:'추가', title:'준공검사 — 개발행위준공검사신청서 자동작성 + 미리보기·PDF·한글파일 다운로드 추가', body:'발전허가·개발행위·PPA·공사계획신고·한전수급계약·사업개시와 <b>똑같은 방식</b>으로 <b>준공검사</b> 서류도 자동화했습니다. ① 좌측 <b>행정 → 준공검사</b> 메뉴가 전용 화면으로 바뀌어, 대상 현장을 고르면 <b>「개발행위준공검사신청서」</b>가 채워집니다. ② <b>신청인(성명·주소·전화)·위치·허가면적·준공면적·신청일</b>이 자동 기입됩니다. ③ <b>생년월일(개인정보)·허가일자·사업기간(착공·준공)·우편번호·시설란(도로/급수/배수/기타)</b>은 준공 후 확정·현장별로 적는 항목이라 <b>빈칸</b>으로 둡니다(한글에서 직접). ④ 이 양식은 <b>건물형(지붕)</b> 기준입니다(토지형 양식은 추후 추가). ⑤ <b>🔍미리보기·📄PDF·📥한글파일(HWP)</b> 모두 지원(원본 양식과 동일). ⑥ 서류 준비가 끝나면 <b>“사업개시로 이관”</b> 버튼으로 다음 단계에 넘깁니다.', author:'개발'},
@@ -6896,14 +6897,16 @@ function renderCostSheet(){
     <div class="cs-sf-grid">
       ${specRow('원가 (원/W)', ci('modules.'+k+'.priceW', m.priceW))}
       ${specRow('정격출력 (W)', ci('modules.'+k+'.w', m.w))}
+      ${specRow('정격효율 (%)', ci('modules.'+k+'.eff', m.eff))}
       ${specRow('제조사', cit('modules.'+k+'.maker', m.maker))}
-      ${specRow('모델', cit('modules.'+k+'.model', m.model))}
-      ${specRow('셀 타입', cit('modules.'+k+'.cell', m.cell))}
+      ${specRow('모델명', cit('modules.'+k+'.model', m.model))}
+      ${specRow('결정질', cit('modules.'+k+'.cell', m.cell))}
       ${specRow('개방전압 (V)', ci('modules.'+k+'.voc', m.voc))}
-      ${specRow('정격전압 (V)', ci('modules.'+k+'.vmp', m.vmp))}
+      ${specRow('최대동작전압 (V)', ci('modules.'+k+'.vmp', m.vmp))}
       ${specRow('단락전류 (A)', ci('modules.'+k+'.isc', m.isc))}
-      ${specRow('정격전류 (A)', ci('modules.'+k+'.imp', m.imp))}
-      ${specRow('외형크기 (mm)', cit('modules.'+k+'.size', m.size))}
+      ${specRow('최대동작전류 (A)', ci('modules.'+k+'.imp', m.imp))}
+      ${specRow('최대전압 (V)', cit('modules.'+k+'.maxV', m.maxV))}
+      ${specRow('모듈크기 (mm)', cit('modules.'+k+'.size', m.size))}
       ${specRow('무게 (kg)', ci('modules.'+k+'.weight', m.weight))}
     </div></div>`;
   const invSpecCard=(k,v)=>`<div class="cs-spec-card" data-tone="1" style="--kc:#5b86c4">
