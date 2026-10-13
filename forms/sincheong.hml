@@ -1416,7 +1416,7 @@
 </PARALIST>
 <CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
 </CELL>
-<CELL ColAddr="2" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="6000" Height="1875">
+<CELL ColAddr="2" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="4200" Height="1875">
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="5">
 <TEXT CharShape="4">
@@ -1426,7 +1426,7 @@
 </PARALIST>
 <CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
 </CELL>
-<CELL ColAddr="3" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="1500" Height="1875">
+<CELL ColAddr="3" RowAddr="0" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="3300" Height="1875">
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="29">
