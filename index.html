@@ -6209,6 +6209,110 @@ function openKepcoModal(id){
   getPermit(d); fillPreviewIframe('kepcoPrintFrame', KEPCO_PRINT_FILES, kepcoTokenMap(d), true);
 }
 
+/* ============ 행정: 사업개시 (사업개시신고서) — 동일 토큰방식·절대양식 ============ */
+const COMMERCIAL_FORM_FILES=[
+  {url:'forms/commercial_report.hml', out:'7. 사업개시신고서.hml', label:'사업개시신고서'},
+];
+const COMMERCIAL_PRINT_FILES=[
+  {url:'forms/commercial_report.print.html', label:'사업개시신고서'},
+];
+function commercialTokenMap(d){
+  const p=resolvePermit(d), c=permitCalc(d);
+  const L=(p.lands&&p.lands[0])||{};
+  const S=(v)=>(v==null?'':String(v));
+  const loc=[S(L.addr),S(L.jibun)].filter(Boolean).join(' ') || S(p.biz.place);
+  const plantName=S(p.outline.plantName)||S(d.site);
+  return {
+    '§NAME§':applicantFullName(p), '§SIGN§':S(p.applicant.name),
+    '§ADDR§':S(p.applicant.addr), '§BIZNAME§':S(p.applicant.bizname)||plantName,
+    '§PHONE§':S(p.applicant.phone), '§LOC§':loc,
+    '§CAP§':pComma(c.cap), '§DATE§':fmtKDate(permitApplyDate(d)),
+    '§START_DATE§':'', '§FIRST_TRADE§':'',   // 사업개시 연월일·최초 전력거래일 = 준공/상업운전 후 확정 → 공란(직접)
+  };
+}
+async function genCommercialForms(id){
+  const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d);
+  const p=resolvePermit(d);
+  const folder=((String((p.outline&&p.outline.plantName)||'사업개시신고').trim()||'사업개시신고')+' 사업개시신고').replace(/[\/\\:*?"<>|]/g,'_');
+  const map=commercialTokenMap(d); toast('사업개시신고 서류(HWP) 생성 중…');
+  const enc=new TextEncoder(); const files=[]; const fail=[];
+  for(const f of COMMERCIAL_FORM_FILES){
+    try{ const res=await fetch(f.url,{cache:'no-store'}); if(!res.ok) throw new Error('HTTP '+res.status);
+      const xml=fillPermitTemplate(await res.text(), map);
+      files.push({name: folder+'/'+f.out, data: enc.encode(xml)});
+    }catch(e){ fail.push(f.label); }
+  }
+  if(!files.length){ toast('생성 실패 — 새로고침 후 다시 시도해주세요'); return; }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(makePermitZip(files)); a.download=folder+'.zip';
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },3000);
+  toast(fail.length ? ('일부 실패: '+fail.join(', ')) : ('“'+folder+'” 폴더로 '+files.length+'종 다운로드 — 압축 풀어 한글에서 여세요'));
+}
+function printCommercial(id){ genCommercialForms(id); }
+function genCommercialFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(COMMERCIAL_PRINT_FILES, commercialTokenMap(d), '사업개시신고 서류', false); }
+let commercialSel=null;
+function selectCommercialDeal(id){ commercialSel=id; refreshActive(); }
+function commercialHandNext(id){ const d=DEALS.find(x=>x.id===id); if(!d) return;
+  const first=!d.commercialHandedAt;
+  if(first){ d.commercialHandedAt=verStamp(); persistDeal(d); toast(`${d.site} · 사업개시 완료 — 설비확인으로 이관`); }
+  switchTab('admin');
+  const b=document.querySelector("#ssNav .ss-item[data-stage='facility']");
+  if(b) activateItem('admin', b); else refreshActive();
+}
+function commercialHandoffFooter(d){
+  const handed=d.commercialHandedAt;
+  const inner = handed
+    ? `<span class="pill done"><span class="pd"></span>✅ 행정-설비확인으로 이관됨 · ${esc(handed)}</span><button class="btn ghost sm" onclick="commercialHandNext('${d.id}')">설비확인 화면 열기 →</button>`
+    : `<button class="btn primary" onclick="commercialHandNext('${d.id}')">➡️ 행정-설비확인으로 이관</button><span class="lr-s">사업개시신고 서류 준비가 끝나면 다음 단계(설비확인)로 넘깁니다.</span>`;
+  return `<div class="card pad" style="margin-top:14px;border-top:3px solid var(--brand)"><div class="st-card-h"><h3 style="margin:0">➡️ 다음 단계</h3></div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px">${inner}</div></div>`;
+}
+function renderCommercialBiz(){
+  const list = permitBizList();
+  const head = wfHead('사업개시','발전사업 허가·실계약에서 입력된 신청정보를 끌어와 「사업개시신고서」를 완성해 접수용 서류(PDF·한글)로 다운로드합니다.');
+  if(!list.length) return head + emptyMsg('사업개시 대상(실계약 완료) 현장이 없습니다. 영업 “실계약”에서 신청정보를 입력하면 여기로 넘어옵니다.');
+  if(!commercialSel || !list.find(d=>d.id===commercialSel)) commercialSel = list[0].id;
+  const d = DEALS.find(x=>x.id===commercialSel), p=getPermit(d);
+  const opts = list.map(x=>`<option value="${x.id}" ${x.id===commercialSel?'selected':''}>${esc(x.site)} (${x.id})</option>`).join('');
+  const tag = p.installType==='건물' ? '<span class="pm-typetag bld">🏭 건물형(지붕)</span>' : '<span class="pm-typetag land">🌾 토지형(노지)</span>';
+  const bar = `<div class="pm-modebar">
+      <span class="lr-s">대상 현장</span>
+      <select class="pm-dealsel" onchange="selectCommercialDeal(this.value)">${opts}</select>
+      ${tag}
+      <div style="flex:1"></div>
+      <span class="lr-s">📅 신고일자</span>
+      <input type="date" class="pm-datepick" value="${permitApplyDate(d)}" onchange="setPermit('${d.id}','applyDate',this.value);refreshActive()" title="사업개시신고서에 기입될 신고일자">
+      <button class="btn ghost sm" onclick="openCommercialModal('${d.id}')">🔍 양식 미리보기</button>
+      <button class="btn primary sm" onclick="genCommercialFormsPDF('${d.id}')">📄 사업개시신고 서류(PDF) 다운로드</button>
+      <button class="btn primary sm" onclick="printCommercial('${d.id}')">📥 사업개시신고 서류(HWP) 다운로드</button>
+    </div>`;
+  const info = `<div class="cred-warn" style="color:var(--ink-2);background:color-mix(in srgb,var(--brand) 9%,transparent);border-color:color-mix(in srgb,var(--brand) 26%,transparent)">🔗 아래 신청정보는 <b>제안서·실계약·발전허가</b>에서 <b>자동 연동된 읽기전용</b>입니다. 사업개시신고서의 신고인(대표자·상호·주소·전화)·발전소 소재지·사업내용(용량)·신고일에 자동 기입됩니다. <b>생년월일(개인정보), 사업개시 연월일·최초 전력거래일</b>은 준공·상업운전 후 확정되는 항목이라 <b>공란</b>이니 한글에서 직접 기재하세요.</div>`;
+  return head + bar + info + renderPermitForm(d,'admin') + commercialHandoffFooter(d);
+}
+function openCommercialModal(id){
+  const d=DEALS.find(x=>x.id===id); if(!d) return;
+  closePermitModal();
+  const ov=document.createElement('div'); ov.className='pm-modal-ov'; ov.id='permitModal';
+  ov.onclick=(e)=>{ if(e.target===ov) closePermitModal(); };
+  ov.innerHTML=`<div class="pm-modal-box" role="dialog" aria-modal="true">
+      <div class="pm-modal-head">
+        <span class="pm-m-ttl">🔍 사업개시 양식 미리보기 — ${esc(d.site)} <span style="opacity:.65;font-weight:500">(${esc(d.id)})</span></span>
+        <div class="pm-m-btns">
+          <button class="pm-mbtn primary" onclick="genCommercialFormsPDF('${d.id}')">📄 사업개시신고 서류(PDF) 다운로드</button>
+          <button class="pm-mbtn primary" onclick="printCommercial('${d.id}')">📥 사업개시신고 서류(HWP) 다운로드</button>
+          <button class="pm-mbtn" onclick="closePermitModal()">✕ 닫기</button>
+        </div>
+      </div>
+      <div class="pm-modal-body" style="background:#eef0f4">
+        <div id="commercialPrintFrame_ld" style="padding:48px;text-align:center;color:#888;font-size:14px">양식 미리보기를 불러오는 중…</div>
+        <iframe id="commercialPrintFrame" title="사업개시 양식 미리보기" scrolling="no" style="width:210mm;max-width:100%;border:0;background:#fff;display:block;margin:0 auto;box-shadow:0 1px 8px rgba(0,0,0,.14);min-height:70vh;visibility:hidden"></iframe>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  document.body.style.overflow='hidden';
+  permitEscHandler=(e)=>{ if(e.key==='Escape') closePermitModal(); };
+  document.addEventListener('keydown',permitEscHandler);
+  getPermit(d); fillPreviewIframe('commercialPrintFrame', COMMERCIAL_PRINT_FILES, commercialTokenMap(d), false);
+}
+
 const WF_SCREENS = {
   'd-intake':{el:'sub-d-intake', fn:renderIntake},
   'd-feas':{el:'sub-d-feas', fn:renderFeasibility},
@@ -6245,6 +6349,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-13', team:'행정', kind:'추가', title:'사업개시 — 사업개시신고서 자동작성 + 미리보기·PDF·한글파일 다운로드 추가', body:'발전허가·개발행위·PPA·공사계획신고·한전수급계약과 <b>똑같은 방식</b>으로 <b>사업개시신고서</b>도 자동화했습니다. ① 좌측 <b>행정 → 사업개시</b> 메뉴가 전용 화면으로 바뀌어, 대상 현장을 고르면 신고서가 채워집니다. ② 신고인(대표자·상호·주소·전화)·발전소 소재지·사업내용(용량)·신고일이 <b>자동 기입</b>됩니다. ③ <b>생년월일(개인정보), 사업개시 연월일·최초 전력거래일</b>은 준공·상업운전 후 확정되는 항목이라 <b>빈칸</b>으로 둡니다(한글에서 직접). ④ <b>🔍미리보기·📄PDF·📥한글파일(HWP)</b> 모두 지원(원본 양식과 동일). ⑤ 서류 준비가 끝나면 <b>“설비확인으로 이관”</b> 버튼으로 다음 단계에 넘깁니다.', author:'개발'},
   {date:'2026-10-12', team:'행정', kind:'수정', title:'서류 미리보기 — 스크롤바 2중 표시 수정', body:'발전허가·개발행위·PPA <b>서류 미리보기 창</b>을 열었을 때 바깥 창 스크롤바에 더해 <b>안쪽 화면에도 스크롤바가 하나 더 생겨 2개가 겹쳐 보이던 문제</b>를 고쳤습니다. 이제는 <b>바깥 창 스크롤바 하나만</b> 남아 더 깔끔하게 스크롤됩니다. (양식 내용·보이는 모습은 그대로입니다)', author:'개발'},
   {date:'2026-10-12', team:'행정', kind:'수정', title:'개발행위 허가신청서 — 인쇄 시 가장자리 잘리던 문제 수정(95% 축소)', body:'개발행위 허가 <b>신청서(1·2페이지)</b>를 인쇄하면 상·하단 글자가 <b>잘려 나오던 문제</b>를 고쳤습니다. 원인은 양식 내용이 용지 가장자리(위·아래 여백 약 3㎜)까지 꽉 차 있어 <b>프린터가 인쇄하지 못하는 가장자리 영역</b>에 걸린 것이었습니다. 신청서를 <b>95%로 균등 축소</b>해 사방에 약 10㎜ 여백을 두어 잘리지 않게 했습니다. ★<b>가로·세로·글자 크기를 모두 같은 비율로 줄여 양식 모양·칸·글자 배치는 전혀 틀어지지 않습니다</b>(그대로 축소만). <b>미리보기·PDF·한글파일(HWP) 모두 동일하게 95%</b>로 적용됩니다. (사업계획서는 기존대로입니다)', author:'개발'},
   {date:'2026-10-12', team:'행정', kind:'추가', title:'한전수급계약 — 계좌이체약정서·인버터 확인서·전압제어 동의서(5종) 자동작성 + 미리보기·PDF·한글파일', body:'발전허가·개발행위·PPA·공사계획신고와 <b>똑같은 방식</b>으로 <b>한전수급계약</b> 서류도 자동화했습니다. ① 좌측 <b>행정 → 한전수급계약</b> 메뉴가 전용 화면으로 바뀌어, 대상 현장을 고르면 <b>계좌이체거래 약정서</b>, <b>인버터 현장설정 확인서 2종</b>(계통연계 유지기능·역률제어 기능), <b>전압제어 동의서 2종</b>(능동전압제어 특고압·역률제어 저압) — 모두 <b>5종</b>이 한 번에 채워집니다. ② 발전소명·사업자(상호·대표자·주소)·발전용량·연계전압·인버터 정격용량/설치수량·작성일자가 <b>자동 기입</b>됩니다. ③ <b>계좌번호·은행 등 금융정보, 인버터 제조사·모델명·보호설정치, 안전관리자 정보</b>는 보안·실물 확인 항목이라 <b>빈칸</b>으로 둡니다(한글에서 직접). ④ <b>전압제어 동의서는 특고압(22.9kV)·저압(380V) 두 가지</b>가 모두 들어 있으니 현장 연계전압에 맞는 <b>1종만 제출</b>하면 됩니다. ⑤ <b>🔍미리보기·📄PDF·📥한글파일(HWP)</b> 모두 지원(원본 양식과 동일). ⑥ 서류 준비가 끝나면 <b>“준공검사로 이관”</b> 버튼으로 다음 단계에 넘깁니다.', author:'개발'},
@@ -7034,6 +7139,9 @@ function activateItem(tab, btn){
       view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-a-stage'));
     } else if(tab==='admin' && btn.dataset.stage==='kepco'){   // 한전수급계약 = 전용 신청·출력 화면
       document.getElementById('sub-a-stage').innerHTML = renderKepcoBiz();
+      view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-a-stage'));
+    } else if(tab==='admin' && btn.dataset.stage==='commercial'){   // 사업개시 = 전용 신청·출력 화면
+      document.getElementById('sub-a-stage').innerHTML = renderCommercialBiz();
       view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-a-stage'));
     } else {
       const target = tab==='construction' ? 'c-stage' : tab==='design' ? 'd-stage' : 'a-stage';
