@@ -1781,8 +1781,8 @@ const STAGES = [
   {key:'build_intake', name:'신규 현장 접수', team:'시공', phase:'시공'},
   {key:'foundation',   name:'기초공사',      team:'시공', phase:'시공'},
   {key:'material_in',  name:'자재입고 확인', team:'시공', phase:'시공'},
-  {key:'struct_inst',  name:'구조물 설치',   team:'시공', phase:'시공'},
-  {key:'module_inst',  name:'모듈 설치',     team:'시공', phase:'시공'},
+  {key:'struct_inst',  name:'구조물·모듈 설치', team:'시공', phase:'시공'},
+  {key:'module_inst',  name:'모듈 설치',     team:'시공', phase:'시공'},   // 구조물·모듈 설치로 통합(na 처리)·단계 정의만 유지
   {key:'electric',     name:'전기 공사',     team:'시공', phase:'시공'},
   {key:'pre_inspect',  name:'사용전 검사',   team:'시공', phase:'준공'},
   {key:'kepco',        name:'한전수급계약',  team:'행정', phase:'준공'},
@@ -1988,7 +1988,7 @@ function renderDesignKanban(){
 const HEADER_NAME = {
   admin_intake:'접수', permit_biz:'발전허가', struct:'구조검토', permit_dev:'개발행위', ppa:'PPA',
   line_fee:'선로비', const_plan:'공사계획', build_intake:'접수', foundation:'기초', material_in:'자재입고',
-  struct_inst:'구조물설치', module_inst:'모듈설치', electric:'전기', pre_inspect:'사용전검사',
+  struct_inst:'구조물·모듈설치', module_inst:'구조물·모듈설치', electric:'전기', pre_inspect:'사용전검사',
   kepco:'한전수급', completion:'준공검사', commercial:'사업개시', facility:'설비확인',
 };
 const TEAM_DESC = {'행정':'신규접수·발전허가·개발행위·PPA·선로비·공사계획·한전수급계약·준공·사업개시·설비확인',
@@ -3019,10 +3019,9 @@ const WF_NODES = [
   {id:'c_intake',lane:3, row:13, label:'신규 현장 접수',nav:"[data-stage='build_intake']"},
   {id:'c_found', lane:3, row:14, label:'기초공사',     nav:"[data-stage='foundation']"},
   {id:'c_mat',   lane:3, row:15, label:'자재입고 확인',nav:"[data-stage='material_in']"},
-  {id:'c_struct',lane:3, row:16, label:'구조물 설치',  nav:"[data-stage='struct_inst']"},
-  {id:'c_module',lane:3, row:17, label:'모듈 설치',    nav:"[data-stage='module_inst']"},
-  {id:'c_elec',  lane:3, row:18, label:'전기 공사',    nav:"[data-stage='electric']"},
-  {id:'c_inspect',lane:3, row:19, label:'사용전 검사', nav:"[data-stage='pre_inspect']"},
+  {id:'c_struct',lane:3, row:16, label:'구조물·모듈 설치', nav:"[data-stage='struct_inst']"},
+  {id:'c_elec',  lane:3, row:17, label:'전기 공사',    nav:"[data-stage='electric']"},
+  {id:'c_inspect',lane:3, row:18, label:'사용전 검사', nav:"[data-stage='pre_inspect']"},
 ];
 const WF_EDGES = [
   ['site','feas1'],['feas1','layout'],['layout','cost'],['cost','quote'],
@@ -3039,7 +3038,7 @@ const WF_EDGES = [
   ['d_struct','a_dev'],
   ['a_dev','a_ppa'],['a_ppa','a_line'],['a_line','a_plan'],
   ['a_plan','c_intake'],
-  ['c_intake','c_found'],['c_found','c_mat'],['c_mat','c_struct'],['c_struct','c_module'],['c_module','c_elec'],['c_elec','c_inspect'],
+  ['c_intake','c_found'],['c_found','c_mat'],['c_mat','c_struct'],['c_struct','c_elec'],['c_elec','c_inspect'],
   ['c_inspect','a_kepco'],
   ['a_kepco','a_comp'],['a_comp','a_comm'],['a_comm','a_fac'],
 ];
@@ -6474,6 +6473,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-13', team:'시공', kind:'추가', title:'시공 — 기초공사·자재입고·구조물·모듈설치·전기공사·사용전검사 전용 화면 추가', body:'시공 세부업무를 각 단계별 <b>전용 작업 화면</b>으로 새로 만들었습니다. ① <b>기초공사</b> — 설계팀 구조검토 도면 수신, 체크리스트(안전관리자 선임필증 요청·주변 민원 미팅·개발행위 도면 일치·안전시설물·기둥간격), 외주업체 정보(상호·대표자/현장소장·연락처). ② <b>자재입고 확인</b> — 설계 수신 BOM(모듈·인버터 종류/수량), 자재 파손 점검 + 파손 사진(전체·근접·시리얼넘버). ③ <b>구조물·모듈 설치</b> — 기존 “구조물 설치”와 “모듈 설치”를 <b>하나로 통합</b>, 체크리스트(원자재·크레인 안전/파손·기둥높이·거더길이·퍼린간격·모듈높이). ④ <b>전기 공사</b> — 행정(PPA·공사계획신고) 전기도면 수신, 어레이도면·계량기함 설계도면/성적서 첨부, <b>계량기함 규격 입력(분전반·ACB반·수배전반 탭)</b> — 탭별 메인차단기·인버터차단기·소내전원·콘센트 규격. ⑤ <b>사용전 검사</b> — 모듈 시리얼넘버 정리 체크 + 검사 양식(수검자 서식·사용자검사 신청서) <b>자리만</b> 잡아둠(양식 확정 후 자동작성 연동 예정). 각 화면에서 <b>“다음 단계로 이관”</b>으로 진행하며, 체크·입력·첨부는 현장별로 저장·공유됩니다. ※ <b>모듈 설치는 구조물 설치에 합쳐져</b> 메뉴에서 빠졌습니다.', author:'개발'},
   {date:'2026-10-13', team:'행정', kind:'수정', title:'접수서류 미리보기·PDF — 자동으로 채운 값을 “파란색”으로 표시', body:'행정 양식의 <b>미리보기·PDF</b>에서, 시스템이 <b>자동으로 채워 넣은 값만 파란색</b>으로 표시됩니다. 양식에 원래 인쇄돼 있는 <b>고정 문구(항목명·법조문·안내문 등)는 검정 그대로</b>여서, 담당자가 <b>“어디가 자동으로 들어갔고, 어디를 직접 써야 하는지”</b>를 한눈에 구분할 수 있습니다. <b>발전허가·개발행위·PPA·공사계획신고·한전수급계약·사업개시·준공검사 모든 양식</b>에 적용됩니다. ※ <b>한글파일(HWP) 다운로드본은 기존처럼 검정</b>으로 나옵니다(실제 접수·제출용). 파란색은 화면·PDF에서 작성 확인을 돕기 위한 표시입니다.', author:'개발'},
   {date:'2026-10-13', team:'행정', kind:'추가', title:'준공검사 — 개발행위준공검사신청서 자동작성 + 미리보기·PDF·한글파일 다운로드 추가', body:'발전허가·개발행위·PPA·공사계획신고·한전수급계약·사업개시와 <b>똑같은 방식</b>으로 <b>준공검사</b> 서류도 자동화했습니다. ① 좌측 <b>행정 → 준공검사</b> 메뉴가 전용 화면으로 바뀌어, 대상 현장을 고르면 <b>「개발행위준공검사신청서」</b>가 채워집니다. ② <b>신청인(성명·주소·전화)·위치·허가면적·준공면적·신청일</b>이 자동 기입됩니다. ③ <b>생년월일(개인정보)·허가일자·사업기간(착공·준공)·우편번호·시설란(도로/급수/배수/기타)</b>은 준공 후 확정·현장별로 적는 항목이라 <b>빈칸</b>으로 둡니다(한글에서 직접). ④ 이 양식은 <b>건물형(지붕)</b> 기준입니다(토지형 양식은 추후 추가). ⑤ <b>🔍미리보기·📄PDF·📥한글파일(HWP)</b> 모두 지원(원본 양식과 동일). ⑥ 서류 준비가 끝나면 <b>“사업개시로 이관”</b> 버튼으로 다음 단계에 넘깁니다.', author:'개발'},
   {date:'2026-10-13', team:'행정', kind:'수정', title:'행정 서류 메뉴 — 각 서류에 “실제 들어가는 항목만” 표시(화면 간결화)', body:'행정의 양식 작성 메뉴에서 그 서류에 <b>실제로 기입되는 항목만</b> 남기고, 나머지 연동정보는 화면에서 숨겼습니다. 예전에는 <b>개발행위·PPA·공사계획신고·한전수급계약·사업개시</b> 메뉴가 모두 똑같이 신청인·설비·자금·면적·토지 등 <b>전체 정보를 길게</b> 보여줘, 그 서류와 무관한 항목이 많아 헷갈렸습니다. 이제 예를 들어 <b>사업개시</b> 메뉴에는 사업개시신고서에 들어가는 <b>신청인(대표자·상호·전화·주소)·설비용량·발전소 소재지</b>만 뜨고, <b>발전설비 사양·소요자금·사업계획 개요·대표자 인적사항</b> 등은 사라집니다. 메뉴별로 ▸개발행위=면적·모듈수량, ▸PPA=설비용량·전압·주파수, ▸공사계획신고·한전수급계약=발전소명·설비용량·모듈/인버터 등 <b>각 서류가 쓰는 값만</b> 표시됩니다. ★<b>발전사업 허가만은 예외로 전체 항목을 그대로</b> 둡니다 — 허가사업계획서가 설비·면적·자금·부지·사양 등 거의 모든 값을 쓰기 때문입니다. (숨긴 것은 <b>화면 표시</b>일 뿐, 실제 서류 자동작성·다운로드 내용은 전혀 바뀌지 않습니다.)', author:'개발'},
@@ -7147,8 +7147,7 @@ const MENUS = {
     {stage:'build_intake', label:'신규 현장 접수', ic:'inbox'},
     {stage:'foundation', label:'기초공사', ic:'dig'},
     {stage:'material_in', label:'자재입고 확인', ic:'box'},
-    {stage:'struct_inst', label:'구조물 설치', ic:'build'},
-    {stage:'module_inst', label:'모듈 설치', ic:'layout'},
+    {stage:'struct_inst', label:'구조물·모듈 설치', ic:'build'},
     {stage:'electric', label:'전기 공사', ic:'plug'},
     {group:'검사'},
     {stage:'pre_inspect', label:'사용전 검사', ic:'check'},
@@ -7274,6 +7273,11 @@ function activateItem(tab, btn){
     } else if(tab==='admin' && btn.dataset.stage==='commercial'){   // 사업개시 = 전용 신청·출력 화면
       document.getElementById('sub-a-stage').innerHTML = renderCommercialBiz();
       view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-a-stage'));
+    } else if(tab==='construction' && ['foundation','material_in','struct_inst','electric','pre_inspect'].includes(btn.dataset.stage)){   // 시공 = 단계별 전용 화면
+      const sk=btn.dataset.stage;
+      const fn = sk==='foundation'?renderFoundationBiz : sk==='material_in'?renderMaterialBiz : sk==='struct_inst'?renderStructBiz : sk==='electric'?renderElectricBiz : renderPreInspectBiz;
+      document.getElementById('sub-c-stage').innerHTML = fn();
+      view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-c-stage'));
     } else {
       const target = tab==='construction' ? 'c-stage' : tab==='design' ? 'd-stage' : 'a-stage';
       document.getElementById('sub-'+target).innerHTML = renderStageBoard(btn.dataset.stage);
@@ -7332,6 +7336,154 @@ function stageOwner(site, stage){
   if(stage.team==='행정') return '한지원';
   return site.rep;
 }
+/* ============================================================
+   시공파트 전용화면 (2026-10-13 신설)
+   기초공사 · 자재입고 · 구조물·모듈 설치 · 전기공사 · 사용전검사(구성만)
+   · 체크리스트 / 외주업체 / 자재 / 계량기함 / 첨부 (설계·행정 연계 데이터 수신)
+   · 모듈설치는 구조물설치로 통합 / 데이터는 site.cons에 저장(공유 persistSite)
+   ============================================================ */
+// 모듈설치(module_inst) 통합 정규화: na 처리 + 그 단계에 머문 현장은 전기공사로
+function normalizeSites(){ (SITES||[]).forEach(s=>{ if(!Array.isArray(s.na)) s.na=[]; if(!s.na.includes('module_inst')) s.na.push('module_inst'); if(s.cur===11) s.cur=12; }); }
+// 시공 대상 현장 = 영업검토(sales) 제외
+function consSites(){ return SITES.filter(s=>s.stage!=='sales'); }
+function consData(s){ if(!s.cons) s.cons={}; return s.cons; }
+function consSub(s,key){ const c=consData(s); if(!c[key]) c[key]={}; return c[key]; }
+function consGet(s,key,path){ let o=consSub(s,key); for(const p of String(path).split('.')){ if(o==null) return ''; o=o[p]; } return o==null?'':o; }
+// 공용 저장/토글
+function consChk(id,key,item){ const s=SITES.find(x=>x.id===id); if(!s)return; const sub=consSub(s,key); sub.chk=sub.chk||{}; sub.chk[item]=!sub.chk[item]; persistSite(s); refreshActive(); }
+function consAtt(id,key,slot){ const s=SITES.find(x=>x.id===id); if(!s)return; const sub=consSub(s,key); sub.att=sub.att||{}; sub.att[slot]=sub.att[slot]?null:{name:slot,url:null}; persistSite(s); refreshActive(); }
+function consPhoto(id,key,item,pos){ const s=SITES.find(x=>x.id===id); if(!s)return; const sub=consSub(s,key); sub.photos=sub.photos||{}; const k=item+'||'+pos; sub.photos[k]=sub.photos[k]?null:{name:item+' '+pos,url:null}; persistSite(s); refreshActive(); }
+function consSet(id,key,path,val){ const s=SITES.find(x=>x.id===id); if(!s)return; const sub=consSub(s,key); const p=String(path).split('.'); let o=sub; for(let i=0;i<p.length-1;i++){ if(o[p[i]]==null)o[p[i]]={}; o=o[p[i]]; } o[p[p.length-1]]=val; persistSite(s); }  // 입력중 재렌더 없음(포커스 유지)
+// 현장 선택(시공 전 메뉴 공통)
+let consSel=null;
+function consCurSite(){ const list=consSites(); if(!list.length) return null; if(!consSel||!list.find(s=>s.id===consSel)) consSel=list[0].id; return list.find(s=>s.id===consSel); }
+function selectConsSite(id){ consSel=id; refreshActive(); }
+function consTypeTag(s){ return s.type==='지붕'?'<span class="pm-typetag bld">🏭 지붕형</span>':s.type==='수상'?'<span class="pm-typetag land">🌊 수상형</span>':'<span class="pm-typetag land">🌾 노지형</span>'; }
+function consBar(s){ const opts=consSites().map(x=>`<option value="${x.id}" ${x.id===s.id?'selected':''}>${esc(x.name)} · ${x.cap.toLocaleString()}kW (${x.id})</option>`).join('');
+  return `<div class="pm-modebar"><span class="lr-s">대상 현장</span><select class="pm-dealsel" onchange="selectConsSite(this.value)">${opts}</select>${consTypeTag(s)}<div style="flex:1"></div><span class="lr-s">현장소장 ${esc(s.mgr||'미배정')}</span></div>`; }
+// 체크리스트(클릭 토글)
+function consChklist(s,key,items,title){ const chk=consSub(s,key).chk||{}; const done=items.filter(it=>chk[it.k]).length;
+  return `<div class="sv-report" style="margin-top:12px"><div class="sv-report-h">✅ ${esc(title||'체크리스트')} <span class="sv-count">${done} / ${items.length}</span></div>
+    <div class="sv-sec" style="--kc:var(--prog)">${items.map(it=>`<div onclick="consChk('${s.id}','${key}','${esc(it.k)}')" style="display:flex;align-items:center;gap:10px;padding:10px 6px;cursor:pointer;border-top:1px solid var(--line)"><span class="sv-chk${chk[it.k]?' on':''}"></span><span style="font-size:13px;${chk[it.k]?'color:var(--muted);text-decoration:line-through':''}">${esc(it.label)}</span></div>`).join('')}</div></div>`; }
+// 첨부 슬롯(자리표시)
+function consAttach(s,key,slots,title){ const att=consSub(s,key).att||{}; const done=slots.filter(x=>att[x.k]).length;
+  return `<div class="sv-photos" style="margin-top:12px"><div class="sv-report-h">📎 ${esc(title||'첨부 자료')} <span class="sv-count">${done} / ${slots.length}</span></div>
+    <div class="sv-dwg-slots">${slots.map(x=>`<div class="sv-ph-item"><div class="sv-ph-top"><span class="sv-chk svph-chk${att[x.k]?' on':''}"></span><span class="sv-ph-k">${esc(x.label)}</span>${x.req?'<span class="sv-req">필수</span>':'<span class="sv-opt">선택</span>'}</div>${x.desc?`<div class="sv-dwg-desc">${esc(x.desc)}</div>`:''}<div class="sv-chips sv-ph-opts"><span class="sv-chip sm up${att[x.k]?' on':''}" onclick="consAtt('${s.id}','${key}','${esc(x.k)}')"><span class="up-ic">${att[x.k]?'✓':'📎'}</span>${att[x.k]?'첨부됨':'첨부'}</span></div></div>`).join('')}</div>
+    <div class="sv-ph-note">실제 파일 업로드·저장은 추후(스토리지 연동) 지원 — 지금은 첨부 상태만 기록됩니다.</div></div>`; }
+// 다위치 사진 블록(파손 전체/근접/시리얼 등)
+function consPhotoBlock(s,key,items,title,note){ const photos=consSub(s,key).photos||{}; const isOn=(it,o)=>!!photos[it+'||'+o];
+  const totalPos=items.reduce((n,p)=>n+p.opt.length,0), donePos=items.reduce((n,p)=>n+p.opt.filter(o=>isOn(p.k,o)).length,0);
+  const rows=items.map(p=>{ const allOn=p.opt.every(o=>isOn(p.k,o));
+    return `<div class="sv-ph-item"><div class="sv-ph-top"><span class="sv-chk svph-chk${allOn?' on':''}"></span><span class="sv-ph-k">${esc(p.k)}</span></div><div class="sv-chips sv-ph-opts">${p.opt.map(o=>`<span class="sv-chip sm up${isOn(p.k,o)?' on':''}" onclick="consPhoto('${s.id}','${key}','${esc(p.k)}','${esc(o)}')"><span class="up-ic">${isOn(p.k,o)?'✓':'📷'}</span>${esc(o)}</span>`).join('')}</div></div>`;}).join('');
+  const cards=items.flatMap(p=>p.opt.filter(o=>isOn(p.k,o)).map(o=>`<div class="sv-thumb" title="${esc(p.k)} · ${esc(o)}"><div class="sv-thumb-img">🖼️</div><div class="sv-thumb-cap">${esc(o)}<span class="sv-thumb-sub">${esc(p.k)}</span></div><button class="sv-thumb-x" onclick="consPhoto('${s.id}','${key}','${esc(p.k)}','${esc(o)}')">×</button></div>`)).join('');
+  const gallery=donePos?`<div class="sv-gallery">${cards}</div>`:`<div class="sv-uparea"><div class="sv-up-ic">🖼️</div><div class="sv-up-t">첨부한 사진이 여기에 표시됩니다</div><div class="sv-up-s">위 위치 버튼(📷)을 눌러 첨부 · 실제 업로드는 추후 스토리지 연동</div></div>`;
+  return `<div class="sv-photos" style="margin-top:12px"><div class="sv-report-h">📷 ${esc(title)} <span class="sv-count">${donePos} / ${totalPos}</span></div><div class="sv-ph-note">${esc(note||'')}</div>${rows}${gallery}</div>`; }
+// 텍스트 입력(저장만·재렌더X)
+function consInput(s,key,path,label,ph,unit){ const v=consGet(s,key,path);
+  return `<div class="tfield"><label>${esc(label)}</label><div style="display:flex;align-items:center;gap:6px"><input class="tinput" value="${esc(v)}" placeholder="${esc(ph||'')}" oninput="consSet('${s.id}','${key}','${path}',this.value)">${unit?`<span class="lr-s">${esc(unit)}</span>`:''}</div></div>`; }
+// 이관 푸터
+function consHandoff(s,key,nextKey,nextLabel,hint){ const handed=consSub(s,key).handedAt;
+  const inner=handed
+    ? `<span class="pill done"><span class="pd"></span>✅ ${esc(nextLabel)}${nextKey?'로 이관됨':' 완료'} · ${esc(handed)}</span>${nextKey?`<button class="btn ghost sm" onclick="consHandNext('${s.id}','${key}','${nextKey}','${esc(nextLabel)}')">${esc(nextLabel)} 화면 열기 →</button>`:''}`
+    : `<button class="btn primary" onclick="consHandNext('${s.id}','${key}','${nextKey||''}','${esc(nextLabel)}')">➡️ ${esc(nextLabel)}${nextKey?'로 이관':' 완료 처리'}</button><span class="lr-s">${esc(hint||'')}</span>`;
+  return `<div class="card pad" style="margin-top:14px;border-top:3px solid var(--prog)"><div class="st-card-h"><h3 style="margin:0">➡️ 다음 단계</h3></div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px">${inner}</div></div>`; }
+function consHandNext(id,key,nextKey,nextLabel){ const s=SITES.find(x=>x.id===id); if(!s)return; const sub=consSub(s,key); if(!sub.handedAt) sub.handedAt=verStamp();
+  if(nextKey){ let gi=STAGES.findIndex(x=>x.key===nextKey); if(gi>=0){ while(gi<STAGES.length && s.na.includes(STAGES[gi].key)) gi++; s.cur=Math.max(s.cur||0, gi); } }
+  s.risk=false; s.note=''; persistSite(s);
+  toast(`${s.name} · ${nextLabel}${nextKey?'로 이관':' 완료'}`);
+  switchTab('construction');
+  const b=nextKey?document.querySelector(`#ssNav .ss-item[data-stage='${nextKey}']`):null;
+  if(b) activateItem('construction', b); else refreshActive();
+}
+
+// ---- 1) 기초공사 ----
+function renderFoundationBiz(){
+  const head=wfHead('기초공사','설계팀 구조검토 도면을 수신하고, 착공 전 체크리스트·외주업체 정보를 확인합니다. (지붕형·수상형은 기초공사 해당없음)');
+  const s=consCurSite(); if(!s) return head+emptyMsg('시공 대상 현장이 없습니다.');
+  const na=s.na.includes('foundation');
+  const naMsg=na?`<div class="cred-warn" style="margin-top:12px">ℹ️ <b>${esc(s.type)}형</b> 현장은 기초공사(터파기·기초콘크리트)가 해당되지 않습니다. 구조검토 도면 수신·외주업체 정보만 확인하세요.</div>`:'';
+  const dwg=consAttach(s,'foundation',[
+    {k:'structDwg', label:'구조검토 도면', req:true, desc:'설계팀 구조검토 완료 시 전달되는 도면(어레이·기초 상세)'},
+    {k:'designDwg', label:'설계팀 시공 도면', req:false, desc:'설계팀 배치·시공 도면'},
+  ],'설계팀 도면 수신');
+  const chk=consChklist(s,'foundation',[
+    {k:'safetyMgr', label:'안전관리자 선임필증 요청'},
+    {k:'civilMeet', label:'현장 주변 민원 여부 미팅 (외주업체 대표)'},
+    {k:'dwgMatch', label:'개발행위 도면 일치 여부 확인'},
+    {k:'safetyFac', label:'안전시설물 설치 여부 확인'},
+    {k:'colSpacing', label:'기둥 간격 확인'},
+  ],'기초공사 체크리스트');
+  const vendor=`<div class="sv-report" style="margin-top:12px"><div class="sv-report-h">🏢 외주업체 정보</div>
+    <div class="field-row" style="margin-top:10px">${consInput(s,'foundation','vendor.bizname','상호','외주 시공업체 상호')}${consInput(s,'foundation','vendor.manager','대표자(현장소장)명','현장소장 성명')}</div>
+    <div class="field-row" style="margin-top:10px">${consInput(s,'foundation','vendor.phone','연락처','010-0000-0000')}<div class="tfield"></div></div></div>`;
+  return head+consBar(s)+naMsg+dwg+chk+vendor+consHandoff(s,'foundation','material_in','자재입고 확인','구조검토 도면 수신·체크리스트·외주업체 확인 후 다음 단계로 넘깁니다.');
+}
+// ---- 2) 자재입고 확인 ----
+function renderMaterialBiz(){
+  const head=wfHead('자재입고 확인','설계팀 수신 BOM(모듈·인버터 종류/수량)을 확인하고, 입고 자재의 파손 여부를 점검합니다.');
+  const s=consCurSite(); if(!s) return head+emptyMsg('시공 대상 현장이 없습니다.');
+  const bom=`<div class="sv-report" style="margin-top:12px"><div class="sv-report-h">📦 설계팀 수신 자료 (BOM)</div>
+    <div class="sv-ph-note">설계팀에서 전달된 모듈·인버터 종류/수량입니다. (설계 BOM 자동연동은 추후 — 현재는 입력값 유지)</div>
+    <div class="field-row" style="margin-top:4px">${consInput(s,'material','modType','모듈 종류','예: 아이코 655W')}${consInput(s,'material','modQty','모듈 수량','수량','매')}</div>
+    <div class="field-row" style="margin-top:10px">${consInput(s,'material','invType','인버터 종류','예: 125kW 스트링')}${consInput(s,'material','invQty','인버터 수량','수량','대')}</div></div>`;
+  const chk=consChklist(s,'material',[
+    {k:'damageCheck', label:'자재 파손 여부 확인'},
+    {k:'damageAction', label:'파손 제품 발생 시 조치 (반품·교체 요청)'},
+  ],'자재상태 확인 체크리스트');
+  const photos=consPhotoBlock(s,'material',[{k:'파손부위', opt:['전체','근접','시리얼넘버']}],'파손 부위 사진','파손 제품 발생 시 전체·근접·시리얼넘버 사진을 첨부합니다. (파손 없으면 생략)');
+  return head+consBar(s)+bom+chk+photos+consHandoff(s,'material','struct_inst','구조물·모듈 설치','자재 입고·파손 점검 후 다음 단계로 넘깁니다.');
+}
+// ---- 3) 구조물·모듈 설치(통합) ----
+function renderStructBiz(){
+  const head=wfHead('구조물·모듈 설치','구조물 설치와 모듈 설치를 통합한 단계입니다. 자재·크레인 안전·구조 치수를 점검합니다.');
+  const s=consCurSite(); if(!s) return head+emptyMsg('시공 대상 현장이 없습니다.');
+  const info=`<div class="cred-warn" style="margin-top:12px;color:var(--ink-2);background:color-mix(in srgb,var(--prog) 10%,transparent);border-color:color-mix(in srgb,var(--prog) 30%,transparent)">🔗 <b>구조물 설치</b>와 <b>모듈 설치</b>를 하나의 단계로 통합했습니다.</div>`;
+  const chk=consChklist(s,'structInst',[
+    {k:'rawMaterial', label:'구조물 원자재 종류 확인'},
+    {k:'craneSafety', label:'크레인 작업 시 안전반경 확보 및 하부 통제'},
+    {k:'craneDamage', label:'크레인 작업 시 자재 파손 여부 확인'},
+    {k:'colHeight', label:'기둥 높이 확인'},
+    {k:'girderLen', label:'거더 길이 확인'},
+    {k:'purlinGap', label:'퍼린 간격 확인'},
+    {k:'modHeight', label:'모듈 높이 확인'},
+  ],'구조물·모듈 설치 체크리스트');
+  return head+consBar(s)+info+chk+consHandoff(s,'structInst','electric','전기 공사','구조물·모듈 설치 점검 후 다음 단계로 넘깁니다.');
+}
+// ---- 4) 전기 공사 ----
+let elecTab='분전반';
+function setElecTab(t){ elecTab=t; refreshActive(); }
+function renderElectricMeterbox(s){
+  const tabs=['분전반','ACB반','수배전반']; const cur=tabs.includes(elecTab)?elecTab:'분전반';
+  const btns=tabs.map(t=>`<button class="btn ${t===cur?'primary':'ghost'} sm" onclick="setElecTab('${t}')">${t}</button>`).join('');
+  const fields=[['main','메인차단기 규격'],['inv','인버터차단기 규격'],['inhouse','소내전원 규격'],['outlet','콘센트 규격']];
+  let grid=''; for(let i=0;i<fields.length;i+=2){ grid+=`<div class="field-row" style="margin-top:10px">${consInput(s,'electric','meterbox.'+cur+'.'+fields[i][0],fields[i][1],'규격 입력')}${fields[i+1]?consInput(s,'electric','meterbox.'+cur+'.'+fields[i+1][0],fields[i+1][1],'규격 입력'):'<div class="tfield"></div>'}</div>`; }
+  return `<div class="sv-report" style="margin-top:12px"><div class="sv-report-h">⚡ 계량기함 정보입력</div>
+    <div class="sv-ph-note">계량기함 종류별(분전반·ACB반·수배전반)로 차단기·전원·콘센트 규격을 입력합니다. 탭을 눌러 전환하세요.</div>
+    <div style="display:flex;gap:8px;margin:4px 0 2px">${btns}</div>${grid}</div>`;
+}
+function renderElectricBiz(){
+  const head=wfHead('전기 공사','행정(PPA·공사계획신고)의 전기도면을 수신하고, 어레이·계량기함 도면/성적서 첨부와 계량기함 규격을 입력합니다.');
+  const s=consCurSite(); if(!s) return head+emptyMsg('시공 대상 현장이 없습니다.');
+  const dwg=consAttach(s,'electric',[
+    {k:'elecDwg', label:'전기 도면', req:true, desc:'행정 PPA신청 또는 공사계획신고의 전기도면 수신'},
+    {k:'arrayDwg', label:'어레이 도면 (사진파일)', req:false},
+    {k:'meterDesign', label:'계량기함 설계도면', req:false},
+    {k:'meterCert', label:'계량기함 성적서', req:false},
+  ],'전기 도면·첨부 자료');
+  const chk=consChklist(s,'electric',[{k:'panelCheck', label:'분전반 종류 및 수량 확인'}],'전기공사 체크리스트');
+  return head+consBar(s)+dwg+chk+renderElectricMeterbox(s)+consHandoff(s,'electric','pre_inspect','사용전 검사','전기공사·계량기함 입력 후 다음 단계로 넘깁니다.');
+}
+// ---- 5) 사용전 검사(구성만·양식 추후) ----
+function renderPreInspectBiz(){
+  const head=wfHead('사용전 검사','사용전 검사 단계 — 모듈 시리얼넘버 정리 및 검사 양식을 작성합니다. (양식은 추후 확정·전달 예정 — 지금은 구성만)');
+  const s=consCurSite(); if(!s) return head+emptyMsg('시공 대상 현장이 없습니다.');
+  const chk=consChklist(s,'preInspect',[{k:'moduleSerial', label:'모듈 시리얼넘버 정리'}],'사용전 검사 체크리스트');
+  const forms=`<div class="sv-report" style="margin-top:12px"><div class="sv-report-h">📄 양식 작성 <span class="sv-count">준비 중</span></div>
+    <div class="sv-ph-note">⚠ 아래 양식은 <b>팀장님이 양식을 정리해 전달</b>하신 뒤 자동작성 기능을 붙일 예정입니다. 현재는 <b>구성(자리)만</b> 잡아둔 상태입니다.</div>
+    <div class="sv-dwg-slots">${['수검자 서식','사용자검사 신청서','첨부파일 (이미지 수신 후 재편집)'].map(t=>`<div class="sv-ph-item"><div class="sv-ph-top"><span class="sv-chk"></span><span class="sv-ph-k">${esc(t)}</span><span class="sv-opt">양식 대기</span></div><div class="sv-dwg-desc">양식 확정 후 자동작성·다운로드 지원 예정</div></div>`).join('')}</div></div>`;
+  return head+consBar(s)+chk+forms+consHandoff(s,'preInspect',null,'사용전 검사','사용전 검사까지 완료되면 준공 단계로 넘어갑니다. (양식·이관 연동은 추후)');
+}
+
 function renderStageBoard(stageKey){
   const gi = STAGES.findIndex(x=>x.key===stageKey);
   const stage = STAGES[gi];
@@ -7565,6 +7717,7 @@ async function adminDeleteMember(id){ if(!SB) return {error:'서버 미연결'};
 
 function firstRender(){
   seedPermits();
+  normalizeSites();
   buildSubMenu('overview');
   refreshTabBadges();
   renderKPI(); renderPipeline(); renderAlerts(); renderTeamLoad();
