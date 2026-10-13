@@ -5575,6 +5575,15 @@ function permitTokenMap(d){
   };
 }
 function fillPermitTemplate(xml, map){ for(const k in map){ xml=xml.split(k).join(hwpXmlEsc(map[k])); } return xml; }
+// 미리보기·PDF 전용: 자동 채운 값을 파란색(span.pm-auto)으로 감싸 '자동입력/수기' 구분. 빈 값은 공란(span 없음). HWP(.hml) 다운로드는 fillPermitTemplate 그대로(검정 유지).
+function fillPermitTemplateHTML(html, map){
+  for(const k in map){
+    const v=map[k];
+    const rep = (v==null||v==='') ? '' : '<span class="pm-auto">'+hwpXmlEsc(v)+'</span>';
+    html=html.split(k).join(rep);
+  }
+  return html;
+}
 // 순수 JS ZIP(무압축 STORE) — 외부 라이브러리 없이. UTF-8 파일명(공사명 폴더) 지원.
 function _crc32(b){
   if(!_crc32.T){ _crc32.T=[]; for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); _crc32.T[n]=c>>>0; } }
@@ -5842,7 +5851,7 @@ async function buildFormsDoc(FILES, map, flow){
   for(const f of FILES){
     try{
       const res=await fetch(f.url,{cache:'no-store'}); if(!res.ok) throw new Error('HTTP '+res.status);
-      const html=fillPermitTemplate(await res.text(), map);           // .hml과 동일 토큰 치환
+      const html=fillPermitTemplateHTML(await res.text(), map);        // 토큰 치환 + 자동값 파란색(span.pm-auto)
       const sm=html.match(/<style>([\s\S]*?)<\/style>/i); const st=sm?sm[1]:'';
       if(st && !styles.includes(st)) styles.push(st);                  // 혼합(절대+흐름) 양식은 서로 다른 스타일 → 모두 수집·중복제거
       const bm=html.match(/<body[^>]*>([\s\S]*?)<\/body>/i); bodies.push(bm?bm[1]:html);
@@ -5857,7 +5866,7 @@ async function buildFormsDoc(FILES, map, flow){
     if(flow && !last && /class=["']flow-paper["']/.test(bodies[k])) joined+=SEP;
   }
   // 용지여백 통일(@page 0 + 흐름양식은 .flow-paper padding으로 여백). 절대·흐름·혼합 모두 동일하게 동작(기존 그룹 역호환: 결과 여백 불변)
-  const unify = '@page{size:210mm 297mm;margin:0}@media print{.flow-paper{padding:12mm 10mm;box-shadow:none;margin:0}}';
+  const unify = '@page{size:210mm 297mm;margin:0}@media print{.flow-paper{padding:12mm 10mm;box-shadow:none;margin:0}}.pm-auto{color:#0000ff}';
   const doc = bodies.length ? ('<!doctype html><html><head><meta charset="utf-8"><style>'+styles.join('\n')+'\n'+unify+' html,body{margin:0}</style></head><body>'+joined+'</body></html>') : '';
   return {doc, fail};
 }
@@ -6465,6 +6474,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-13', team:'행정', kind:'수정', title:'접수서류 미리보기·PDF — 자동으로 채운 값을 “파란색”으로 표시', body:'행정 양식의 <b>미리보기·PDF</b>에서, 시스템이 <b>자동으로 채워 넣은 값만 파란색</b>으로 표시됩니다. 양식에 원래 인쇄돼 있는 <b>고정 문구(항목명·법조문·안내문 등)는 검정 그대로</b>여서, 담당자가 <b>“어디가 자동으로 들어갔고, 어디를 직접 써야 하는지”</b>를 한눈에 구분할 수 있습니다. <b>발전허가·개발행위·PPA·공사계획신고·한전수급계약·사업개시·준공검사 모든 양식</b>에 적용됩니다. ※ <b>한글파일(HWP) 다운로드본은 기존처럼 검정</b>으로 나옵니다(실제 접수·제출용). 파란색은 화면·PDF에서 작성 확인을 돕기 위한 표시입니다.', author:'개발'},
   {date:'2026-10-13', team:'행정', kind:'추가', title:'준공검사 — 개발행위준공검사신청서 자동작성 + 미리보기·PDF·한글파일 다운로드 추가', body:'발전허가·개발행위·PPA·공사계획신고·한전수급계약·사업개시와 <b>똑같은 방식</b>으로 <b>준공검사</b> 서류도 자동화했습니다. ① 좌측 <b>행정 → 준공검사</b> 메뉴가 전용 화면으로 바뀌어, 대상 현장을 고르면 <b>「개발행위준공검사신청서」</b>가 채워집니다. ② <b>신청인(성명·주소·전화)·위치·허가면적·준공면적·신청일</b>이 자동 기입됩니다. ③ <b>생년월일(개인정보)·허가일자·사업기간(착공·준공)·우편번호·시설란(도로/급수/배수/기타)</b>은 준공 후 확정·현장별로 적는 항목이라 <b>빈칸</b>으로 둡니다(한글에서 직접). ④ 이 양식은 <b>건물형(지붕)</b> 기준입니다(토지형 양식은 추후 추가). ⑤ <b>🔍미리보기·📄PDF·📥한글파일(HWP)</b> 모두 지원(원본 양식과 동일). ⑥ 서류 준비가 끝나면 <b>“사업개시로 이관”</b> 버튼으로 다음 단계에 넘깁니다.', author:'개발'},
   {date:'2026-10-13', team:'행정', kind:'수정', title:'행정 서류 메뉴 — 각 서류에 “실제 들어가는 항목만” 표시(화면 간결화)', body:'행정의 양식 작성 메뉴에서 그 서류에 <b>실제로 기입되는 항목만</b> 남기고, 나머지 연동정보는 화면에서 숨겼습니다. 예전에는 <b>개발행위·PPA·공사계획신고·한전수급계약·사업개시</b> 메뉴가 모두 똑같이 신청인·설비·자금·면적·토지 등 <b>전체 정보를 길게</b> 보여줘, 그 서류와 무관한 항목이 많아 헷갈렸습니다. 이제 예를 들어 <b>사업개시</b> 메뉴에는 사업개시신고서에 들어가는 <b>신청인(대표자·상호·전화·주소)·설비용량·발전소 소재지</b>만 뜨고, <b>발전설비 사양·소요자금·사업계획 개요·대표자 인적사항</b> 등은 사라집니다. 메뉴별로 ▸개발행위=면적·모듈수량, ▸PPA=설비용량·전압·주파수, ▸공사계획신고·한전수급계약=발전소명·설비용량·모듈/인버터 등 <b>각 서류가 쓰는 값만</b> 표시됩니다. ★<b>발전사업 허가만은 예외로 전체 항목을 그대로</b> 둡니다 — 허가사업계획서가 설비·면적·자금·부지·사양 등 거의 모든 값을 쓰기 때문입니다. (숨긴 것은 <b>화면 표시</b>일 뿐, 실제 서류 자동작성·다운로드 내용은 전혀 바뀌지 않습니다.)', author:'개발'},
   {date:'2026-10-13', team:'행정', kind:'추가', title:'사업개시 — 사업개시신고서 자동작성 + 미리보기·PDF·한글파일 다운로드 추가', body:'발전허가·개발행위·PPA·공사계획신고·한전수급계약과 <b>똑같은 방식</b>으로 <b>사업개시신고서</b>도 자동화했습니다. ① 좌측 <b>행정 → 사업개시</b> 메뉴가 전용 화면으로 바뀌어, 대상 현장을 고르면 신고서가 채워집니다. ② 신고인(대표자·상호·주소·전화)·발전소 소재지·사업내용(용량)·신고일이 <b>자동 기입</b>됩니다. ③ <b>생년월일(개인정보), 사업개시 연월일·최초 전력거래일</b>은 준공·상업운전 후 확정되는 항목이라 <b>빈칸</b>으로 둡니다(한글에서 직접). ④ <b>🔍미리보기·📄PDF·📥한글파일(HWP)</b> 모두 지원(원본 양식과 동일). ⑤ 서류 준비가 끝나면 <b>“설비확인으로 이관”</b> 버튼으로 다음 단계에 넘깁니다.', author:'개발'},
