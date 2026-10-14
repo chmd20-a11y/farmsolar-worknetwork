@@ -3894,7 +3894,7 @@ async function mmWithdraw(id){ const r=await adminUpdateMember(id,{withdrawn:tru
 async function mmRestore(id){ const r=await adminUpdateMember(id,{withdrawn:false,approved:true}); if(r.error){ toast('복구 실패: '+r.error); return; } toast('복구했습니다'); fillManageMembers(); }
 async function mmDelete(id){ const r=await adminDeleteMember(id); if(r.error){ toast('삭제 실패: '+r.error); return; } toast('완전 삭제했습니다'); fillManageMembers(); }
 async function mmSetTeam(id, team){ const r=await adminUpdateMember(id,{team}); if(r.error){ toast('소속팀 변경 실패: '+r.error); return; } toast('소속팀을 변경했습니다'); }
-async function mmSetBirth(id, birth){ const r=await adminUpdateMember(id,{birth:birth||null}); if(r.error){ toast('생년월일 변경 실패: '+r.error); return; } toast('생년월일을 저장했습니다'); }
+async function mmSetBirth(id, birth){ const r=await adminUpdateMember(id,{birth:birth||null}); if(r.error){ toast('생년월일 변경 실패: '+r.error); return; } if(currentUser&&currentUser.id===id) currentUser.birth=birth||''; toast('생년월일을 저장했습니다'); }
 
 // 비밀번호 초기화 (관리자 → Edge Function 경유, 서버에서 서비스롤로 처리)
 async function adminResetPassword(targetId, newPw){
