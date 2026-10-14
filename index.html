@@ -5200,7 +5200,7 @@ function openPermitModal(id){
   document.body.style.overflow='hidden';
   permitEscHandler=(e)=>{ if(e.key==='Escape') closePermitModal(); };
   document.addEventListener('keydown',permitEscHandler);
-  getPermit(d); fillPreviewIframe('permitPrintFrame', PERMIT_PRINT_FILES, permitTokenMap(d), false);
+  getPermit(d); fillPreviewIframe('permitPrintFrame', permitBundle(d), permitTokenMap(d), false);
 }
 function closePermitModal(){
   const ov=document.getElementById('permitModal'); if(ov) ov.remove();
@@ -5871,13 +5871,58 @@ function printPpa(id){ genPpaForms(id); }
    브라우저 네이티브 인쇄(“PDF로 저장”)로 내려받습니다. 양식(표·레이아웃)은 HWP와 동일하게 재현됩니다.
    한 그룹의 양식은 같은 레이아웃 모드(발전허가·개발행위=절대좌표 / PPA=흐름)라 하나의 PDF로 병합됩니다.
    서류 순서 = 개인/법인 구비서류 리스트 기준(우리가 생성하는 양식만; 조회·설계도면·원본첨부는 범위 밖). */
-const PERMIT_PRINT_FILES=[
-  {url:'forms/sincheong.print.html', label:'전기사업 허가신청서'},
-  {url:'forms/saup.print.html',      label:'허가사업계획서'},
-  {url:'forms/ilramdo.print.html',   label:'송전관계 일람도'},
-  {url:'forms/dongui.print.html',    label:'행정정보 공동이용 사전동의서'},
-  {url:'forms/uihyang.print.html',   label:'공사 협력 의향서'},
-];
+// 발전허가 접수서류 — 보유 양식(실제 페이지)
+const _PF={
+  sincheong:{url:'forms/sincheong.print.html', label:'전기사업 허가신청서'},
+  saup:     {url:'forms/saup.print.html',      label:'허가사업계획서'},
+  ilramdo:  {url:'forms/ilramdo.print.html',   label:'송전관계 일람도'},
+  dongui:   {url:'forms/dongui.print.html',    label:'행정정보 공동이용 사전동의서'},
+  uihyang:  {url:'forms/uihyang.print.html',   label:'공사 협력 의향서'},
+};
+// 아직 업로드/입력 전 서류 = 자리표시 페이지. ph(서류명, 가져오는 위치)
+function _ph(name, src){ return {ph:name, src:src}; }
+const _SRC={ design:'설계팀 작성 · 대시보드 업로드', idcopy:'사업주 제출 · 대시보드 업로드',
+  orig:'영업 수령 원본 · 접수 체크리스트', gong:'공부 발급자료 · 자동조회/업로드', form:'양식 작성 (추후 제공)' };
+// 접수서류 순서 묶음 — 첨부 리스트(개인/법인) 순서대로. 건물형(지붕형)만 건축물대장·건축물등기부등본 포함. 공사 협력 의향서는 목록 뒤 유지.
+function permitBundle(d){
+  const p=getPermit(d);
+  const corp=!!(p.applicant&&p.applicant.corp);                                           // true=법인 / false=개인
+  const bld=((p.builds&&p.builds.length>0)) || /지붕|건물/.test(String(d.site||''));        // 건물형(지붕형)
+  const L=[ _PF.sincheong, _PF.saup, _ph('배치도',_SRC.design), _ph('측면도',_SRC.design), _PF.ilramdo, _PF.dongui,
+            _ph('사업주 신분증 사본',_SRC.idcopy) ];
+  if(corp){
+    L.push(_ph('사업주 인감증명서',_SRC.orig), _ph('가족관계증명서',_SRC.orig), _ph('주민등록등본',_SRC.orig),
+           _ph('잔액증명서',_SRC.orig), _ph('사용인감계 (공양식만 제공)',_SRC.orig), _ph('법인 인감증명서',_SRC.orig),
+           _ph('대리인 위임장',_SRC.form), _ph('사업주/대리인 신분증',_SRC.form),
+           _ph('법인 등기사항 전부 증명서',_SRC.orig), _ph('법인 재무제표',_SRC.orig), _ph('법인 정관',_SRC.orig),
+           _ph('토지사용승낙서',_SRC.orig), _ph('토지주 인감증명서',_SRC.orig), _ph('지상권 승낙서',_SRC.orig), _ph('지상권자 인감증명서',_SRC.orig),
+           _ph('토지대장',_SRC.gong));
+    if(bld) L.push(_ph('건축물대장',_SRC.gong));
+    L.push(_ph('지적도',_SRC.gong), _ph('토지이음',_SRC.gong), _ph('토지등기부등본',_SRC.gong));
+    if(bld) L.push(_ph('건축물등기부등본',_SRC.gong));
+  } else {
+    L.push(_ph('가족관계증명서',_SRC.orig), _ph('주민등록등본',_SRC.orig), _ph('잔액증명서',_SRC.orig),
+           _ph('사용인감계 (공양식만 제공)',_SRC.orig), _ph('인감증명서',_SRC.orig),
+           _ph('대리인 위임장',_SRC.form), _ph('사업주/대리인 신분증',_SRC.form),
+           _ph('토지사용승낙서',_SRC.orig), _ph('토지주 인감증명서',_SRC.orig), _ph('지상권 승낙서',_SRC.orig), _ph('지상권자 인감증명서',_SRC.orig),
+           _ph('토지대장',_SRC.gong));
+    if(bld) L.push(_ph('건축물대장',_SRC.gong));
+    L.push(_ph('지적도',_SRC.gong), _ph('토지이음',_SRC.gong), _ph('토지등기부등본',_SRC.gong));
+    if(bld) L.push(_ph('건축물등기부등본',_SRC.gong));
+  }
+  L.push(_PF.uihyang);
+  return L;
+}
+// 자리표시 1페이지(A4) — 서류명 + 가져오는 위치 마킹. 실제 파일 업로드 시 이 자리에 삽입 예정.
+function permitPlaceholderPage(name, src){
+  return "<div class=\"page\" style=\"width:210mm;height:297mm;display:flex;align-items:center;justify-content:center\">"
+    +"<div style=\"border:2px dashed #94a3b8;border-radius:14px;padding:46px 60px;text-align:center;max-width:150mm\">"
+    +"<div style=\"font-size:12pt;color:#94a3b8;letter-spacing:3px;margin-bottom:16px\">첨부 서류 자리</div>"
+    +"<div style=\"font-size:27pt;font-weight:700;color:#1f2937;margin-bottom:24px;word-break:keep-all\">"+esc(name)+"</div>"
+    +"<div style=\"font-size:13.5pt;color:#334155\">가져오는 위치 : <b style=\"color:#1d4ed8\">"+esc(src)+"</b></div>"
+    +"<div style=\"font-size:10.5pt;color:#94a3b8;margin-top:18px\">실제 파일이 업로드·입력되면 이 자리에 자동으로 삽입됩니다</div>"
+    +"</div></div>";
+}
 const DEVPERMIT_PRINT_FILES=[
   {url:'forms/dev_sincheong.print.html', label:'개발행위 허가신청서'},
   {url:'forms/dev_saup.print.html',      label:'개발행위 사업계획서'},
@@ -5890,6 +5935,7 @@ const PPA_PRINT_FILES=[
 async function buildFormsDoc(FILES, map, flow){
   let styles=[], bodies=[], fail=[];
   for(const f of FILES){
+    if(f.ph){ bodies.push(permitPlaceholderPage(f.ph, f.src)); continue; }   // 자리표시(업로드 전 서류) — fetch 없이 1페이지 삽입
     try{
       const res=await fetch(f.url,{cache:'no-store'}); if(!res.ok) throw new Error('HTTP '+res.status);
       const html=fillPermitTemplateHTML(await res.text(), map);        // 토큰 치환 + 자동값 파란색(span.pm-auto)
@@ -5961,7 +6007,7 @@ async function fillPreviewIframe(frameId, FILES, map, flow){
   if(idoc.readyState==='complete') setTimeout(done,150); else ifr.onload=()=>setTimeout(done,150);
   setTimeout(fit,600); setTimeout(fit,1400);   // 폰트·이미지 로딩 후 높이 재측정
 }
-function genPermitFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(PERMIT_PRINT_FILES, permitTokenMap(d), '발전허가 접수서류', false); }
+function genPermitFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(permitBundle(d), permitTokenMap(d), '발전허가 접수서류', false); }
 function genDevFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(DEVPERMIT_PRINT_FILES, devPermitTokenMap(d), '개발행위 접수서류', false); }
 function genPpaFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(PPA_PRINT_FILES, ppaTokenMap(d), 'PPA 신청서류', true); }
 let ppaSel=null;
@@ -6515,6 +6561,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-14', team:'행정', kind:'추가', title:'발전사업 허가 접수서류(PDF) — 제출 순서대로 정렬 + 첨부서류 자리표시 페이지 자동 생성', body:'발전사업 허가 <b>접수서류 PDF·미리보기</b>를 실제 <b>제출 순서</b>(전기사업 허가신청서 → 사업계획서 → 배치도 → 측면도 → 송전관계 일람도 → 행정정보 공동이용 사전동의서 → 각종 증빙서류 → 토지서류 …)대로 정렬했습니다. <b>개인/법인에 따라 순서와 서류 구성이 자동으로 달라지며</b>(법인은 법인 인감·등기사항·재무제표·정관 등 추가), <b>건물형(지붕형)</b>이면 건축물대장·건축물등기부등본이 자동 포함됩니다. 아직 양식으로 만들지 않거나 <b>업로드·발급으로 들어오는 서류</b>(주민등록등본·가족관계증명서·배치도·측면도·토지대장·지적도 등)는 <b>“[서류명] + 가져오는 위치”가 적힌 자리표시 1페이지</b>로 끼워 넣어, <b>나중에 실제 파일이 업로드·입력되면 그 자리에 그대로 들어가도록</b> 했습니다(사업계획서 사진 자리표시와 동일 방식). 가져오는 위치 예: 설계팀 작성·대시보드 업로드 / 영업 수령 원본 / 공부 발급자료. ※ 공사 협력 의향서는 목록 뒤에 유지. <b>보유 양식(허가신청서·사업계획서·송전관계 일람도·동의서)은 실제 내용이 그대로</b> 들어갑니다.', author:'개발'},
   {date:'2026-10-14', team:'행정', kind:'수정', title:'행정정보 공동이용 사전동의서 — 신분증 종류 선택(☑)이 미리보기·PDF에는 안 보이던 문제 수정', body:'<b>행정정보 공동이용 사전동의서</b>의 <b>신분증 종류 선택</b>란 <b>( 주민등록·여권·외국인등록·운전면허 )</b>에서, <b>선택 표시(☑)</b>가 <b>한글파일에는 정상인데 미리보기·PDF에는 빈칸</b>으로 안 보이던 문제를 고쳤습니다. 체크 표시가 양식에 <b>그림으로 되어 있어</b> 미리보기 변환 때 빠졌던 것으로(공정표 화살표와 같은 종류), 이제 <b>미리보기·PDF에서도 신청인이 고른 신분증 종류에 ☑</b>가 표시됩니다(예: 주민등록증 선택 시 「주민등록」에 ☑). <b>한글파일·데이터에는 영향 없이 미리보기 표시만 보강</b>했습니다. ※ 발전사업 허가 5개 양식 전수 점검 결과, 나머지 4개(허가신청서·사업계획서·송전관계 일람도·공사 협력 의향서)는 <b>미리보기·PDF·한글파일이 모두 동일</b>했습니다.', author:'개발'},
   {date:'2026-10-14', team:'행정', kind:'수정', title:'공사 협력 의향서 — 맨 아래 신청일자가 “2026년 월 일”로 비어 있던 문제 수정', body:'<b>태양광발전소 공사 협력 의향서</b>의 맨 아래 <b>신청일자</b>가 연도만 “2026년 월 일”로 나오고 <b>월·일이 비어 있던</b> 것을 고쳤습니다. 양식에 날짜가 <b>고정 글자로 박혀 있어</b> 채워지지 않았는데, 다른 양식들과 동일하게 <b>신청일자(발전사업 허가에 입력한 날짜)</b>가 자동으로 들어가도록 바꿨습니다(예: 2026년 10월 2일). <b>미리보기·PDF·한글파일 모두 동일</b>하게 적용됩니다.', author:'개발'},
   {date:'2026-10-14', team:'행정', kind:'수정', title:'사업계획서 미리보기 — 사진 들어갈 자리가 빈칸으로만 보이던 문제 수정(자리 박스 표시)', body:'사업계획서 뒷부분의 <b>사진 4곳(설치장소 전경·전주사진·현장사진 ①·②)</b>이 <b>미리보기에서 빈 여백</b>처럼 보이던 문제를 고쳤습니다. 원래 양식의 사진칸에는 <b>새하얀 빈 이미지</b>가 들어 있어, 흰 바탕 위에서는 <b>자리가 보이지 않았습니다</b>. 이제 각 사진칸에 <b>점선 테두리 + 카메라 아이콘 + “사진 자리” + 어느 위치 사진인지(발전소 예정 부지 전경 / 수급지점 인근 전주 / 현장 사진 ①·②)</b>가 그려진 <b>자리표시 박스</b>가 보입니다. <b>미리보기·PDF·한글파일 모두 동일</b>하게 표시되며, 실제 사진 이미지 자동삽입은 기존 계획대로 별도 준비 중입니다.', author:'개발'},
