@@ -25672,7 +25672,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="2">
 <TEXT CharShape="2">
-<CHAR>6. 설치장소 전경   (▶ 발전소 예정 부지 전경 사진)</CHAR>
+<CHAR>6. 설치장소 전경   (▶ 설계 현장실측 — 발전소 예정 부지 전경)</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -25717,7 +25717,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="2">
 <TEXT CharShape="2">
-<CHAR>7. 전주사진   (▶ 수급지점 인근 전주 사진)</CHAR>
+<CHAR>7. 전주사진   (▶ 설계 현장실측 — 수급지점 인근 전주)</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -25774,7 +25774,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="2">
 <TEXT CharShape="2">
-<CHAR>8. 현장사진   (▶ 현장사진 ①)</CHAR>
+<CHAR>8. 현장사진   (▶ 설계 현장실측 — 현장사진 ①)</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -25819,7 +25819,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="2">
 <TEXT CharShape="2">
-<CHAR>현장사진_2   (▶ 현장사진 ②)</CHAR>
+<CHAR>현장사진_2   (▶ 설계 현장실측 — 현장사진 ②)</CHAR>
 </TEXT>
 </P>
 </PARALIST>
