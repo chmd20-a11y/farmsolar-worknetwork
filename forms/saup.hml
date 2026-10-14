@@ -23790,7 +23790,7 @@
 <PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
 <P ParaShape="5">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_OWNERADDR§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -23910,7 +23910,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_LANDSUM§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -24602,7 +24602,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_BLD_NO§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -24638,7 +24638,7 @@
 <PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
 <P ParaShape="5">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_BLD_ADDR§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -24674,7 +24674,7 @@
 <PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
 <P ParaShape="5">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_BLD_JIBUN§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -24710,7 +24710,7 @@
 <PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
 <P ParaShape="5">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_BLD_AREA§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -24746,7 +24746,7 @@
 <PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
 <P ParaShape="5">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_BLD_DIV§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -24782,7 +24782,7 @@
 <PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
 <P ParaShape="5">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_BLD_STRUCT§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -24818,7 +24818,7 @@
 <PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
 <P ParaShape="5">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_BLD_USE§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -24854,7 +24854,7 @@
 <PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
 <P ParaShape="5">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_BLD_OWNER§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -24938,7 +24938,7 @@
 <PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
 <P ParaShape="5">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_BLD_SUM§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -25066,7 +25066,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="2">
-<CHAR/>
+<CHAR>§PHONE§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -25626,7 +25626,7 @@
 <PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
 <P ParaShape="5">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§ADDR§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -25672,7 +25672,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="2">
 <TEXT CharShape="2">
-<CHAR>6. 설치장소 전경</CHAR>
+<CHAR>6. 설치장소 전경   (▶ 발전소 예정 부지 전경 사진)</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -25717,7 +25717,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="2">
 <TEXT CharShape="2">
-<CHAR>7. 전주사진</CHAR>
+<CHAR>7. 전주사진   (▶ 수급지점 인근 전주 사진)</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -25774,7 +25774,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="2">
 <TEXT CharShape="2">
-<CHAR>8. 현장사진</CHAR>
+<CHAR>8. 현장사진   (▶ 현장사진 ①)</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -25819,7 +25819,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="2">
 <TEXT CharShape="2">
-<CHAR>현장사진_2</CHAR>
+<CHAR>현장사진_2   (▶ 현장사진 ②)</CHAR>
 </TEXT>
 </P>
 </PARALIST>
