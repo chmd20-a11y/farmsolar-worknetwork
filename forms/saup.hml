@@ -6663,7 +6663,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_TOTCOST§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
