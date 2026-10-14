@@ -8043,7 +8043,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="2">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_MODCELL§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -8151,7 +8151,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_MODW§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -8286,7 +8286,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_MODVOC§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -8340,7 +8340,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_MODVMP§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -8421,7 +8421,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_MODISC§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -8475,7 +8475,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_MODIMP§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -8556,7 +8556,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_MODSZ_W§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -8610,7 +8610,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_MODSZ_H§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -8664,7 +8664,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_MODSZ_T§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -8745,7 +8745,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_MODAREA§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -8826,7 +8826,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_MODWEIGHT§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -8934,7 +8934,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_ARRKW§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -9042,7 +9042,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_MODW§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -9123,7 +9123,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_MODQTY§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -9204,7 +9204,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_ARRKW§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -9285,7 +9285,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_INSTAREA§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -9339,7 +9339,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_INSTAREA§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -9420,7 +9420,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_INSTTON§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -10646,7 +10646,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_INVWEIGHT§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
