@@ -4005,7 +4005,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>380V</CHAR>
+<CHAR>§SP_SUPPLYV§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -4194,7 +4194,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_TOTAREA§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -4356,7 +4356,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_OWN§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -4437,7 +4437,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§SP_LOAN§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -6177,7 +6177,7 @@
 <CELL ColAddr="1" RowAddr="1" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="13163" Height="2325" BorderFill="4">
 <PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
 <P ParaShape="4">
-<TEXT CharShape="422"><CHAR>§CAP§</CHAR></TEXT>
+<TEXT CharShape="422"><CHAR>§CAP§ Kwp</CHAR></TEXT>
 </P>
 </PARALIST>
 <CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
@@ -6185,7 +6185,7 @@
 <CELL ColAddr="2" RowAddr="1" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="13163" Height="2325" BorderFill="4">
 <PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
 <P ParaShape="4">
-<TEXT CharShape="421"><CHAR>§Y1§</CHAR></TEXT>
+<TEXT CharShape="421"><CHAR>§Y1§ MWh</CHAR></TEXT>
 </P>
 </PARALIST>
 <CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
@@ -6559,7 +6559,7 @@
 <CELL ColAddr="1" RowAddr="4" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="13163" Height="2325" BorderFill="4">
 <PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
 <P ParaShape="4">
-<TEXT CharShape="420"><CHAR>§CAP§</CHAR></TEXT>
+<TEXT CharShape="420"><CHAR>§CAP§ Kwp</CHAR></TEXT>
 </P>
 </PARALIST>
 <CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
@@ -6567,7 +6567,7 @@
 <CELL ColAddr="2" RowAddr="4" ColSpan="1" RowSpan="1" Header="false" HasMargin="true" Protect="false" Editable="false" Dirty="false" Width="13163" Height="2325" BorderFill="4">
 <PARALIST TextDirection="0" LineWrap="Break" VertAlign="Center">
 <P ParaShape="4">
-<TEXT CharShape="419"><CHAR>§Y1§</CHAR></TEXT>
+<TEXT CharShape="419"><CHAR>§Y1§ MWh</CHAR></TEXT>
 </P>
 </PARALIST>
 <CELLMARGIN Left="0" Right="0" Top="0" Bottom="0"/>
