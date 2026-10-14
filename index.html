@@ -1159,8 +1159,10 @@ button{font-family:inherit;cursor:pointer}
       <select id="suTeam" class="tinput">
         <option>임원</option><option>경영지원</option><option>영업</option><option>설계</option><option>시공</option><option>행정</option><option>홍보</option>
       </select>
-      <label style="margin-top:10px">연락처(휴대폰)</label>
-      <input id="suPhone" class="tinput" inputmode="numeric" placeholder="010-0000-0000" autocomplete="off">
+      <div class="field-row" style="margin-top:10px">
+        <div class="tfield"><label>연락처(휴대폰)</label><input id="suPhone" class="tinput" inputmode="numeric" placeholder="010-0000-0000" autocomplete="off"></div>
+        <div class="tfield"><label>생년월일</label><input id="suBirth" class="tinput" type="date" autocomplete="off"></div>
+      </div>
       <div class="field-row" style="margin-top:10px">
         <div class="tfield"><label>비밀번호(6자 이상)</label><input id="suPw" class="tinput" type="password" autocomplete="new-password"></div>
         <div class="tfield"><label>비밀번호 확인</label><input id="suPw2" class="tinput" type="password" autocomplete="new-password"></div>
@@ -3862,6 +3864,8 @@ function renderManageMembers(){
     + '<div id="mm-wrap"><div class="card pad" style="color:var(--muted)">불러오는 중…</div></div>';
 }
 function mmTeamSelect(m){ return `<select class="tinput" style="width:auto;min-width:96px;padding:6px 8px" onchange="mmSetTeam('${m.id}',this.value)"><option value=""${!m.team?' selected':''}>소속팀</option>${TEAMS.map(t=>`<option${m.team===t?' selected':''}>${t}</option>`).join('')}</select>`; }
+// 생년월일 — 대리인 위임장 '위임받는 사람'에 쓰임(기존 회원은 관리자가 여기서 입력)
+function mmBirthInput(m){ return `<input type="date" class="tinput" title="생년월일(위임장용)" style="width:auto;padding:6px 8px" value="${esc(m.birth||'')}" onchange="mmSetBirth('${m.id}',this.value)">`; }
 async function fillManageMembers(){
   const wrap=document.getElementById('mm-wrap'); if(!wrap) return;
   if(!SB){ wrap.innerHTML='<div class="card pad" style="color:var(--muted)">서버가 연결되지 않아 회원 관리를 사용할 수 없습니다.</div>'; return; }
@@ -3879,7 +3883,7 @@ async function fillManageMembers(){
   h+=`<div class="section-title" style="font-size:13px;margin:4px 0 8px">가입 승인 대기 (${pend.length})</div>`;
   h+= pend.length ? pend.map(m=>row(m,`<button class="btn ok sm" onclick="mmApprove('${m.id}')">승인 ✓</button><button class="btn danger sm" onclick="mmDelete('${m.id}')">거절</button>`)).join('') : emptyMsg('승인 대기 중인 가입이 없습니다.');
   h+=`<div class="section-title" style="font-size:13px;margin:18px 0 8px">회원 (${act.length})</div>`;
-  h+= act.length ? act.map(m=>row(m,`${mmTeamSelect(m)}<button class="btn ghost sm" onclick="openPwReset('${m.id}','${esc((m.name||'').replace(/'/g,''))}')">비번 초기화</button>${m.role==='admin'?`<button class="btn ghost sm" onclick="mmSetRole('${m.id}','member')">관리자 해제</button>`:`<button class="btn ghost sm" onclick="mmSetRole('${m.id}','admin')">관리자 지정</button>`}<button class="btn danger sm" onclick="mmWithdraw('${m.id}')">탈퇴</button>`)).join('') : emptyMsg('회원이 없습니다.');
+  h+= act.length ? act.map(m=>row(m,`${mmTeamSelect(m)}${mmBirthInput(m)}<button class="btn ghost sm" onclick="openPwReset('${m.id}','${esc((m.name||'').replace(/'/g,''))}')">비번 초기화</button>${m.role==='admin'?`<button class="btn ghost sm" onclick="mmSetRole('${m.id}','member')">관리자 해제</button>`:`<button class="btn ghost sm" onclick="mmSetRole('${m.id}','admin')">관리자 지정</button>`}<button class="btn danger sm" onclick="mmWithdraw('${m.id}')">탈퇴</button>`)).join('') : emptyMsg('회원이 없습니다.');
   if(wd.length){ h+=`<div class="section-title" style="font-size:13px;margin:18px 0 8px">탈퇴 (${wd.length})</div>`;
     h+= wd.map(m=>row(m,`<button class="btn ghost sm" onclick="mmRestore('${m.id}')">복구</button><button class="btn danger sm" onclick="mmDelete('${m.id}')">완전삭제</button>`)).join(''); }
   wrap.innerHTML=h;
@@ -3890,6 +3894,7 @@ async function mmWithdraw(id){ const r=await adminUpdateMember(id,{withdrawn:tru
 async function mmRestore(id){ const r=await adminUpdateMember(id,{withdrawn:false,approved:true}); if(r.error){ toast('복구 실패: '+r.error); return; } toast('복구했습니다'); fillManageMembers(); }
 async function mmDelete(id){ const r=await adminDeleteMember(id); if(r.error){ toast('삭제 실패: '+r.error); return; } toast('완전 삭제했습니다'); fillManageMembers(); }
 async function mmSetTeam(id, team){ const r=await adminUpdateMember(id,{team}); if(r.error){ toast('소속팀 변경 실패: '+r.error); return; } toast('소속팀을 변경했습니다'); }
+async function mmSetBirth(id, birth){ const r=await adminUpdateMember(id,{birth:birth||null}); if(r.error){ toast('생년월일 변경 실패: '+r.error); return; } toast('생년월일을 저장했습니다'); }
 
 // 비밀번호 초기화 (관리자 → Edge Function 경유, 서버에서 서비스롤로 처리)
 async function adminResetPassword(targetId, newPw){
@@ -5582,6 +5587,9 @@ function permitTokenMap(d){
     '§PLACE§':S(p.biz.place), '§PLANTNAME§':S(p.outline.plantName), '§OFFICE§':S(p.office),
     '§VENDOR§':permitVendor(d).full, '§DATE§':fmtKDate(permitApplyDate(d)),
     '§POLE§':S(d.survey&&d.survey.poleNo),
+    // 대리인 위임장 — 위임받는 사람(수임인)=로그인한 직원(이름·생년월일만 로그인 정보, 연락처·주소는 양식에 고정)
+    '§WJ_NAME§':(typeof currentUser!=='undefined'&&currentUser)?S(currentUser.name):'',
+    '§WJ_BIRTH§':(typeof currentUser!=='undefined'&&currentUser&&currentUser.birth)?fmtKDate(currentUser.birth):'',
     '§INV_IN§':S(eq.invIn), '§INV_OUT§':S(eq.invOut), '§INV_KW§':S(eq.invKW), '§INV_QTY§':S(eq.invQty),
     '§MOD_W§':S(eq.modW), '§MOD_QTY§':pComma(eq.modQty),
     '§BIRTH§':donguiBirth(p)||'년 월 일', '§DONGUI_NO§':donguiPersonNo(p),
@@ -5878,6 +5886,7 @@ const _PF={
   ilramdo:  {url:'forms/ilramdo.print.html',   label:'송전관계 일람도'},
   dongui:   {url:'forms/dongui.print.html',    label:'행정정보 공동이용 사전동의서'},
   uihyang:  {url:'forms/uihyang.print.html',   label:'공사 협력 의향서'},
+  wiimjang: {url:'forms/wiimjang.print.html',  label:'대리인 위임장'},
 };
 // 아직 업로드/입력 전 서류 = 자리표시 페이지. ph(서류명, 가져오는 위치)
 function _ph(name, src){ return {ph:name, src:src}; }
@@ -5893,7 +5902,7 @@ function permitBundle(d){
   if(corp){
     L.push(_ph('사업주 인감증명서',_SRC.orig), _ph('가족관계증명서',_SRC.orig), _ph('주민등록등본',_SRC.orig),
            _ph('잔액증명서',_SRC.orig), _ph('사용인감계 (공양식만 제공)',_SRC.orig), _ph('법인 인감증명서',_SRC.orig),
-           _ph('대리인 위임장',_SRC.form), _ph('사업주/대리인 신분증',_SRC.form),
+           _PF.wiimjang, _ph('사업주/대리인 신분증',_SRC.form),
            _ph('법인 등기사항 전부 증명서',_SRC.orig), _ph('법인 재무제표',_SRC.orig), _ph('법인 정관',_SRC.orig),
            _ph('토지사용승낙서',_SRC.orig), _ph('토지주 인감증명서',_SRC.orig), _ph('지상권 승낙서',_SRC.orig), _ph('지상권자 인감증명서',_SRC.orig),
            _ph('토지대장',_SRC.gong));
@@ -5903,7 +5912,7 @@ function permitBundle(d){
   } else {
     L.push(_ph('가족관계증명서',_SRC.orig), _ph('주민등록등본',_SRC.orig), _ph('잔액증명서',_SRC.orig),
            _ph('사용인감계 (공양식만 제공)',_SRC.orig), _ph('인감증명서',_SRC.orig),
-           _ph('대리인 위임장',_SRC.form), _ph('사업주/대리인 신분증',_SRC.form),
+           _PF.wiimjang, _ph('사업주/대리인 신분증',_SRC.form),
            _ph('토지사용승낙서',_SRC.orig), _ph('토지주 인감증명서',_SRC.orig), _ph('지상권 승낙서',_SRC.orig), _ph('지상권자 인감증명서',_SRC.orig),
            _ph('토지대장',_SRC.gong));
     if(bld) L.push(_ph('건축물대장',_SRC.gong));
@@ -6561,6 +6570,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-14', team:'행정', kind:'추가', title:'대리인 위임장 — 실제 양식 자동 생성 + 회원 생년월일 항목 추가', body:'발전사업 허가 접수서류의 <b>대리인 위임장</b>을 자리표시가 아닌 <b>실제 양식</b>으로 만들어 자동으로 채워지도록 했습니다. <b>위임하는 사람(사업주)</b>은 현장에 입력된 사업주 정보(이름·생년월일·주소·전화)로, <b>위임받는 사람(대리인)</b>은 <b>로그인한 본인</b>의 이름·생년월일로 자동 기입됩니다(관계=“태양광 시공업체 직원”, 연락처 010-7335-4745·주소 교하로875번길 23 전층은 고정). 이를 위해 <b>회원가입에 “생년월일”</b> 항목을 추가했고, <b>이미 가입한 회원</b>은 관리자(⚙ → 회원 관리)에서 각 회원의 생년월일을 입력·수정할 수 있습니다. 위임장은 접수서류 PDF·미리보기에서 <b>대리인 위임장 순서 자리</b>에 실제 양식으로 들어갑니다(개인/법인 공통). <b>미리보기·PDF·한글파일 모두 동일</b> 적용.', author:'개발'},
   {date:'2026-10-14', team:'행정', kind:'추가', title:'발전사업 허가 접수서류(PDF) — 제출 순서대로 정렬 + 첨부서류 자리표시 페이지 자동 생성', body:'발전사업 허가 <b>접수서류 PDF·미리보기</b>를 실제 <b>제출 순서</b>(전기사업 허가신청서 → 사업계획서 → 배치도 → 측면도 → 송전관계 일람도 → 행정정보 공동이용 사전동의서 → 각종 증빙서류 → 토지서류 …)대로 정렬했습니다. <b>개인/법인에 따라 순서와 서류 구성이 자동으로 달라지며</b>(법인은 법인 인감·등기사항·재무제표·정관 등 추가), <b>건물형(지붕형)</b>이면 건축물대장·건축물등기부등본이 자동 포함됩니다. 아직 양식으로 만들지 않거나 <b>업로드·발급으로 들어오는 서류</b>(주민등록등본·가족관계증명서·배치도·측면도·토지대장·지적도 등)는 <b>“[서류명] + 가져오는 위치”가 적힌 자리표시 1페이지</b>로 끼워 넣어, <b>나중에 실제 파일이 업로드·입력되면 그 자리에 그대로 들어가도록</b> 했습니다(사업계획서 사진 자리표시와 동일 방식). 가져오는 위치 예: 설계팀 작성·대시보드 업로드 / 영업 수령 원본 / 공부 발급자료. ※ 공사 협력 의향서는 목록 뒤에 유지. <b>보유 양식(허가신청서·사업계획서·송전관계 일람도·동의서)은 실제 내용이 그대로</b> 들어갑니다.', author:'개발'},
   {date:'2026-10-14', team:'행정', kind:'수정', title:'행정정보 공동이용 사전동의서 — 신분증 종류 선택(☑)이 미리보기·PDF에는 안 보이던 문제 수정', body:'<b>행정정보 공동이용 사전동의서</b>의 <b>신분증 종류 선택</b>란 <b>( 주민등록·여권·외국인등록·운전면허 )</b>에서, <b>선택 표시(☑)</b>가 <b>한글파일에는 정상인데 미리보기·PDF에는 빈칸</b>으로 안 보이던 문제를 고쳤습니다. 체크 표시가 양식에 <b>그림으로 되어 있어</b> 미리보기 변환 때 빠졌던 것으로(공정표 화살표와 같은 종류), 이제 <b>미리보기·PDF에서도 신청인이 고른 신분증 종류에 ☑</b>가 표시됩니다(예: 주민등록증 선택 시 「주민등록」에 ☑). <b>한글파일·데이터에는 영향 없이 미리보기 표시만 보강</b>했습니다. ※ 발전사업 허가 5개 양식 전수 점검 결과, 나머지 4개(허가신청서·사업계획서·송전관계 일람도·공사 협력 의향서)는 <b>미리보기·PDF·한글파일이 모두 동일</b>했습니다.', author:'개발'},
   {date:'2026-10-14', team:'행정', kind:'수정', title:'공사 협력 의향서 — 맨 아래 신청일자가 “2026년 월 일”로 비어 있던 문제 수정', body:'<b>태양광발전소 공사 협력 의향서</b>의 맨 아래 <b>신청일자</b>가 연도만 “2026년 월 일”로 나오고 <b>월·일이 비어 있던</b> 것을 고쳤습니다. 양식에 날짜가 <b>고정 글자로 박혀 있어</b> 채워지지 않았는데, 다른 양식들과 동일하게 <b>신청일자(발전사업 허가에 입력한 날짜)</b>가 자동으로 들어가도록 바꿨습니다(예: 2026년 10월 2일). <b>미리보기·PDF·한글파일 모두 동일</b>하게 적용됩니다.', author:'개발'},
@@ -7754,7 +7764,7 @@ async function loadMyProfile(){
   if(!user){ currentUser=null; return null; }
   let data=null; try{ const r=await SB.from('fsnet_members').select('*').eq('id',user.id).single(); data=r.data; if(r.error) data=null; }catch(e){ data=null; }
   if(!data){ currentUser=null; return null; }
-  currentUser = { id:data.id, name:data.name, branch:data.branch, team:data.team, rank:data.rank, position:data.position, phone:data.phone, role:data.role, approved:!!data.approved, withdrawn:!!data.withdrawn };
+  currentUser = { id:data.id, name:data.name, branch:data.branch, team:data.team, rank:data.rank, position:data.position, phone:data.phone, birth:data.birth||'', role:data.role, approved:!!data.approved, withdrawn:!!data.withdrawn };
   return currentUser;
 }
 // 로그인 (휴대폰+비번)
@@ -7782,10 +7792,10 @@ async function authSignup(o){
   if(!data || !data.session || !data.user) return {error:'가입 세션 생성 실패 — 관리자: Supabase에서 "Confirm email"을 OFF로 설정해야 합니다.'};
   let isFirst=false;
   try{ const c=await SB.from('fsnet_members').select('id',{count:'exact',head:true}); isFirst=((c.count||0)===0); }catch(e){}
-  const row={ id:data.user.id, phone:phoneDigits(o.phone), name:o.name, branch:o.branch, team:o.team, rank:o.rank, position:o.position, role:isFirst?'admin':'member', approved:isFirst, withdrawn:false };
+  const row={ id:data.user.id, phone:phoneDigits(o.phone), name:o.name, branch:o.branch, team:o.team, rank:o.rank, position:o.position, birth:o.birth||null, role:isFirst?'admin':'member', approved:isFirst, withdrawn:false };
   let { error:e2 } = await SB.from('fsnet_members').insert(row);
-  if(e2 && (e2.code==='PGRST204' || /team/i.test(e2.message||''))){   // team 칼럼 미추가(ALTER 전) → team 빼고 재시도
-    const { team, ...row2 }=row; const r2=await SB.from('fsnet_members').insert(row2); e2=r2.error;
+  if(e2 && (e2.code==='PGRST204' || /team|birth/i.test(e2.message||''))){   // team/birth 칼럼 미추가(ALTER 전) → 빼고 재시도
+    const { team, birth, ...row2 }=row; const r2=await SB.from('fsnet_members').insert(row2); e2=r2.error;
   }
   if(e2) return {error:'프로필 저장 실패: '+e2.message};
   if(isFirst){ await loadMyProfile(); return {ok:true, admin:true}; }
@@ -7886,7 +7896,7 @@ async function doAuthSignup(){
   setAuthErr(''); const btn=document.getElementById('suGo'); if(btn) btn.disabled=true;
   const o={ branch:(document.getElementById('suBranch')||{}).value, team:(document.getElementById('suTeam')||{}).value, name:((document.getElementById('suName')||{}).value||'').trim(),
     rank:(document.getElementById('suRank')||{}).value, position:(document.getElementById('suPos')||{}).value,
-    phone:(document.getElementById('suPhone')||{}).value, pw:(document.getElementById('suPw')||{}).value, pw2:(document.getElementById('suPw2')||{}).value };
+    phone:(document.getElementById('suPhone')||{}).value, birth:(document.getElementById('suBirth')||{}).value, pw:(document.getElementById('suPw')||{}).value, pw2:(document.getElementById('suPw2')||{}).value };
   const r=await authSignup(o);
   if(btn) btn.disabled=false;
   if(r.ok && r.admin){ try{ sessionStorage.setItem('fsnet_flash','가입 완료 — 첫 가입자라 관리자로 지정되었습니다'); }catch(e){} location.reload(); return; }
