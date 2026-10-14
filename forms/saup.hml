@@ -10886,7 +10886,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>380/220V</CHAR>
+<CHAR>§SP_SUPPLY2§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
