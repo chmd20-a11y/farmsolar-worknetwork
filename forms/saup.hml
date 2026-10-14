@@ -10940,7 +10940,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§POLE§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
