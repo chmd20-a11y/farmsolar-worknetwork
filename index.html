@@ -5302,6 +5302,32 @@ function daeriinIdUpload(id,file){
   rd.readAsDataURL(file);
 }
 function daeriinIdRemove(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d); if(p.daeriinIdDoc) delete p.daeriinIdDoc; persistDeal(d); toast('대리인 신분증 첨부를 취소했습니다'); refreshActive(); }
+// 첨부서류 실제 파일 업로드 — 발급받은 서류(이미지/PDF)를 올리면 base64로 저장 → 접수 PDF 출력물의 해당 자리에 자동 삽입(이미지) 또는 업로드 확인(PDF)
+function permitDocPick(id,key){ const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*,application/pdf';
+  inp.onchange=()=>{ const f=inp.files&&inp.files[0]; if(f) permitDocUpload(id,key,f); }; inp.click(); }
+function permitDocUpload(id,key,file){
+  const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d); p.docs=p.docs||{};
+  const isPdf=/pdf$/i.test(file.type||'')||/\.pdf$/i.test(file.name||'');
+  const isImg=/^image\//.test(file.type||'');
+  if(!isPdf&&!isImg){ toast('이미지 또는 PDF 파일만 업로드할 수 있습니다'); return; }
+  if(file.size>10*1024*1024){ toast('파일이 너무 큽니다 (10MB 이하로 올려주세요)'); return; }
+  const save=(url,mime)=>{ p.docs[key]={attached:true, at:new Date().toLocaleString('ko-KR'), dataUrl:url, name:file.name, mime:mime};
+    persistDeal(d); toast(isPdf?'첨부했습니다 — 출력 시 “열기”로 PDF를 함께 제출하세요':'첨부했습니다 — 출력물 자리에 자동 삽입됩니다'); refreshActive(); };
+  const rd=new FileReader();
+  if(isPdf){ rd.onload=e=>save(e.target.result,'application/pdf'); rd.onerror=()=>toast('파일을 읽지 못했습니다'); rd.readAsDataURL(file); return; }
+  rd.onload=e=>{ const img=new Image();                                     // 이미지 → 최대 1600px 축소 후 JPEG 저장
+    img.onload=()=>{ const MX=1600; let w=img.width,h=img.height; if(w>MX||h>MX){ const r=Math.min(MX/w,MX/h); w=Math.round(w*r); h=Math.round(h*r); }
+      const cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(img,0,0,w,h);
+      let url; try{ url=cv.toDataURL('image/jpeg',0.85); }catch(_){ url=e.target.result; } save(url,'image/jpeg'); };
+    img.onerror=()=>toast('이미지를 읽지 못했습니다'); img.src=e.target.result; };
+  rd.onerror=()=>toast('파일을 읽지 못했습니다'); rd.readAsDataURL(file);
+}
+function permitDocRemove(id,key){ const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d); if(p.docs&&p.docs[key]) delete p.docs[key]; persistDeal(d); toast('첨부를 취소했습니다'); refreshActive(); }
+function permitDocOpen(id,key){ const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d); const rec=p.docs&&p.docs[key]; if(!rec||!rec.dataUrl){ toast('첨부된 파일이 없습니다'); return; }
+  try{ const parts=rec.dataUrl.split(','); const mime=(parts[0].match(/data:([^;]+)/)||[])[1]||rec.mime||'application/octet-stream';
+    const bin=atob(parts[1]); const arr=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+    window.open(URL.createObjectURL(new Blob([arr],{type:mime})),'_blank'); }
+  catch(e){ window.open(rec.dataUrl,'_blank'); } }
 function renderPermitDocs(d){
   const p=getPermit(d), isBld=p.installType==='건물';
   const need = PERMIT_DOCS.filter(x=> isBld?x.bld:x.land);
@@ -5315,22 +5341,37 @@ function renderPermitDocs(d){
   };
   const items = PERMIT_DOCS.map(x=>{
     const req = isBld?x.bld:x.land;
-    const att = p.docs&&p.docs[x.key]&&p.docs[x.key].attached;
+    const rec = p.docs&&p.docs[x.key];
+    const att = rec&&rec.attached;
+    const file = rec&&rec.dataUrl ? rec : null;                               // 실제 업로드된 파일
+    const isPdf = file && /pdf/i.test(file.mime||'');
+    const ck = file ? `<div class="doc-ck" style="cursor:default" title="첨부됨">✓</div>`
+                    : `<div class="doc-ck" onclick="toggleDoc('${d.id}','${esc(x.key)}')" title="표시만 체크">${att?'✓':''}</div>`;
+    const badge = file
+      ? `<span class="doc-badge" style="background:color-mix(in srgb,#2e8b63 16%,transparent);color:#2e8b63">${isPdf?'📄 PDF':'🖼 이미지'} 첨부 · ${esc(file.at||'')}</span>`
+      : (att?`<span class="doc-badge" style="background:color-mix(in srgb,var(--ink-3) 14%,transparent)">표시 체크 · ${esc(rec.at||'')}</span>`:'');
+    const actions = file
+      ? `${isPdf?'<span class="doc-badge" style="background:color-mix(in srgb,#2e8b63 12%,transparent);color:#2e8b63">📄 '+esc(file.name||'PDF')+'</span>':`<img src="${file.dataUrl}" alt="첨부" style="height:44px;border-radius:5px;border:1px solid var(--border)">`}
+         <button class="btn ghost sm" onclick="permitDocOpen('${d.id}','${esc(x.key)}')">열기 ↗</button>
+         <button class="btn ghost sm" onclick="permitDocPick('${d.id}','${esc(x.key)}')">다시 업로드</button>
+         <button class="btn ghost sm" onclick="permitDocRemove('${d.id}','${esc(x.key)}')">첨부 취소</button>`
+      : `<button class="btn dark sm" onclick="permitDocPick('${d.id}','${esc(x.key)}')">📎 파일 업로드</button>
+         <button class="btn ghost sm" onclick="toggleDoc('${d.id}','${esc(x.key)}')">${att?'표시 해제':'표시만 체크'}</button>`;
     return `<div class="doc-item ${att?'done':''} ${req?'':'skip'}">
-      <div class="doc-ck" onclick="toggleDoc('${d.id}','${esc(x.key)}')" title="첨부 토글">${att?'✓':''}</div>
+      ${ck}
       <div class="doc-b">
-        <div class="doc-t">${esc(x.key)} <span class="doc-badge">${esc(x.site)}</span>${req?'':'<span class="doc-badge">이 유형 불필요</span>'}${att?`<span class="doc-badge" style="background:color-mix(in srgb,#2e8b63 16%,transparent);color:#2e8b63">첨부됨 · ${esc(p.docs[x.key].at||'')}</span>`:''}</div>
+        <div class="doc-t">${esc(x.key)} <span class="doc-badge">${esc(x.site)}</span>${req?'':'<span class="doc-badge">이 유형 불필요</span>'}${badge}</div>
         <div class="doc-g">${esc(x.guide)}</div>
         ${credLine(x.cred)}
-        <div class="doc-act">
+        <div class="doc-act" style="align-items:center">
           <a class="btn ghost sm" href="${x.url}" target="_blank" rel="noopener">발급처 열기 ↗</a>
-          <button class="btn ${att?'ghost':'dark'} sm" onclick="toggleDoc('${d.id}','${esc(x.key)}')">${att?'첨부 취소':'파일 첨부(표시)'}</button>
+          ${actions}
         </div>
       </div></div>`;
   }).join('');
   return `<div class="card pad" style="margin-top:16px">
     <h3 class="section-title" style="font-size:13px;margin:0 0 4px"><svg class="st-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>첨부서류 발급 · 준비 <span class="lr-s" style="font-weight:600">(${isBld?'건물':'토지'} 유형 필요 ${doneN}/${need.length})</span></h3>
-    <div class="cred-warn">ℹ️ 관할 관청에 제출하는 <b>공식 발급본</b>은 발급처별 자동 API 발급이 불가해(조회 API는 날인본이 아님) 각 포털에서 직접 발급해야 합니다. 아래 버튼으로 발급처를 열고 가이드대로 발급 → 각 서류를 첨부하세요. 발급 계정은 로그인한 내부 직원에게만 표시되며 공개 소스에는 저장되지 않습니다.</div>
+    <div class="cred-warn">ℹ️ 관할 관청에 제출하는 <b>공식 발급본</b>은 발급처별 자동 API 발급이 불가해(조회 API는 날인본이 아님) 각 포털에서 직접 발급해야 합니다. 아래 버튼으로 발급처를 열고 가이드대로 발급 → <b>발급받은 파일(이미지·PDF)을 업로드</b>하세요. 업로드하면 <b>접수 PDF 출력물의 해당 자리에 자동으로 들어갑니다</b> — 이미지는 그 자리에 바로 삽입, 여러 장짜리 PDF는 “업로드 완료” 표시 후 출력 시 <b>“열기”로 따로 인쇄해 합본</b>합니다. 발급 계정은 로그인한 내부 직원에게만 표시되며 공개 소스에는 저장되지 않습니다.</div>
     ${items}
     ${(()=>{ const dd=p.daeriinIdDoc, has=!!(dd&&dd.dataUrl); return `<div class="doc-item ${has?'done':''}" style="border-top:2px dashed var(--border);margin-top:10px;padding-top:12px">
       <div class="doc-ck" style="cursor:default">${has?'✓':'📎'}</div>
@@ -5933,13 +5974,16 @@ const _PF={
   wiimjang: {url:'forms/wiimjang.print.html',  label:'대리인 위임장'},
   sinbun:   {url:'forms/sinbunjeung.print.html', label:'사업주/대리인 신분증'},
 };
-// 아직 업로드/입력 전 서류 = 자리표시 페이지. ph(서류명, 가져오는 위치)
-function _ph(name, src){ return {ph:name, src:src}; }
 const _SRC={ design:'설계팀 작성 · 대시보드 업로드', idcopy:'사업주 제출 · 대시보드 업로드',
   orig:'영업 수령 원본 · 접수 체크리스트', gong:'공부 발급자료 · 자동조회/업로드', form:'양식 작성 (추후 제공)' };
+// 번들 자리표시 서류명 → 「첨부서류 발급·준비」 체크리스트 key 매핑(업로드 파일을 그 자리에 삽입)
+const DOC_UP={ '건축물대장':'건축물대장', '토지대장':'토지(임야)대장', '지적도':'지적도',
+  '토지이음':'토지이용계획확인서', '토지등기부등본':'등기부등본(토지·건물)', '건축물등기부등본':'등기부등본(토지·건물)' };
 // 접수서류 순서 묶음 — 첨부 리스트(개인/법인) 순서대로. 건물형(지붕형)만 건축물대장·건축물등기부등본 포함. 공사 협력 의향서는 목록 뒤 유지.
 function permitBundle(d){
   const p=getPermit(d);
+  // 업로드 전 서류 = 자리표시. 체크리스트에 업로드된 파일이 있으면 그 자리에 삽입(up).
+  const _ph=(name, src)=>{ const k=DOC_UP[name]; const r=k&&p.docs&&p.docs[k]; return {ph:name, src:src, up:(r&&r.dataUrl)?r:null}; };
   const corp=!!(p.applicant&&p.applicant.corp);                                           // true=법인 / false=개인
   const bld=((p.builds&&p.builds.length>0)) || /지붕|건물/.test(String(d.site||''));        // 건물형(지붕형)
   const L=[ _PF.sincheong, _PF.saup, _ph('배치도',_SRC.design), _ph('측면도',_SRC.design), _PF.ilramdo, _PF.dongui,
@@ -5967,8 +6011,24 @@ function permitBundle(d){
   L.push(_PF.uihyang);
   return L;
 }
-// 자리표시 1페이지(A4) — 서류명 + 가져오는 위치 마킹. 실제 파일 업로드 시 이 자리에 삽입 예정.
-function permitPlaceholderPage(name, src){
+// 자리표시 1페이지(A4) — 서류명 + 가져오는 위치 마킹. up(업로드 파일)이 있으면 이미지=전면삽입 / PDF=업로드완료 확인.
+function permitPlaceholderPage(name, src, up){
+  if(up && up.dataUrl){
+    const isImg = /^image\//.test(up.mime||'') || !/pdf/i.test(up.mime||'');
+    if(isImg){                                                                  // 이미지 → 그 자리에 한 페이지로 삽입
+      return "<div class=\"page\" style=\"width:210mm;height:297mm;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12mm 8mm;box-sizing:border-box\">"
+        +"<div style=\"font-size:11pt;color:#64748b;letter-spacing:2px;margin-bottom:10px;word-break:keep-all\">"+esc(name)+"</div>"
+        +"<img src=\""+up.dataUrl+"\" alt=\""+esc(name)+"\" style=\"max-width:100%;max-height:262mm;object-fit:contain;border:1px solid #e2e8f0\">"
+        +"</div>";
+    }
+    return "<div class=\"page\" style=\"width:210mm;height:297mm;display:flex;align-items:center;justify-content:center\">"   // PDF → 본문 합본 불가 → 업로드 확인 페이지
+      +"<div style=\"border:2px solid #16a34a;border-radius:14px;padding:46px 60px;text-align:center;max-width:152mm\">"
+      +"<div style=\"font-size:13pt;color:#16a34a;letter-spacing:2px;margin-bottom:14px\">✓ 업로드 완료</div>"
+      +"<div style=\"font-size:27pt;font-weight:700;color:#1f2937;margin-bottom:18px;word-break:keep-all\">"+esc(name)+"</div>"
+      +"<div style=\"font-size:12.5pt;color:#334155\">첨부 파일 : <b>"+esc(up.name||'PDF')+"</b></div>"
+      +"<div style=\"font-size:10.5pt;color:#64748b;margin-top:16px;line-height:1.65\">여러 장짜리 공식 PDF는 인쇄본에 자동으로 합쳐지지 않습니다.<br>이 자리에 <b>업로드한 PDF를 출력해 함께 제출</b>하세요. (체크리스트의 “열기”로 바로 인쇄)</div>"
+      +"</div></div>";
+  }
   return "<div class=\"page\" style=\"width:210mm;height:297mm;display:flex;align-items:center;justify-content:center\">"
     +"<div style=\"border:2px dashed #94a3b8;border-radius:14px;padding:46px 60px;text-align:center;max-width:150mm\">"
     +"<div style=\"font-size:12pt;color:#94a3b8;letter-spacing:3px;margin-bottom:16px\">첨부 서류 자리</div>"
@@ -5989,7 +6049,7 @@ const PPA_PRINT_FILES=[
 async function buildFormsDoc(FILES, map, flow, rawMap){
   let styles=[], bodies=[], fail=[];
   for(const f of FILES){
-    if(f.ph){ bodies.push(permitPlaceholderPage(f.ph, f.src)); continue; }   // 자리표시(업로드 전 서류) — fetch 없이 1페이지 삽입
+    if(f.ph){ bodies.push(permitPlaceholderPage(f.ph, f.src, f.up)); continue; }   // 자리표시(업로드 전 서류) 또는 업로드 파일 삽입 — fetch 없이 1페이지
     try{
       const res=await fetch(f.url,{cache:'no-store'}); if(!res.ok) throw new Error('HTTP '+res.status);
       const html=fillPermitTemplateHTML(await res.text(), map, rawMap);        // 토큰 치환 + 자동값 파란색(span.pm-auto) + 이미지(rawMap)
@@ -6615,6 +6675,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-15', team:'행정', kind:'추가', title:'첨부서류 발급·준비 — 실제 파일 업로드 + 접수 PDF 자동 삽입', body:'발전사업 허가 하단 <b>「첨부서류 발급·준비」</b>를 <b>실제 파일 업로드</b>로 바꿨습니다. 그동안은 “표시만” 체크였는데, 이제 건축물대장·토지대장·지적도·토지이용계획확인서·건축물현황도·등기부등본 등 <b>발급받은 파일(이미지 또는 PDF)을 직접 올릴 수 있습니다</b>. ① 올린 파일은 썸네일·파일명으로 확인되고 <b>“열기”로 바로 열어</b> 볼 수 있으며, 다시 업로드·첨부 취소가 됩니다. ② <b>업로드하면 접수 PDF 출력물의 해당 서류 자리에 자동으로 반영</b>됩니다 — <b>이미지</b>는 그 자리에 한 페이지로 바로 삽입되고, <b>여러 장짜리 공식 PDF</b>는 브라우저 인쇄로는 본문에 합칠 수 없어 “✓ 업로드 완료” 표시 페이지로 들어간 뒤 <b>“열기”로 따로 인쇄해 합본</b>합니다. 파일 없이 체크만 하고 싶을 때를 위한 <b>“표시만 체크”도 그대로</b> 남겨 두었습니다. (10MB 이하, 이미지는 올릴 때 자동으로 적정 크기로 축소)', author:'개발'},
   {date:'2026-10-15', team:'행정', kind:'추가', title:'사업주/대리인 신분증 양식 + 대리인 신분증 업로드 기능', body:'발전사업 허가 접수서류에 <b>「사업주/대리인 신분증」 양식</b>을 실제 양식으로 추가했습니다. ① <b>사업주 신분증</b>은 다른 이미지들처럼 <b>자리표시</b>(“영업 「실계약」 첨부에서 자동 삽입 예정”)로 위치를 잡아 둡니다. ② <b>대리인 신분증</b>은 <b>「첨부서류 발급·준비」</b> 구역에 <b>업로드 기능</b>을 새로 만들어, 대리인(로그인 직원) 신분증 이미지를 올리면 <b>미리보기·PDF 양식에 실제 이미지가 자동 삽입</b>됩니다(한글파일에는 ‘대리인 신분증 첨부됨’으로 표기). 업로드한 이미지는 자동으로 적정 크기로 줄여 저장됩니다. 접수서류 순서상 <b>「대리인 위임장」 다음 자리</b>에 들어가며 개인·법인 공통입니다.', author:'개발'},
   {date:'2026-10-15', team:'공통', kind:'수정', title:'화면 스크롤 — 상단바·좌측 메뉴 고정, 중앙 내용만 스크롤', body:'대시보드에서 아래로 스크롤할 때 <b>좌측 메뉴까지 함께 밀려 올라가던 문제</b>를 고쳤습니다. 이제 <b>상단바와 좌측 세부업무 메뉴는 항상 고정</b>되고, <b>가운데 본문 영역만 스크롤</b>됩니다. 긴 목록을 봐도 메뉴가 늘 같은 자리에 있어 이동이 편해집니다. (좁은 모바일 세로화면은 기존처럼 전체가 함께 스크롤)', author:'개발'},
   {date:'2026-10-14', team:'행정', kind:'수정', title:'대리인 위임장 보완 — 생년월일 선택 표시 + 관리자 저장 즉시 반영 + 한글파일 다운로드 추가', body:'오늘 새로 만든 <b>대리인 위임장·생년월일</b> 기능을 다듬었습니다. ① 회원가입 화면의 생년월일 항목에 <b>“(선택)”</b> 표시를 넣어, <b>비워 둬도 가입에 문제없다</b>는 것을 분명히 했습니다(필요한 직원만 나중에 관리자가 입력하면 됩니다). ② 관리자가 ⚙ → 회원 관리에서 <b>자기 자신의 생년월일을 저장</b>했을 때 다시 로그인하지 않아도 <b>그 자리에서 바로 위임장에 반영</b>되도록 고쳤습니다(이전에는 재로그인해야 보였습니다). ③ 대리인 위임장을 <b>한글파일(HWP) 다운로드 목록</b>에도 추가했습니다 — 지금까지 미리보기·PDF에만 있고 한글파일 받기에는 빠져 있었는데, 이제 <b>미리보기·PDF·한글파일 모두 동일</b>하게 위임장을 받을 수 있습니다.', author:'개발'},
