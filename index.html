@@ -5287,8 +5287,7 @@ function toggleDoc(id,key){ const d=DEALS.find(x=>x.id===id); if(!d) return; con
   p.docs[key]= cur?{attached:false}:{attached:true, at:new Date().toLocaleString('ko-KR')};
   persistDeal(d); refreshActive(); }
 // 대리인 신분증 업로드 — 이미지 선택 → 축소(최대 1280px) → base64 저장 → 「사업주/대리인 신분증」 양식(미리보기·PDF)에 자동 삽입
-function daeriinIdPick(id){ const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
-  inp.onchange=()=>{ const f=inp.files&&inp.files[0]; if(f) daeriinIdUpload(id,f); }; inp.click(); }
+function daeriinIdPick(id){ pickFile('image/*', f=>daeriinIdUpload(id,f)); }
 function daeriinIdUpload(id,file){
   if(!/^image\//.test(file.type||'')){ toast('이미지 파일만 업로드할 수 있습니다'); return; }
   const rd=new FileReader();
@@ -5302,13 +5301,22 @@ function daeriinIdUpload(id,file){
   rd.readAsDataURL(file);
 }
 function daeriinIdRemove(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d); if(p.daeriinIdDoc) delete p.daeriinIdDoc; persistDeal(d); toast('대리인 신분증 첨부를 취소했습니다'); refreshActive(); }
+// 파일 선택 공용 헬퍼 — input을 화면 밖에 잠깐 DOM에 붙였다 떼어야 Safari 등에서 선택 후 onchange가 안정적으로 걸림(detached input은 콜백 유실)
+function pickFile(accept, cb){
+  const inp=document.createElement('input'); inp.type='file'; if(accept) inp.accept=accept;
+  inp.style.position='fixed'; inp.style.left='-9999px'; inp.style.top='0'; inp.style.opacity='0';
+  document.body.appendChild(inp);
+  const done=()=>{ try{ document.body.removeChild(inp); }catch(_){} };
+  inp.onchange=()=>{ const f=inp.files&&inp.files[0]; if(f) cb(f); setTimeout(done,0); };
+  inp.click();
+}
 // 첨부서류 실제 파일 업로드 — 발급받은 서류(이미지/PDF)를 올리면 base64로 저장 → 접수 PDF 출력물의 해당 자리에 자동 삽입(이미지) 또는 업로드 확인(PDF)
-function permitDocPick(id,key){ const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*,application/pdf';
-  inp.onchange=()=>{ const f=inp.files&&inp.files[0]; if(f) permitDocUpload(id,key,f); }; inp.click(); }
+function permitDocPick(id,key){ pickFile('image/*,application/pdf', f=>permitDocUpload(id,key,f)); }
 function permitDocUpload(id,key,file){
   const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d); p.docs=p.docs||{};
-  const isPdf=/pdf$/i.test(file.type||'')||/\.pdf$/i.test(file.name||'');
-  const isImg=/^image\//.test(file.type||'');
+  const nm=(file.name||'').toLowerCase();
+  const isPdf=/pdf$/i.test(file.type||'')||/\.pdf$/.test(nm);
+  const isImg=/^image\//.test(file.type||'')||/\.(jpe?g|png|gif|webp|bmp|heic|heif)$/.test(nm);
   if(!isPdf&&!isImg){ toast('이미지 또는 PDF 파일만 업로드할 수 있습니다'); return; }
   if(file.size>10*1024*1024){ toast('파일이 너무 큽니다 (10MB 이하로 올려주세요)'); return; }
   const save=(url,mime)=>{ p.docs[key]={attached:true, at:new Date().toLocaleString('ko-KR'), dataUrl:url, name:file.name, mime:mime};
@@ -6675,6 +6683,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-15', team:'행정', kind:'수정', title:'첨부서류·대리인 신분증 업로드 — 파일 선택 후 반응 없던 문제 수정', body:'첨부서류와 대리인 신분증에서 <b>파일을 고른 뒤에도 업로드가 안 되던 문제</b>를 고쳤습니다. 파일 선택창은 떴지만 파일을 고르고 나면 <b>일부 브라우저(특히 Safari)에서 선택이 반영되지 않던</b> 현상으로, 업로드 처리 방식을 바로잡아 <b>Safari·Chrome 등에서 모두 정상 동작</b>하도록 했습니다. 이미지는 올리면 바로 미리보기·출력물에 반영됩니다. (화면이 그대로면 한 번 <b>새로고침</b> 후 다시 시도해 주세요)', author:'개발'},
   {date:'2026-10-15', team:'행정', kind:'추가', title:'첨부서류 발급·준비 — 실제 파일 업로드 + 접수 PDF 자동 삽입', body:'발전사업 허가 하단 <b>「첨부서류 발급·준비」</b>를 <b>실제 파일 업로드</b>로 바꿨습니다. 그동안은 “표시만” 체크였는데, 이제 건축물대장·토지대장·지적도·토지이용계획확인서·건축물현황도·등기부등본 등 <b>발급받은 파일(이미지 또는 PDF)을 직접 올릴 수 있습니다</b>. ① 올린 파일은 썸네일·파일명으로 확인되고 <b>“열기”로 바로 열어</b> 볼 수 있으며, 다시 업로드·첨부 취소가 됩니다. ② <b>업로드하면 접수 PDF 출력물의 해당 서류 자리에 자동으로 반영</b>됩니다 — <b>이미지</b>는 그 자리에 한 페이지로 바로 삽입되고, <b>여러 장짜리 공식 PDF</b>는 브라우저 인쇄로는 본문에 합칠 수 없어 “✓ 업로드 완료” 표시 페이지로 들어간 뒤 <b>“열기”로 따로 인쇄해 합본</b>합니다. 파일 없이 체크만 하고 싶을 때를 위한 <b>“표시만 체크”도 그대로</b> 남겨 두었습니다. (10MB 이하, 이미지는 올릴 때 자동으로 적정 크기로 축소)', author:'개발'},
   {date:'2026-10-15', team:'행정', kind:'추가', title:'사업주/대리인 신분증 양식 + 대리인 신분증 업로드 기능', body:'발전사업 허가 접수서류에 <b>「사업주/대리인 신분증」 양식</b>을 실제 양식으로 추가했습니다. ① <b>사업주 신분증</b>은 다른 이미지들처럼 <b>자리표시</b>(“영업 「실계약」 첨부에서 자동 삽입 예정”)로 위치를 잡아 둡니다. ② <b>대리인 신분증</b>은 <b>「첨부서류 발급·준비」</b> 구역에 <b>업로드 기능</b>을 새로 만들어, 대리인(로그인 직원) 신분증 이미지를 올리면 <b>미리보기·PDF 양식에 실제 이미지가 자동 삽입</b>됩니다(한글파일에는 ‘대리인 신분증 첨부됨’으로 표기). 업로드한 이미지는 자동으로 적정 크기로 줄여 저장됩니다. 접수서류 순서상 <b>「대리인 위임장」 다음 자리</b>에 들어가며 개인·법인 공통입니다.', author:'개발'},
   {date:'2026-10-15', team:'공통', kind:'수정', title:'화면 스크롤 — 상단바·좌측 메뉴 고정, 중앙 내용만 스크롤', body:'대시보드에서 아래로 스크롤할 때 <b>좌측 메뉴까지 함께 밀려 올라가던 문제</b>를 고쳤습니다. 이제 <b>상단바와 좌측 세부업무 메뉴는 항상 고정</b>되고, <b>가운데 본문 영역만 스크롤</b>됩니다. 긴 목록을 봐도 메뉴가 늘 같은 자리에 있어 이동이 편해집니다. (좁은 모바일 세로화면은 기존처럼 전체가 함께 스크롤)', author:'개발'},
