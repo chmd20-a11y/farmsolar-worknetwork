@@ -2149,46 +2149,64 @@ function teamCurLabel(site, team){
 }
 const BOARD_SUB = {
   '영업':'발굴 → 이관 → 인허가 → 시공 → 준공 (현장 전체 진행률)',
+  '설계':'타당성 → 실측 → 구조검토 (설계 단계 기준 · 영업·설계 현장 포함)',
   '시공':'신규접수 → 기초 → 자재입고 → 구조물 → 모듈 → 전기 → 사용전검사 (시공 단계 완료율)',
   '행정':'발전사업허가 → 개발행위 → PPA → 선로비 → 공사계획 → 한전수급 → 준공 → 사업개시 → 설비확인 (행정 단계 완료율)',
 };
+// 한 현장(영업·설계 딜/행정~준공 현장)에 대한 '그 팀 관점'의 진행률·상태·담당
+function teamView(proj, team){
+  if(proj.kind==='deal'){
+    const d=proj.obj;
+    if(team==='영업') return {pct:projPct(proj), label: d.stage==='rejected'?'반려·보완':'영업·설계 진행중', cls: d.stage==='rejected'?'risk':'prog', owner:d.rep};
+    if(team==='설계'){ const dp=designProgress(d)||{label:'영업 검토중',pct:12,cls:'prog'}; return {pct:dp.pct, label:dp.label, cls:dp.cls, owner:'이도현'}; }
+    return {pct:0, label: team+' 예정', cls:'wait', owner: team==='시공'?'미배정':'한지원'};
+  }
+  const s=proj.obj;
+  if(team==='영업'){
+    const pct=projPct(proj);
+    const label= s.stage==='sales'?'영업 검토중': sitePct(s)>=100?'준공 완료':curStageName(s);
+    const cls= s.risk?'risk': (sitePct(s)>=100?'done':'prog');
+    return {pct, label, cls, owner:s.rep};
+  }
+  if(team==='설계'){
+    const si=STAGES.findIndex(x=>x.key==='struct'), st= si>=0?stageStatus(s,si):'done';
+    const done= (s.cur>si) || st==='done';
+    const pct= done?100: st==='active'?60: st==='risk'?60: (s.stage==='sales'?0:20);
+    const label= done?'구조검토 완료': st==='active'?'구조검토 중': st==='risk'?'구조검토 지연': (s.stage==='sales'?'이관 대기':'구조검토 대기');
+    const cls= done?'done': st==='risk'?'risk': (s.stage==='sales'?'wait':'prog');
+    return {pct, label, cls, owner:'이도현'};
+  }
+  // 행정 / 시공 — 그 팀 단계 완료율
+  const pct=teamStagePct(s,team), info=teamCurLabel(s,team);
+  return {pct, label:info.label, cls:info.cls, owner: team==='시공'?(s.mgr!=='-'?s.mgr+' 소장':'미배정'):'한지원'};
+}
 function renderSitesProgressBoard(team){
-  const isSales = team==='영업';
-  const rowsData = SITES.map(site=>{
-    let pct, info, owner;
-    if(isSales){
-      pct = sitePct(site);
-      if(site.stage==='sales') info={label:'영업 검토중', cls:'prog'};
-      else if(pct>=100) info={label:'준공 완료', cls:'done'};
-      else info={label:curStageName(site), cls: site.risk?'risk':'prog'};
-      owner = site.rep;
-    } else {
-      pct = teamStagePct(site, team);
-      info = teamCurLabel(site, team);
-      owner = team==='시공' ? (site.mgr!=='-'?site.mgr+' 소장':'미배정') : '한지원';
-    }
-    return {site, pct, info, owner};
-  });
-  const scope = isSales ? rowsData : rowsData.filter(x=>x.site.stage!=='sales');
-  const doneN = scope.filter(x=>x.pct>=100).length;
-  const riskN = scope.filter(x=>x.info.cls==='risk').length;
-  const inprog = scope.length - doneN;
-  const avg = scope.length ? Math.round(scope.reduce((a,x)=>a+x.pct,0)/scope.length) : 0;
+  const ps = allProjectsRaw();
+  const rowsData = ps.map(proj=>{ const v=teamView(proj,team); return {proj, pct:v.pct, info:{label:v.label,cls:v.cls}, owner:v.owner}; });
+  const doneN = rowsData.filter(x=>x.pct>=100).length;
+  const riskN = rowsData.filter(x=>x.info.cls==='risk').length;
+  const inprog = rowsData.length - doneN;
+  const avg = rowsData.length ? Math.round(rowsData.reduce((a,x)=>a+x.pct,0)/rowsData.length) : 0;
+  const salesN = rowsData.filter(x=>x.proj.kind==='deal').length;
   const barColor = cls => cls==='done' ? 'var(--ok)' : cls==='risk' ? 'var(--risk)' : 'var(--prog)';
-  const rows = rowsData.slice().sort((a,b)=> b.pct-a.pct).map(({site,pct,info,owner})=>`
-    <tr class="site-row" onclick="openDrawer('${site.id}')" style="cursor:pointer">
-      <td><div class="lr-t" style="font-size:13px">${esc(site.name)} · ${site.cap.toLocaleString()}kW <span class="type-chip">${esc(site.type)}</span></div><div class="site-id">${esc(site.id)}</div></td>
+  const rows = rowsData.slice().sort((a,b)=> b.pct-a.pct).map(({proj,pct,info,owner})=>{
+    const mark = proj.kind==='deal' ? ' <span class="type-chip" style="background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent-ink)">영업·설계</span>' : '';
+    return `<tr class="site-row" onclick="openDrawer('${proj.id}')" style="cursor:pointer">
+      <td><div class="lr-t" style="font-size:13px">${esc(proj.name)} · ${proj.cap.toLocaleString()}kW <span class="type-chip">${esc(proj.type)}</span></div><div class="site-id">${esc(proj.id)}${mark}</div></td>
       <td><span class="pill ${info.cls}"><span class="pd"></span>${esc(info.label)}</span></td>
       <td><span class="dpb-bar"><span class="dpb-fill" style="width:${pct}%;background:${barColor(info.cls)}"></span></span><span class="dpb-pct" style="color:${barColor(info.cls)}">${pct}%</span></td>
-      <td>${esc(owner)}</td></tr>`).join('');
+      <td>${esc(owner)}</td></tr>`;
+  }).join('');
+  const doneLabel = team==='영업'?'준공 완료': team==='설계'?'설계 완료':'완료';
   return `<div class="card">
     <div class="card-head"><h2>${team} 진행 현황</h2><span class="ch-sub">${BOARD_SUB[team]||''}</span></div>
     <div class="dpb-kpis">
-      <div class="dpb-kpi"><div class="dpb-k-l">평균 진행률</div><div class="dpb-k-v" style="color:var(--accent-ink)">${avg}<small>%</small></div></div>
+      <div class="dpb-kpi"><div class="dpb-k-l">전체 현장</div><div class="dpb-k-v" style="color:var(--accent-ink)">${rowsData.length}<small>개</small></div></div>
       <div class="dpb-kpi"><div class="dpb-k-l">진행중</div><div class="dpb-k-v">${inprog}<small>건</small></div></div>
-      <div class="dpb-kpi"><div class="dpb-k-l">${isSales?'준공 완료':'완료'}</div><div class="dpb-k-v">${doneN}<small>건</small></div></div>
+      <div class="dpb-kpi"><div class="dpb-k-l">${doneLabel}</div><div class="dpb-k-v">${doneN}<small>건</small></div></div>
       <div class="dpb-kpi"><div class="dpb-k-l">지연·문제</div><div class="dpb-k-v" style="${riskN?'color:var(--risk)':''}">${riskN}<small>건</small></div></div>
     </div>
+    <div class="ch-sub" style="margin:2px 2px 10px;font-size:11.5px">영업·설계 ${salesN} · 인허가~준공 ${rowsData.length-salesN} · 평균 진행률 ${avg}%</div>
     <div class="table-scroll"><table class="chk-table">
       <thead><tr><th style="min-width:180px">현장</th><th style="min-width:116px">현재 단계</th><th style="min-width:230px">진행률</th><th style="min-width:80px">담당</th></tr></thead>
       <tbody>${rows}</tbody></table></div>
@@ -6761,6 +6779,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-15', team:'공통', kind:'수정', title:'팀별 세부 현황판도 전 현장 통합 — 영업·설계·행정·시공 모두 한 현장 기준', body:'종합현황판에 이어, <b>팀별 세부 현황판(영업·설계·행정·시공)</b>도 모두 <b>전 현장을 그 팀 관점으로</b> 보여주도록 통합했습니다. 그동안 팀별 현황판은 시공 단계 현장만 집계해, 영업·설계 중인 현장이 빠져 있었습니다. 이제 <b>각 팀 현황판에 모든 현장(영업·설계 중 + 인허가~준공)</b>이 나오고, <b>그 팀 관점의 진행률·현재 단계</b>로 표시됩니다 — 예: 행정 현황판에서 시공 중 현장은 행정 진행률로, 아직 영업·설계 중인 현장은 “행정 예정”으로. 설계 현황판도 같은 방식으로(영업·설계 현장은 설계 진행도, 시공 현장은 “구조검토 완료”). 현장 이름을 누르면 영업·설계 현장이든 시공 현장이든 전 과정 상세가 열립니다. 어느 팀 화면에서 보든 <b>한 현장이 전체 과정 어디에 있는지</b> 일관되게 보입니다.', author:'개발'},
   {date:'2026-10-15', team:'공통', kind:'수정', title:'종합현황판 — 영업부터 준공까지 모든 현장을 한 줄로 통합 표시', body:'종합현황판의 <b>현장 파이프라인</b>을 <b>한 현장 기준</b>으로 합쳤습니다. 그동안 <b>영업·설계 단계 현장과 시공 단계 현장이 따로</b> 집계돼, 종합현황판에는 인허가~준공 현장만 보이고 영업·설계 중인 현장(가온뜰·새터들·봉산 등)은 빠져 있었습니다. 이제 <b>모든 현장이 영업→설계→인허가→시공→준공 한 줄의 진행바</b>로 한 목록에 나옵니다. ① 진행바 맨 앞에 <b>영업·설계 구간</b>이 생겨, 영업 중인 현장은 앞부분만 채워진 상태로, 시공 현장은 전 구간으로 표시됩니다. ② 상단 요약도 <b>영업~준공 전체 기준</b>으로 바뀌었습니다(관리 현장·영업·설계 중·준공 임박·문제발생). ③ <b>영업·설계 현장을 클릭</b>하면 그 현장의 영업·설계 진행과 <b>앞으로의 인허가~준공 예정</b>이 한눈에 보이는 상세가 열립니다. 한 현장이 어느 과정에 있든 <b>같은 화면에서 전 과정으로</b> 보입니다.', author:'개발'},
   {date:'2026-10-15', team:'공통', kind:'수정', title:'하나의 현장 = 하나의 데이터 — 시공이 영업·설계·행정 데이터를 그대로 공유', body:'대시보드의 <b>핵심 원칙</b>을 구조에 반영했습니다 — <b>한 현장에 한 번 들어온 정보는 모든 메뉴가 같은 기준으로 가져다 씁니다.</b> 그동안 <b>시공은 영업·행정과 데이터가 따로</b> 놀아서(현장이 시공으로 넘어갈 때 이름·용량·유형만 넘어가고 사업주·설비·부지·허가 정보는 끊겼습니다) 사용전검사에서 임시 데이터를 따로 두고 있었는데, 이제 <b>발전사업허가와 똑같은 하나의 현장 데이터</b>를 시공도 그대로 읽도록 통합했습니다. ① 사업주·설비 제원·설치장소·허가번호가 <b>발전허가에서 입력한 바로 그 값</b>으로 사용전검사·수검자서식에 자동 반영됩니다. ② 앞으로 <b>현장이 영업→설계→행정→시공으로 넘어가도 같은 현장 데이터가 계속 따라갑니다</b>(완료 시 전체 승계+연결). ③ 새 양식·메뉴를 붙일 때도 항상 이 <b>하나의 현장 데이터</b>에서 꺼내 쓰므로, 같은 정보를 다시 입력·업로드할 일이 없습니다. 화면·출력 모습은 그대로이고, <b>데이터가 하나로 이어진 것</b>이 핵심입니다.', author:'개발'},
   {date:'2026-10-15', team:'시공', kind:'수정', title:'사용전 검사 첨부서류 — 대시보드에 이미 있는 서류는 자동 연동(중복 업로드 제거)', body:'사용전검사 <b>「첨부서류 발급·준비」</b>에서, <b>대시보드에 이미 그 현장 정보가 있는 서류는 다시 올리지 않아도 되도록</b> 자동 연동했습니다. ① <b>허가증·도면·사업자등록 등 10종</b>(토지대장·개발행위 허가증·공사계획 신고필증·구조검토서·발전사업 변경허가증·사업자등록증·전기 도면·감리배치확인서·안전관리 선임필증·모듈 시리얼 목록)은 <b>영업·설계·행정 단계에 등록된 현장 정보로 자동 연동</b>되어 “🔗 대시보드 연동” 으로 표시됩니다(업로드 불필요 · 필요하면 직접 교체 가능). 접수 PDF에도 “대시보드 연동 — 어느 단계에서 왔는지”가 표시됩니다. ② <b>제조사 시험성적서·KS인증서·인버터 개별성적서·감리완료보고서 등 외부 발급 서류 12종만 업로드</b>하면 됩니다. 상단에 <b>확보 N / 22</b>로 몇 건이 준비됐는지 한눈에 보입니다. (연동 판정은 현장에 해당 정보가 등록돼 있는지로 자동 결정)', author:'개발'},
@@ -7594,7 +7613,7 @@ function activateItem(tab, btn){
     const map = {'시공':'c-board','행정':'a-status','설계':'d-overview'};
     const target = map[btn.dataset.board];
     const b = btn.dataset.board;
-    document.getElementById('sub-'+target).innerHTML = b==='설계' ? renderDesignProgressBoard() : renderSitesProgressBoard(b);
+    document.getElementById('sub-'+target).innerHTML = renderSitesProgressBoard(b);   // 전 팀 현황판 통합(영업·설계 딜 + 행정~준공 현장, 각 팀 관점)
     view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-'+target));
   } else if(btn.dataset.wf){
     const s = WF_SCREENS[btn.dataset.wf];
