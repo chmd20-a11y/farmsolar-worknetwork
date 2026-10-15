@@ -1380,7 +1380,7 @@ button{font-family:inherit;cursor:pointer}
                     <th style="min-width:190px">현장</th>
                     <th>용량 · 유형</th>
                     <th>영업담당</th>
-                    <th style="min-width:300px">진행 (발전허가→설비확인)</th>
+                    <th style="min-width:300px">진행 (영업→설비확인)</th>
                     <th>현재 단계</th>
                     <th>상태</th>
                   </tr>
@@ -1865,22 +1865,82 @@ function filteredSites(){
   if(ovFilter==='soon') return s.filter(x=>!x.risk && x.stage!=='sales' && x.cur<STAGES.length && ['pre_inspect','kepco','completion','commercial','facility'].includes(STAGES[x.cur].key));
   return s;
 }
-const FILTER_LABEL = {all:'전체', risk:'문제·지연', soon:'준공 임박', handover:'이관 대기'};
+const FILTER_LABEL = {all:'전체', risk:'문제·지연', soon:'준공 임박', handover:'영업·설계'};
+
+/* ── 한 현장 기준 통합: 영업·설계 단계 현장(DEALS) + 행정~준공 현장(SITES)을 하나의 현장 목록으로 ── */
+// 아직 시공현장으로 넘어오지 않은 영업·설계 단계 딜(같은 이름 현장이 이미 SITES에 있거나 dealId로 연결됐으면 제외 = 중복 방지)
+function salesProjects(){
+  const siteNames=new Set(SITES.map(s=>s.name)), linked=new Set(SITES.map(s=>s.dealId).filter(Boolean));
+  return DEALS.filter(d=> !isReservedId(d.id) && d.stage!=='done' && !d.spawned && !linked.has(d.id) && !siteNames.has(d.site));
+}
+function allProjectsRaw(){   // 전 과정 현장 한 목록(영업·설계 먼저, 행정~준공 다음)
+  const byRole = (currentRole==='김영수'||currentRole==='박서준');
+  const sv = byRole ? SITES.filter(s=>s.rep===currentRole) : SITES;
+  const dv = salesProjects().filter(d=> !byRole || d.rep===currentRole);
+  return dv.map(d=>({kind:'deal',obj:d,id:d.id,name:d.site,cap:d.cap,type:d.type,rep:d.rep}))
+    .concat(sv.map(s=>({kind:'site',obj:s,id:s.id,name:s.name,cap:s.cap,type:s.type,rep:s.rep})));
+}
+function filteredProjects(){
+  const ps=allProjectsRaw();
+  if(ovFilter==='risk') return ps.filter(p=> p.kind==='deal'?p.obj.stage==='rejected':p.obj.risk);
+  if(ovFilter==='handover') return ps.filter(p=> p.kind==='deal' || p.obj.stage==='sales');
+  if(ovFilter==='soon') return ps.filter(p=> p.kind==='site' && !p.obj.risk && p.obj.stage!=='sales' && p.obj.cur<STAGES.length && ['pre_inspect','kepco','completion','commercial','facility'].includes(STAGES[p.obj.cur].key));
+  return ps;
+}
+const _STKO={done:'완료',active:'진행중',wait:'대기',risk:'문제·지연',na:'해당없음'};
+// 영업·설계 2칸(전 생애주기 앞머리) 상태
+function projLeadSegs(proj){
+  if(proj.kind==='site'){ return proj.obj.stage==='sales'?['active','wait']:['done','done']; }
+  const dp=designProgress(proj.obj)||{pct:12,cls:'prog'};
+  if(dp.cls==='risk') return ['done','risk'];
+  if(dp.pct>=100) return ['done','done'];
+  if(dp.pct>=45)  return ['done','active'];
+  return ['active','wait'];
+}
+function projStageState(proj,i){ return proj.kind==='deal' ? 'wait' : stageStatus(proj.obj,i); }
+function projPipe(proj){   // 영업·설계 + 인허가·시공·준공 전 구간 바
+  const lead=projLeadSegs(proj), LB=['영업','설계'];
+  let html='<div class="pipe-seg"><div class="grp">';
+  lead.forEach((s,i)=> html+=`<span class="seg ${s}" title="${esc(LB[i]+' · '+_STKO[s])}"></span>`);
+  html+='</div>';
+  let lastPhase=null;
+  STAGES.forEach((st,i)=>{
+    if(st.phase!==lastPhase){ if(lastPhase!==null) html+='</div>'; html+='<div class="grp">'; lastPhase=st.phase; }
+    const s=projStageState(proj,i);
+    html+=`<span class="seg ${s}" title="${esc(st.name+' · '+_STKO[s])}"></span>`;
+  });
+  html+='</div></div>';
+  return html;
+}
+function projPct(proj){
+  let done=0,tot=0;
+  projLeadSegs(proj).forEach(s=>{ tot++; if(s==='done')done++; });
+  STAGES.forEach((st,i)=>{ const s=projStageState(proj,i); if(s==='na')return; tot++; if(s==='done')done++; });
+  return Math.round(done/tot*100);
+}
+function projStatus(proj){
+  if(proj.kind==='deal') return proj.obj.stage==='rejected'?{cls:'risk',label:'⚠ 반려·보완'}:{cls:'prog',label:'영업·설계 진행중'};
+  return siteStatus(proj.obj);
+}
+function projCurStage(proj){
+  if(proj.kind==='deal'){ const dp=designProgress(proj.obj); return dp?dp.label:'영업 검토중'; }
+  return curStageName(proj.obj);
+}
 
 /* ============================================================
    종합현황판 렌더
    ============================================================ */
 function renderKPI(){
-  const sites = visibleSites();
-  const active = sites.filter(s=>s.stage!=='sales' && sitePct(s)<100).length;
-  const handover = sites.filter(s=>s.stage==='sales').length;
-  const soon = sites.filter(s=>!s.risk && s.stage!=='sales' && s.cur<STAGES.length && ['pre_inspect','kepco','completion','commercial','facility'].includes(STAGES[s.cur].key)).length;
-  const risk = sites.filter(s=>s.risk).length;
-  const totalMW = (sites.reduce((a,s)=>a+s.cap,0)/1000).toFixed(1);
+  const ps = allProjectsRaw();
+  const active = ps.filter(p=> projPct(p)<100).length;
+  const salesN = ps.filter(p=> p.kind==='deal' || p.obj.stage==='sales').length;
+  const soon = ps.filter(p=> p.kind==='site' && !p.obj.risk && p.obj.stage!=='sales' && p.obj.cur<STAGES.length && ['pre_inspect','kepco','completion','commercial','facility'].includes(STAGES[p.obj.cur].key)).length;
+  const risk = ps.filter(p=> p.kind==='deal'?p.obj.stage==='rejected':p.obj.risk).length;
+  const totalMW = (ps.reduce((a,p)=>a+(p.cap||0),0)/1000).toFixed(1);
   const html = [
-    {l:'관리 현장', v:sites.length, u:'개', sub:`누적 ${totalMW}MW`, ic:'grid'},
-    {l:'진행중', v:active, u:'개', sub:'인허가·시공 진행', ic:'flow'},
-    {l:'이관 대기', v:handover, u:'개', sub:'영업 → 공무', ic:'inbox'},
+    {l:'관리 현장', v:ps.length, u:'개', sub:`누적 ${totalMW}MW · 영업~준공`, ic:'grid'},
+    {l:'진행중', v:active, u:'개', sub:'영업~준공 진행', ic:'flow'},
+    {l:'영업·설계 중', v:salesN, u:'개', sub:'인허가 전 단계', ic:'inbox'},
     {l:'이번주 준공예정', v:soon, u:'개', sub:'검사·개시 임박', ic:'flag'},
     {l:'⚠ 문제발생', v:risk, u:'개', sub:'즉시 확인 필요', ic:'alert', alert:true},
   ].map(k=>`
@@ -1910,27 +1970,30 @@ function pipeSegments(site){
 }
 
 function renderPipeline(){
-  const sites = filteredSites();
-  const body = sites.map(site=>{
-    const stt = siteStatus(site);
-    const pct = sitePct(site);
+  const ps = filteredProjects();
+  const body = ps.map(proj=>{
+    const stt = projStatus(proj);
+    const pct = projPct(proj);
+    const isDeal = proj.kind==='deal';
+    const mark = isDeal ? ' <span class="type-chip" style="background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent-ink)">영업·설계</span>' : '';
     return `
-    <tr class="site-row" onclick="openDrawer('${site.id}')">
+    <tr class="site-row" onclick="openDrawer('${proj.id}')">
       <td>
-        <div class="site-name">${esc(site.name)}${site.risk?' <span style="color:var(--risk)">●</span>':''}</div>
-        <div class="site-id">${site.id}</div>
+        <div class="site-name">${esc(proj.name)}${(!isDeal&&proj.obj.risk)||(isDeal&&proj.obj.stage==='rejected')?' <span style="color:var(--risk)">●</span>':''}</div>
+        <div class="site-id">${proj.id}${mark}</div>
       </td>
-      <td><span class="cap">${site.cap.toLocaleString()}<small>kW</small></span> <span class="type-chip">${site.type}</span></td>
-      <td><div class="rep">${avatar(site.rep)}<span style="font-size:12.5px;font-weight:600">${site.rep}</span></div></td>
-      <td><div class="pipe">${pipeSegments(site)}<span class="pipe-pct">${pct}%</span></div></td>
-      <td><span class="team-tag">${esc(curStageName(site))}</span></td>
+      <td><span class="cap">${proj.cap.toLocaleString()}<small>kW</small></span> <span class="type-chip">${proj.type}</span></td>
+      <td><div class="rep">${avatar(proj.rep)}<span style="font-size:12.5px;font-weight:600">${proj.rep}</span></div></td>
+      <td><div class="pipe">${projPipe(proj)}<span class="pipe-pct">${pct}%</span></div></td>
+      <td><span class="team-tag">${esc(projCurStage(proj))}</span></td>
       <td><span class="pill ${stt.cls}"><span class="pd"></span>${stt.label}</span></td>
     </tr>`;
   }).join('');
   document.getElementById('pipeBody').innerHTML = body ||
     `<tr><td colspan="6" style="padding:34px;text-align:center;color:var(--muted)">해당 조건의 현장이 없습니다.</td></tr>`;
-  const suffix = ovFilter==='all' ? '인허가 7 · 시공 6 · 준공 5단계' : `${FILTER_LABEL[ovFilter]} 필터`;
-  document.getElementById('pipeSub').textContent = `${sites.length}개 현장 · ${suffix}`;
+  const sN=ps.filter(p=>p.kind==='deal').length, cN=ps.length-sN;
+  const suffix = ovFilter==='all' ? `영업·설계 ${sN} · 인허가~준공 ${cN}` : `${FILTER_LABEL[ovFilter]} 필터`;
+  document.getElementById('pipeSub').textContent = `${ps.length}개 현장 · ${suffix}`;
 }
 
 const ALERTS = [
@@ -6698,6 +6761,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-15', team:'공통', kind:'수정', title:'종합현황판 — 영업부터 준공까지 모든 현장을 한 줄로 통합 표시', body:'종합현황판의 <b>현장 파이프라인</b>을 <b>한 현장 기준</b>으로 합쳤습니다. 그동안 <b>영업·설계 단계 현장과 시공 단계 현장이 따로</b> 집계돼, 종합현황판에는 인허가~준공 현장만 보이고 영업·설계 중인 현장(가온뜰·새터들·봉산 등)은 빠져 있었습니다. 이제 <b>모든 현장이 영업→설계→인허가→시공→준공 한 줄의 진행바</b>로 한 목록에 나옵니다. ① 진행바 맨 앞에 <b>영업·설계 구간</b>이 생겨, 영업 중인 현장은 앞부분만 채워진 상태로, 시공 현장은 전 구간으로 표시됩니다. ② 상단 요약도 <b>영업~준공 전체 기준</b>으로 바뀌었습니다(관리 현장·영업·설계 중·준공 임박·문제발생). ③ <b>영업·설계 현장을 클릭</b>하면 그 현장의 영업·설계 진행과 <b>앞으로의 인허가~준공 예정</b>이 한눈에 보이는 상세가 열립니다. 한 현장이 어느 과정에 있든 <b>같은 화면에서 전 과정으로</b> 보입니다.', author:'개발'},
   {date:'2026-10-15', team:'공통', kind:'수정', title:'하나의 현장 = 하나의 데이터 — 시공이 영업·설계·행정 데이터를 그대로 공유', body:'대시보드의 <b>핵심 원칙</b>을 구조에 반영했습니다 — <b>한 현장에 한 번 들어온 정보는 모든 메뉴가 같은 기준으로 가져다 씁니다.</b> 그동안 <b>시공은 영업·행정과 데이터가 따로</b> 놀아서(현장이 시공으로 넘어갈 때 이름·용량·유형만 넘어가고 사업주·설비·부지·허가 정보는 끊겼습니다) 사용전검사에서 임시 데이터를 따로 두고 있었는데, 이제 <b>발전사업허가와 똑같은 하나의 현장 데이터</b>를 시공도 그대로 읽도록 통합했습니다. ① 사업주·설비 제원·설치장소·허가번호가 <b>발전허가에서 입력한 바로 그 값</b>으로 사용전검사·수검자서식에 자동 반영됩니다. ② 앞으로 <b>현장이 영업→설계→행정→시공으로 넘어가도 같은 현장 데이터가 계속 따라갑니다</b>(완료 시 전체 승계+연결). ③ 새 양식·메뉴를 붙일 때도 항상 이 <b>하나의 현장 데이터</b>에서 꺼내 쓰므로, 같은 정보를 다시 입력·업로드할 일이 없습니다. 화면·출력 모습은 그대로이고, <b>데이터가 하나로 이어진 것</b>이 핵심입니다.', author:'개발'},
   {date:'2026-10-15', team:'시공', kind:'수정', title:'사용전 검사 첨부서류 — 대시보드에 이미 있는 서류는 자동 연동(중복 업로드 제거)', body:'사용전검사 <b>「첨부서류 발급·준비」</b>에서, <b>대시보드에 이미 그 현장 정보가 있는 서류는 다시 올리지 않아도 되도록</b> 자동 연동했습니다. ① <b>허가증·도면·사업자등록 등 10종</b>(토지대장·개발행위 허가증·공사계획 신고필증·구조검토서·발전사업 변경허가증·사업자등록증·전기 도면·감리배치확인서·안전관리 선임필증·모듈 시리얼 목록)은 <b>영업·설계·행정 단계에 등록된 현장 정보로 자동 연동</b>되어 “🔗 대시보드 연동” 으로 표시됩니다(업로드 불필요 · 필요하면 직접 교체 가능). 접수 PDF에도 “대시보드 연동 — 어느 단계에서 왔는지”가 표시됩니다. ② <b>제조사 시험성적서·KS인증서·인버터 개별성적서·감리완료보고서 등 외부 발급 서류 12종만 업로드</b>하면 됩니다. 상단에 <b>확보 N / 22</b>로 몇 건이 준비됐는지 한눈에 보입니다. (연동 판정은 현장에 해당 정보가 등록돼 있는지로 자동 결정)', author:'개발'},
   {date:'2026-10-15', team:'시공', kind:'추가', title:'사용전 검사 — 접수서류 전체 자동작성 + 현장 데이터 자동연동 + 수검자 서식 추가', body:'시공 <b>「사용전 검사」</b>를 <b>접수서류 묶음 전체</b>로 확장했습니다. ① <b>영업·설계·행정에서 넘어온 현장 데이터 자동연동</b> — 시공은 앞 과정이 끝난 뒤라 이미 데이터가 쌓여 있으므로, <b>사업주(상호·사업자번호·대표자·전화·주소)·설비 제원(용량·계통전압·모듈/인버터 제조사·모델·수량)·설치장소·공사계획 신고필증·감리단</b>이 <b>발전사업허가/설계에서 자동으로 채워집니다</b>(화면에 읽기전용으로 표시, 검사 일정만 입력). ② <b>「수검자 서식」(10쪽)을 새 양식으로 추가</b> — 사업장·설비 제원은 자동으로 채워지고, <b>현장에서 계측하는 측정값(모듈 스트링 전압·절연저항, 인버터 보호시험 등)은 공란</b>으로 둬 현장에서 기입합니다. ③ <b>접수서류 전체 묶음</b> — 사용전검사 제출 순서(토지대장 → 개발행위허가증 → 공사계획 신고필증 → … → 사용전검사 신청서 → … → 수검자 서식 → 인버터 개별성적서 → 감리완료보고서)대로 <b>우리 양식 2종은 자동작성</b>, <b>외부 발급 서류(인증서·성적서·허가증 등)는 업로드</b>하면 그 자리에 자동 삽입됩니다. <b>🔍 접수서류 미리보기 / 접수서류(PDF) / 양식(HWP)</b>로 한 번에 출력 — 미리보기·PDF·한글파일 모두 동일합니다.', author:'개발'},
@@ -7260,9 +7324,57 @@ function renderDynamicSub(sub){
 /* ============================================================
    드로어 (현장 상세 — 팀별 상태 + 타임라인)
    ============================================================ */
+// 영업·설계 단계 현장(DEAL) 드로어 — 한 현장 전 과정 뷰(영업·설계 진행 + 인허가~준공 예정)
+function openDealDrawer(d){
+  const dp = designProgress(d) || {label:'영업 검토중', pct:12, cls:'prog'};
+  document.getElementById('drTop').innerHTML =
+    `<span class="dr-title">${esc(d.site)}</span><span class="pill ${dp.cls}"><span class="pd"></span>${esc(dp.label)}</span>`;
+  document.getElementById('drMeta').innerHTML = `
+    <span class="type-chip">${esc(d.type)}</span>
+    <span class="type-chip">${d.cap.toLocaleString()} kW</span>
+    <span class="type-chip">${esc(d.id)}</span>
+    <span class="type-chip">영업 ${esc(d.rep)}</span>
+    <span class="type-chip" style="background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent-ink)">영업·설계 단계</span>`;
+  const teams = [
+    {team:'영업', stage:'제안·계약 진행', owner:d.rep, done:false, risk:false},
+    {team:'설계', stage:dp.label, owner:'이도현', done:dp.pct>=100, risk:dp.cls==='risk'},
+    {team:'행정', stage:'인허가 예정', owner:'한지원', done:false, risk:false},
+    {team:'시공', stage:'시공 예정', owner:'미배정', done:false, risk:false},
+  ];
+  document.getElementById('drTeams').innerHTML = teams.map(t=>`
+    <div class="team-card ${t.risk?'risk':''}">
+      <div class="tc-top"><span style="color:${TEAM_COLOR[t.team]}">${t.team}</span>${t.risk?'<span style="color:var(--risk-ink)">⚠</span>':t.done?'<span style="color:var(--ok-ink)">✓</span>':''}</div>
+      <div class="tc-stage">${esc(t.stage)}</div>
+      <div class="tc-owner">담당 ${esc(t.owner)}</div>
+    </div>`).join('');
+  // 타임라인: 영업·설계(DESIGN_FLOW) 진행 + 인허가~준공(STAGES) 예정
+  let tl = '<div class="phase-div">영업 · 설계</div>';
+  DESIGN_FLOW.forEach((f,i)=>{
+    let s = f.pct<dp.pct?'done':(f.pct===dp.pct?'active':'wait');
+    if(d.stage==='rejected') s = f.pct<=20?'done':(i===1?'risk':'wait');
+    const glyph = {done:'✓',active:'◐',wait:'',risk:'!'}[s];
+    tl += `<div class="tl-item ${s}">
+      <div class="tl-line"><div class="tl-node ${s}">${glyph}</div><div class="tl-bar"></div></div>
+      <div class="tl-content"><div class="tl-name">${esc(f.label)}<span class="team-tag" style="color:${i?TEAM_COLOR['설계']:TEAM_COLOR['영업']};font-size:10.5px">${i?'설계':'영업'}</span></div>
+        <div class="tl-sub">${_STKO[s]}</div>${s==='risk'&&d.rejectReason?`<div class="tl-note">⚠ ${esc(d.rejectReason)}</div>`:''}</div></div>`;
+  });
+  let lastPhase=null;
+  STAGES.forEach((st,i)=>{
+    if(st.phase!==lastPhase){ tl += `<div class="phase-div">${st.phase==='인허가'?'인허가 · 사전':st.phase==='시공'?'시공':'준공 · 개시'}</div>`; lastPhase=st.phase; }
+    const last = i===STAGES.length-1;
+    tl += `<div class="tl-item wait">
+      <div class="tl-line"><div class="tl-node wait"></div>${last?'':'<div class="tl-bar"></div>'}</div>
+      <div class="tl-content"><div class="tl-name">${esc(st.name)}<span class="team-tag" style="color:${TEAM_COLOR[st.team]};font-size:10.5px">${st.team}</span></div>
+        <div class="tl-sub">예정</div></div></div>`;
+  });
+  document.getElementById('drTimeline').innerHTML = tl;
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawerScrim').classList.add('open');
+  document.getElementById('drawer').setAttribute('aria-hidden','false');
+}
 function openDrawer(id){
   const site = SITES.find(s=>s.id===id);
-  if(!site) return;
+  if(!site){ const deal=DEALS.find(d=>d.id===id); if(deal){ openDealDrawer(deal); } return; }
   const stt = siteStatus(site);
   document.getElementById('drTop').innerHTML =
     `<span class="dr-title">${esc(site.name)}</span><span class="pill ${stt.cls}"><span class="pd"></span>${stt.label}</span>`;
