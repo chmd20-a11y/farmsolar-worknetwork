@@ -6683,6 +6683,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-15', team:'시공', kind:'추가', title:'사용전 검사 — 접수서류 전체 자동작성 + 현장 데이터 자동연동 + 수검자 서식 추가', body:'시공 <b>「사용전 검사」</b>를 <b>접수서류 묶음 전체</b>로 확장했습니다. ① <b>영업·설계·행정에서 넘어온 현장 데이터 자동연동</b> — 시공은 앞 과정이 끝난 뒤라 이미 데이터가 쌓여 있으므로, <b>사업주(상호·사업자번호·대표자·전화·주소)·설비 제원(용량·계통전압·모듈/인버터 제조사·모델·수량)·설치장소·공사계획 신고필증·감리단</b>이 <b>발전사업허가/설계에서 자동으로 채워집니다</b>(화면에 읽기전용으로 표시, 검사 일정만 입력). ② <b>「수검자 서식」(10쪽)을 새 양식으로 추가</b> — 사업장·설비 제원은 자동으로 채워지고, <b>현장에서 계측하는 측정값(모듈 스트링 전압·절연저항, 인버터 보호시험 등)은 공란</b>으로 둬 현장에서 기입합니다. ③ <b>접수서류 전체 묶음</b> — 사용전검사 제출 순서(토지대장 → 개발행위허가증 → 공사계획 신고필증 → … → 사용전검사 신청서 → … → 수검자 서식 → 인버터 개별성적서 → 감리완료보고서)대로 <b>우리 양식 2종은 자동작성</b>, <b>외부 발급 서류(인증서·성적서·허가증 등)는 업로드</b>하면 그 자리에 자동 삽입됩니다. <b>🔍 접수서류 미리보기 / 접수서류(PDF) / 양식(HWP)</b>로 한 번에 출력 — 미리보기·PDF·한글파일 모두 동일합니다.', author:'개발'},
   {date:'2026-10-15', team:'시공', kind:'추가', title:'사용전 검사 — 「사용전검사 신청서」 자동작성 + 미리보기·PDF·한글파일 출력', body:'시공 <b>「사용전 검사」</b>에 한국전기안전공사 제출용 <b>「사용전검사 신청서」</b>(전기사업법 별지 제28호서식)를 <b>자동작성</b>하는 기능을 넣었습니다. 발전사업 허가와 <b>똑같은 방식</b>으로, 양식에서 <b>붉게 표시된 칸(자동으로 채워야 하는 항목)</b>이 현장·회사 정보로 채워집니다. ① <b>시공자(㈜해피솔라에너지 — 대표자·전기공사업 등록번호·전화·주소)</b>와 <b>설비용량</b>은 <b>자동</b>으로 들어갑니다(용량은 현장 등록값 기본, 실제 검사용량이 다르면 수정). ② <b>사업주(발전사업자)의 상호·사업자등록번호·대표자·전화·주소</b>, <b>검사받을 설비 소재지</b>, <b>검사희망일·사용개시예정일·신청일</b>은 화면에서 <b>직접 입력</b>하면 됩니다(신청일은 오늘로 기본). 입력·자동값은 양식에 <b>파란색</b>으로 표시됩니다. <b>🔍 양식 미리보기</b>로 실제 출력물과 똑같은 모습을 바로 확인하고, <b>신청서(PDF)</b> 또는 <b>신청서(한글파일)</b>로 받아 제출할 수 있습니다 — <b>미리보기·PDF·한글파일이 모두 동일</b>합니다. (대상 현장은 상단에서 선택)', author:'개발'},
   {date:'2026-10-15', team:'행정', kind:'수정', title:'첨부서류·대리인 신분증 업로드 — 파일 선택 후 반응 없던 문제 수정', body:'첨부서류와 대리인 신분증에서 <b>파일을 고른 뒤에도 업로드가 안 되던 문제</b>를 고쳤습니다. 파일 선택창은 떴지만 파일을 고르고 나면 <b>일부 브라우저(특히 Safari)에서 선택이 반영되지 않던</b> 현상으로, 업로드 처리 방식을 바로잡아 <b>Safari·Chrome 등에서 모두 정상 동작</b>하도록 했습니다. 이미지는 올리면 바로 미리보기·출력물에 반영됩니다. (화면이 그대로면 한 번 <b>새로고침</b> 후 다시 시도해 주세요)', author:'개발'},
   {date:'2026-10-15', team:'행정', kind:'추가', title:'첨부서류 발급·준비 — 실제 파일 업로드 + 접수 PDF 자동 삽입', body:'발전사업 허가 하단 <b>「첨부서류 발급·준비」</b>를 <b>실제 파일 업로드</b>로 바꿨습니다. 그동안은 “표시만” 체크였는데, 이제 건축물대장·토지대장·지적도·토지이용계획확인서·건축물현황도·등기부등본 등 <b>발급받은 파일(이미지 또는 PDF)을 직접 올릴 수 있습니다</b>. ① 올린 파일은 썸네일·파일명으로 확인되고 <b>“열기”로 바로 열어</b> 볼 수 있으며, 다시 업로드·첨부 취소가 됩니다. ② <b>업로드하면 접수 PDF 출력물의 해당 서류 자리에 자동으로 반영</b>됩니다 — <b>이미지</b>는 그 자리에 한 페이지로 바로 삽입되고, <b>여러 장짜리 공식 PDF</b>는 브라우저 인쇄로는 본문에 합칠 수 없어 “✓ 업로드 완료” 표시 페이지로 들어간 뒤 <b>“열기”로 따로 인쇄해 합본</b>합니다. 파일 없이 체크만 하고 싶을 때를 위한 <b>“표시만 체크”도 그대로</b> 남겨 두었습니다. (10MB 이하, 이미지는 올릴 때 자동으로 적정 크기로 축소)', author:'개발'},
@@ -7706,63 +7707,205 @@ function renderElectricBiz(){
   const chk=consChklist(s,'electric',[{k:'panelCheck', label:'분전반 종류 및 수량 확인'}],'전기공사 체크리스트');
   return head+consBar(s)+dwg+chk+renderElectricMeterbox(s)+consHandoff(s,'electric','pre_inspect','사용전 검사','전기공사·계량기함 입력 후 다음 단계로 넘깁니다.');
 }
+/* ============================================================
+   시공 현장 누적 데이터(sitePermit) — 영업·설계·행정에서 넘어온 발전허가 데이터
+   시공은 전 과정이 끝난 뒤라 이 데이터가 이미 쌓여 있음 → 사용전검사·수검자서식이 자동으로 채워짐.
+   (실제 운영: 발전사업허가에서 입력한 값이 그대로 이어짐 / 목업: 각 현장에 데모 시드 부여)
+   ============================================================ */
+// 현장별 누적 데이터 시드(가상 예시 — 사업주·설치장소·제원·허가/선임/감리)
+const SITE_ACC_SEED = {
+  'FS-2405': {owner:'이정호', bizno:'135-81-20451', phone:'010-2841-3390', ownerAddr:'경기도 파주시 금릉로 42', place:'경기도 파주시 적성면 주월리 412-3 (토지위)', jibun:'412-3 외 2필지', jimok:'답', devNo:'파주 제2025-노지-0184호', planNo:'제2025-전기-0471호', changeNo:'광주 제2025-0463호', safetyMgr:'한도윤', supervisor:'대성감리단'},
+  'FS-2404': {owner:'(주)삼거리물류', corp:true, bizno:'214-88-61027', phone:'031-945-2210', ownerAddr:'경기도 파주시 산단로 77', place:'경기도 파주시 월롱면 덕은리 55-1 (공장 지붕)', jibun:'55-1', jimok:'대', devNo:'파주 제2025-건축-0233호', planNo:'제2025-전기-0388호', changeNo:'광주 제2025-0391호', safetyMgr:'서민규', supervisor:'한울감리'},
+  'FS-2408': {owner:'두물머리영농조합법인', corp:true, bizno:'128-81-77350', phone:'031-957-8830', ownerAddr:'경기도 파주시 문산읍 문향로 18', place:'경기도 파주시 파평면 두포리 저수지 수면 (수상)', jibun:'산14-2', jimok:'유지', devNo:'파주 제2025-수상-0097호', planNo:'제2025-전기-0502호', changeNo:'광주 제2025-0515호', safetyMgr:'노현석', supervisor:'대성감리단'},
+  'FS-2401': {owner:'최성우', bizno:'142-45-88213', phone:'010-6672-1908', ownerAddr:'경기도 파주시 법원읍 술이홀로 231', place:'경기도 파주시 법원읍 가야리 178-4 (축사 지붕)', jibun:'178-4', jimok:'대', devNo:'파주 제2025-건축-0301호', planNo:'제2025-전기-0455호', changeNo:'광주 제2025-0468호', safetyMgr:'서민규', supervisor:'한울감리'},
+  'FS-2403': {owner:'한들영농조합법인', corp:true, bizno:'128-81-90114', phone:'031-953-1120', ownerAddr:'경기도 파주시 적성면 설마로 55', place:'경기도 파주시 적성면 객현리 제방 수면 (수상)', jibun:'산7-1', jimok:'유지', devNo:'파주 제2025-수상-0110호', planNo:'제2025-전기-0520호', changeNo:'광주 제2025-0533호', safetyMgr:'노현석', supervisor:'대성감리단'},
+  'FS-2407': {owner:'강대현', bizno:'137-29-50482', phone:'010-3318-7745', ownerAddr:'경기도 파주시 광탄면 보광로 66', place:'경기도 파주시 광탄면 신산리 320-1 (토지위)', jibun:'320-1 외 1필지', jimok:'답', devNo:'파주 제2025-노지-0205호', planNo:'제2025-전기-0491호', changeNo:'광주 제2025-0499호', safetyMgr:'한도윤', supervisor:'대성감리단'},
+  'FS-2402': {owner:'윤재호', bizno:'139-51-33027', phone:'010-5540-2217', ownerAddr:'경기도 파주시 탄현면 성동로 140', place:'경기도 파주시 탄현면 금승리 88-6 (토지위)', jibun:'88-6 외 3필지', jimok:'답', devNo:'파주 제2025-노지-0198호', planNo:'제2025-전기-0480호', changeNo:'광주 제2025-0487호', safetyMgr:'한도윤', supervisor:'대성감리단'},
+};
+function sitePlantName(s){ return String(s.name||'').replace(/\s*(노지형|수상형|축사지붕|공장지붕|지붕).*$/,'').trim()+' 태양광발전소'; }
+// 각 현장의 발전허가 누적 데이터 생성(시드 + site 필드 파생). module/inverter/struct 제원은 수검자서식에서 사용.
+function defaultSitePermit(s){
+  const isBld=s.type==='지붕', isWater=s.type==='수상', cap=pNum(s.cap)||0;
+  const sd=SITE_ACC_SEED[s.id]||{};
+  const modW=640, modQty=Math.max(1,Math.round(cap*1000/modW)), invKW=110, invQty=Math.max(1,Math.round(cap/invKW));
+  const volt = cap>=500 ? '22.9kV' : '380V';
+  return {
+    owner:{ bizname: sitePlantName(s), corp:!!sd.corp, name: sd.owner||'(사업주)', bizno: sd.bizno||'000-00-00000',
+      phone: sd.phone||'010-0000-0000', addr: sd.ownerAddr||'' },
+    plant:{ cap, volt, freq:'60', place: sd.place||'', jibun: sd.jibun||'', jimok: sd.jimok||(isWater?'유지':isBld?'대':'답'),
+      method: isBld?'건물형(지붕)':isWater?'수상형':'노지형', loc: isBld?'건물지붕':isWater?'수상(해양)':'농지(논밭)' },
+    module:{ maker:'한화큐셀', model:'Q.PEAK DUO XL-G11.7', cell:'단결정', face:'양면형', w:modW,
+      voc:'58.50', vmp:'49.75', isc:'13.5', imp:'12.87', weight:'32', qty:modQty, size:'2,384 x 1,134 x 35' },
+    inverter:{ maker:'화웨이', model:'SUN2000-110KTL-M2', kw:invKW, qty:invQty, vdc:'1000', vmpp:'540~800', vout:'380', eff:'98.14' },
+    struct:{ maker:'(주)에스디레이저', method:'경사고정', base:'스파이럴+그라우팅', material:'포스맥',
+      col:'ㅁ-100*100*2.1t', girder:'几-110*107*50*2.1t', purlin:'C-100*50*15*2.1t' },
+    admin:{ devPermitNo: sd.devNo||'', constPlanNo: sd.planNo||'', bizChangeNo: sd.changeNo||'',
+      safetyMgr: sd.safetyMgr||'', supervisor: sd.supervisor||'', elecSafety:'한국전기안전공사' },
+    docs:{}
+  };
+}
+function sitePermit(s){ if(!s.permit) s.permit = defaultSitePermit(s); return s.permit; }
+
 // ---- 5) 사용전 검사 — 「사용전검사 신청서」(전기사업법 별지 제28호서식) 자동작성·미리보기·PDF/HWP ----
-// 시공자(전기공사·신청 대행) = 해피솔라 고정정보. 붉은 자동치환 항목 중 시공자·설비용량은 자동, 사업주/설치장소/일정은 직접입력.
-const HAPPYSOLAR_CO = { name:'조종률', phone:'010-3040-6142', bizname:'㈜해피솔라에너지', elecReg:'제 광주-01455호', addr:'경기도 파주시 교하로875번길 23(문발동)' };
-const PRE_INSPECT_PRINT = [{url:'forms/pre_inspect.print.html', label:'사용전검사 신청서'}];   // 미리보기·PDF(절대양식 .page)
-function preInspectBundle(s){ return PRE_INSPECT_PRINT; }
-// site + site.cons.preInspect + 회사상수 → 토큰맵(발전사업허가 permitTokenMap과 동일 방식)
+// 시공자(전기공사·신청 대행) = 해피솔라 고정정보. 사업주·설비·설치장소는 현장 누적데이터(sitePermit) 자동, 검사일정만 입력.
+const HAPPYSOLAR_CO = { name:'조종률', phone:'010-3040-6142', bizname:'㈜해피솔라에너지', elecReg:'제 광주-01455호', addr:'경기도 파주시 교하로875번길 23(문발동)', email:'' };
+// 사용전검사 제출 서류 묶음 — 첨부 이미지(사용전검사 제출목록) 순서. form=우리 양식(자동작성) / ph=외부 발급(자리표시+업로드)
+const PRE_INSPECT_DOCS = [
+  {ph:'토지(임야)대장', src:'정부24 발급 · 업로드'},
+  {ph:'개발행위 허가증', src:'행정 보유 · 업로드'},
+  {ph:'공사계획 신고필증', src:'행정 보유 · 업로드'},
+  {ph:'구조검토서', src:'설계 · 업로드'},
+  {ph:'발전사업 변경허가증', src:'행정 보유 · 업로드'},
+  {form:1, url:'forms/pre_inspect.print.html', hml:'forms/pre_inspect.hml', out:'01.사용전검사신청서.hml', label:'사용전검사 신청서'},
+  {ph:'사업자등록증', src:'사업주 제출 · 업로드'},
+  {ph:'전기(설계) 도면', src:'설계 · 업로드'},
+  {ph:'감리배치확인서', src:'감리 · 업로드'},
+  {ph:'안전관리 선임필증', src:'행정 보유 · 업로드'},
+  {ph:'모듈 KS인증서', src:'제조사 · 업로드'},
+  {ph:'모듈 시험성적서', src:'제조사 · 업로드'},
+  {ph:'인버터 KS인증서', src:'제조사 · 업로드'},
+  {ph:'인버터 능동전압제어 시험성적서', src:'제조사 · 업로드'},
+  {ph:'인버터 시험성적서', src:'제조사 · 업로드'},
+  {ph:'인버터 지락차단장치 성적서', src:'제조사 · 업로드'},
+  {ph:'접속함 KS인증서', src:'제조사 · 업로드'},
+  {ph:'접속함 시험성적서', src:'제조사 · 업로드'},
+  {ph:'모듈 시리얼(SN) 목록', src:'시공 · 업로드'},
+  {form:2, url:'forms/sg_inspector.print.html', hml:'forms/sg_inspector.hml', out:'07.수검자서식.hml', label:'수검자 서식'},
+  {ph:'인버터 개별성적서 ①', src:'제조사 · 업로드'},
+  {ph:'인버터 개별성적서 ②', src:'제조사 · 업로드'},
+  {ph:'인버터 개별성적서 ③', src:'제조사 · 업로드'},
+  {ph:'감리완료보고서', src:'감리 · 업로드'},
+];
+// 접수서류 번들(미리보기·PDF) — form=우리양식(url) / ph=자리표시+업로드. 업로드 파일은 해당 자리에 자동삽입.
+function preInspectBundle(s){
+  const P=sitePermit(s), docs=P.docs||{};
+  return PRE_INSPECT_DOCS.map(d=>{
+    if(d.form) return {url:d.url, label:d.label};
+    const r=docs[d.ph];
+    return {ph:d.ph, src:d.src, up:(r&&r.dataUrl)?r:null};
+  });
+}
+// 사용전검사 신청서 토큰맵 — 사업주·설비·설치장소=현장 누적데이터(sitePermit) 자동 / 시공자=회사상수 / 검사일정=입력
 function preInspectTokenMap(s){
-  const pi=consSub(s,'preInspect'), CO=HAPPYSOLAR_CO;
-  const capRaw=(pi.cap!=null&&String(pi.cap).trim()!=='')?String(pi.cap).trim():(s.cap!=null?s.cap.toLocaleString():'');
+  const pi=consSub(s,'preInspect'), CO=HAPPYSOLAR_CO, P=sitePermit(s), o=P.owner, pl=P.plant;
+  const capRaw=(pi.cap!=null&&String(pi.cap).trim()!=='')?String(pi.cap).trim():(pl.cap!=null?pl.cap.toLocaleString():'');
   const cap=capRaw?(/[a-zA-Z]/.test(capRaw)?capRaw:capRaw+'kW'):'';
   const S=(v)=>(v==null?'':String(v));
   return {
-    '§PI_NAME§':S(pi.piName), '§PI_PHONE§':S(pi.piPhone), '§PI_BIZNAME§':S(pi.piBizname),
-    '§PI_BIZNO§':S(pi.piBizno), '§PI_ADDR§':S(pi.piAddr),
+    '§PI_NAME§':S(o.name), '§PI_PHONE§':S(o.phone), '§PI_BIZNAME§':S(o.bizname),
+    '§PI_BIZNO§':S(o.bizno), '§PI_ADDR§':S(o.addr),
     '§CO_NAME§':CO.name, '§CO_PHONE§':CO.phone, '§CO_BIZNAME§':CO.bizname, '§CO_ELECREG§':CO.elecReg, '§CO_ADDR§':CO.addr,
-    '§SITE_ADDR§':S(pi.siteAddr), '§CAP§':cap,
+    '§SITE_ADDR§':S(pl.place), '§CAP§':cap,
     '§WANT_DATE§':fmtKDate(pi.wantDate), '§START_DATE§':fmtKDate(pi.startDate), '§APPLY_DATE§':fmtKDate(pi.applyDate),
   };
 }
+// 수검자서식 토큰맵 — 제원=현장 누적데이터(sitePermit) 자동 / 점검자=시공자 회사상수 / 점검일=입력. (실측값은 양식에서 공란)
+function inspectorTokenMap(s){
+  const pi=consSub(s,'preInspect'), CO=HAPPYSOLAR_CO, P=sitePermit(s);
+  const o=P.owner, pl=P.plant, m=P.module, iv=P.inverter, st=P.struct, ad=P.admin;
+  const S=(v)=>(v==null?'':String(v));
+  const cap=(pl.cap!=null?pl.cap.toLocaleString():'')+(pl.cap?'kW':'');
+  return {
+    '§SG_PLANT§':S(o.bizname), '§SG_OWNER§':S(o.name), '§SG_ADDR§':S(pl.place),
+    '§SG_CAP§':cap, '§SG_VOLT§':S(pl.volt), '§SG_DATE§':fmtKDate(pi.inspectDate||pi.wantDate||''),
+    '§SG_COBIZ§':CO.bizname, '§SG_CONAME§':CO.name, '§SG_COPHONE§':CO.phone, '§SG_COEMAIL§':S(CO.email),
+    '§SG_MODMAKER§':S(m.maker), '§SG_MODMODEL§':S(m.model), '§SG_MODW§':S(m.w),
+    '§SG_INVMAKER§':S(iv.maker), '§SG_INVMODEL§':S(iv.model), '§SG_INVKW§':S(iv.kw), '§SG_INVVOUT§':S(iv.vout),
+    '§SG_STMAKER§':S(st.maker), '§SG_SUPER§':S(ad.supervisor), '§SG_SUPERNAME§':'',
+  };
+}
+// 신청서·수검자서식 토큰은 이름이 겹치지 않으므로 하나로 합쳐 번들 전체에 적용
+function preInspectCombinedMap(s){ return Object.assign({}, preInspectTokenMap(s), inspectorTokenMap(s)); }
 // 날짜 입력 셀(ISO 저장·한글변환은 토큰맵에서). def=기본값(미입력 시 표시)
 function consDate(s,key,path,label,def){ const v=consGet(s,key,path)||def||'';
   return `<div class="tfield"><label>${esc(label)}</label><input type="date" class="tinput" value="${esc(v)}" onchange="consSet('${s.id}','${key}','${path}',this.value)"></div>`; }
+// 첨부서류 업로드(현장 누적데이터 sitePermit.docs에 저장) — 이미지=축소 jpeg / PDF=원본. 접수 PDF 자리에 자동삽입.
+function piDocPick(id,key){ pickFile('image/*,application/pdf', f=>piDocUpload(id,key,f)); }
+function piDocUpload(id,key,file){
+  const s=SITES.find(x=>x.id===id); if(!s) return; const P=sitePermit(s); P.docs=P.docs||{};
+  const nm=(file.name||'').toLowerCase();
+  const isPdf=/pdf$/i.test(file.type||'')||/\.pdf$/.test(nm);
+  const isImg=/^image\//.test(file.type||'')||/\.(jpe?g|png|gif|webp|bmp|heic|heif)$/.test(nm);
+  if(!isPdf&&!isImg){ toast('이미지 또는 PDF 파일만 업로드할 수 있습니다'); return; }
+  if(file.size>10*1024*1024){ toast('파일이 너무 큽니다 (10MB 이하로 올려주세요)'); return; }
+  const save=(url,mime)=>{ P.docs[key]={attached:true, at:new Date().toLocaleString('ko-KR'), dataUrl:url, name:file.name, mime:mime};
+    persistSite(s); toast(isPdf?'첨부했습니다 — 출력 시 “열기”로 PDF를 함께 제출하세요':'첨부했습니다 — 출력물 자리에 자동 삽입됩니다'); refreshActive(); };
+  const rd=new FileReader();
+  if(isPdf){ rd.onload=e=>save(e.target.result,'application/pdf'); rd.onerror=()=>toast('파일을 읽지 못했습니다'); rd.readAsDataURL(file); return; }
+  rd.onload=e=>{ const img=new Image();
+    img.onload=()=>{ const MX=1600; let w=img.width,h=img.height; if(w>MX||h>MX){ const r=Math.min(MX/w,MX/h); w=Math.round(w*r); h=Math.round(h*r); }
+      const cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(img,0,0,w,h);
+      let url; try{ url=cv.toDataURL('image/jpeg',0.85); }catch(_){ url=e.target.result; } save(url,'image/jpeg'); };
+    img.onerror=()=>toast('이미지를 읽지 못했습니다'); img.src=e.target.result; };
+  rd.onerror=()=>toast('파일을 읽지 못했습니다'); rd.readAsDataURL(file);
+}
+function piDocRemove(id,key){ const s=SITES.find(x=>x.id===id); if(!s) return; const P=sitePermit(s); if(P.docs&&P.docs[key]) delete P.docs[key]; persistSite(s); toast('첨부를 취소했습니다'); refreshActive(); }
+function piDocOpen(id,key){ const s=SITES.find(x=>x.id===id); if(!s) return; const P=sitePermit(s); const rec=P.docs&&P.docs[key]; if(!rec||!rec.dataUrl){ toast('첨부된 파일이 없습니다'); return; }
+  try{ const parts=rec.dataUrl.split(','); const mime=(parts[0].match(/data:([^;]+)/)||[])[1]||rec.mime||'application/octet-stream';
+    const bin=atob(parts[1]); const arr=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+    window.open(URL.createObjectURL(new Blob([arr],{type:mime})),'_blank'); }
+  catch(e){ window.open(rec.dataUrl,'_blank'); } }
+// 누적데이터 읽기전용 표시 셀
+function _roCell(label,val,src){ return `<div class="tfield"><label>${esc(label)} <span style="color:var(--muted);font-weight:700;font-size:10px">${esc(src||'자동')}</span></label><input class="tinput" value="${esc(val||'')}" readonly style="background:var(--surface-2);color:var(--ink-2);cursor:default"></div>`; }
+// 첨부서류 발급·준비(외부 발급 22종) — 업로드 → 접수 PDF 자리 자동삽입
+function renderPiDocs(s){
+  const P=sitePermit(s), docs=P.docs||{};
+  const exts=PRE_INSPECT_DOCS.filter(d=>d.ph);
+  const done=exts.filter(d=>docs[d.ph]&&docs[d.ph].dataUrl).length;
+  const items=exts.map(d=>{
+    const rec=docs[d.ph], file=rec&&rec.dataUrl?rec:null, isPdf=file&&/pdf/i.test(file.mime||'');
+    const badge = file
+      ? `<span style="font-size:10.5px;font-weight:700;color:#2e8b63">${isPdf?'📄 PDF':'🖼 이미지'} 첨부 · ${esc(file.at||'')}</span>`
+      : `<span style="font-size:10.5px;color:var(--muted)">미첨부</span>`;
+    const thumb = file ? (isPdf
+      ? `<span style="font-size:11px;color:var(--ink-2)">📄 ${esc(file.name||'PDF')}</span>`
+      : `<img src="${file.dataUrl}" alt="" style="width:38px;height:38px;object-fit:cover;border-radius:5px;border:1px solid var(--line)">`) : '';
+    const actions = file
+      ? `${thumb}<span class="sv-chip sm" onclick="piDocOpen('${s.id}','${esc(d.ph)}')">열기 ↗</span><span class="sv-chip sm" onclick="piDocPick('${s.id}','${esc(d.ph)}')">다시</span><span class="sv-chip sm" onclick="piDocRemove('${s.id}','${esc(d.ph)}')">취소</span>`
+      : `<span class="sv-chip sm up" onclick="piDocPick('${s.id}','${esc(d.ph)}')"><span class="up-ic">📎</span> 파일 업로드</span>`;
+    return `<div class="sv-ph-item"><div class="sv-ph-top"><span class="sv-chk svph-chk${file?' on':''}"></span><span class="sv-ph-k">${esc(d.ph)}</span><span class="sv-opt">${esc(d.src)}</span></div>
+      <div style="margin:4px 0 2px">${badge}</div>
+      <div class="sv-chips sv-ph-opts" style="align-items:center">${actions}</div></div>`;
+  }).join('');
+  return `<div class="sv-photos" style="margin-top:12px"><div class="sv-report-h">📎 첨부서류 발급·준비 <span class="sv-count">${done} / ${exts.length}</span></div>
+    <div class="sv-ph-note">외부에서 발급·수령한 서류(이미지 또는 PDF)를 올리면 <b>접수 PDF의 해당 순서 자리에 자동 삽입</b>됩니다. 이미지는 바로 삽입, 여러 장 PDF는 “✓ 업로드 완료” 페이지 뒤 <b>“열기”로 따로 인쇄해 합본</b>합니다. (아래 순서 = 제출 서류 순서 · 10MB 이하)</div>
+    <div class="sv-dwg-slots">${items}</div></div>`;
+}
 function renderPreInspectBiz(){
-  const head=wfHead('사용전 검사','한국전기안전공사 「사용전검사 신청서」(전기사업법 별지 제28호서식)를 자동작성해 <b>미리보기·PDF·HWP</b>로 출력합니다. 양식의 붉은 표시(자동치환) 항목이 현장·회사 정보로 채워집니다.');
+  const head=wfHead('사용전 검사','한국전기안전공사 제출용 <b>사용전검사 접수서류</b>를 자동작성합니다 — 「사용전검사 신청서」·「수검자 서식」은 <b>영업·설계·행정에서 넘어온 현장 데이터로 자동</b> 채워지고, 외부 발급 서류는 업로드하면 제출 순서대로 묶입니다. <b>미리보기·PDF·한글파일</b> 모두 동일합니다.');
   const s=consCurSite(); if(!s) return head+emptyMsg('시공 대상 현장이 없습니다.');
-  const CO=HAPPYSOLAR_CO, today=new Date().toISOString().slice(0,10);
+  const today=new Date().toISOString().slice(0,10);
+  const P=sitePermit(s), o=P.owner, pl=P.plant, m=P.module, iv=P.inverter, ad=P.admin;
   const bar=`<div class="pm-modebar">
       <span class="lr-s">대상 현장</span>
       <select class="pm-dealsel" onchange="selectConsSite(this.value)">${consSites().map(x=>`<option value="${x.id}" ${x.id===s.id?'selected':''}>${esc(x.name)} · ${x.cap.toLocaleString()}kW (${x.id})</option>`).join('')}</select>
       ${consTypeTag(s)}
       <div style="flex:1"></div>
-      <button class="btn ghost sm" onclick="openPreInspectModal('${s.id}')">🔍 양식 미리보기</button>
-      <button class="btn primary sm" onclick="genPreInspectPDF('${s.id}')">📄 신청서(PDF) 다운로드</button>
-      <button class="btn primary sm" onclick="printPreInspect('${s.id}')">📥 신청서(HWP) 다운로드</button>
+      <button class="btn ghost sm" onclick="openPreInspectModal('${s.id}')">🔍 접수서류 미리보기</button>
+      <button class="btn primary sm" onclick="genPreInspectPDF('${s.id}')">📄 접수서류(PDF)</button>
+      <button class="btn primary sm" onclick="printPreInspect('${s.id}')">📥 양식(HWP)</button>
     </div>`;
-  const info=`<div class="cred-warn" style="color:var(--ink-2);background:color-mix(in srgb,var(--prog) 10%,transparent);border-color:color-mix(in srgb,var(--prog) 30%,transparent)">🔗 <b>시공자</b>(㈜해피솔라에너지)와 <b>설비용량</b>은 현장·회사 정보에서 <b>자동</b>으로 채워집니다. <b>사업주(발전사업자)·설치장소·검사 일정</b>은 아래에서 <b>직접 입력</b>하세요. 입력값은 미리보기·PDF·HWP에 <b style="color:#2e6fe8">파란색</b>으로 자동 반영됩니다.</div>`;
-  const roField=(label,val)=>`<div class="tfield"><label>${esc(label)} <span style="color:var(--muted);font-weight:700;font-size:10px">자동</span></label><input class="tinput" value="${esc(val)}" readonly style="background:var(--surface-2);color:var(--ink-2);cursor:default"></div>`;
-  const coRow=`<div class="sv-report" style="margin-top:12px"><div class="sv-report-h">🏢 시공자 · 전기공사/신청 대행 <span class="sv-count">자동</span></div>
-      <div class="field-row" style="margin-top:8px">${roField('회사명 또는 상호',CO.bizname)}${roField('대표자 성명',CO.name)}</div>
-      <div class="field-row" style="margin-top:10px">${roField('전기공사업 등록번호',CO.elecReg)}${roField('전화번호',CO.phone)}</div>
-      <div class="field-row" style="margin-top:10px">${roField('주소',CO.addr)}<div class="tfield"></div></div></div>`;
-  const piCard=`<div class="sv-report" style="margin-top:12px"><div class="sv-report-h">👤 신청인 · 사업주(발전사업자) <span class="sv-count">직접입력</span></div>
-      <div class="field-row" style="margin-top:8px">${consInput(s,'preInspect','piBizname','회사명 또는 상호(발전소명)','예: ○○태양광발전소')}${consInput(s,'preInspect','piBizno','사업자등록번호','000-00-00000')}</div>
-      <div class="field-row" style="margin-top:10px">${consInput(s,'preInspect','piName','대표자 성명','사업주 대표자명')}${consInput(s,'preInspect','piPhone','전화번호','010-0000-0000')}</div>
-      <div class="field-row" style="margin-top:10px">${consInput(s,'preInspect','piAddr','주소','사업주 주소')}<div class="tfield"></div></div></div>`;
-  const setRow=`<div class="sv-report" style="margin-top:12px"><div class="sv-report-h">⚡ 검사 설비 · 일정 <span class="sv-count">현장 자동 + 입력</span></div>
-      <div class="field-row" style="margin-top:8px">${consInput(s,'preInspect','siteAddr','검사받을 설비 사업장 소재지','예: ○○면 ○○리 00-0 (토지위)')}${consInput(s,'preInspect','cap','설비용량',s.cap.toLocaleString(),'kW')}</div>
-      <div class="field-row" style="margin-top:10px">${consDate(s,'preInspect','wantDate','검사희망연월일')}${consDate(s,'preInspect','startDate','사용개시예정연월일')}</div>
-      <div class="field-row" style="margin-top:10px">${consDate(s,'preInspect','applyDate','신청 연월일',today)}<div class="tfield"></div></div>
-      <div class="sv-ph-note">※ 설비용량은 현장 등록값(<b>${s.cap.toLocaleString()}kW</b>)이 기본으로 채워집니다. 실제 검사용량이 다르면 수정하세요. 신청일은 오늘로 기본 설정됩니다.</div></div>`;
+  const info=`<div class="cred-warn" style="color:var(--ink-2);background:color-mix(in srgb,var(--prog) 10%,transparent);border-color:color-mix(in srgb,var(--prog) 30%,transparent)">🔗 아래 <b>사업주·설비 제원·설치장소</b>는 <b style="color:#2e8b63">발전사업허가·설계</b>에서 넘어온 <b>읽기전용 자동값</b>입니다(시공은 전 과정이 끝난 뒤라 이미 입력돼 있습니다). <b>시공자</b>는 ㈜해피솔라에너지로 자동, <b>검사 일정</b>만 아래에서 입력하세요. 모든 자동값은 양식에 <b style="color:#2e6fe8">파란색</b>으로 반영됩니다.</div>`;
+  const ownerCard=`<div class="sv-report" style="margin-top:12px"><div class="sv-report-h">👤 신청인 · 사업주(발전사업자) <span class="sv-count">자동 · 발전허가</span></div>
+      <div class="field-row" style="margin-top:8px">${_roCell('회사명 또는 상호(발전소명)',o.bizname,'발전허가')}${_roCell('사업자등록번호',o.bizno,'발전허가')}</div>
+      <div class="field-row" style="margin-top:10px">${_roCell('대표자 성명',o.name,'발전허가')}${_roCell('전화번호',o.phone,'발전허가')}</div>
+      <div class="field-row" style="margin-top:10px">${_roCell('주소',o.addr,'발전허가')}<div class="tfield"></div></div></div>`;
+  const plantCard=`<div class="sv-report" style="margin-top:12px"><div class="sv-report-h">⚡ 설비 · 설치장소 제원 <span class="sv-count">자동 · 설계/허가</span></div>
+      <div class="field-row" style="margin-top:8px">${_roCell('검사받을 설비 소재지',pl.place,'발전허가')}${_roCell('설비용량',(pl.cap?pl.cap.toLocaleString()+'kW':''),'현장')}</div>
+      <div class="field-row" style="margin-top:10px">${_roCell('계통연계전압',pl.volt,'설계')}${_roCell('설치방식',pl.method,'현장')}</div>
+      <div class="field-row" style="margin-top:10px">${_roCell('모듈',(m.maker+' '+m.model+' / '+m.w+'W × '+(m.qty||0).toLocaleString()+'매'),'설계')}${_roCell('인버터',(iv.maker+' '+iv.model+' / '+iv.kw+'kW × '+(iv.qty||0)+'대'),'설계')}</div>
+      <div class="field-row" style="margin-top:10px">${_roCell('공사계획 신고필증',ad.constPlanNo,'행정')}${_roCell('감리단',ad.supervisor,'행정')}</div></div>`;
+  const dateCard=`<div class="sv-report" style="margin-top:12px"><div class="sv-report-h">📅 검사 일정 <span class="sv-count">직접입력</span></div>
+      <div class="field-row" style="margin-top:8px">${consDate(s,'preInspect','wantDate','검사희망연월일')}${consDate(s,'preInspect','startDate','사용개시예정연월일')}</div>
+      <div class="field-row" style="margin-top:10px">${consDate(s,'preInspect','inspectDate','수검자 점검일자')}${consDate(s,'preInspect','applyDate','신청 연월일',today)}</div>
+      <div class="sv-ph-note">※ 신청일은 오늘로 기본 설정됩니다. 점검일자(수검자서식)는 미입력 시 검사희망일을 사용합니다.</div></div>`;
   const chk=consChklist(s,'preInspect',[
     {k:'moduleSerial', label:'모듈 시리얼넘버 정리'},
     {k:'docReady', label:'첨부서류 준비 (공사계획 신고수리서·설계도서·감리/자체감리 서류·전기안전관리자 선임신고증명서)'},
   ],'사용전 검사 체크리스트');
-  return head+bar+info+coRow+piCard+setRow+chk+consHandoff(s,'preInspect',null,'사용전 검사','사용전 검사까지 완료되면 준공 단계로 넘어갑니다.');
+  return head+bar+info+ownerCard+plantCard+dateCard+renderPiDocs(s)+chk+consHandoff(s,'preInspect',null,'사용전 검사','사용전 검사까지 완료되면 준공 단계로 넘어갑니다.');
 }
-// 미리보기 모달 — 발전사업허가 openPermitModal과 동일 방식(절대양식이라 flow=false)
+// 접수서류 미리보기 모달 — 전체 묶음(우리 양식 자동 + 업로드 자리). 절대양식이라 flow=false.
 let preInspectEscHandler=null;
 function openPreInspectModal(id){
   const s=SITES.find(x=>x.id===id); if(!s) return;
@@ -7771,39 +7914,45 @@ function openPreInspectModal(id){
   ov.onclick=(e)=>{ if(e.target===ov) closePreInspectModal(); };
   ov.innerHTML=`<div class="pm-modal-box" role="dialog" aria-modal="true">
       <div class="pm-modal-head">
-        <span class="pm-m-ttl">🔍 사용전검사 신청서 미리보기 — ${esc(s.name)} <span style="opacity:.65;font-weight:500">(${esc(s.id)})</span></span>
+        <span class="pm-m-ttl">🔍 사용전검사 접수서류 미리보기 — ${esc(s.name)} <span style="opacity:.65;font-weight:500">(${esc(s.id)})</span></span>
         <div class="pm-m-btns">
-          <button class="pm-mbtn primary" onclick="genPreInspectPDF('${s.id}')">📄 신청서(PDF) 다운로드</button>
-          <button class="pm-mbtn primary" onclick="printPreInspect('${s.id}')">📥 신청서(HWP) 다운로드</button>
+          <button class="pm-mbtn primary" onclick="genPreInspectPDF('${s.id}')">📄 접수서류(PDF)</button>
+          <button class="pm-mbtn primary" onclick="printPreInspect('${s.id}')">📥 양식(HWP)</button>
           <button class="pm-mbtn" onclick="closePreInspectModal()">✕ 닫기</button>
         </div>
       </div>
       <div class="pm-modal-body" style="background:#eef0f4">
         <div id="preInspectPrintFrame_ld" style="padding:48px;text-align:center;color:#888;font-size:14px">양식 미리보기를 불러오는 중…</div>
-        <iframe id="preInspectPrintFrame" title="사용전검사 신청서 미리보기" scrolling="no" style="width:210mm;max-width:100%;border:0;background:#fff;display:block;margin:0 auto;box-shadow:0 1px 8px rgba(0,0,0,.14);min-height:70vh;visibility:hidden"></iframe>
+        <iframe id="preInspectPrintFrame" title="사용전검사 접수서류 미리보기" scrolling="no" style="width:210mm;max-width:100%;border:0;background:#fff;display:block;margin:0 auto;box-shadow:0 1px 8px rgba(0,0,0,.14);min-height:70vh;visibility:hidden"></iframe>
       </div>
     </div>`;
   document.body.appendChild(ov); document.body.style.overflow='hidden';
   preInspectEscHandler=(e)=>{ if(e.key==='Escape') closePreInspectModal(); };
   document.addEventListener('keydown',preInspectEscHandler);
-  fillPreviewIframe('preInspectPrintFrame', preInspectBundle(s), preInspectTokenMap(s), false);
+  fillPreviewIframe('preInspectPrintFrame', preInspectBundle(s), preInspectCombinedMap(s), false);
 }
 function closePreInspectModal(){ const ov=document.getElementById('preInspectModal'); if(ov) ov.remove(); document.body.style.overflow=''; if(preInspectEscHandler){ document.removeEventListener('keydown',preInspectEscHandler); preInspectEscHandler=null; } }
-function genPreInspectPDF(id){ const s=SITES.find(x=>x.id===id); if(!s) return; buildAndPrintForms(preInspectBundle(s), preInspectTokenMap(s), '사용전검사 신청서', false); }
-// HWP(.hml) 다운로드 — 토큰 치환 후 단일 파일 저장(한글에서 열어 편집·인쇄)
+function genPreInspectPDF(id){ const s=SITES.find(x=>x.id===id); if(!s) return; buildAndPrintForms(preInspectBundle(s), preInspectCombinedMap(s), '사용전검사 접수서류', false); }
+// HWP(.hml) 다운로드 — 우리 양식 2종(신청서·수검자서식)을 토큰 치환해 ZIP 다운로드(외부 발급 서류는 업로드본으로 별도 제출)
 async function printPreInspect(id){
   const s=SITES.find(x=>x.id===id); if(!s) return;
-  const map=preInspectTokenMap(s); toast('사용전검사 신청서(HWP) 생성 중…');
-  try{
-    const res=await fetch('forms/pre_inspect.hml',{cache:'no-store'}); if(!res.ok) throw new Error('HTTP '+res.status);
-    const xml=fillPermitTemplate(await res.text(), map);
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(new Blob([new TextEncoder().encode(xml)],{type:'application/octet-stream'}));
-    a.download='사용전검사신청서.hml';
-    document.body.appendChild(a); a.click();
-    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },3000);
-    toast('사용전검사 신청서(HWP) 다운로드 — 한글에서 여세요');
-  }catch(e){ toast('생성 실패 — 새로고침 후 다시 시도해주세요'); }
+  const P=sitePermit(s);
+  const folder=(String((P.plant&&P.owner&&P.owner.bizname)||'사용전검사').trim()||'사용전검사').replace(/[\/\\:*?"<>|]/g,'_')+' 사용전검사';
+  const map=preInspectCombinedMap(s); toast('사용전검사 양식(HWP) 생성 중…');
+  const enc=new TextEncoder(); const files=[]; const fail=[];
+  for(const d of PRE_INSPECT_DOCS){
+    if(!d.form) continue;
+    try{
+      const res=await fetch(d.hml,{cache:'no-store'}); if(!res.ok) throw new Error('HTTP '+res.status);
+      files.push({name: folder+'/'+d.out, data: enc.encode(fillPermitTemplate(await res.text(), map))});
+    }catch(e){ fail.push(d.label); }
+  }
+  if(!files.length){ toast('생성 실패 — 새로고침 후 다시 시도해주세요'); return; }
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(makePermitZip(files)); a.download=folder+'.zip';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },3000);
+  toast(fail.length ? ('일부 실패: '+fail.join(', ')) : ('“'+folder+'” 폴더로 '+files.length+'종 다운로드 — 압축 풀어 한글에서 여세요'));
 }
 
 function renderStageBoard(stageKey){
