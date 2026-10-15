@@ -5207,7 +5207,7 @@ function openPermitModal(id){
   document.body.style.overflow='hidden';
   permitEscHandler=(e)=>{ if(e.key==='Escape') closePermitModal(); };
   document.addEventListener('keydown',permitEscHandler);
-  getPermit(d); fillPreviewIframe('permitPrintFrame', permitBundle(d), permitTokenMap(d), false);
+  getPermit(d); fillPreviewIframe('permitPrintFrame', permitBundle(d), permitTokenMap(d), false, permitRawMap(d));
 }
 function closePermitModal(){
   const ov=document.getElementById('permitModal'); if(ov) ov.remove();
@@ -5286,6 +5286,22 @@ function toggleDoc(id,key){ const d=DEALS.find(x=>x.id===id); if(!d) return; con
   const cur=p.docs[key]&&p.docs[key].attached;
   p.docs[key]= cur?{attached:false}:{attached:true, at:new Date().toLocaleString('ko-KR')};
   persistDeal(d); refreshActive(); }
+// 대리인 신분증 업로드 — 이미지 선택 → 축소(최대 1280px) → base64 저장 → 「사업주/대리인 신분증」 양식(미리보기·PDF)에 자동 삽입
+function daeriinIdPick(id){ const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
+  inp.onchange=()=>{ const f=inp.files&&inp.files[0]; if(f) daeriinIdUpload(id,f); }; inp.click(); }
+function daeriinIdUpload(id,file){
+  if(!/^image\//.test(file.type||'')){ toast('이미지 파일만 업로드할 수 있습니다'); return; }
+  const rd=new FileReader();
+  rd.onload=e=>{ const img=new Image();
+    img.onload=()=>{ const MX=1280; let w=img.width,h=img.height; if(w>MX||h>MX){ const r=Math.min(MX/w,MX/h); w=Math.round(w*r); h=Math.round(h*r); }
+      const cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(img,0,0,w,h);
+      let url; try{ url=cv.toDataURL('image/jpeg',0.82); }catch(_){ url=e.target.result; }
+      const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d).daeriinIdDoc={dataUrl:url, name:file.name, at:new Date().toLocaleString('ko-KR')};
+      persistDeal(d); toast('대리인 신분증을 첨부했습니다 — 양식에 자동 삽입됩니다'); refreshActive(); };
+    img.onerror=()=>toast('이미지를 읽지 못했습니다'); img.src=e.target.result; };
+  rd.readAsDataURL(file);
+}
+function daeriinIdRemove(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d); if(p.daeriinIdDoc) delete p.daeriinIdDoc; persistDeal(d); toast('대리인 신분증 첨부를 취소했습니다'); refreshActive(); }
 function renderPermitDocs(d){
   const p=getPermit(d), isBld=p.installType==='건물';
   const need = PERMIT_DOCS.filter(x=> isBld?x.bld:x.land);
@@ -5316,6 +5332,15 @@ function renderPermitDocs(d){
     <h3 class="section-title" style="font-size:13px;margin:0 0 4px"><svg class="st-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>첨부서류 발급 · 준비 <span class="lr-s" style="font-weight:600">(${isBld?'건물':'토지'} 유형 필요 ${doneN}/${need.length})</span></h3>
     <div class="cred-warn">ℹ️ 관할 관청에 제출하는 <b>공식 발급본</b>은 발급처별 자동 API 발급이 불가해(조회 API는 날인본이 아님) 각 포털에서 직접 발급해야 합니다. 아래 버튼으로 발급처를 열고 가이드대로 발급 → 각 서류를 첨부하세요. 발급 계정은 로그인한 내부 직원에게만 표시되며 공개 소스에는 저장되지 않습니다.</div>
     ${items}
+    ${(()=>{ const dd=p.daeriinIdDoc, has=!!(dd&&dd.dataUrl); return `<div class="doc-item ${has?'done':''}" style="border-top:2px dashed var(--border);margin-top:10px;padding-top:12px">
+      <div class="doc-ck" style="cursor:default">${has?'✓':'📎'}</div>
+      <div class="doc-b">
+        <div class="doc-t">대리인 신분증 업로드 <span class="doc-badge">양식 자동삽입</span>${has?`<span class="doc-badge" style="background:color-mix(in srgb,#2e8b63 16%,transparent);color:#2e8b63">첨부됨 · ${esc(dd.at||'')}</span>`:''}</div>
+        <div class="doc-g">대리인(로그인 직원)의 신분증 이미지를 올리면 <b>「사업주/대리인 신분증」 양식</b>의 미리보기·PDF에 자동 삽입됩니다. (한글파일에는 ‘첨부됨’으로 표기)</div>
+        <div class="doc-act" style="align-items:center">
+          ${has?`<img src="${dd.dataUrl}" alt="대리인 신분증" style="height:48px;border-radius:5px;border:1px solid var(--border)"> <button class="btn ghost sm" onclick="daeriinIdPick('${d.id}')">다시 업로드</button><button class="btn ghost sm" onclick="daeriinIdRemove('${d.id}')">첨부 취소</button>`:`<button class="btn dark sm" onclick="daeriinIdPick('${d.id}')">📎 대리인 신분증 업로드</button>`}
+        </div>
+      </div></div>`; })()}
     <div style="margin-top:8px">${doneN>=need.length?'<span class="pill done"><span class="pd"></span>필요 서류 모두 첨부 완료 — 접수 준비 OK</span>':`<span class="pill wait"><span class="pd"></span>필요 서류 ${need.length-doneN}건 남음</span>`}</div>
   </div>`;
 }
@@ -5559,6 +5584,7 @@ const PERMIT_FORM_FILES=[
   {url:'forms/ilramdo.hml',   out:'송전관계_일람도.hml', label:'송전관계 일람도'},
   {url:'forms/saup.hml',      out:'1-1. 발전사업 허가신청 - 허가사업계획서.hwp', label:'허가사업계획서'},
   {url:'forms/wiimjang.hml',  out:'대리인 위임장.hml', label:'대리인 위임장'},
+  {url:'forms/sinbunjeung.hml', out:'사업주 대리인 신분증.hml', label:'사업주/대리인 신분증'},
 ];
 function hwpXmlEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function permitTokenMap(d){
@@ -5593,6 +5619,9 @@ function permitTokenMap(d){
     // 대리인 위임장 — 위임받는 사람(수임인)=로그인한 직원(이름·생년월일만 로그인 정보, 연락처·주소는 양식에 고정)
     '§WJ_NAME§':(typeof currentUser!=='undefined'&&currentUser)?S(currentUser.name):'',
     '§WJ_BIRTH§':(typeof currentUser!=='undefined'&&currentUser&&currentUser.birth)?fmtKDate(currentUser.birth):'',
+    // 사업주/대리인 신분증 양식 — HWP(.hml) 다운로드용 '텍스트 표기'(미리보기·PDF는 permitRawMap에서 실제 이미지로 대체)
+    '§SAUP_ID§':'사업주 신분증 (영업 「실계약」 첨부본)',
+    '§DAERIIN_ID§':(p.daeriinIdDoc&&p.daeriinIdDoc.dataUrl)?'대리인 신분증 첨부됨 ✓':'대리인 신분증 미첨부',
     '§INV_IN§':S(eq.invIn), '§INV_OUT§':S(eq.invOut), '§INV_KW§':S(eq.invKW), '§INV_QTY§':S(eq.invQty),
     '§MOD_W§':S(eq.modW), '§MOD_QTY§':pComma(eq.modQty),
     '§BIRTH§':donguiBirth(p)||'년 월 일', '§DONGUI_NO§':donguiPersonNo(p),
@@ -5627,8 +5656,20 @@ function permitTokenMap(d){
   };
 }
 function fillPermitTemplate(xml, map){ for(const k in map){ xml=xml.split(k).join(hwpXmlEsc(map[k])); } return xml; }
+// 신분증 양식 자리표시(미리보기·PDF) — 박스 가운데 안내
+function _idPlace(title,note){ return `<div style="color:#64748b;text-align:center;line-height:1.7"><div style="font-size:15pt">📎</div><div style="font-size:12.5pt;font-weight:700;color:#334155">${esc(title)}</div><div style="font-size:10.5pt">${esc(note)}</div></div>`; }
+// 미리보기·PDF 전용 '원본 HTML 치환'(이미지 등 — 이스케이프/파란span 없이 그대로 삽입). 사업주=자리표시, 대리인=업로드 이미지(있으면)
+function permitRawMap(d){
+  const p=getPermit(d), dd=p.daeriinIdDoc;
+  return {
+    '§SAUP_ID§': _idPlace('사업주 신분증','영업 「실계약」 첨부에서 자동 삽입 예정'),
+    '§DAERIIN_ID§': (dd&&dd.dataUrl) ? `<img src="${dd.dataUrl}" alt="대리인 신분증" style="max-width:100%;max-height:75mm;display:block;margin:0 auto;object-fit:contain">` : _idPlace('대리인 신분증','「첨부서류 발급·준비」에서 업로드하면 자동 삽입'),
+  };
+}
 // 미리보기·PDF 전용: 자동 채운 값을 파란색(span.pm-auto)으로 감싸 '자동입력/수기' 구분. 빈 값은 공란(span 없음). HWP(.hml) 다운로드는 fillPermitTemplate 그대로(검정 유지).
-function fillPermitTemplateHTML(html, map){
+// rawMap: 이미지 등 원본 HTML을 이스케이프/span 없이 먼저 치환(선적용). map(§토큰§)은 그 뒤 텍스트로 치환.
+function fillPermitTemplateHTML(html, map, rawMap){
+  if(rawMap){ for(const k in rawMap){ html=html.split(k).join(rawMap[k]==null?'':String(rawMap[k])); } }
   for(const k in map){
     const v=map[k];
     const rep = (v==null||v==='') ? '' : '<span class="pm-auto">'+hwpXmlEsc(v)+'</span>';
@@ -5890,6 +5931,7 @@ const _PF={
   dongui:   {url:'forms/dongui.print.html',    label:'행정정보 공동이용 사전동의서'},
   uihyang:  {url:'forms/uihyang.print.html',   label:'공사 협력 의향서'},
   wiimjang: {url:'forms/wiimjang.print.html',  label:'대리인 위임장'},
+  sinbun:   {url:'forms/sinbunjeung.print.html', label:'사업주/대리인 신분증'},
 };
 // 아직 업로드/입력 전 서류 = 자리표시 페이지. ph(서류명, 가져오는 위치)
 function _ph(name, src){ return {ph:name, src:src}; }
@@ -5905,7 +5947,7 @@ function permitBundle(d){
   if(corp){
     L.push(_ph('사업주 인감증명서',_SRC.orig), _ph('가족관계증명서',_SRC.orig), _ph('주민등록등본',_SRC.orig),
            _ph('잔액증명서',_SRC.orig), _ph('사용인감계 (공양식만 제공)',_SRC.orig), _ph('법인 인감증명서',_SRC.orig),
-           _PF.wiimjang, _ph('사업주/대리인 신분증',_SRC.form),
+           _PF.wiimjang, _PF.sinbun,
            _ph('법인 등기사항 전부 증명서',_SRC.orig), _ph('법인 재무제표',_SRC.orig), _ph('법인 정관',_SRC.orig),
            _ph('토지사용승낙서',_SRC.orig), _ph('토지주 인감증명서',_SRC.orig), _ph('지상권 승낙서',_SRC.orig), _ph('지상권자 인감증명서',_SRC.orig),
            _ph('토지대장',_SRC.gong));
@@ -5915,7 +5957,7 @@ function permitBundle(d){
   } else {
     L.push(_ph('가족관계증명서',_SRC.orig), _ph('주민등록등본',_SRC.orig), _ph('잔액증명서',_SRC.orig),
            _ph('사용인감계 (공양식만 제공)',_SRC.orig), _ph('인감증명서',_SRC.orig),
-           _PF.wiimjang, _ph('사업주/대리인 신분증',_SRC.form),
+           _PF.wiimjang, _PF.sinbun,
            _ph('토지사용승낙서',_SRC.orig), _ph('토지주 인감증명서',_SRC.orig), _ph('지상권 승낙서',_SRC.orig), _ph('지상권자 인감증명서',_SRC.orig),
            _ph('토지대장',_SRC.gong));
     if(bld) L.push(_ph('건축물대장',_SRC.gong));
@@ -5944,13 +5986,13 @@ const PPA_PRINT_FILES=[
   {url:'forms/ppa_use.print.html',   label:'전기사용신청서'},
 ];
 // 템플릿들을 토큰 치환해 '하나의 인쇄/미리보기 문서'로 병합 (미리보기·PDF가 동일 문서 공유)
-async function buildFormsDoc(FILES, map, flow){
+async function buildFormsDoc(FILES, map, flow, rawMap){
   let styles=[], bodies=[], fail=[];
   for(const f of FILES){
     if(f.ph){ bodies.push(permitPlaceholderPage(f.ph, f.src)); continue; }   // 자리표시(업로드 전 서류) — fetch 없이 1페이지 삽입
     try{
       const res=await fetch(f.url,{cache:'no-store'}); if(!res.ok) throw new Error('HTTP '+res.status);
-      const html=fillPermitTemplateHTML(await res.text(), map);        // 토큰 치환 + 자동값 파란색(span.pm-auto)
+      const html=fillPermitTemplateHTML(await res.text(), map, rawMap);        // 토큰 치환 + 자동값 파란색(span.pm-auto) + 이미지(rawMap)
       const sm=html.match(/<style>([\s\S]*?)<\/style>/i); const st=sm?sm[1]:'';
       if(st && !styles.includes(st)) styles.push(st);                  // 혼합(절대+흐름) 양식은 서로 다른 스타일 → 모두 수집·중복제거
       const bm=html.match(/<body[^>]*>([\s\S]*?)<\/body>/i); bodies.push(bm?bm[1]:html);
@@ -5969,9 +6011,9 @@ async function buildFormsDoc(FILES, map, flow){
   const doc = bodies.length ? ('<!doctype html><html><head><meta charset="utf-8"><style>'+styles.join('\n')+'\n'+unify+' html,body{margin:0}</style></head><body>'+joined+'</body></html>') : '';
   return {doc, fail};
 }
-async function buildAndPrintForms(FILES, map, title, flow){
+async function buildAndPrintForms(FILES, map, title, flow, rawMap){
   toast(title+' PDF 생성 중… 인쇄창에서 “대상: PDF로 저장”을 선택하세요');
-  const {doc, fail} = await buildFormsDoc(FILES, map, flow);
+  const {doc, fail} = await buildFormsDoc(FILES, map, flow, rawMap);
   if(!doc){ toast('PDF 생성 실패 — 새로고침 후 다시 시도해주세요'); return; }
   const ifr=document.createElement('iframe');
   ifr.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
@@ -6007,9 +6049,9 @@ function paginateFlow(idoc){
   idoc.body.innerHTML=''; idoc.body.style.background='#eef0f4';
   pages.forEach(p=>idoc.body.appendChild(p));
 }
-async function fillPreviewIframe(frameId, FILES, map, flow){
+async function fillPreviewIframe(frameId, FILES, map, flow, rawMap){
   const ifr=document.getElementById(frameId); if(!ifr) return;
-  const {doc} = await buildFormsDoc(FILES, map, flow);
+  const {doc} = await buildFormsDoc(FILES, map, flow, rawMap);
   const ld=document.getElementById(frameId+'_ld');
   if(!doc){ if(ld) ld.innerHTML='<span style="color:#b00">양식을 불러오지 못했습니다 — 닫고 다시 열어주세요</span>'; return; }
   const idoc=ifr.contentWindow.document; idoc.open(); idoc.write(doc); idoc.close();
@@ -6019,7 +6061,7 @@ async function fillPreviewIframe(frameId, FILES, map, flow){
   if(idoc.readyState==='complete') setTimeout(done,150); else ifr.onload=()=>setTimeout(done,150);
   setTimeout(fit,600); setTimeout(fit,1400);   // 폰트·이미지 로딩 후 높이 재측정
 }
-function genPermitFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(permitBundle(d), permitTokenMap(d), '발전허가 접수서류', false); }
+function genPermitFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(permitBundle(d), permitTokenMap(d), '발전허가 접수서류', false, permitRawMap(d)); }
 function genDevFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(DEVPERMIT_PRINT_FILES, devPermitTokenMap(d), '개발행위 접수서류', false); }
 function genPpaFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(PPA_PRINT_FILES, ppaTokenMap(d), 'PPA 신청서류', true); }
 let ppaSel=null;
@@ -6573,6 +6615,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-15', team:'행정', kind:'추가', title:'사업주/대리인 신분증 양식 + 대리인 신분증 업로드 기능', body:'발전사업 허가 접수서류에 <b>「사업주/대리인 신분증」 양식</b>을 실제 양식으로 추가했습니다. ① <b>사업주 신분증</b>은 다른 이미지들처럼 <b>자리표시</b>(“영업 「실계약」 첨부에서 자동 삽입 예정”)로 위치를 잡아 둡니다. ② <b>대리인 신분증</b>은 <b>「첨부서류 발급·준비」</b> 구역에 <b>업로드 기능</b>을 새로 만들어, 대리인(로그인 직원) 신분증 이미지를 올리면 <b>미리보기·PDF 양식에 실제 이미지가 자동 삽입</b>됩니다(한글파일에는 ‘대리인 신분증 첨부됨’으로 표기). 업로드한 이미지는 자동으로 적정 크기로 줄여 저장됩니다. 접수서류 순서상 <b>「대리인 위임장」 다음 자리</b>에 들어가며 개인·법인 공통입니다.', author:'개발'},
   {date:'2026-10-15', team:'공통', kind:'수정', title:'화면 스크롤 — 상단바·좌측 메뉴 고정, 중앙 내용만 스크롤', body:'대시보드에서 아래로 스크롤할 때 <b>좌측 메뉴까지 함께 밀려 올라가던 문제</b>를 고쳤습니다. 이제 <b>상단바와 좌측 세부업무 메뉴는 항상 고정</b>되고, <b>가운데 본문 영역만 스크롤</b>됩니다. 긴 목록을 봐도 메뉴가 늘 같은 자리에 있어 이동이 편해집니다. (좁은 모바일 세로화면은 기존처럼 전체가 함께 스크롤)', author:'개발'},
   {date:'2026-10-14', team:'행정', kind:'수정', title:'대리인 위임장 보완 — 생년월일 선택 표시 + 관리자 저장 즉시 반영 + 한글파일 다운로드 추가', body:'오늘 새로 만든 <b>대리인 위임장·생년월일</b> 기능을 다듬었습니다. ① 회원가입 화면의 생년월일 항목에 <b>“(선택)”</b> 표시를 넣어, <b>비워 둬도 가입에 문제없다</b>는 것을 분명히 했습니다(필요한 직원만 나중에 관리자가 입력하면 됩니다). ② 관리자가 ⚙ → 회원 관리에서 <b>자기 자신의 생년월일을 저장</b>했을 때 다시 로그인하지 않아도 <b>그 자리에서 바로 위임장에 반영</b>되도록 고쳤습니다(이전에는 재로그인해야 보였습니다). ③ 대리인 위임장을 <b>한글파일(HWP) 다운로드 목록</b>에도 추가했습니다 — 지금까지 미리보기·PDF에만 있고 한글파일 받기에는 빠져 있었는데, 이제 <b>미리보기·PDF·한글파일 모두 동일</b>하게 위임장을 받을 수 있습니다.', author:'개발'},
   {date:'2026-10-14', team:'행정', kind:'추가', title:'대리인 위임장 — 실제 양식 자동 생성 + 회원 생년월일 항목 추가', body:'발전사업 허가 접수서류의 <b>대리인 위임장</b>을 자리표시가 아닌 <b>실제 양식</b>으로 만들어 자동으로 채워지도록 했습니다. <b>위임하는 사람(사업주)</b>은 현장에 입력된 사업주 정보(이름·생년월일·주소·전화)로, <b>위임받는 사람(대리인)</b>은 <b>로그인한 본인</b>의 이름·생년월일로 자동 기입됩니다(관계=“태양광 시공업체 직원”, 연락처 010-7335-4745·주소 교하로875번길 23 전층은 고정). 이를 위해 <b>회원가입에 “생년월일”</b> 항목을 추가했고, <b>이미 가입한 회원</b>은 관리자(⚙ → 회원 관리)에서 각 회원의 생년월일을 입력·수정할 수 있습니다. 위임장은 접수서류 PDF·미리보기에서 <b>대리인 위임장 순서 자리</b>에 실제 양식으로 들어갑니다(개인/법인 공통). <b>미리보기·PDF·한글파일 모두 동일</b> 적용.', author:'개발'},
