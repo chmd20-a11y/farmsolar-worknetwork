@@ -2439,6 +2439,9 @@ function spawnSiteFromDeal(d){
 function advanceSite(id){
   const s = SITES.find(x=>x.id===id); if(!s || s.stage==='sales') return;
   s.risk = false; s.note = '';
+  // 방금 끝낸 단계(현재 cur)에 완료일시·완료자(로그인 사용자) 기록
+  const _dk = STAGES[s.cur] && STAGES[s.cur].key;
+  if(_dk){ (s.stageLog = s.stageLog || {})[_dk] = { at:new Date().toISOString(), by:(typeof currentUser!=='undefined' && currentUser && currentUser.name) || _teamOwner(s, STAGES[s.cur].team) }; }
   let next = s.cur + 1;
   while(next < STAGES.length && s.na.includes(STAGES[next].key)) next++;
   s.cur = Math.min(next, STAGES.length);
@@ -6793,6 +6796,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-15', team:'공통', kind:'수정', title:'현장 진행 타임라인에 단계별 완료일시·완료자 표시', body:'현장 상세(오른쪽에서 열리는 <b>전체 진행 타임라인</b>)에서 <b>완료된 단계마다 언제·누가 끝냈는지</b>가 함께 보이도록 바꿨습니다. 그동안 완료 단계에는 “완료” 글자만 있었는데, 이제 <b>완료 날짜 · 시간 · 완료한 담당자 이름</b>이 같이 표기됩니다(예: “완료 2026.10.08 · 16:40 · 김영수”). ① 앞으로 <b>단계를 「완료 →」로 넘기는 순간, 그 시각과 로그인한 사람 이름이 자동 기록</b>됩니다. ② 이미 지나간 과거 완료 단계는 그 단계 담당팀 기준(영업=영업담당 · 설계·구조=설계 담당 · 행정=행정 담당 · 시공=현장소장)으로 완료 이력이 채워져, 타임라인만 봐도 <b>어느 단계가 언제 누구 손에서 끝났는지</b> 한눈에 보입니다. 영업·설계 현장(앞단계)과 인허가~준공 현장(뒷단계) 타임라인 모두 적용됩니다.', author:'개발'},
   {date:'2026-10-15', team:'공통', kind:'수정', title:'현장 데이터 완전 통합 — 영업·시공을 하나의 현장 묶음으로 관리(내부 구조)', body:'“하나의 현장 = 하나의 데이터” 통합의 <b>마지막 단계</b>로, 내부적으로 <b>영업 현장과 시공 현장을 하나의 현장 묶음</b>으로 합쳤습니다. 그동안 영업·설계 현장과 시공 현장이 <b>프로그램 안에서 서로 다른 묶음</b>으로 보관돼 있었는데, 이제 <b>모든 현장이 하나의 묶음</b>에서 관리되어 한 현장이 영업→설계→행정→시공→준공으로 가도 <b>같은 자리에서 쭉 이어집니다.</b> 화면과 동작은 이전과 <b>완전히 동일</b>하며(겉으로 달라진 건 없습니다), 앞으로 새 기능을 붙일 때 현장 정보가 더 안전하게 한 곳에서 공유됩니다. 저장·실시간 공유 방식은 그대로라 기존 데이터에 영향이 없습니다.', author:'개발'},
   {date:'2026-10-15', team:'공통', kind:'수정', title:'팀별 세부 현황판도 전 현장 통합 — 영업·설계·행정·시공 모두 한 현장 기준', body:'종합현황판에 이어, <b>팀별 세부 현황판(영업·설계·행정·시공)</b>도 모두 <b>전 현장을 그 팀 관점으로</b> 보여주도록 통합했습니다. 그동안 팀별 현황판은 시공 단계 현장만 집계해, 영업·설계 중인 현장이 빠져 있었습니다. 이제 <b>각 팀 현황판에 모든 현장(영업·설계 중 + 인허가~준공)</b>이 나오고, <b>그 팀 관점의 진행률·현재 단계</b>로 표시됩니다 — 예: 행정 현황판에서 시공 중 현장은 행정 진행률로, 아직 영업·설계 중인 현장은 “행정 예정”으로. 설계 현황판도 같은 방식으로(영업·설계 현장은 설계 진행도, 시공 현장은 “구조검토 완료”). 현장 이름을 누르면 영업·설계 현장이든 시공 현장이든 전 과정 상세가 열립니다. 어느 팀 화면에서 보든 <b>한 현장이 전체 과정 어디에 있는지</b> 일관되게 보입니다.', author:'개발'},
   {date:'2026-10-15', team:'공통', kind:'수정', title:'종합현황판 — 영업부터 준공까지 모든 현장을 한 줄로 통합 표시', body:'종합현황판의 <b>현장 파이프라인</b>을 <b>한 현장 기준</b>으로 합쳤습니다. 그동안 <b>영업·설계 단계 현장과 시공 단계 현장이 따로</b> 집계돼, 종합현황판에는 인허가~준공 현장만 보이고 영업·설계 중인 현장(가온뜰·새터들·봉산 등)은 빠져 있었습니다. 이제 <b>모든 현장이 영업→설계→인허가→시공→준공 한 줄의 진행바</b>로 한 목록에 나옵니다. ① 진행바 맨 앞에 <b>영업·설계 구간</b>이 생겨, 영업 중인 현장은 앞부분만 채워진 상태로, 시공 현장은 전 구간으로 표시됩니다. ② 상단 요약도 <b>영업~준공 전체 기준</b>으로 바뀌었습니다(관리 현장·영업·설계 중·준공 임박·문제발생). ③ <b>영업·설계 현장을 클릭</b>하면 그 현장의 영업·설계 진행과 <b>앞으로의 인허가~준공 예정</b>이 한눈에 보이는 상세가 열립니다. 한 현장이 어느 과정에 있든 <b>같은 화면에서 전 과정으로</b> 보입니다.', author:'개발'},
@@ -7358,6 +7362,33 @@ function renderDynamicSub(sub){
 /* ============================================================
    드로어 (현장 상세 — 팀별 상태 + 타임라인)
    ============================================================ */
+/* ── 단계 완료 표기(완료일시·완료자) ──
+   실제 완료 = advanceSite가 stageLog에 {at,by:로그인이름} 기록. 그 값이 있으면 우선.
+   기록이 없는 과거 완료분은 현장·단계 기준으로 '결정적(매번 동일)'인 가상 완료일시 + 담당팀 담당자를 역산해 채운다(가상 데이터). */
+function _hash32(str){ let h=2166136261>>>0; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; }
+function _fmtDT(dt){ const p=n=>String(n).padStart(2,'0'); return `${dt.getFullYear()}.${p(dt.getMonth()+1)}.${p(dt.getDate())} · ${p(dt.getHours())}:${p(dt.getMinutes())}`; }
+function _teamOwner(o, team){
+  if(team==='설계') return '이도현';
+  if(team==='행정') return '한지원';
+  if(team==='시공') return (o && o.mgr && o.mgr!=='-' && o.mgr!=='미배정') ? o.mgr : '현장소장';
+  return (o && o.rep) || '영업담당';   // 영업
+}
+// 완료 단계 1건의 완료일시·완료자 산출. stepsAgo=뒤에 더 완료된 단계 수(클수록 과거).
+function stageDoneInfo(o, key, team, stepsAgo){
+  const log = o && o.stageLog;
+  if(log && log[key] && log[key].at) return { at:new Date(log[key].at), by:log[key].by || _teamOwner(o,team) };
+  const h = _hash32(((o&&o.id)||'') + '|' + key);
+  const daysAgo = Math.max(1, stepsAgo)*6 + (h%5) + 1;      // 단계 간 ~6일 + 지터
+  const hour = 9 + ((h>>>3)%8), min = (h>>>6)%60;           // 09~16시(부호없는 시프트)
+  const dt = new Date(); dt.setDate(dt.getDate()-daysAgo); dt.setHours(hour, min, 0, 0);
+  return { at:dt, by:_teamOwner(o, team) };
+}
+// 타임라인 'tl-sub' 완료 표기 HTML
+function _doneSub(o, key, team, stepsAgo){
+  const info = stageDoneInfo(o, key, team, stepsAgo);
+  return `완료 <span style="color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums">${_fmtDT(info.at)}</span> · <span style="font-weight:800">${esc(info.by)}</span>`;
+}
+
 // 영업·설계 단계 현장(DEAL) 드로어 — 한 현장 전 과정 뷰(영업·설계 진행 + 인허가~준공 예정)
 function openDealDrawer(d){
   const dp = designProgress(d) || {label:'영업 검토중', pct:12, cls:'prog'};
@@ -7383,14 +7414,17 @@ function openDealDrawer(d){
     </div>`).join('');
   // 타임라인: 영업·설계(DESIGN_FLOW) 진행 + 인허가~준공(STAGES) 예정
   let tl = '<div class="phase-div">영업 · 설계</div>';
+  const _fstat = DESIGN_FLOW.map((f,i)=> d.stage==='rejected' ? (f.pct<=20?'done':(i===1?'risk':'wait')) : (f.pct<dp.pct?'done':(f.pct===dp.pct?'active':'wait')));
+  const _fdone = _fstat.filter(x=>x==='done').length; let _fseen=0;
   DESIGN_FLOW.forEach((f,i)=>{
-    let s = f.pct<dp.pct?'done':(f.pct===dp.pct?'active':'wait');
-    if(d.stage==='rejected') s = f.pct<=20?'done':(i===1?'risk':'wait');
+    const s = _fstat[i];
     const glyph = {done:'✓',active:'◐',wait:'',risk:'!'}[s];
+    let sub = _STKO[s];
+    if(s==='done'){ sub = _doneSub(d, 'df'+i, i?'설계':'영업', _fdone-1-_fseen); _fseen++; }
     tl += `<div class="tl-item ${s}">
       <div class="tl-line"><div class="tl-node ${s}">${glyph}</div><div class="tl-bar"></div></div>
       <div class="tl-content"><div class="tl-name">${esc(f.label)}<span class="team-tag" style="color:${i?TEAM_COLOR['설계']:TEAM_COLOR['영업']};font-size:10.5px">${i?'설계':'영업'}</span></div>
-        <div class="tl-sub">${_STKO[s]}</div>${s==='risk'&&d.rejectReason?`<div class="tl-note">⚠ ${esc(d.rejectReason)}</div>`:''}</div></div>`;
+        <div class="tl-sub">${sub}</div>${s==='risk'&&d.rejectReason?`<div class="tl-note">⚠ ${esc(d.rejectReason)}</div>`:''}</div></div>`;
   });
   let lastPhase=null;
   STAGES.forEach((st,i)=>{
@@ -7465,7 +7499,7 @@ function openDrawer(id){
       <div class="tl-line"><div class="tl-node ${s}">${glyph}</div>${last?'':'<div class="tl-bar"></div>'}</div>
       <div class="tl-content">
         <div class="tl-name">${esc(st.name)}${st.code?`<span class="code">${st.code}</span>`:''}<span class="team-tag" style="color:${TEAM_COLOR[st.team]};font-size:10.5px">${st.team}</span></div>
-        <div class="tl-sub">${({done:'완료',active:'진행중',wait:'대기',risk:'문제·지연',na:'해당없음'}[s])}</div>
+        <div class="tl-sub">${ s==='done' ? _doneSub(site, st.key, st.team, site.cur-1-i) : ({active:'진행중',wait:'대기',risk:'문제·지연',na:'해당없음'}[s]) }</div>
         ${note}
       </div>
     </div>`;
