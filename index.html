@@ -1802,7 +1802,7 @@ const STAGES = [
 ];
 const ROOF_NA = ['foundation'];   // 지붕형·수상형은 기초공사 해당없음
 
-let SITES = [
+const SITE_SEED = [
   {id:'FS-2405', name:'서촌 노지형',   type:'노지', cap:990,  rep:'김영수', mgr:'정민재', cur:17, risk:false, na:[], note:''},
   {id:'FS-2404', name:'삼거리 공장지붕', type:'지붕', cap:480,  rep:'박서준', mgr:'최현우', cur:15, risk:false, na:ROOF_NA, note:''},
   {id:'FS-2408', name:'두물머리 수상형', type:'수상', cap:1800, rep:'김영수', mgr:'정민재', cur:11, risk:false, na:ROOF_NA, note:''},
@@ -2216,7 +2216,7 @@ function renderSitesProgressBoard(team){
 /* ============================================================
    영업 ↔ 설계 이관 워크플로우 (타당성·가계약·실측·실계약)
    ============================================================ */
-let DEALS = [
+const DEAL_SEED = [
   {id:'D-1031', site:'가온뜰 노지형', cap:34.83, type:'노지', rep:'김영수', stage:'handover_design', rejectReason:'',
     proposal:{
       quote:[
@@ -2250,6 +2250,20 @@ let DEALS = [
   {id:'D-1029', site:'하리 노지형',     cap:990,  type:'노지', rep:'김영수', stage:'survey_done',       rejectReason:'',
     drawings:{ '배치도':{kind:'배치도',url:null,uploadedAt:null}, '구조 / 단면도':{kind:'구조 / 단면도',url:null,uploadedAt:null} } },
 ];
+/* ============================================================
+   ★ 단일 현장 레코드 — PROJECTS 하나의 배열이 유일한 소스.
+   DEALS(영업·설계 단계)·SITES(행정~준공 단계)는 PROJECTS의 live 파생 뷰(getter).
+   한 현장이 영업→준공으로 가도 같은 배열에서 관리된다. (읽기=그대로 동작 / 쓰기만 PROJECTS 조작)
+   ============================================================ */
+function _tagKind(arr, k){ (arr||[]).forEach(x=>{ if(x&&typeof x==='object') x.kind=k; }); return arr||[]; }
+function buildProjects(deals, sites){ return _tagKind((sites||[]).slice(),'site').concat(_tagKind((deals||[]).slice(),'deal')); }
+let PROJECTS = buildProjects(DEAL_SEED, SITE_SEED);
+// DEALS/SITES = PROJECTS 파생 뷰(읽기 전용). 요소는 PROJECTS와 같은 객체 참조 → 객체 속성 변경은 그대로 반영됨.
+Object.defineProperty(window, 'DEALS', { configurable:true, get(){ return PROJECTS.filter(p=>p.kind==='deal'); } });
+Object.defineProperty(window, 'SITES', { configurable:true, get(){ return PROJECTS.filter(p=>p.kind==='site'); } });
+// 영속화 로드용 — 파티션 교체(상대 순서 보존)
+function setDeals(deals){ PROJECTS = buildProjects(deals, PROJECTS.filter(p=>p.kind==='site')); }
+function setSites(sites){ PROJECTS = buildProjects(PROJECTS.filter(p=>p.kind==='deal'), sites); }
 const WF_STAGES = {
   'd-intake':['handover_design'], 'd-feas':['feasibility'], 'd-survey':['survey_handover','survey_sched','survey_progress'],
   's-supplement':['rejected'], 's-precontract':['approved'], 's-realcontract':['survey_done'],
@@ -2320,7 +2334,7 @@ const LS_KEY = 'fsnet_state_v1';
 function cacheLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify({DEALS, SITES, spawnSeq, dealSeq})); }catch(e){} }
 function loadLocal(){
   try{ const s=JSON.parse(localStorage.getItem(LS_KEY)||'null');
-    if(s && Array.isArray(s.DEALS) && Array.isArray(s.SITES)){ DEALS=s.DEALS; SITES=s.SITES; spawnSeq=s.spawnSeq||0; dealSeq=s.dealSeq||1031; return true; }
+    if(s && Array.isArray(s.DEALS) && Array.isArray(s.SITES)){ PROJECTS=buildProjects(s.DEALS, s.SITES); spawnSeq=s.spawnSeq||0; dealSeq=s.dealSeq||1031; return true; }
   }catch(e){}
   return false;
 }
@@ -2345,12 +2359,12 @@ async function loadShared(){
         const pcRow = dq.data.find(r=>r.id===PERMIT_CREDS_ID);
         if(pcRow && pcRow.data && pcRow.data.creds) applyPermitCreds(pcRow.data.creds);   // 발급 계정(로그인 직원만)
         const dealRows = dq.data.filter(r=>!isReservedId(r.id));
-        if(dealRows.length) DEALS = dealRows.map(r=>r.data);
+        if(dealRows.length) setDeals(dealRows.map(r=>r.data));
         else await Promise.all(DEALS.map(d=>SB.from('fsnet_deals').upsert({id:d.id, data:d})));
         if(!st) await SB.from('fsnet_deals').upsert({id:SETTINGS_ID, data:{org:ORG}});   // 최초 설정행 생성
       }
       else { await Promise.all(DEALS.map(d=>SB.from('fsnet_deals').upsert({id:d.id, data:d}))); await SB.from('fsnet_deals').upsert({id:SETTINGS_ID, data:{org:ORG}}); }
-      if(sq.data && sq.data.length) SITES = sq.data.map(r=>r.data);
+      if(sq.data && sq.data.length) setSites(sq.data.map(r=>r.data));
       else await Promise.all(SITES.map(s=>SB.from('fsnet_sites').upsert({id:s.id, data:s})));
       cacheLocal(); return true;
     }catch(e){ console.log('공유 로드 실패 → 로컬 사용', e); }
@@ -2367,17 +2381,17 @@ function subscribeRT(){
           if(nd&&nd.org) applyOrg(nd.org);
           if(nd&&Array.isArray(nd.list)) applyDevreqs(nd.list);
           refreshActive(); refreshTabBadges(); return; }
-        applyRemote(DEALS, p);
+        applyRemote('deal', p);
       })
-      .on('postgres_changes', {event:'*', schema:'public', table:'fsnet_sites'}, p=>applyRemote(SITES, p))
+      .on('postgres_changes', {event:'*', schema:'public', table:'fsnet_sites'}, p=>applyRemote('site', p))
       .subscribe();
   }catch(e){}
 }
-function applyRemote(arr, p){
+function applyRemote(kind, p){
   try{
     const id=(p.new&&p.new.data&&p.new.data.id)||(p.old&&p.old.id);
-    if(p.eventType==='DELETE'){ const i=arr.findIndex(x=>x.id===(p.old&&p.old.id)); if(i>=0) arr.splice(i,1); }
-    else if(p.new && p.new.data){ const o=p.new.data; const i=arr.findIndex(x=>x.id===o.id); if(i>=0) arr[i]=o; else arr.unshift(o); }
+    if(p.eventType==='DELETE'){ const i=PROJECTS.findIndex(x=>x.id===(p.old&&p.old.id)); if(i>=0) PROJECTS.splice(i,1); }
+    else if(p.new && p.new.data){ const o=p.new.data; o.kind=kind; const i=PROJECTS.findIndex(x=>x.id===o.id); if(i>=0) PROJECTS[i]=o; else PROJECTS.unshift(o); }
     cacheLocal();
     if(isSelfWrite(id)) return;   // 내 저장의 에코 — 데이터만 갱신하고 화면 리렌더는 생략(편집 중 입력 보존)
     refreshActive();
@@ -2400,8 +2414,8 @@ const SALES_POOL = [
 ];
 function receiveFromSales(){
   const p = SALES_POOL[Math.floor(Math.random()*SALES_POOL.length)];
-  const d = { id:'D-'+(dealSeq++), site:p.site, cap:p.cap, type:p.type, rep:p.rep, stage:'handover_design', rejectReason:'' };
-  DEALS.unshift(d);
+  const d = { id:'D-'+(dealSeq++), site:p.site, cap:p.cap, type:p.type, rep:p.rep, stage:'handover_design', rejectReason:'', kind:'deal' };
+  PROJECTS.unshift(d);
   toast('영업에서 신규 현장 이관 수신 — '+p.site);
   persistDeal(d); refreshActive();
 }
@@ -2416,8 +2430,8 @@ function spawnSiteFromDeal(d){
   base.admin = base.admin || { devPermitNo:'', constPlanNo:'', bizChangeNo:'', safetyMgr:'', supervisor:'', elecSafety:'한국전기안전공사' };
   base.struct = base.struct || {};
   base.docs = base.docs || {};
-  const s = { id:'FS-'+(2409+spawnSeq++), dealId:d.id, name:d.site, type:d.type, cap:d.cap, rep:d.rep, mgr:'-', cur:0, risk:false, na, note:'', permit:base };
-  SITES.unshift(s);
+  const s = { id:'FS-'+(2409+spawnSeq++), dealId:d.id, name:d.site, type:d.type, cap:d.cap, rep:d.rep, mgr:'-', cur:0, risk:false, na, note:'', permit:base, kind:'site' };
+  PROJECTS.unshift(s);
   return s;
 }
 
@@ -4030,15 +4044,15 @@ const TEST_SURVEY_SITES = [
 ];
 function spawnTestSurvey(){
   const t = TEST_SURVEY_SITES[dealSeq % TEST_SURVEY_SITES.length];
-  const d = { id:'D-'+(dealSeq++), site:'[테스트] '+t.site, cap:t.cap, type:t.type, rep:t.rep, stage:'survey_handover', rejectReason:'', test:true };
-  DEALS.unshift(d);
+  const d = { id:'D-'+(dealSeq++), site:'[테스트] '+t.site, cap:t.cap, type:t.type, rep:t.rep, stage:'survey_handover', rejectReason:'', test:true, kind:'deal' };
+  PROJECTS.unshift(d);
   persistDeal(d);
   toast('테스트 현장 추가 — 현장 실측(실측 대기)로 투입');
   refreshActive(); refreshTabBadges();
 }
 function delTestSurvey(id){
   const i = DEALS.findIndex(x=>x.id===id); if(i<0) return;
-  const d = DEALS[i]; DEALS.splice(i,1);
+  const d = DEALS[i]; const _pi=PROJECTS.indexOf(d); if(_pi>=0) PROJECTS.splice(_pi,1);
   cacheLocal(); if(SB){ try{ SB.from('fsnet_deals').delete().eq('id',id); }catch(e){} }
   toast(`테스트 현장 삭제 — ${d.site}`);
   refreshActive(); refreshTabBadges();
@@ -6779,6 +6793,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-15', team:'공통', kind:'수정', title:'현장 데이터 완전 통합 — 영업·시공을 하나의 현장 묶음으로 관리(내부 구조)', body:'“하나의 현장 = 하나의 데이터” 통합의 <b>마지막 단계</b>로, 내부적으로 <b>영업 현장과 시공 현장을 하나의 현장 묶음</b>으로 합쳤습니다. 그동안 영업·설계 현장과 시공 현장이 <b>프로그램 안에서 서로 다른 묶음</b>으로 보관돼 있었는데, 이제 <b>모든 현장이 하나의 묶음</b>에서 관리되어 한 현장이 영업→설계→행정→시공→준공으로 가도 <b>같은 자리에서 쭉 이어집니다.</b> 화면과 동작은 이전과 <b>완전히 동일</b>하며(겉으로 달라진 건 없습니다), 앞으로 새 기능을 붙일 때 현장 정보가 더 안전하게 한 곳에서 공유됩니다. 저장·실시간 공유 방식은 그대로라 기존 데이터에 영향이 없습니다.', author:'개발'},
   {date:'2026-10-15', team:'공통', kind:'수정', title:'팀별 세부 현황판도 전 현장 통합 — 영업·설계·행정·시공 모두 한 현장 기준', body:'종합현황판에 이어, <b>팀별 세부 현황판(영업·설계·행정·시공)</b>도 모두 <b>전 현장을 그 팀 관점으로</b> 보여주도록 통합했습니다. 그동안 팀별 현황판은 시공 단계 현장만 집계해, 영업·설계 중인 현장이 빠져 있었습니다. 이제 <b>각 팀 현황판에 모든 현장(영업·설계 중 + 인허가~준공)</b>이 나오고, <b>그 팀 관점의 진행률·현재 단계</b>로 표시됩니다 — 예: 행정 현황판에서 시공 중 현장은 행정 진행률로, 아직 영업·설계 중인 현장은 “행정 예정”으로. 설계 현황판도 같은 방식으로(영업·설계 현장은 설계 진행도, 시공 현장은 “구조검토 완료”). 현장 이름을 누르면 영업·설계 현장이든 시공 현장이든 전 과정 상세가 열립니다. 어느 팀 화면에서 보든 <b>한 현장이 전체 과정 어디에 있는지</b> 일관되게 보입니다.', author:'개발'},
   {date:'2026-10-15', team:'공통', kind:'수정', title:'종합현황판 — 영업부터 준공까지 모든 현장을 한 줄로 통합 표시', body:'종합현황판의 <b>현장 파이프라인</b>을 <b>한 현장 기준</b>으로 합쳤습니다. 그동안 <b>영업·설계 단계 현장과 시공 단계 현장이 따로</b> 집계돼, 종합현황판에는 인허가~준공 현장만 보이고 영업·설계 중인 현장(가온뜰·새터들·봉산 등)은 빠져 있었습니다. 이제 <b>모든 현장이 영업→설계→인허가→시공→준공 한 줄의 진행바</b>로 한 목록에 나옵니다. ① 진행바 맨 앞에 <b>영업·설계 구간</b>이 생겨, 영업 중인 현장은 앞부분만 채워진 상태로, 시공 현장은 전 구간으로 표시됩니다. ② 상단 요약도 <b>영업~준공 전체 기준</b>으로 바뀌었습니다(관리 현장·영업·설계 중·준공 임박·문제발생). ③ <b>영업·설계 현장을 클릭</b>하면 그 현장의 영업·설계 진행과 <b>앞으로의 인허가~준공 예정</b>이 한눈에 보이는 상세가 열립니다. 한 현장이 어느 과정에 있든 <b>같은 화면에서 전 과정으로</b> 보입니다.', author:'개발'},
   {date:'2026-10-15', team:'공통', kind:'수정', title:'하나의 현장 = 하나의 데이터 — 시공이 영업·설계·행정 데이터를 그대로 공유', body:'대시보드의 <b>핵심 원칙</b>을 구조에 반영했습니다 — <b>한 현장에 한 번 들어온 정보는 모든 메뉴가 같은 기준으로 가져다 씁니다.</b> 그동안 <b>시공은 영업·행정과 데이터가 따로</b> 놀아서(현장이 시공으로 넘어갈 때 이름·용량·유형만 넘어가고 사업주·설비·부지·허가 정보는 끊겼습니다) 사용전검사에서 임시 데이터를 따로 두고 있었는데, 이제 <b>발전사업허가와 똑같은 하나의 현장 데이터</b>를 시공도 그대로 읽도록 통합했습니다. ① 사업주·설비 제원·설치장소·허가번호가 <b>발전허가에서 입력한 바로 그 값</b>으로 사용전검사·수검자서식에 자동 반영됩니다. ② 앞으로 <b>현장이 영업→설계→행정→시공으로 넘어가도 같은 현장 데이터가 계속 따라갑니다</b>(완료 시 전체 승계+연결). ③ 새 양식·메뉴를 붙일 때도 항상 이 <b>하나의 현장 데이터</b>에서 꺼내 쓰므로, 같은 정보를 다시 입력·업로드할 일이 없습니다. 화면·출력 모습은 그대로이고, <b>데이터가 하나로 이어진 것</b>이 핵심입니다.', author:'개발'},
@@ -7094,7 +7109,7 @@ function saveQuoteFromEditor(){
   cfg.owner={ name:(g('qx-ow-name').value||'').trim(), bizname:(g('qx-ow-biz').value||'').trim(), phone:(g('qx-ow-phone').value||'').trim() };
   const existingId=g('qx-id').value;
   let d = existingId ? DEALS.find(x=>x.id===existingId) : null;
-  if(!d){ d={ id:nextSalesId(), stage:'quote', rejectReason:'', versions:[], confirmedVer:null }; DEALS.unshift(d); applyCfgToDeal(d, cfg); }
+  if(!d){ d={ id:nextSalesId(), stage:'quote', rejectReason:'', versions:[], confirmedVer:null, kind:'deal' }; PROJECTS.unshift(d); applyCfgToDeal(d, cfg); }
   else ensureVersions(d);
   const memo=(g('qx-memo')&&g('qx-memo').value||'').trim();
   const ver=withCostPreset(snap, ()=>addVersion(d, cfg, memo, cfg.rep));   // 선택 프리셋 단가로 스냅샷 계산
@@ -7130,7 +7145,7 @@ function loadQuoteToEditor(id, ver){
 }
 function deleteQuote(id){
   const i = DEALS.findIndex(x=>x.id===id); if(i<0) return;
-  const d = DEALS[i]; DEALS.splice(i,1);
+  const d = DEALS[i]; const _pi=PROJECTS.indexOf(d); if(_pi>=0) PROJECTS.splice(_pi,1);
   cacheLocal(); if(SB){ try{ SB.from('fsnet_deals').delete().eq('id',id); }catch(e){} }
   toast(`견적 삭제 — ${d.site}`);
   repaintQuote();
