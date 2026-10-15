@@ -5663,7 +5663,7 @@ function permitRawMap(d){
   const p=getPermit(d), dd=p.daeriinIdDoc;
   return {
     '§SAUP_ID§': _idPlace('사업주 신분증','영업 「실계약」 첨부에서 자동 삽입 예정'),
-    '§DAERIIN_ID§': (dd&&dd.dataUrl) ? `<img src="${dd.dataUrl}" alt="대리인 신분증" style="max-width:100%;max-height:75mm;display:block;margin:0 auto;object-fit:contain">` : _idPlace('대리인 신분증','「첨부서류 발급·준비」에서 업로드하면 자동 삽입'),
+    '§DAERIIN_ID§': (dd&&dd.dataUrl) ? `<img src="${dd.dataUrl}" alt="대리인 신분증" style="max-width:100%;max-height:115mm;display:block;margin:0 auto;object-fit:contain">` : _idPlace('대리인 신분증','「첨부서류 발급·준비」에서 업로드하면 자동 삽입'),
   };
 }
 // 미리보기·PDF 전용: 자동 채운 값을 파란색(span.pm-auto)으로 감싸 '자동입력/수기' 구분. 빈 값은 공란(span 없음). HWP(.hml) 다운로드는 fillPermitTemplate 그대로(검정 유지).
