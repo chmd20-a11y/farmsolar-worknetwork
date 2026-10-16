@@ -4731,8 +4731,7 @@ function resolvePermit(d){
   if(q.modInc!=null) p.equip.modInc=q.modInc;
   // 설치방법 = 유형(노지/건물)에 따라 자동 파생(제안서 유형 기준, 영업 손입력 제거)
   p.outline.method = (p.installType==='건물') ? '건물형(지붕)' : '노지형';
-  // 전력수급방식 전압 = 설비용량 고정 규칙(500kW 미만 380V / 이상 22.9kV)
-  p.outline.supply = ((pNum(p.biz.cap)||0)>=500 ? '22.9kV' : '380V') + ' 교류 3상 4선식';
+  // 전력수급방식 = 공급전압 계산값(아래) + 고정 "교류 3상 4선식" → 공급전압 핀 뒤에서 파생
   // 연간발전량 = 제안서 발전공식(설비용량 × 발전시간 × 365) 우선, 없으면 종전 추정
   p.outline.annual = q.annual || Math.round(pNum(p.biz.cap)*1460);
   // ── 모듈·인버터 종류 → 원가표 저장 사양을 설비 개요에 반영 ──
@@ -4768,6 +4767,8 @@ function resolvePermit(d){
   // ★공급전압·주파수·준비기간 고정 — 영업 실계약에서 변경 불가(하드코딩). 모든 화면·양식에 반영.
   //   공급전압 = 설비용량 500kW 기준 자동(미만 380V / 이상 22.9kV) — 값·단위 함께 조건에 맞춰 저장
   { const _hv=(pNum(p.biz.cap)||0)>=500; p.biz.volt=_hv?'22.9':'380'; p.biz.voltUnit=_hv?'kV':'V'; }
+  //   전력수급방식 = 공급전압(동일 공식) + 고정 "교류 3상 4선식"
+  p.outline.supply = p.biz.volt + p.biz.voltUnit + ' 교류 3상 4선식';
   p.biz.freq='60'; p.biz.prep='18';
   return p;
 }
@@ -5323,7 +5324,7 @@ function renderPermitForm(d, origin, fields){
       ${pr('발전소 명칭','outline.plantName',p.outline.plantName)}
       ${pr('설치방법','outline.method',p.outline.method)}
       ${pr('발전방식','outline.genType',p.outline.genType)}
-      ${pr('전력수급방식','outline.supply',p.outline.supply)}
+      ${pr('전력수급방식','outline.supply',p.outline.supply,{lock:true})}
       ${pr('사용면적','outline.useArea',p.outline.useArea,{unit:'㎡'})}
       ${pr('전체면적','outline.totalArea',p.outline.totalArea,{unit:'㎡'})}
       ${isBld?pr('건축면적','outline.bldArea',p.outline.bldArea,{unit:'㎡'}):''}
