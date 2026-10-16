@@ -4765,7 +4765,9 @@ function resolvePermit(d){
   }
   // 인버터 무게 보충: 종류 미선택이어도 용량(kW) 일치 모델에서 무게 자동 보충(예: 125kW→84kg)
   if(!p.equip.invWeight){ const _iw=Object.values(COST_PRESET.inverters).find(v=>pNum(v.kw)===pNum(p.equip.invKW)); if(_iw&&_iw.weight!=null) p.equip.invWeight=String(_iw.weight); }
-  // ★주파수(60Hz)·준비기간(18개월) 고정 — 영업 실계약에서 변경 불가(하드코딩). 모든 화면·양식에 반영.
+  // ★공급전압·주파수·준비기간 고정 — 영업 실계약에서 변경 불가(하드코딩). 모든 화면·양식에 반영.
+  //   공급전압 = 설비용량 500kW 기준 자동(미만 380V / 이상 22.9kV=22,900V)
+  p.biz.volt = ((pNum(p.biz.cap)||0)>=500) ? '22,900' : '380';
   p.biz.freq='60'; p.biz.prep='18';
   return p;
 }
@@ -5311,7 +5313,7 @@ function renderPermitForm(d, origin, fields){
       ${pr('사업의 종류','biz.kind',p.biz.kind)}
       ${pr('설비용량','biz.cap',p.biz.cap,{unit:'kW',type:'text'})}
       ${pr('설치장소','biz.place',p.biz.place)}
-      ${pr('공급전압','biz.volt',p.biz.volt,{unit:'V'})}
+      ${pr('공급전압','biz.volt',p.biz.volt,{unit:'V',lock:true})}
       ${pr('주파수','biz.freq',p.biz.freq,{unit:'Hz',lock:true})}
       ${pr('준비기간','biz.prep',p.biz.prep,{unit:'개월',lock:true})}
       ${pr('접수 관청','office',p.office,{ph:'○○시청/군청'})}
