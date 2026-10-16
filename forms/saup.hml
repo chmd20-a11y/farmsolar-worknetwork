@@ -13455,7 +13455,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_SELF§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -13649,7 +13649,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_FUNDSUM§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -13853,7 +13853,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_GJG§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -13937,7 +13937,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_HANJ§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -14021,7 +14021,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_ELEC§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -14105,7 +14105,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>1,000</CHAR>
+<CHAR>§SP_C_DEV§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -14542,7 +14542,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>1,000</CHAR>
+<CHAR>§SP_C_DEV§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -14710,7 +14710,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_GUGJO§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -14794,7 +14794,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_PV§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -14878,7 +14878,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_BUDAE§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -14962,7 +14962,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_JAP§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -15382,7 +15382,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>1,000</CHAR>
+<CHAR>§SP_C_TOTAL§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -15982,7 +15982,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>1,000</CHAR>
+<CHAR>§SP_C_DEV§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -16054,7 +16054,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>1,000</CHAR>
+<CHAR>§SP_C_DEV§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -16138,7 +16138,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>1,000</CHAR>
+<CHAR>§SP_C_DEV§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -16210,7 +16210,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>1,000</CHAR>
+<CHAR>§SP_C_DEV§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -16395,7 +16395,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_JU_IN§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -16467,7 +16467,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_JU_IN§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -16551,7 +16551,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_JU_EX§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -16623,7 +16623,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_JU_EX§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -16707,7 +16707,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_JU§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -16779,7 +16779,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_JU§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -16899,7 +16899,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_BO_IN§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -16971,7 +16971,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_BO_IN§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -17055,7 +17055,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_BO_EX§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -17127,7 +17127,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_BO_EX§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -17211,7 +17211,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_BO§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -17283,7 +17283,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_BO§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -17403,7 +17403,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_JAB_IN§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -17475,7 +17475,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_JAB_IN§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -17559,7 +17559,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_JAB_EX§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -17631,7 +17631,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_JAB_EX§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -17715,7 +17715,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_JAB§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -17787,7 +17787,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_JAB§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -18080,7 +18080,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_SIGONG§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -18152,7 +18152,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_SIGONG§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -18704,7 +18704,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_SIGONG§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -18776,7 +18776,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_SIGONG§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -18896,7 +18896,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_JAB_IN§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -18968,7 +18968,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_JAB_IN§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -19052,7 +19052,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_DIRECT_EX§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -19124,7 +19124,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_DIRECT_EX§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -19208,7 +19208,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>1,000</CHAR>
+<CHAR>§SP_C_TOTAL§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -19280,7 +19280,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>1,000</CHAR>
+<CHAR>§SP_C_TOTAL§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -20257,7 +20257,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_JAB_IN§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -20329,7 +20329,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_JAB_IN§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -20413,7 +20413,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_DIRECT_EX§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -20485,7 +20485,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§SP_C_DIRECT_EX§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -20569,7 +20569,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>1,000</CHAR>
+<CHAR>§SP_C_TOTAL§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -20641,7 +20641,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>1,000</CHAR>
+<CHAR>§SP_C_TOTAL§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
