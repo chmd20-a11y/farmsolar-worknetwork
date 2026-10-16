@@ -1243,11 +1243,24 @@ button{font-family:inherit;cursor:pointer}
       <div class="wf-actions"><button class="btn primary sm" onclick="acChangePw()">비밀번호 변경</button></div>
       <div id="acMsg" class="note" style="min-height:16px;margin-top:6px"></div>
       <div style="border-top:1px solid var(--border);margin:16px 0"></div>
+      <div class="section-title" style="font-size:12px;margin:0 0 4px">🪪 내 대리인 신분증 <span style="color:var(--muted);font-weight:400">(위임받은 대리인 = 본인)</span></div>
+      <div class="lr-s" style="margin-bottom:8px">내(로그인한 직원) 신분증 이미지를 등록하면, <b>내가 처리하는 모든 현장</b>의 「사업주/대리인 신분증」 양식(미리보기·PDF)에 <b>자동으로 삽입</b>됩니다. 한 번만 등록하면 됩니다. <span style="color:var(--muted)">(지금은 이 기기에만 저장 — 공용 보관은 추후 지원)</span></div>
+      <div id="acMyId" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"></div>
+      <div style="border-top:1px solid var(--border);margin:16px 0"></div>
       <div class="section-title" style="font-size:12px;margin:0 0 8px;color:var(--risk-ink)">⚠ 회원 탈퇴</div>
       <div class="lr-s" style="margin-bottom:9px">탈퇴하면 로그인할 수 없게 됩니다. (기록은 관리자가 완전 삭제할 수 있습니다)</div>
       <button class="btn ghost sm" id="acWithdrawBtn" onclick="acArmWithdraw()">회원 탈퇴</button>
     </div>
     <div class="modal-foot"><button class="btn ghost" onclick="closeAccount()">닫기</button></div>
+  </div>
+</div>
+
+<!-- 행정서류함 모달 (현재 현장의 관청 발급서류 발급·업로드) -->
+<div class="modal-scrim" id="docBoxScrim" onclick="if(event.target===this)closeDocBox()">
+  <div class="modal" style="max-width:880px;width:95vw">
+    <div class="modal-head" style="padding-right:52px"><h3>🗂 행정서류함</h3><p id="docBoxHead"></p></div>
+    <div class="modal-body scroll" id="docBoxBody" style="max-height:74vh"></div>
+    <div class="modal-foot"><button class="btn ghost" onclick="closeDocBox()">닫기</button></div>
   </div>
 </div>
 
@@ -1621,7 +1634,7 @@ button{font-family:inherit;cursor:pointer}
       <section class="view" id="view-admin">
         <div class="page-head">
           <div><h1>인허가 · 행정</h1><p>발전사업허가부터 설비확인까지 행정 9단계. 기한 임박·반려 건은 빨간색으로 표시됩니다.</p></div>
-          <div class="ph-actions"><button class="btn ghost sm">제출 서류함</button><button class="btn dark sm">＋ 인허가 등록</button></div>
+          <div class="ph-actions"><button class="btn ghost sm" onclick="openDocBox()">🗂 행정서류함</button><button class="btn dark sm">＋ 인허가 등록</button></div>
         </div>
 
         <!-- 개별 인허가 업무 현황(동적) -->
@@ -3937,7 +3950,16 @@ function openAccount(){
   const m=document.getElementById('acMsg'); if(m) m.textContent='';
   const wb=document.getElementById('acWithdrawBtn'); if(wb){ wb.textContent='회원 탈퇴'; wb.classList.remove('danger'); }
   _acArm=false;
+  fillMyId();
   document.getElementById('accountScrim').classList.add('open');
+}
+// 내 계정 모달의 '내 대리인 신분증' 영역 렌더(등록/미등록 상태)
+function fillMyId(){
+  const box=document.getElementById('acMyId'); if(!box) return;
+  const dd=myDaeriinId();
+  box.innerHTML = (dd&&dd.dataUrl)
+    ? `<img src="${dd.dataUrl}" alt="내 신분증" style="height:64px;border-radius:6px;border:1px solid var(--border)"><span class="doc-badge" style="background:color-mix(in srgb,#2e8b63 16%,transparent);color:#2e8b63">등록됨${dd.at?` · ${esc(dd.at)}`:''}</span><button class="btn ghost sm" onclick="myIdPick()">다시 등록</button><button class="btn ghost sm" onclick="myIdRemove()">등록 해제</button>`
+    : `<button class="btn dark sm" onclick="myIdPick()">📎 내 신분증 등록</button><span class="lr-s">미등록 — 등록 시 내 현장 서류에 자동 삽입</span>`;
 }
 function closeAccount(){ document.getElementById('accountScrim').classList.remove('open'); }
 async function acChangePw(){
@@ -5340,7 +5362,8 @@ function renderPermitBiz(){
       <button class="btn primary sm" onclick="printPermit('${d.id}')">📥 접수서류(HWP) 다운로드</button>
     </div>`;
   const info = `<div class="cred-warn" style="color:var(--ink-2);background:color-mix(in srgb,var(--brand) 9%,transparent);border-color:color-mix(in srgb,var(--brand) 26%,transparent)">🔗 아래 신청정보는 각 원천에서 <b>자동으로 가져온 읽기전용</b>입니다 — <b style="color:#2e8b63">제안서</b>(설비·금액·사업주 성명·상호·전화·설치방법·연간발전량·경사각/입사각) / <b style="color:#9a6f16">실계약</b>(민감정보·설치장소·접수관청·전압·주파수·면적·발전방식·수급방식·부지 명세). 제안서가 바뀌면 설비·발전량이 <b>자동 반영</b>됩니다. 각 항목의 출처 태그를 누르면 그 원천 화면으로 이동해 수정할 수 있습니다. 행정은 <b>첨부서류 발급·준비</b>와 <b>접수 PDF 출력</b>을 담당합니다.</div>`;
-  return head + bar + info + renderPermitForm(d,'admin') + renderPermitDocs(d) + permitBizHandoffFooter(d) + permitNotes();
+  const docBoxNote = `<div class="card pad" style="margin-top:16px;border-top:3px solid var(--brand)"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div style="flex:1;min-width:220px"><div class="section-title" style="font-size:13px;margin:0 0 3px">🗂 첨부서류 발급 · 준비 → <b>행정서류함</b>으로 이동</div><div class="lr-s">건축물대장·토지대장·지적도·토지이용계획확인서·건축물현황도·등기부등본 등 <b>관청 발급 서류의 발급·업로드</b>는 이제 우측 상단 <b>「행정서류함」</b> 버튼에서 관리합니다. 올린 파일은 이 현장의 모든 접수서류에 자동 반영됩니다.</div></div><button class="btn dark sm" onclick="openDocBox()">🗂 행정서류함 열기</button></div></div>`;
+  return head + bar + info + renderPermitForm(d,'admin') + docBoxNote + permitBizHandoffFooter(d) + permitNotes();
 }
 // 발전사업 허가 완료 → 다음 단계(설계 구조검토)로 이관 — 플래그 기록 + 구조검토 이관 화면으로 이동
 function permitBizHandNext(id){ const d=DEALS.find(x=>x.id===id); if(!d) return;
@@ -5389,22 +5412,31 @@ const PERMIT_DOCS = [
 function toggleDoc(id,key){ const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d); p.docs=p.docs||{};
   const cur=p.docs[key]&&p.docs[key].attached;
   p.docs[key]= cur?{attached:false}:{attached:true, at:new Date().toLocaleString('ko-KR')};
-  persistDeal(d); refreshActive(); }
-// 대리인 신분증 업로드 — 이미지 선택 → 축소(최대 1280px) → base64 저장 → 「사업주/대리인 신분증」 양식(미리보기·PDF)에 자동 삽입
-function daeriinIdPick(id){ pickFile('image/*', f=>daeriinIdUpload(id,f)); }
-function daeriinIdUpload(id,file){
+  persistDeal(d); permitDocsRefresh(); }
+// 행정서류함(모달)이 열려 있으면 모달 본문도 함께 갱신 + 현재 화면도 갱신
+function permitDocsRefresh(){ refreshActive(); if(document.getElementById('docBoxScrim')&&document.getElementById('docBoxScrim').classList.contains('open')) fillDocBox(); }
+// 대리인 신분증 = 로그인한 직원(대리인) 본인의 신분증. 「내 계정」에서 개인이 직접 업로드(현장별 아님, 사람별).
+// 업로드하면 그 사람이 처리하는 모든 현장의 「사업주/대리인 신분증」 양식에 자동 삽입. (저장은 현재 이 기기만 — 실제 보관은 추후 백엔드)
+function myDaeriinId(){
+  if(typeof currentUser==='undefined' || !currentUser) return null;
+  if(!currentUser.daeriinIdDoc){ try{ const s=localStorage.getItem('fsnet_myid_'+currentUser.id); if(s) currentUser.daeriinIdDoc=JSON.parse(s); }catch(_){} }
+  return currentUser.daeriinIdDoc||null;
+}
+function myIdSaveLocal(){ try{ if(currentUser) localStorage.setItem('fsnet_myid_'+currentUser.id, JSON.stringify(currentUser.daeriinIdDoc||null)); }catch(_){} }
+function myIdPick(){ if(!currentUser){ toast('로그인 후 이용할 수 있습니다'); return; } pickFile('image/*', f=>myIdUpload(f)); }
+function myIdUpload(file){
   if(!/^image\//.test(file.type||'')){ toast('이미지 파일만 업로드할 수 있습니다'); return; }
   const rd=new FileReader();
   rd.onload=e=>{ const img=new Image();
     img.onload=()=>{ const MX=1280; let w=img.width,h=img.height; if(w>MX||h>MX){ const r=Math.min(MX/w,MX/h); w=Math.round(w*r); h=Math.round(h*r); }
       const cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(img,0,0,w,h);
       let url; try{ url=cv.toDataURL('image/jpeg',0.82); }catch(_){ url=e.target.result; }
-      const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d).daeriinIdDoc={dataUrl:url, name:file.name, at:new Date().toLocaleString('ko-KR')};
-      persistDeal(d); toast('대리인 신분증을 첨부했습니다 — 양식에 자동 삽입됩니다'); refreshActive(); };
+      if(!currentUser) return; currentUser.daeriinIdDoc={dataUrl:url, name:file.name, at:new Date().toLocaleString('ko-KR')};
+      myIdSaveLocal(); toast('내 신분증을 등록했습니다 — 내가 처리하는 현장 서류에 자동 삽입됩니다'); fillMyId(); };
     img.onerror=()=>toast('이미지를 읽지 못했습니다'); img.src=e.target.result; };
   rd.readAsDataURL(file);
 }
-function daeriinIdRemove(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d); if(p.daeriinIdDoc) delete p.daeriinIdDoc; persistDeal(d); toast('대리인 신분증 첨부를 취소했습니다'); refreshActive(); }
+function myIdRemove(){ if(!currentUser) return; delete currentUser.daeriinIdDoc; myIdSaveLocal(); toast('내 신분증 등록을 해제했습니다'); fillMyId(); }
 // 파일 선택 공용 헬퍼 — input을 화면 밖에 잠깐 DOM에 붙였다 떼어야 Safari 등에서 선택 후 onchange가 안정적으로 걸림(detached input은 콜백 유실)
 function pickFile(accept, cb){
   const inp=document.createElement('input'); inp.type='file'; if(accept) inp.accept=accept;
@@ -5424,7 +5456,7 @@ function permitDocUpload(id,key,file){
   if(!isPdf&&!isImg){ toast('이미지 또는 PDF 파일만 업로드할 수 있습니다'); return; }
   if(file.size>10*1024*1024){ toast('파일이 너무 큽니다 (10MB 이하로 올려주세요)'); return; }
   const save=(url,mime)=>{ p.docs[key]={attached:true, at:new Date().toLocaleString('ko-KR'), dataUrl:url, name:file.name, mime:mime};
-    persistDeal(d); toast(isPdf?'첨부했습니다 — 출력 시 “열기”로 PDF를 함께 제출하세요':'첨부했습니다 — 출력물 자리에 자동 삽입됩니다'); refreshActive(); };
+    persistDeal(d); toast(isPdf?'첨부했습니다 — 출력 시 “열기”로 PDF를 함께 제출하세요':'첨부했습니다 — 출력물 자리에 자동 삽입됩니다'); permitDocsRefresh(); };
   const rd=new FileReader();
   if(isPdf){ rd.onload=e=>save(e.target.result,'application/pdf'); rd.onerror=()=>toast('파일을 읽지 못했습니다'); rd.readAsDataURL(file); return; }
   rd.onload=e=>{ const img=new Image();                                     // 이미지 → 최대 1600px 축소 후 JPEG 저장
@@ -5434,7 +5466,7 @@ function permitDocUpload(id,key,file){
     img.onerror=()=>toast('이미지를 읽지 못했습니다'); img.src=e.target.result; };
   rd.onerror=()=>toast('파일을 읽지 못했습니다'); rd.readAsDataURL(file);
 }
-function permitDocRemove(id,key){ const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d); if(p.docs&&p.docs[key]) delete p.docs[key]; persistDeal(d); toast('첨부를 취소했습니다'); refreshActive(); }
+function permitDocRemove(id,key){ const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d); if(p.docs&&p.docs[key]) delete p.docs[key]; persistDeal(d); toast('첨부를 취소했습니다'); permitDocsRefresh(); }
 function permitDocOpen(id,key){ const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d); const rec=p.docs&&p.docs[key]; if(!rec||!rec.dataUrl){ toast('첨부된 파일이 없습니다'); return; }
   try{ const parts=rec.dataUrl.split(','); const mime=(parts[0].match(/data:([^;]+)/)||[])[1]||rec.mime||'application/octet-stream';
     const bin=atob(parts[1]); const arr=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
@@ -5485,17 +5517,36 @@ function renderPermitDocs(d){
     <h3 class="section-title" style="font-size:13px;margin:0 0 4px"><svg class="st-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>첨부서류 발급 · 준비 <span class="lr-s" style="font-weight:600">(${isBld?'건물':'토지'} 유형 필요 ${doneN}/${need.length})</span></h3>
     <div class="cred-warn">ℹ️ 관할 관청에 제출하는 <b>공식 발급본</b>은 발급처별 자동 API 발급이 불가해(조회 API는 날인본이 아님) 각 포털에서 직접 발급해야 합니다. 아래 버튼으로 발급처를 열고 가이드대로 발급 → <b>발급받은 파일(이미지·PDF)을 업로드</b>하세요. 업로드하면 <b>접수 PDF 출력물의 해당 자리에 자동으로 들어갑니다</b> — 이미지는 그 자리에 바로 삽입, 여러 장짜리 PDF는 “업로드 완료” 표시 후 출력 시 <b>“열기”로 따로 인쇄해 합본</b>합니다. 발급 계정은 로그인한 내부 직원에게만 표시되며 공개 소스에는 저장되지 않습니다.</div>
     ${items}
-    ${(()=>{ const dd=p.daeriinIdDoc, has=!!(dd&&dd.dataUrl); return `<div class="doc-item ${has?'done':''}" style="border-top:2px dashed var(--border);margin-top:10px;padding-top:12px">
-      <div class="doc-ck" style="cursor:default">${has?'✓':'📎'}</div>
-      <div class="doc-b">
-        <div class="doc-t">대리인 신분증 업로드 <span class="doc-badge">양식 자동삽입</span>${has?`<span class="doc-badge" style="background:color-mix(in srgb,#2e8b63 16%,transparent);color:#2e8b63">첨부됨 · ${esc(dd.at||'')}</span>`:''}</div>
-        <div class="doc-g">대리인(로그인 직원)의 신분증 이미지를 올리면 <b>「사업주/대리인 신분증」 양식</b>의 미리보기·PDF에 자동 삽입됩니다. (한글파일에는 ‘첨부됨’으로 표기)</div>
-        <div class="doc-act" style="align-items:center">
-          ${has?`<img src="${dd.dataUrl}" alt="대리인 신분증" style="height:48px;border-radius:5px;border:1px solid var(--border)"> <button class="btn ghost sm" onclick="daeriinIdPick('${d.id}')">다시 업로드</button><button class="btn ghost sm" onclick="daeriinIdRemove('${d.id}')">첨부 취소</button>`:`<button class="btn dark sm" onclick="daeriinIdPick('${d.id}')">📎 대리인 신분증 업로드</button>`}
-        </div>
-      </div></div>`; })()}
+    <div class="lr-s" style="border-top:2px dashed var(--border);margin-top:10px;padding-top:10px">🪪 <b>대리인(위임받은 직원 본인) 신분증</b>은 우측 상단 <b>「내 계정」</b>에서 개인이 직접 등록합니다 — 등록 시 「사업주/대리인 신분증」 양식에 자동 삽입됩니다.</div>
     <div style="margin-top:8px">${doneN>=need.length?'<span class="pill done"><span class="pd"></span>필요 서류 모두 첨부 완료 — 접수 준비 OK</span>':`<span class="pill wait"><span class="pd"></span>필요 서류 ${need.length-doneN}건 남음</span>`}</div>
   </div>`;
+}
+
+/* ===== 행정서류함 — 현재 보고 있는 행정 현장의 관청 발급서류 발급·업로드(별도 팝업). 모든 행정 메뉴 우측 상단 버튼에서 호출 ===== */
+let docBoxDealId = null;
+// 현재 활성화된 행정 메뉴의 대상 현장 id(각 단계가 쓰는 선택값에서). 없으면 첫 현장.
+function currentAdminDealId(){
+  const list = permitBizList(); if(!list.length) return null;
+  const active = document.querySelector('#ssNav .ss-item.active');
+  const stage = active && active.dataset ? active.dataset.stage : null;
+  const sel = {permit_biz:permitSel, permit_dev:devPermitSel, ppa:ppaSel, const_plan:constPlanSel, kepco:kepcoSel, completion:completionSel, commercial:commercialSel}[stage];
+  let id = sel || permitSel;
+  if(!id || !list.find(d=>d.id===id)) id = list[0].id;
+  return id;
+}
+function openDocBox(){
+  const id = currentAdminDealId();
+  if(!id){ toast('행정 대상 현장이 없습니다 — 영업 「실계약」 완료 후 이용할 수 있습니다'); return; }
+  docBoxDealId = id;
+  fillDocBox();
+  document.getElementById('docBoxScrim').classList.add('open');
+}
+function closeDocBox(){ const s=document.getElementById('docBoxScrim'); if(s) s.classList.remove('open'); }
+function fillDocBox(){
+  const d = DEALS.find(x=>x.id===docBoxDealId); if(!d){ closeDocBox(); return; }
+  const p = getPermit(d);
+  const hd=document.getElementById('docBoxHead'); if(hd) hd.textContent = `${d.site} (${d.id}) · ${p.installType==='건물'?'건물형(지붕)':'토지형(노지)'} — 이 현장의 발급서류`;
+  const bd=document.getElementById('docBoxBody'); if(bd) bd.innerHTML = renderPermitDocs(d);
 }
 
 /* ---- 발급 계정 관리 (행정담당자/관리자 편집 · Supabase 보관) ---- */
@@ -5774,7 +5825,7 @@ function permitTokenMap(d){
     '§WJ_BIRTH§':(typeof currentUser!=='undefined'&&currentUser&&currentUser.birth)?fmtKDate(currentUser.birth):'',
     // 사업주/대리인 신분증 양식 — HWP(.hml) 다운로드용 '텍스트 표기'(미리보기·PDF는 permitRawMap에서 실제 이미지로 대체)
     '§SAUP_ID§':'사업주 신분증 (영업 「실계약」 첨부본)',
-    '§DAERIIN_ID§':(p.daeriinIdDoc&&p.daeriinIdDoc.dataUrl)?'대리인 신분증 첨부됨 ✓':'대리인 신분증 미첨부',
+    '§DAERIIN_ID§':(myDaeriinId()&&myDaeriinId().dataUrl)?'대리인 신분증 첨부됨 ✓':'대리인 신분증 미첨부',
     '§INV_IN§':S(eq.invIn), '§INV_OUT§':S(eq.invOut), '§INV_KW§':S(eq.invKW), '§INV_QTY§':S(eq.invQty),
     '§MOD_W§':S(eq.modW), '§MOD_QTY§':pComma(eq.modQty),
     '§BIRTH§':donguiBirth(p)||'년 월 일', '§DONGUI_NO§':donguiPersonNo(p),
@@ -5813,10 +5864,10 @@ function fillPermitTemplate(xml, map){ for(const k in map){ xml=xml.split(k).joi
 function _idPlace(title,note){ return `<div style="color:#64748b;text-align:center;line-height:1.7"><div style="font-size:15pt">📎</div><div style="font-size:12.5pt;font-weight:700;color:#334155">${esc(title)}</div><div style="font-size:10.5pt">${esc(note)}</div></div>`; }
 // 미리보기·PDF 전용 '원본 HTML 치환'(이미지 등 — 이스케이프/파란span 없이 그대로 삽입). 사업주=자리표시, 대리인=업로드 이미지(있으면)
 function permitRawMap(d){
-  const p=getPermit(d), dd=p.daeriinIdDoc;
+  const dd=myDaeriinId();   // 대리인 = 로그인한 직원 본인(「내 계정」에서 등록)
   return {
     '§SAUP_ID§': _idPlace('사업주 신분증','영업 「실계약」 첨부에서 자동 삽입 예정'),
-    '§DAERIIN_ID§': (dd&&dd.dataUrl) ? `<img src="${dd.dataUrl}" alt="대리인 신분증" style="max-width:100%;max-height:115mm;display:block;margin:0 auto;object-fit:contain">` : _idPlace('대리인 신분증','「첨부서류 발급·준비」에서 업로드하면 자동 삽입'),
+    '§DAERIIN_ID§': (dd&&dd.dataUrl) ? `<img src="${dd.dataUrl}" alt="대리인 신분증" style="max-width:100%;max-height:115mm;display:block;margin:0 auto;object-fit:contain">` : _idPlace('대리인 신분증','「내 계정」에서 내 신분증을 등록하면 자동 삽입'),
   };
 }
 // 미리보기·PDF 전용: 자동 채운 값을 파란색(span.pm-auto)으로 감싸 '자동입력/수기' 구분. 빈 값은 공란(span 없음). HWP(.hml) 다운로드는 fillPermitTemplate 그대로(검정 유지).
@@ -6796,6 +6847,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-16', team:'행정', kind:'추가', title:'행정서류함 — 관청 발급서류 발급·업로드를 한곳에 모음 + 내 신분증은 「내 계정」에서', body:'행정 화면 <b>우측 상단 「행정서류함」 버튼</b>을 실제 기능으로 만들었습니다. ① <b>관청에서 직접 발급받는 서류</b>(건축물대장·토지(임야)대장·지적도·토지이용계획확인서·건축물현황도·등기부등본)의 <b>발급처 열기 + 파일 업로드</b>를, 그동안 「발전사업 허가」 화면 맨 아래에 있던 것을 <b>행정서류함 팝업으로 옮겨</b> 한곳에서 관리합니다. ② 이 버튼은 <b>행정의 모든 메뉴(발전허가·개발행위·PPA·선로비·공사계획·한전수급·준공·사업개시·설비확인) 어디서나 우측 상단에 고정</b>으로 떠서, <b>지금 보고 있는 현장</b>의 발급서류를 바로 열 수 있습니다(현장은 보던 화면 기준으로 자동). ③ 올린(또는 재발급해 다시 올린) 파일은 <b>그 현장의 모든 접수서류(미리보기·PDF·한글)에 자동 반영</b>됩니다. ④ <b>대리인(위임받은 직원 본인) 신분증</b>은 이제 현장별이 아니라 <b>우측 상단 「내 계정」에서 개인이 직접 한 번만 등록</b>하면, <b>그 사람이 처리하는 모든 현장</b>의 「사업주/대리인 신분증」 양식에 자동으로 들어갑니다. (신분증 사진의 실제 공용 보관은 추후 서버 작업에서 지원 — 현재는 등록한 기기에 보관)', author:'개발'},
   {date:'2026-10-15', team:'행정', kind:'수정', title:'사업주/대리인 신분증 양식 — 사진 넣는 칸을 키워 A4 한 장 꽉 채움', body:'앞서 추가한 <b>「사업주/대리인 신분증」 양식</b>에서, 사진을 넣는 칸이 작아 양식 <b>아래쪽에 빈 여백이 많이 남던 것</b>을 보완했습니다. 사업주용·대리인용 <b>사진 칸 두 개를 위아래로 더 크게 키워</b> 양식이 <b>용지 한 장을 거의 가득 채우도록</b> 조정했고, 미리보기에서도 <b>신분증 사진이 더 크고 선명하게</b> 보이도록 함께 키웠습니다.', author:'개발'},
   {date:'2026-10-15', team:'시공', kind:'수정', title:'사용전 검사 — 수검자 서식 미리보기 전체 정리(틀어짐·치우침·잘림·겹침)', body:'시공 <b>「사용전 검사」</b>의 <b>수검자 서식 미리보기</b>가 틀어져 보이던 문제를 전체적으로 바로잡았습니다. ① <b>좁은 칸의 긴 글자</b>(예: “전력계통 저압이하 연계설비”, 긴 안내 문구)가 옆 칸을 덮던 것 → <b>칸 안에서 줄바꿈</b>. ② <b>각 기록표 제목이 표 위에 겹쳐</b> 보이던 것 → 제목이 표 바로 위 제자리로. ③ 한 장에 서식 두 개가 겹쳐 <b>뒤 내용이 잘리던</b> 전력변환장치·모듈 기록표 → <b>서식마다 한 장씩</b> 분리(총 12장). ④ 서식이 <b>왼쪽으로 치우쳐</b> 있던 것 → <b>용지 가운데로 정렬</b>. ⑤ 용지보다 넓어 <b>오른쪽이 잘리던</b> 저압설비 기록표 → 폭에 맞춰 <b>살짝 줄여 전부 보이게</b>. ⑥ 좁은 칸의 라벨 글자가 아래 칸으로 <b>삐져나와 겹치던</b> 것(제조번호·단면/양면 구분 등) → 그 칸 글자만 <b>자동으로 줄여 칸 안에 맞춤</b>. ⑦ 내용이 <b>용지 위쪽에 몰리고 상·하 여백만 크던</b> 것 → <b>A4 용지에 꽉 차게</b> 비율 그대로 키우고 <b>가운데 정렬</b>(상·하·좌·우 여백 적정화). ⑧ <b>사용전검사 신청서</b>도 같은 쏠림이 있어 동일하게 A4에 맞춰 채우고, <b>앞쪽·뒤쪽 2장</b>으로 바르게 나눠 정리. ⑨ <b>모듈 규격표 등 상단 표의 글자가 지나치게 작아져</b>(읽기 어려울 정도) 아래 칸들과 크기가 달라 보이던 것 → <b>칸에 맞는 정상 크기(대부분 그대로)로 통일</b>하고, 꼭 줄여야 하는 칸도 <b>읽을 수 있는 최소 크기까지만</b> 줄이도록 수정. ⑩ <b>서명란 등 여러 줄 문단의 줄 간격이 너무 좁던</b> 것(줄이 붙어 보임) → <b>원본 한글의 줄 간격을 그대로 반영</b>해 적정하게 벌림. 모든 점검기록표의 같은 서명 문구에 함께 적용. 미리보기·PDF·한글 출력 모두 동일하게 반영됩니다.', author:'개발'},
   {date:'2026-10-15', team:'공통', kind:'수정', title:'현장 진행 타임라인에 단계별 완료일시·완료자 표시', body:'현장 상세(오른쪽에서 열리는 <b>전체 진행 타임라인</b>)에서 <b>완료된 단계마다 언제·누가 끝냈는지</b>가 함께 보이도록 바꿨습니다. 그동안 완료 단계에는 “완료” 글자만 있었는데, 이제 <b>완료 날짜 · 시간 · 완료한 담당자 이름</b>이 같이 표기됩니다(예: “완료 2026.10.08 · 16:40 · 김영수”). ① 앞으로 <b>단계를 「완료 →」로 넘기는 순간, 그 시각과 로그인한 사람 이름이 자동 기록</b>됩니다. ② 이미 지나간 과거 완료 단계는 그 단계 담당팀 기준(영업=영업담당 · 설계·구조=설계 담당 · 행정=행정 담당 · 시공=현장소장)으로 완료 이력이 채워져, 타임라인만 봐도 <b>어느 단계가 언제 누구 손에서 끝났는지</b> 한눈에 보입니다. 영업·설계 현장(앞단계)과 인허가~준공 현장(뒷단계) 타임라인 모두 적용됩니다.', author:'개발'},
