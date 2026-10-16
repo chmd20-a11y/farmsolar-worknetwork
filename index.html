@@ -5250,10 +5250,22 @@ async function permitAutofill(id){
       } else if(bg&&bg.reason==='nokey'){ bldNote=' (건물명세서는 건축물대장 키 등록 후 자동채움)'; }
       else { bldNote=' (이 지번에 등록된 건축물대장이 없어 건물명세서는 직접 입력)'; }
     }
+    // 전체면적 = 토지·건물 명세서 면적 합계로 자동채움(이후 발전사업 허가에서 직접 수정 가능)
+    { const _la=(p.lands||[]).reduce((s,x)=>s+(pNum(x&&x.area)||0),0); const _ba=(p.builds||[]).reduce((s,x)=>s+(pNum(x&&x.bldArea)||0),0); const _tot=_la+_ba; if(_tot>0){ p.outline.totalArea=Math.round(_tot); if(set.indexOf('전체면적')<0) set.push('전체면적'); } }
     persistDeal(d); refreshActive();
     toast((set.length?('공공데이터로 '+set.join('·')+' 채움 — 등기부와 대조 확인하세요'):'이미 입력돼 있어 변경하지 않았습니다(빈 칸만 자동 채움)')+bldNote);
   }catch(e){ toast('조회 중 문제가 발생했습니다 — 잠시 후 다시 시도해 주세요'); }
   finally{ _permitAutofillBusy=false; }
+}
+// 전체면적 = 토지명세서 면적 합 + 건물명세서 건축면적 합 (여러 필지면 면적들의 합). 발전사업 허가에서 버튼으로 채움, 이후 수정 가능.
+function permitFillTotalArea(id){
+  const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d);
+  const _la=(p.lands||[]).reduce((s,x)=>s+(pNum(x&&x.area)||0),0);
+  const _ba=(p.builds||[]).reduce((s,x)=>s+(pNum(x&&x.bldArea)||0),0);
+  const _tot=_la+_ba;
+  if(_tot<=0){ toast('먼저 토지·건물 명세서 면적을 채워주세요'); return; }
+  p.outline.totalArea=Math.round(_tot); persistDeal(d); refreshActive();
+  toast('전체면적을 명세서 면적 합계('+Math.round(_tot).toLocaleString()+'㎡)로 채웠습니다 — 필요 시 직접 수정하세요');
 }
 function addPermitRow(id,kind){ const d=DEALS.find(x=>x.id===id); const p=getPermit(d);
   if(kind==='lands') (p.lands=p.lands||[]).push({addr:'',jibun:'',jimok:'전',area:'',owner:'',ownerAddr:'',zone:''});
@@ -5286,6 +5298,12 @@ function renderPermitForm(d, origin, fields){
     if(fields && !fields.has(path)) return '';        // 이 메뉴 양식이 안 쓰는 필드는 숨김(발전허가·sales는 fields 없음=전체)
     opt=Object.assign({},opt);
     if(opt.lock){ opt.ro=true; opt.src=opt.src||{tag:'고정', color:'#8a8f98', title:'이 값은 고정되어 변경할 수 없습니다.'}; return piRow(id,label,path,val,opt); }   // 주파수·준비기간 등 고정값(읽기전용)
+    if(opt.adminEdit){   // 발전사업 허가에서만 입력·수정(초기값=명세서 합계 자동), 영업·타 행정메뉴는 읽기전용 미러
+      const _ed=(origin==='admin' && !fields);
+      opt.ro=!_ed;
+      opt.src=opt.src||(_ed?{tag:'여기서 입력', color:'#8a8f98', title:'발전사업 허가에서 입력·수정합니다.'}:{tag:'발전사업 허가에서 입력', color:'#8a8f98', title:'발전사업 허가에서 입력합니다(여기선 읽기전용).'});
+      return piRow(id,label,path,val,opt);
+    }
     const org=fieldOrigin(path);
     if(origin==='sales'){
       if(org==='quote') return '';                      // 설비·금액은 실계약에서 숨김(원천=견적서)
@@ -5330,12 +5348,12 @@ function renderPermitForm(d, origin, fields){
       ${pr('발전방식','outline.genType',p.outline.genType)}
       ${pr('전력수급방식','outline.supply',p.outline.supply,{lock:true})}
       ${pr('사용면적','outline.useArea',pArea(p.outline.useArea),{unit:'㎡',lock:true})}
-      ${pr('전체면적','outline.totalArea',p.outline.totalArea,{unit:'㎡'})}
+      ${pr('전체면적','outline.totalArea',p.outline.totalArea,{unit:'㎡',adminEdit:true})}
       ${isBld?pr('건축면적','outline.bldArea',p.outline.bldArea,{unit:'㎡'}):''}
       ${pr('총사업비','outline.totalCost',p.outline.totalCost,{unit:'천원'})}
       ${pr('건설단가','outline.unitCost',p.outline.unitCost,{unit:'천원/kW'})}
       ${pr('연간발전량','outline.annual',p.outline.annual,{unit:'kWh'})}
-    </div>`);
+    </div>${(origin==='admin'&&!fields)?`<div style="margin-top:6px"><button class="btn ghost sm" onclick="permitFillTotalArea('${id}')">📐 전체면적 = 토지·건물 명세서 면적 합계로 채우기</button> <span class="lr-s">명세서를 채운 뒤 누르면 자동 합산됩니다(이후 직접 수정 가능). 공공데이터 자동 채우기 시에도 함께 채워집니다.</span></div>`:''}`);
   const fund = sec('#bd8a2e','💰','소요자금 조달',
     `<div class="pm-grid">
       ${pr('자기자금 비율','fund.ownPct',p.fund.ownPct,{unit:'%'})}
@@ -6963,6 +6981,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-16', team:'행정', kind:'수정', title:'전체면적 — 토지·건물 명세서 면적 합계로 자동(발전사업 허가에서 입력·수정)', body:'발전사업 허가의 <b>전체면적</b>을, 이제 <b>토지·건물 명세서 면적의 합계</b>로 채웁니다. ① <b>「🛰 공공데이터로 자동 채우기」</b>를 누르거나 전체면적 아래 <b>「📐 명세서 면적 합계로 채우기」</b> 버튼을 누르면, <b>토지명세서 각 필지 면적 + 건물명세서 건축면적</b>을 모두 더해 전체면적에 넣습니다(주소지가 <b>여러 필지</b>인 넓은 현장은 토지대장 면적들의 합). ② 자동으로 채운 뒤 <b>발전사업 허가 화면에서 직접 수정</b>할 수 있습니다. ③ <b>영업 실계약</b>에서는 <b>읽기전용</b>으로만 보입니다(값은 발전사업 허가에서 결정).', author:'개발'},
   {date:'2026-10-16', team:'영업', kind:'수정', title:'발전사업 허가 신청정보 — 자동 계산·고정값으로 입력 간소화', body:'영업 실계약의 「발전사업 허가 추가 신청정보」에서 매번 손으로 넣던 값들을 <b>자동으로 채우고 고정</b>해, 틀릴 일 없이 바로 접수서류로 넘어가도록 했습니다. ① <b>주파수 60Hz · 준비기간 18개월</b>로 고정(수정 불가). ② <b>공급전압</b>은 <b>설비용량 기준 자동</b> — <b>500kW 미만이면 380V, 이상이면 22.9kV</b>로 <b>단위(V/kV)까지 함께</b> 바뀝니다. ③ <b>전력수급방식</b>은 공급전압과 같은 값 뒤에 <b>“교류 3상 4선식”</b>을 고정으로 붙여 자동 완성(예: <b>22.9kV 교류 3상 4선식</b>). ④ <b>사용면적</b>은 <b>모듈 외형크기(가로×세로)와 수량</b>으로 자동 계산합니다(소수 셋째 자리까지, 예: <b>4,081.495㎡</b>). 고정된 칸은 <b>「고정」</b> 표시로 바로 알 수 있고, 모든 접수서류(사업계획서 등)에 같은 값으로 들어갑니다.', author:'개발'},
   {date:'2026-10-16', team:'행정', kind:'추가', title:'토지·건물 명세서 — 지번만으로 공공데이터 자동 채우기(+등기부 대조 안전장치)', body:'발전사업 허가의 <b>토지·건물 명세서</b>를, 이제 <b>지번만으로 공공데이터를 조회해 자동으로 채웁니다</b>(실연동). ① 명세서 위 <b>「🛰 공공데이터로 자동 채우기」</b> 버튼을 누르면, 입력한 <b>소재지(지번)</b>로 조회해 <b>토지명세서</b>의 <b>소재지·지번·지목·면적·용도지역</b>을 <b>첫 필지의 빈 칸</b>에 자동으로 채웁니다(이미 입력한 칸은 보존). ② <b>건물(지붕) 현장</b>이면 같은 지번의 <b>건축물대장</b>에서 <b>건물명세서(건축면적·구조·용도)</b>도 함께 자동으로 채웁니다. ③ <b>소유자(이름·주소)</b>는 개인정보라 공개 데이터에 없어 <b>등기부등본을 보고 직접 입력</b>하도록 분리하고, 칸에 <b>“·등기부”</b>로 표시했습니다. ④ <b>안전장치</b> — 자동으로 채운 값은 <b>“초안”</b>이며, 특히 <b>면적·소유자</b>는 올린 <b>등기부등본과 대조해 확인</b>하라는 안내를 상시 표시합니다(현황·면적은 <b>대장</b> 기준, 소유자는 <b>등기부</b> 기준이라 서로 다를 수 있기 때문). 편집 기능은 그대로입니다.', author:'개발'},
   {date:'2026-10-16', team:'행정', kind:'수정', title:'발전사업 허가 — 토지·건물 명세서를 여기서 직접 입력 + 건물 현장은 둘 다 표시', body:'발전사업 허가 화면의 <b>부지 명세서</b>를 손봤습니다. ① 그동안 영업 「실계약」에서 입력하던 <b>명세서 초기값을, 이제 「발전사업 허가」 화면에서 직접 입력·수정</b>합니다(행정 담당자가 발급서류를 보면서 바로 채우도록). 한 번 입력하면 <b>이 현장의 모든 접수서류에 그대로 자동 반영</b>되고, 영업 「실계약」 등 다른 화면에서는 <b>읽기전용 미러</b>로 보입니다. ② 이름을 <b>“대상 토지 명세서 → 토지명세서”</b>, <b>“대상 건물 명세서 → 건물명세서”</b>로 바꿨습니다. ③ <b>토지(노지) 현장은 토지명세서만</b>, <b>건물(지붕) 현장은 토지명세서와 건물명세서를 함께</b> 보여줍니다(지붕 태양광도 그 아래 땅의 토지 정보가 필요하기 때문). 필지·건물은 ＋ 버튼으로 여러 건 추가할 수 있습니다.', author:'개발'},
