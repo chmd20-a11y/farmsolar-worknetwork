@@ -4765,6 +4765,8 @@ function resolvePermit(d){
   }
   // 인버터 무게 보충: 종류 미선택이어도 용량(kW) 일치 모델에서 무게 자동 보충(예: 125kW→84kg)
   if(!p.equip.invWeight){ const _iw=Object.values(COST_PRESET.inverters).find(v=>pNum(v.kw)===pNum(p.equip.invKW)); if(_iw&&_iw.weight!=null) p.equip.invWeight=String(_iw.weight); }
+  // ★주파수(60Hz)·준비기간(18개월) 고정 — 영업 실계약에서 변경 불가(하드코딩). 모든 화면·양식에 반영.
+  p.biz.freq='60'; p.biz.prep='18';
   return p;
 }
 function getPermit(d){ if(!d.permit) d.permit = defaultPermit(d); return d.permit; }
@@ -5276,6 +5278,7 @@ function renderPermitForm(d, origin, fields){
   const pr=(label,path,val,opt)=>{
     if(fields && !fields.has(path)) return '';        // 이 메뉴 양식이 안 쓰는 필드는 숨김(발전허가·sales는 fields 없음=전체)
     opt=Object.assign({},opt);
+    if(opt.lock){ opt.ro=true; opt.src=opt.src||{tag:'고정', color:'#8a8f98', title:'이 값은 고정되어 변경할 수 없습니다.'}; return piRow(id,label,path,val,opt); }   // 주파수·준비기간 등 고정값(읽기전용)
     const org=fieldOrigin(path);
     if(origin==='sales'){
       if(org==='quote') return '';                      // 설비·금액은 실계약에서 숨김(원천=견적서)
@@ -5309,8 +5312,8 @@ function renderPermitForm(d, origin, fields){
       ${pr('설비용량','biz.cap',p.biz.cap,{unit:'kW',type:'text'})}
       ${pr('설치장소','biz.place',p.biz.place)}
       ${pr('공급전압','biz.volt',p.biz.volt,{unit:'V'})}
-      ${pr('주파수','biz.freq',p.biz.freq,{unit:'Hz'})}
-      ${pr('준비기간','biz.prep',p.biz.prep,{unit:'개월'})}
+      ${pr('주파수','biz.freq',p.biz.freq,{unit:'Hz',lock:true})}
+      ${pr('준비기간','biz.prep',p.biz.prep,{unit:'개월',lock:true})}
       ${pr('접수 관청','office',p.office,{ph:'○○시청/군청'})}
     </div>`);
   const outline = sec('#7e6bb0','📄','사업계획 개요',
