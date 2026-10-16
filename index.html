@@ -5517,7 +5517,6 @@ function renderPermitDocs(d){
   }).join('');
   return `<div class="card pad" style="margin-top:16px">
     <h3 class="section-title" style="font-size:13px;margin:0 0 4px"><svg class="st-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>첨부서류 발급 · 준비 <span class="lr-s" style="font-weight:600">(${isBld?'건물':'토지'} 유형 필요 ${doneN}/${need.length})</span></h3>
-    <div class="cred-warn">ℹ️ 관할 관청에 제출하는 <b>공식 발급본</b>은 발급처별 자동 API 발급이 불가해(조회 API는 날인본이 아님) 각 포털에서 직접 발급해야 합니다. 아래 버튼으로 발급처를 열고 가이드대로 발급 → <b>발급받은 파일(이미지·PDF)을 업로드</b>하세요. 업로드하면 <b>접수 PDF 출력물의 해당 자리에 자동으로 들어갑니다</b> — 이미지는 그 자리에 바로 삽입, 여러 장짜리 PDF는 “업로드 완료” 표시 후 출력 시 <b>“열기”로 따로 인쇄해 합본</b>합니다. 발급 계정은 로그인한 내부 직원에게만 표시되며 공개 소스에는 저장되지 않습니다.</div>
     ${items}
     <div class="lr-s" style="border-top:2px dashed var(--border);margin-top:10px;padding-top:10px">🪪 <b>대리인(위임받은 직원 본인) 신분증</b>은 우측 상단 <b>「내 계정」</b>에서 개인이 직접 등록합니다 — 등록 시 「사업주/대리인 신분증」 양식에 자동 삽입됩니다.</div>
     <div style="margin-top:8px">${doneN>=need.length?'<span class="pill done"><span class="pd"></span>필요 서류 모두 첨부 완료 — 접수 준비 OK</span>':`<span class="pill wait"><span class="pd"></span>필요 서류 ${need.length-doneN}건 남음</span>`}</div>
