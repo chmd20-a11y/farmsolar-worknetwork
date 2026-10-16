@@ -5147,7 +5147,7 @@ function renderPermitLands(d, ro){
      <td style="width:96px"><input ${R} value="${esc(L.zone||'')}" oninput="setPermit('${id}','lands.${i}.zone',this.value)"></td>
      ${ro?'':`<td style="width:30px"><button class="btn ghost sm" style="padding:2px 6px" onclick="delPermitRow('${id}','lands',${i})">✕</button></td>`}</tr>`).join('');
   const cols=ro?6:7;
-  return `<table class="pm-tbl"><thead><tr><th>소재지</th><th>지번</th><th>지목</th><th>면적(㎡)</th><th>소유자</th><th>용도지역</th>${ro?'':'<th></th>'}</tr></thead><tbody>${rows||`<tr><td colspan="${cols}" style="color:var(--muted)">${ro?'영업 실계약에서 부지 정보를 입력하면 표시됩니다':'필지를 추가하세요'}</td></tr>`}</tbody></table>
+  return `<table class="pm-tbl"><thead><tr><th>소재지</th><th>지번</th><th>지목</th><th>면적(㎡)</th><th>소유자</th><th>용도지역</th>${ro?'':'<th></th>'}</tr></thead><tbody>${rows||`<tr><td colspan="${cols}" style="color:var(--muted)">${ro?'발전사업 허가에서 토지 정보를 입력하면 표시됩니다':'필지를 추가하세요'}</td></tr>`}</tbody></table>
      ${ro?'':`<button class="btn ghost sm" onclick="addPermitRow('${id}','lands')">＋ 필지 추가</button>`}`;
 }
 function renderPermitBuilds(d, ro){
@@ -5161,7 +5161,7 @@ function renderPermitBuilds(d, ro){
      <td><input ${R} value="${esc(B.owner||'')}" oninput="setPermit('${id}','builds.${i}.owner',this.value)"></td>
      ${ro?'':`<td style="width:30px"><button class="btn ghost sm" style="padding:2px 6px" onclick="delPermitRow('${id}','builds',${i})">✕</button></td>`}</tr>`).join('');
   const cols=ro?6:7;
-  return `<table class="pm-tbl"><thead><tr><th>소재지</th><th>지번</th><th>건축면적(㎡)</th><th>구조</th><th>용도</th><th>소유자</th>${ro?'':'<th></th>'}</tr></thead><tbody>${rows||`<tr><td colspan="${cols}" style="color:var(--muted)">${ro?'영업 실계약에서 건물 정보를 입력하면 표시됩니다':'건물을 추가하세요'}</td></tr>`}</tbody></table>
+  return `<table class="pm-tbl"><thead><tr><th>소재지</th><th>지번</th><th>건축면적(㎡)</th><th>구조</th><th>용도</th><th>소유자</th>${ro?'':'<th></th>'}</tr></thead><tbody>${rows||`<tr><td colspan="${cols}" style="color:var(--muted)">${ro?'발전사업 허가에서 건물 정보를 입력하면 표시됩니다':'건물을 추가하세요'}</td></tr>`}</tbody></table>
      ${ro?'':`<button class="btn ghost sm" onclick="addPermitRow('${id}','builds')">＋ 건물 추가</button>`}`;
 }
 function addPermitRow(id,kind){ const d=DEALS.find(x=>x.id===id); const p=getPermit(d);
@@ -5275,9 +5275,16 @@ function renderPermitForm(d, origin, fields){
       ${pr('인버터 형식','equip.invType',eq.invType)}
       ${pr('입/출력전압','equip.invIn',eq.invIn,{unit:'V · '+esc(eq.invOut)+'V'})}
     </div>`);
-  const siteBadge = adminRO ? '실계약 입력 · 읽기전용' : '';
-  const siteSec = show('site') ? piSec('#2e8b63', isBld?'🏭':'🌾', isBld?'대상 건물 명세서':'대상 토지 명세서', siteBadge,
-    isBld ? renderPermitBuilds(d, adminRO) : renderPermitLands(d, adminRO)) : '';
+  // 명세서 입력(초기값)은 '발전사업 허가'(origin=admin·필드필터 없음)에서만 편집. 그 외(영업 실계약·기타 행정메뉴)는 읽기전용 미러.
+  const siteEditable = (origin==='admin' && !fields);
+  const siteRO = !siteEditable;
+  const siteBadge = siteEditable ? '여기서 입력 · 편집' : '발전사업 허가에서 입력 · 읽기전용';
+  let siteSec = '';
+  if(show('site')){
+    // 토지 현장=토지명세서만 / 건물 현장=토지명세서+건물명세서 둘 다
+    siteSec = piSec('#2e8b63','🌾','토지명세서', siteBadge, renderPermitLands(d, siteRO));
+    if(isBld) siteSec += piSec('#7e6bb0','🏭','건물명세서', siteBadge, renderPermitBuilds(d, siteRO));
+  }
   const rep = (origin==='admin' && show('rep')) ? sec('#7e6bb0','🧾','대표자 인적사항',
     `<div class="pm-grid">
       ${pr('직위','rep.title',p.rep.title)}
@@ -5296,7 +5303,7 @@ function renderPermitSalesForm(d){
     <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:10px">
       <span class="sv-sec-ic" style="font-size:16px">🏛️</span>
       <b style="font-size:13.5px">발전사업 허가 — 추가 신청정보 입력</b>
-      <span class="lr-s"><b>설비·금액·설치방법·연간발전량·경사각/입사각</b>과 사업주 <b>성명·상호·전화</b>는 「제안서」에서 자동으로 끌어옵니다(읽기전용). 제안서에 없는 <b>주민/법인번호·주소</b> 등 민감정보와 <b>설치장소·접수관청·공급전압·주파수·준비기간·면적·발전방식·전력수급방식·부지(토지/건물) 명세</b>를 여기서 입력하세요. 입력값은 행정 발전사업 허가로 자동 연동됩니다.</span>
+      <span class="lr-s"><b>설비·금액·설치방법·연간발전량·경사각/입사각</b>과 사업주 <b>성명·상호·전화</b>는 「제안서」에서 자동으로 끌어옵니다(읽기전용). 제안서에 없는 <b>주민/법인번호·주소</b> 등 민감정보와 <b>설치장소·접수관청·공급전압·주파수·준비기간·면적·발전방식·전력수급방식</b>을 여기서 입력하세요. 입력값은 행정 발전사업 허가로 자동 연동됩니다. <b>부지(토지·건물) 명세서</b>는 아래 유형만 지정하고, 실제 명세 입력은 <b>행정 › 발전사업 허가</b>에서 합니다(여기선 읽기전용 미러).</span>
       <select class="pm-sel" style="margin-left:auto;max-width:150px" onchange="setPermit('${d.id}','installType',this.value);refreshActive()">
         <option value="토지" ${!isBld?'selected':''}>유형: 토지(노지)</option>
         <option value="건물" ${isBld?'selected':''}>유형: 건물(지붕)</option>
@@ -6862,6 +6869,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-16', team:'행정', kind:'수정', title:'발전사업 허가 — 토지·건물 명세서를 여기서 직접 입력 + 건물 현장은 둘 다 표시', body:'발전사업 허가 화면의 <b>부지 명세서</b>를 손봤습니다. ① 그동안 영업 「실계약」에서 입력하던 <b>명세서 초기값을, 이제 「발전사업 허가」 화면에서 직접 입력·수정</b>합니다(행정 담당자가 발급서류를 보면서 바로 채우도록). 한 번 입력하면 <b>이 현장의 모든 접수서류에 그대로 자동 반영</b>되고, 영업 「실계약」 등 다른 화면에서는 <b>읽기전용 미러</b>로 보입니다. ② 이름을 <b>“대상 토지 명세서 → 토지명세서”</b>, <b>“대상 건물 명세서 → 건물명세서”</b>로 바꿨습니다. ③ <b>토지(노지) 현장은 토지명세서만</b>, <b>건물(지붕) 현장은 토지명세서와 건물명세서를 함께</b> 보여줍니다(지붕 태양광도 그 아래 땅의 토지 정보가 필요하기 때문). 필지·건물은 ＋ 버튼으로 여러 건 추가할 수 있습니다.', author:'개발'},
   {date:'2026-10-16', team:'행정', kind:'수정', title:'발급 계정 관리 — 「행정서류함」 안으로 이동 + 관리자·행정직원만', body:'서류 발급 포털(정부24·세움터·인터넷등기소 등)의 <b>아이디·비밀번호를 등록하는 「발급 계정 관리」</b>를, 좌측 메뉴에서 빼고 <b>「행정서류함」 안으로 옮겼습니다</b>(발급서류를 발급받는 곳과 같은 화면에서 계정도 함께 관리). ① <b>관리자와 행정직원만</b> 행정서류함 안에서 이 <b>발급 계정 관리 섹션</b>을 보고 등록할 수 있습니다. ② 그 외 팀 직원은 행정서류함을 열어도 <b>발급 계정 부분(아이디·비밀번호)이 아예 보이지 않습니다</b> — 발급처 열기·파일 업로드 등 나머지는 그대로 사용합니다. ③ 섹션에 <b>관리자·행정직원 전용</b>임을 안내 문구로 명시했습니다. (관리자로 지정된 분은 소속 팀과 무관하게 볼 수 있습니다.)', author:'개발'},
   {date:'2026-10-16', team:'행정', kind:'추가', title:'행정서류함 — 관청 발급서류 발급·업로드를 한곳에 모음 + 내 신분증은 「내 계정」에서', body:'행정 화면 <b>우측 상단 「행정서류함」 버튼</b>을 실제 기능으로 만들었습니다. ① <b>관청에서 직접 발급받는 서류</b>(건축물대장·토지(임야)대장·지적도·토지이용계획확인서·건축물현황도·등기부등본)의 <b>발급처 열기 + 파일 업로드</b>를, 그동안 「발전사업 허가」 화면 맨 아래에 있던 것을 <b>행정서류함 팝업으로 옮겨</b> 한곳에서 관리합니다. ② 이 버튼은 <b>행정의 모든 메뉴(발전허가·개발행위·PPA·선로비·공사계획·한전수급·준공·사업개시·설비확인) 어디서나 우측 상단에 고정</b>으로 떠서, <b>지금 보고 있는 현장</b>의 발급서류를 바로 열 수 있습니다(현장은 보던 화면 기준으로 자동). ③ 올린(또는 재발급해 다시 올린) 파일은 <b>그 현장의 모든 접수서류(미리보기·PDF·한글)에 자동 반영</b>됩니다. ④ <b>대리인(위임받은 직원 본인) 신분증</b>은 이제 현장별이 아니라 <b>우측 상단 「내 계정」에서 개인이 직접 한 번만 등록</b>하면, <b>그 사람이 처리하는 모든 현장</b>의 「사업주/대리인 신분증」 양식에 자동으로 들어갑니다. (신분증 사진의 실제 공용 보관은 추후 서버 작업에서 지원 — 현재는 등록한 기기에 보관)', author:'개발'},
   {date:'2026-10-15', team:'행정', kind:'수정', title:'사업주/대리인 신분증 양식 — 사진 넣는 칸을 키워 A4 한 장 꽉 채움', body:'앞서 추가한 <b>「사업주/대리인 신분증」 양식</b>에서, 사진을 넣는 칸이 작아 양식 <b>아래쪽에 빈 여백이 많이 남던 것</b>을 보완했습니다. 사업주용·대리인용 <b>사진 칸 두 개를 위아래로 더 크게 키워</b> 양식이 <b>용지 한 장을 거의 가득 채우도록</b> 조정했고, 미리보기에서도 <b>신분증 사진이 더 크고 선명하게</b> 보이도록 함께 키웠습니다.', author:'개발'},
