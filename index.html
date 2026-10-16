@@ -5594,7 +5594,6 @@ function renderPermitCreds(){
   return `<div class="wf-head" style="margin-bottom:14px"><h3 class="section-title" style="margin:0">발급 계정 관리 <span class="doc-badge" style="background:color-mix(in srgb,var(--brand) 16%,transparent);color:var(--accent-ink)">관리자·행정직원 전용</span></h3>
       <div class="note" style="margin-top:5px">서류 발급 포털 로그인 정보를 관리합니다. ${editable?'행정 담당자·관리자가 편집할 수 있습니다.':'열람 전용입니다(편집은 행정 담당자·관리자).'}</div></div>
     <div class="cred-warn" style="color:var(--ink);background:color-mix(in srgb,var(--brand) 9%,transparent);border-color:color-mix(in srgb,var(--brand) 28%,transparent)">🔑 <b>발급 계정(아이디·비밀번호)은 관리자와 행정직원만 등록·열람할 수 있습니다.</b> 다른 팀 직원에게는 이 부분(발급 계정)이 보이지 않습니다.</div>
-    <div class="cred-warn">🔒 이 정보는 <b>로그인한 내부 직원에게만</b> 보이며, 서버(Supabase)에 보관되어 공개 소스코드에는 저장되지 않습니다. 실제 자격증명은 외부에 공유하지 마세요.</div>
     ${row('gov24','정부24 (건축물대장·토지대장·지적도)','gov.kr')}
     ${row('eais','세움터 (건축물 현황도)','eais.go.kr · 자동저장')}
     ${row('iros','인터넷등기소 (등기부등본)','iros.go.kr')}
