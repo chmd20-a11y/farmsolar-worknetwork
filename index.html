@@ -4589,6 +4589,7 @@ function renderRealContract(){
    ============================================================ */
 function pNum(v){ return Number(String(v==null?'':v).replace(/[^0-9.-]/g,''))||0; }
 function pComma(n){ return Math.round(pNum(n)).toLocaleString(); }
+function pArea(n){ return pNum(n).toLocaleString(undefined,{maximumFractionDigits:3}); }   // 소수 3자리까지(천단위 콤마) — 사용면적용
 // MWh 표기 — 소수 3자리 반올림 + 끝자리 0 생략 + 천단위 콤마(실제 접수샘플 표기와 동일: 355.744 / 99.91 / 1,761.022)
 function fmtMWh(v){ const r=Math.round(pNum(v)*1000)/1000; return r.toLocaleString('en-US',{maximumFractionDigits:3}); }
 
@@ -4770,6 +4771,9 @@ function resolvePermit(d){
   //   전력수급방식 = 공급전압(동일 공식) + 고정 "교류 3상 4선식"
   p.outline.supply = p.biz.volt + p.biz.voltUnit + ' 교류 3상 4선식';
   p.biz.freq='60'; p.biz.prep='18';
+  //   사용면적 = 모듈 가로×세로(mm)×장수 ÷ 1,000,000 (㎡), 소수 3자리 반올림 — 모듈 외형크기·수량에서 자동
+  { const _mz=String(p.equip.modSize||'').split(/\s*[x×]\s*/).map(s=>pNum(s)); const _w=_mz[0]||0,_h=_mz[1]||0,_q=pNum(p.equip.modQty)||0;
+    if(_w&&_h&&_q) p.outline.useArea=Math.round(_w*_h*_q/1000000*1000)/1000; }
   return p;
 }
 function getPermit(d){ if(!d.permit) d.permit = defaultPermit(d); return d.permit; }
@@ -5325,7 +5329,7 @@ function renderPermitForm(d, origin, fields){
       ${pr('설치방법','outline.method',p.outline.method)}
       ${pr('발전방식','outline.genType',p.outline.genType)}
       ${pr('전력수급방식','outline.supply',p.outline.supply,{lock:true})}
-      ${pr('사용면적','outline.useArea',p.outline.useArea,{unit:'㎡'})}
+      ${pr('사용면적','outline.useArea',pArea(p.outline.useArea),{unit:'㎡',lock:true})}
       ${pr('전체면적','outline.totalArea',p.outline.totalArea,{unit:'㎡'})}
       ${isBld?pr('건축면적','outline.bldArea',p.outline.bldArea,{unit:'㎡'}):''}
       ${pr('총사업비','outline.totalCost',p.outline.totalCost,{unit:'천원'})}
@@ -5749,7 +5753,7 @@ function renderPermitPrint(d){
     <div class="pp-li"><b>발전소의 명칭</b> ${esc(p.outline.plantName)}</div>
     <div class="pp-li"><b>발전소의 위치</b> ${esc(p.biz.place)}</div>
     <div class="pp-li"><b>설비용량</b> ${pComma(c.cap)} kWp</div>
-    <div class="pp-li"><b>설치방법</b> ${esc(p.outline.method)} (사용면적 ${pComma(p.outline.useArea)}㎡ / 전체면적 ${pComma(p.outline.totalArea)}㎡)${isBld?` · 건축면적 ${pComma(p.outline.bldArea)}㎡`:''}</div>
+    <div class="pp-li"><b>설치방법</b> ${esc(p.outline.method)} (사용면적 ${pArea(p.outline.useArea)}㎡ / 전체면적 ${pComma(p.outline.totalArea)}㎡)${isBld?` · 건축면적 ${pComma(p.outline.bldArea)}㎡`:''}</div>
     <div class="pp-li"><b>건축물(관리동 및 건축면적)</b> ${pComma(p.outline.totalArea)}㎡ 정도</div>
     <div class="pp-li"><b>발전방식 / 전력수급방식</b> ${esc(p.outline.genType)} · ${esc(p.outline.supply)}</div>
     <div class="pp-li"><b>사용연료</b> 태양광 (별도 연료 없음)</div>
@@ -5963,7 +5967,7 @@ function permitTokenMap(d){
     '§SP_BLD_AREA§':B.bldArea?pComma(B.bldArea):'', '§SP_BLD_DIV§':S(B.div), '§SP_BLD_STRUCT§':S(B.struct),
     '§SP_BLD_USE§':S(B.use), '§SP_BLD_OWNER§':S(B.owner), '§SP_BLD_SUM§':_bldSum?pComma(_bldSum):'',
     '§SP_NAME§':S(p.outline.plantName), '§SP_LOC§':S(p.biz.place), '§SP_METHOD§':S(p.outline.method),
-    '§SP_USEAREA§':pComma(p.outline.useArea), '§SP_TOTAREA§':pComma(p.outline.totalArea),
+    '§SP_USEAREA§':pArea(p.outline.useArea), '§SP_TOTAREA§':pComma(p.outline.totalArea),
     '§SP_UNITCOST§':pComma(p.outline.unitCost), '§SP_ANNUAL§':pComma(p.outline.annual),
     '§Y1§':fmtMWh(c.yrs[0]), '§Y2§':fmtMWh(c.yrs[1]), '§Y3§':fmtMWh(c.yrs[2]), '§Y4§':fmtMWh(c.yrs[3]), '§Y5§':fmtMWh(c.yrs[4]), '§YSUM§':fmtMWh(c.sum5),
     // 마. 소요자금 및 그 조달방법 — 구성(발전설비47/부대21/구조물30/기타2) · 조달(자기15/타인85)
@@ -6054,7 +6058,7 @@ function devPermitTokenMap(d){
     '§NAME§':applicantFullName(p), '§FULLNAME§':applicantFullName(p), '§SIGN§':S(p.applicant.name), '§IDNO§':S(p.applicant.idno),
     '§ADDR§':S(p.applicant.addr), '§PHONE§':S(p.applicant.phone), '§DATE§':fmtKDate(permitApplyDate(d)),
     '§LOC§':loc, '§JIMOK§':S(L.jimok), '§ZONE§':S(L.zone), '§ZONE2§':'',
-    '§AREA_FAC§':pComma(p.outline.useArea), '§AREA_LAND§':pComma(p.outline.totalArea),
+    '§AREA_FAC§':pArea(p.outline.useArea), '§AREA_LAND§':pComma(p.outline.totalArea),
     '§MOD_QTY§':pComma(eq.modQty),
   };
 }
@@ -6124,7 +6128,7 @@ function renderDevPermitPrint(d){
   const today=fmtKDate(permitApplyDate(d));
   const S=(v)=>esc(v==null?'':String(v));
   const loc=[(p.lands&&L.addr)?L.addr:'', L.jibun?L.jibun:''].filter(Boolean).join(' ') || S(p.biz.place);
-  const areaFac=pComma(p.outline.useArea), areaLand=pComma(p.outline.totalArea), modQty=pComma(eq.modQty);
+  const areaFac=pArea(p.outline.useArea), areaLand=pComma(p.outline.totalArea), modQty=pComma(eq.modQty);
   const applForm=`<div class="pp-page">
     <div class="pp-formtop">■ 국토의 계획 및 이용에 관한 법률 시행규칙 [별지 제5호서식] &lt;개정 2023. 1. 27.&gt;</div>
     <div class="pp-h1" style="letter-spacing:2px">개발행위(변경) 허가신청서</div>
@@ -6731,7 +6735,7 @@ function completionTokenMap(d){
   return {
     '§NAME§':applicantFullName(p), '§SIGN§':S(p.applicant.name),
     '§ADDR§':S(p.applicant.addr), '§PHONE§':S(p.applicant.phone), '§LOC§':loc,
-    '§AREA_LAND§':pComma(p.outline.totalArea), '§AREA_FAC§':pComma(p.outline.useArea),
+    '§AREA_LAND§':pComma(p.outline.totalArea), '§AREA_FAC§':pArea(p.outline.useArea),
     '§DATE§':fmtKDate(permitApplyDate(d)),
     // 생년월일(개인정보)·허가일자·사업기간·우편번호·시설란(도로/급수/배수/기타)은 공란(직접)
   };
