@@ -7018,6 +7018,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-16', team:'시공', kind:'추가', title:'사용전 검사 — 수검자 서식에 수동 입력칸 신설(사양·식별값이 양식에 자동 반영)', body:'수검자 서식에는 자동으로 못 채우는 값이 있어 <b>직접 입력</b>해야 하는데, 그동안 메뉴에 <b>입력칸이 없었습니다</b>. 이제 <b>제품 데이터시트·설계로 미리 아는 사양·식별값</b>을 메뉴에서 바로 입력하면 <b>양식(미리보기·PDF·한글)에 그대로 들어갑니다</b>. ① <b>모듈 점검기록표</b> — 제조연월·제조번호(S/N) 대표·KS인증번호·태양전지 직렬(수). ② <b>인버터 점검기록표</b> — 제조연월·제조번호(S/N). ③ <b>감리 확인</b> — 감리원 성명. 입력하면 “여기서 입력” 표시가 붙고, <b>미리보기·PDF·한글 세 가지에 똑같이 반영</b>됩니다(배치 위치를 직접 렌더링으로 확인). ④ <b>현장에서 계측기로 재는 값</b>(모듈 개방전압·절연/접지저항, 인버터 보호계전 동작시험, 저압 차단기·절연저항 등)과 <b>체크(□) 항목</b>(설치위치·종류·극수 등)은 성격상 <b>검사 당일 현장에서 기입</b>하므로 각 양식 아래에 “📍 현장 계측” 안내로 남겨 두었습니다. 즉 <b>미리 아는 값은 입력→자동 반영, 현장값은 양식 공란</b>으로 역할을 나눴습니다.', author:'개발'},
   {date:'2026-10-16', team:'시공', kind:'수정', title:'사용전 검사 — 수검자 서식의 모든 양식(점검기록표 6종)을 각각 표시', body:'시공 「사용전 검사」의 <b>수검자 서식</b>은 <b>여러 장(측정/시험 총괄표 + 점검기록표 5종)</b>으로 이뤄져 있는데, 그동안 <b>총괄표 한 장만</b> 보였습니다. 이제 <b>양식 6종을 각각 섹션으로</b> 보여줍니다 — ① <b>측정/시험 총괄표</b>(발전소·사업주·소재지·용량·전압·점검일·점검자) ② <b>태양전지 모듈 점검기록표</b>(모듈 제조사·모델·정격출력) ③ <b>전력변환장치(인버터) 점검기록표</b>(인버터 제조사·모델·용량·출력전압) ④ <b>태양광 구조물 점검기록표</b>(구조물 제조사) ⑤ <b>저압설비(LV반)·보호장치 점검기록표</b> ⑥ <b>작성자·감리 확인</b>(점검자·감리원). <b>대시보드가 자동으로 채우는 값</b>은 양식마다 출처 뱃지와 함께 보이고, <b>현장에서 측정·기입하는 항목</b>(모듈 개방전압·절연저항, 인버터 보호계전 동작시험, 저압 차단기·접지저항 등)은 각 양식 아래에 <b>“📍 현장 계측 …”</b> 한 줄로 안내해, 어느 값이 어느 양식에 들어가는지 한눈에 볼 수 있습니다. (현장 계측값은 지금처럼 양식에 공란으로 출력되어 현장에서 기입)', author:'개발'},
   {date:'2026-10-16', team:'시공', kind:'수정', title:'사용전 검사 — 입력칸을 실제 양식 그대로 나눠 보이기 + 「시공서류함」 신설 + 출처 뱃지', body:'시공 <b>「사용전 검사」</b> 화면을 <b>실제 제출 양식과 똑같은 구분(섹션)</b>으로 다시 정리했습니다. ① 가운데 입력값들을 <b>「사용전검사 신청서」의 신청인(발전사업자)·시공자·검사받을 전기설비</b>, 그리고 <b>「수검자 서식」의 ‘1. 점검 및 시험성적서 측정/시험 총괄표’</b> 순서로 나눠, <b>어느 값이 양식 어디에 들어가는지 한눈에</b> 보이게 했습니다. 양식 섹션 이름을 그대로 써서 바로 대조할 수 있습니다. ② 그동안 화면에 없던 <b>시공자(㈜해피솔라에너지) 정보 5가지</b>(상호·대표자·전기공사업 등록번호·전화·주소)도 양식대로 보여줍니다. ③ <b>자동으로 가져온 값마다 「어디서 온 값인지」 작은 뱃지</b>를 붙였습니다 — <b>‘발전허가에서 입력’·‘설계에서 입력’·‘시공자 고정’·‘행정에서 입력’</b>처럼 표시되고, <b>뱃지를 누르면 그 값을 입력·수정하는 원래 화면으로 바로 이동</b>합니다(검사·점검 일정만 이 화면에서 직접 입력). 행정 화면과 똑같은 방식입니다. ④ 아래에 흩어져 있던 <b>제출서류 묶음(22종)</b>을, 행정의 「행정서류함」처럼 <b>우측 상단 「시공서류함」 버튼</b>으로 모았습니다 — <b>대시보드에 이미 있는 서류는 자동 연동, 외부 발급 서류만 업로드</b>하면 되고, 올린 파일은 접수서류(미리보기·PDF)에 그대로 반영됩니다. 화면이 한결 깔끔해지고, 값이 양식 어디에 쓰이는지 명확해졌습니다.', author:'개발'},
   {date:'2026-10-16', team:'시공', kind:'수정', title:'사용전검사 신청서 — 시공자 상호 줄바꿈 방지(한 줄 고정)', body:'시공 「사용전 검사」의 <b>사용전검사 신청서</b> 양식에서 <b>시공자 상호(㈜해피솔라에너지)</b>가 칸이 좁아 <b>두 줄로 접히던</b> 것을, <b>한 줄로 고정</b>되도록 바로잡았습니다. 칸을 벗어나지 않게 글자를 아주 살짝만 줄여 맞추므로 옆 칸(전기공사업 등록번호)과 겹치지 않습니다. 미리보기·PDF·한글 출력 모두 동일합니다.', author:'개발'},
@@ -8255,10 +8256,11 @@ function preInspectTokenMap(s){
     '§WANT_DATE§':fmtKDate(pi.wantDate), '§START_DATE§':fmtKDate(pi.startDate), '§APPLY_DATE§':fmtKDate(pi.applyDate),
   };
 }
-// 수검자서식 토큰맵 — 제원=현장 마스터(siteMaster) 자동 / 점검자=시공자 회사상수 / 점검일=입력. (실측값은 양식에서 공란)
+// 수검자서식 토큰맵 — 제원=현장 마스터(siteMaster) 자동 / 점검자=시공자 회사상수 / 점검일·사양식별값=입력. (실측값은 양식에서 공란)
 function inspectorTokenMap(s){
   const pi=consSub(s,'preInspect'), CO=HAPPYSOLAR_CO, P=siteMaster(s);
   const o=P.applicant, b=P.biz, ou=P.outline, eq=P.equip, st=P.struct, ad=P.admin;
+  const sg=pi.sg||{};   // 수동 입력(사양·식별값)
   const S=(v)=>(v==null?'':String(v));
   const cap=(b.cap!=null?b.cap.toLocaleString():'')+(b.cap?'kW':'');
   return {
@@ -8267,7 +8269,10 @@ function inspectorTokenMap(s){
     '§SG_COBIZ§':CO.bizname, '§SG_CONAME§':CO.name, '§SG_COPHONE§':CO.phone, '§SG_COEMAIL§':S(CO.email),
     '§SG_MODMAKER§':S(eq.modMaker), '§SG_MODMODEL§':S(eq.modModel), '§SG_MODW§':S(eq.modW),
     '§SG_INVMAKER§':S(eq.invMaker), '§SG_INVMODEL§':S(eq.invModel), '§SG_INVKW§':S(eq.invKW), '§SG_INVVOUT§':S(eq.invOut),
-    '§SG_STMAKER§':S(st.maker), '§SG_SUPER§':S(ad.supervisor), '§SG_SUPERNAME§':'',
+    '§SG_STMAKER§':S(st.maker), '§SG_SUPER§':S(ad.supervisor), '§SG_SUPERNAME§':S(sg.superName),
+    // 수동 입력(사양·식별값) — 제품 데이터시트/설계로 미리 아는 값. 미리보기·PDF·한글에 공통 반영
+    '§SG_MODMADE§':S(sg.modMade), '§SG_MODSN§':S(sg.modSN), '§SG_MODKS§':S(sg.modKS), '§SG_MODSERIES§':S(sg.modSeries),
+    '§SG_INVMADE§':S(sg.invMade), '§SG_INVSN§':S(sg.invSN),
   };
 }
 // 신청서·수검자서식 토큰은 이름이 겹치지 않으므로 하나로 합쳐 번들 전체에 적용
@@ -8419,25 +8424,32 @@ function renderPreInspectBiz(){
       ${ciAuto('모듈 제조사',eq.modMaker,CI_SRC_DESIGN)}
       ${ciAuto('모듈 제품명(모델)',eq.modModel,CI_SRC_DESIGN)}
       ${ciAuto('정격출력',eq.modW,CI_SRC_DESIGN,{unit:'W'})}
-    </div>${sgNote('개방전압(Voc)·단락전류(Isc)·출력전압/전류·충진율(FF)·전력변환효율·DC지락차단장치·점검 시 기상(온도·일사량) 등')}`);
+      ${ciInput(s,'preInspect','sg.modMade','제조연월',{ph:'예: 2026-07'})}
+      ${ciInput(s,'preInspect','sg.modSN','제조번호(S/N) 대표',{ph:'대표모듈 S/N'})}
+      ${ciInput(s,'preInspect','sg.modKS','KS인증번호',{ph:'모듈 KS인증번호'})}
+      ${ciInput(s,'preInspect','sg.modSeries','태양전지 직렬(수)',{unit:'직렬'})}
+    </div>${sgNote('개방전압(Voc)·단락전류(Isc)·출력전압/전류(STC)·충진율(FF)·전력변환효율은 데이터시트값, Array 현장시험(절연/접지저항)·DC지락차단장치·점검 시 기상(온도·일사량) 등은 현장 기입')}`);
   const sg3=piSec('#3f77a8','⚡','「수검자 서식」 · 태양광 발전용 전력변환장치(인버터) 점검기록표','',
     `<div class="pm-grid">
       ${ciAuto('인버터 제조사',eq.invMaker,CI_SRC_DESIGN)}
       ${ciAuto('인버터 제품명(모델)',eq.invModel,CI_SRC_DESIGN)}
       ${ciAuto('정격용량',eq.invKW,CI_SRC_DESIGN,{unit:'kW'})}
       ${ciAuto('정격출력전압',eq.invOut,CI_SRC_DESIGN,{unit:'V'})}
-    </div>${sgNote('보호계전(과전압·저전압·과주파수·저주파수 등) 동작시험·절연저항·지락차단·단독운전 방지시험 등')}`);
+      ${ciInput(s,'preInspect','sg.invMade','제조연월',{ph:'예: 2026-07'})}
+      ${ciInput(s,'preInspect','sg.invSN','제조번호(S/N)',{ph:'인버터 S/N'})}
+    </div>${sgNote('DC 최대입력전압·MPPT범위·동작온습도·IP등급·KS인증번호(데이터시트), 보호계전(과전압·저전압·과주파수 등) 동작시험·절연저항·단독운전 방지시험 등은 현장 기입')}`);
   const sg4=piSec('#bd8a2e','🏗','「수검자 서식」 · 태양광 구조물 점검기록표(구조계산서 포함)','',
     `<div class="pm-grid">
       ${ciAuto('구조물 제조사',st.maker,CI_SRC_DESIGN)}
-    </div>${sgNote('기초·기둥·거더·퍼린 규격, 체결·용접 상태, 이격거리, 구조계산서 확인 등')}`);
+    </div>${sgNote('형태·기초·재질·규격(두께), 기둥·거더·퍼린, 체결·용접 상태, 이격거리, 구조계산서 확인 등 (체크·실측 항목은 현장 기입)')}`);
   const sg5=piSec('#6b7280','🔌','「수검자 서식」 · 저압설비(LV반) 및 보호장치 점검기록표','',
-    sgNote('차단기·개폐기 규격(극수·정격전류·차단전류), 절연·접지저항 측정, 보호계전기 설정·동작시험 등 (점검자·점검일은 총괄표와 동일 자동)'));
+    sgNote('설치위치·형태, 차단기 종류(ACB/MCCB)·극수·사용전압·정격/차단전류, 절연·접지저항 측정, 보호계전기(형식·제조사·설정·동작시험) 등 (점검자·점검일은 총괄표와 동일 자동)'));
   const sg6=piSec('#8a8f98','🖊','「수검자 서식」 · 기록표/성적서 작성자 · 감리 확인','',
     `<div class="pm-grid">
       ${ciAuto('점검자(작성자) 상호',CO.bizname,CI_SRC_CO)}
       ${ciAuto('점검자(작성자) 성명',CO.name,CI_SRC_CO)}
       ${ciAuto('감리원',ad.supervisor,CI_SRC_ADMIN)}
+      ${ciInput(s,'preInspect','sg.superName','감리원 성명',{ph:'감리원 개인 성명'})}
     </div>`);
   const sgSummary=sgHdr+sg1+sg2+sg3+sg4+sg5+sg6;
 
