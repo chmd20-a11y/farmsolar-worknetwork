@@ -5480,9 +5480,10 @@ function renderPermitDocs(d){
   const creds = window.PERMIT_CREDS||{};
   const credLine=(c)=>{
     if(c==='eum') return '<span class="doc-cred">로그인 불필요</span>';
+    if(!canSeeCreds()) return '';   // 발급계정(아이디/비번)은 관리자·행정직원에게만 표시
     const cc=creds[c]||{};
     const has=cc.id||cc.pw;
-    return `<div class="doc-cred">${has?`발급계정 <b>${esc(cc.id||'-')}</b> / ${esc(cc.pw||'-')}`:'발급계정 미등록 — 행정 “발급 계정 관리”에서 등록'}${c==='iros'&&(creds.irospay&&(creds.irospay.id||creds.irospay.pw))?` · 선불결제 <b>${esc(creds.irospay.id||'-')}</b> / ${esc(creds.irospay.pw||'-')}`:''}</div>`;
+    return `<div class="doc-cred">${has?`발급계정 <b>${esc(cc.id||'-')}</b> / ${esc(cc.pw||'-')}`:'발급계정 미등록 — 아래 “발급 계정 관리”에서 등록'}${c==='iros'&&(creds.irospay&&(creds.irospay.id||creds.irospay.pw))?` · 선불결제 <b>${esc(creds.irospay.id||'-')}</b> / ${esc(creds.irospay.pw||'-')}`:''}</div>`;
   };
   const items = PERMIT_DOCS.map(x=>{
     const req = isBld?x.bld:x.land;
@@ -5547,7 +5548,11 @@ function fillDocBox(){
   const d = DEALS.find(x=>x.id===docBoxDealId); if(!d){ closeDocBox(); return; }
   const p = getPermit(d);
   const hd=document.getElementById('docBoxHead'); if(hd) hd.textContent = `${d.site} (${d.id}) · ${p.installType==='건물'?'건물형(지붕)':'토지형(노지)'} — 이 현장의 발급서류`;
-  const bd=document.getElementById('docBoxBody'); if(bd) bd.innerHTML = renderPermitDocs(d);
+  const bd=document.getElementById('docBoxBody'); if(!bd) return;
+  // 첨부서류 발급·준비(현장별, 모두에게) + 발급 계정 관리(전역, 관리자·행정직원만)
+  let html = renderPermitDocs(d);
+  if(canSeeCreds()) html += `<div style="margin-top:18px;border-top:2px solid var(--brand);padding-top:14px">${renderPermitCreds()}</div>`;
+  bd.innerHTML = html;
 }
 
 /* ---- 발급 계정 관리 (행정담당자/관리자 편집 · Supabase 보관) ---- */
@@ -5562,7 +5567,9 @@ async function savePermitCreds(){
   if(SB){ try{ await SB.from('fsnet_deals').upsert({id:PERMIT_CREDS_ID, data:{creds:c}}); toast('발급 계정을 저장했습니다 (로그인 직원만 열람)'); }
     catch(e){ toast('저장 실패 — 로컬 보관'); } }
   else toast('저장됨 (로컬)');
-  const el=document.getElementById('sub-a-creds'); if(el) el.innerHTML=renderPermitCreds();
+  // 행정서류함 모달 안에 있으므로 모달을 다시 그림(구 좌측화면이 열려 있으면 그쪽도)
+  if(document.getElementById('docBoxScrim') && document.getElementById('docBoxScrim').classList.contains('open')) fillDocBox();
+  else { const el=document.getElementById('sub-a-creds'); if(el) el.innerHTML=renderPermitCreds(); }
 }
 function canEditCreds(){ return isOwner() || (currentUser && (currentUser.team==='행정' || isTeamHead('행정', currentUser.name))); }
 // 발급 계정 관리 메뉴/화면 접근 = 관리자 또는 행정직원만(편집 권한과 동일 집합)
@@ -5586,7 +5593,7 @@ function renderPermitCreds(){
   };
   return `<div class="wf-head" style="margin-bottom:14px"><h3 class="section-title" style="margin:0">발급 계정 관리 <span class="doc-badge" style="background:color-mix(in srgb,var(--brand) 16%,transparent);color:var(--accent-ink)">관리자·행정직원 전용</span></h3>
       <div class="note" style="margin-top:5px">서류 발급 포털 로그인 정보를 관리합니다. ${editable?'행정 담당자·관리자가 편집할 수 있습니다.':'열람 전용입니다(편집은 행정 담당자·관리자).'}</div></div>
-    <div class="cred-warn" style="color:var(--ink);background:color-mix(in srgb,var(--brand) 9%,transparent);border-color:color-mix(in srgb,var(--brand) 28%,transparent)">🔑 <b>이 메뉴는 관리자와 행정직원만 진입할 수 있는 메뉴입니다.</b> 다른 팀 직원에게는 이 메뉴가 보이지 않습니다.</div>
+    <div class="cred-warn" style="color:var(--ink);background:color-mix(in srgb,var(--brand) 9%,transparent);border-color:color-mix(in srgb,var(--brand) 28%,transparent)">🔑 <b>발급 계정(아이디·비밀번호)은 관리자와 행정직원만 등록·열람할 수 있습니다.</b> 다른 팀 직원에게는 이 부분(발급 계정)이 보이지 않습니다.</div>
     <div class="cred-warn">🔒 이 정보는 <b>로그인한 내부 직원에게만</b> 보이며, 서버(Supabase)에 보관되어 공개 소스코드에는 저장되지 않습니다. 실제 자격증명은 외부에 공유하지 마세요.</div>
     ${row('gov24','정부24 (건축물대장·토지대장·지적도)','gov.kr')}
     ${row('eais','세움터 (건축물 현황도)','eais.go.kr · 자동저장')}
@@ -6857,7 +6864,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
-  {date:'2026-10-16', team:'행정', kind:'수정', title:'발급 계정 관리 — 관리자·행정직원만 보이도록 접근 제한', body:'서류 발급 포털(정부24·세움터·인터넷등기소 등)의 <b>아이디·비밀번호를 다루는 「발급 계정 관리」 메뉴</b>를, 이제 <b>관리자와 행정직원에게만 보이도록</b> 제한했습니다. 그 외 팀 직원에게는 <b>좌측 메뉴에서 아예 보이지 않고</b>, 혹시 다른 경로로 들어가더라도 <b>“관리자와 행정직원만 진입할 수 있습니다”</b> 안내만 표시됩니다. 메뉴 안에도 <b>관리자·행정직원 전용 메뉴</b>임을 안내 문구로 명시했습니다. (관리자로 지정된 분은 소속 팀과 무관하게 볼 수 있습니다.)', author:'개발'},
+  {date:'2026-10-16', team:'행정', kind:'수정', title:'발급 계정 관리 — 「행정서류함」 안으로 이동 + 관리자·행정직원만', body:'서류 발급 포털(정부24·세움터·인터넷등기소 등)의 <b>아이디·비밀번호를 등록하는 「발급 계정 관리」</b>를, 좌측 메뉴에서 빼고 <b>「행정서류함」 안으로 옮겼습니다</b>(발급서류를 발급받는 곳과 같은 화면에서 계정도 함께 관리). ① <b>관리자와 행정직원만</b> 행정서류함 안에서 이 <b>발급 계정 관리 섹션</b>을 보고 등록할 수 있습니다. ② 그 외 팀 직원은 행정서류함을 열어도 <b>발급 계정 부분(아이디·비밀번호)이 아예 보이지 않습니다</b> — 발급처 열기·파일 업로드 등 나머지는 그대로 사용합니다. ③ 섹션에 <b>관리자·행정직원 전용</b>임을 안내 문구로 명시했습니다. (관리자로 지정된 분은 소속 팀과 무관하게 볼 수 있습니다.)', author:'개발'},
   {date:'2026-10-16', team:'행정', kind:'추가', title:'행정서류함 — 관청 발급서류 발급·업로드를 한곳에 모음 + 내 신분증은 「내 계정」에서', body:'행정 화면 <b>우측 상단 「행정서류함」 버튼</b>을 실제 기능으로 만들었습니다. ① <b>관청에서 직접 발급받는 서류</b>(건축물대장·토지(임야)대장·지적도·토지이용계획확인서·건축물현황도·등기부등본)의 <b>발급처 열기 + 파일 업로드</b>를, 그동안 「발전사업 허가」 화면 맨 아래에 있던 것을 <b>행정서류함 팝업으로 옮겨</b> 한곳에서 관리합니다. ② 이 버튼은 <b>행정의 모든 메뉴(발전허가·개발행위·PPA·선로비·공사계획·한전수급·준공·사업개시·설비확인) 어디서나 우측 상단에 고정</b>으로 떠서, <b>지금 보고 있는 현장</b>의 발급서류를 바로 열 수 있습니다(현장은 보던 화면 기준으로 자동). ③ 올린(또는 재발급해 다시 올린) 파일은 <b>그 현장의 모든 접수서류(미리보기·PDF·한글)에 자동 반영</b>됩니다. ④ <b>대리인(위임받은 직원 본인) 신분증</b>은 이제 현장별이 아니라 <b>우측 상단 「내 계정」에서 개인이 직접 한 번만 등록</b>하면, <b>그 사람이 처리하는 모든 현장</b>의 「사업주/대리인 신분증」 양식에 자동으로 들어갑니다. (신분증 사진의 실제 공용 보관은 추후 서버 작업에서 지원 — 현재는 등록한 기기에 보관)', author:'개발'},
   {date:'2026-10-15', team:'행정', kind:'수정', title:'사업주/대리인 신분증 양식 — 사진 넣는 칸을 키워 A4 한 장 꽉 채움', body:'앞서 추가한 <b>「사업주/대리인 신분증」 양식</b>에서, 사진을 넣는 칸이 작아 양식 <b>아래쪽에 빈 여백이 많이 남던 것</b>을 보완했습니다. 사업주용·대리인용 <b>사진 칸 두 개를 위아래로 더 크게 키워</b> 양식이 <b>용지 한 장을 거의 가득 채우도록</b> 조정했고, 미리보기에서도 <b>신분증 사진이 더 크고 선명하게</b> 보이도록 함께 키웠습니다.', author:'개발'},
   {date:'2026-10-15', team:'시공', kind:'수정', title:'사용전 검사 — 수검자 서식 미리보기 전체 정리(틀어짐·치우침·잘림·겹침)', body:'시공 <b>「사용전 검사」</b>의 <b>수검자 서식 미리보기</b>가 틀어져 보이던 문제를 전체적으로 바로잡았습니다. ① <b>좁은 칸의 긴 글자</b>(예: “전력계통 저압이하 연계설비”, 긴 안내 문구)가 옆 칸을 덮던 것 → <b>칸 안에서 줄바꿈</b>. ② <b>각 기록표 제목이 표 위에 겹쳐</b> 보이던 것 → 제목이 표 바로 위 제자리로. ③ 한 장에 서식 두 개가 겹쳐 <b>뒤 내용이 잘리던</b> 전력변환장치·모듈 기록표 → <b>서식마다 한 장씩</b> 분리(총 12장). ④ 서식이 <b>왼쪽으로 치우쳐</b> 있던 것 → <b>용지 가운데로 정렬</b>. ⑤ 용지보다 넓어 <b>오른쪽이 잘리던</b> 저압설비 기록표 → 폭에 맞춰 <b>살짝 줄여 전부 보이게</b>. ⑥ 좁은 칸의 라벨 글자가 아래 칸으로 <b>삐져나와 겹치던</b> 것(제조번호·단면/양면 구분 등) → 그 칸 글자만 <b>자동으로 줄여 칸 안에 맞춤</b>. ⑦ 내용이 <b>용지 위쪽에 몰리고 상·하 여백만 크던</b> 것 → <b>A4 용지에 꽉 차게</b> 비율 그대로 키우고 <b>가운데 정렬</b>(상·하·좌·우 여백 적정화). ⑧ <b>사용전검사 신청서</b>도 같은 쏠림이 있어 동일하게 A4에 맞춰 채우고, <b>앞쪽·뒤쪽 2장</b>으로 바르게 나눠 정리. ⑨ <b>모듈 규격표 등 상단 표의 글자가 지나치게 작아져</b>(읽기 어려울 정도) 아래 칸들과 크기가 달라 보이던 것 → <b>칸에 맞는 정상 크기(대부분 그대로)로 통일</b>하고, 꼭 줄여야 하는 칸도 <b>읽을 수 있는 최소 크기까지만</b> 줄이도록 수정. ⑩ <b>서명란 등 여러 줄 문단의 줄 간격이 너무 좁던</b> 것(줄이 붙어 보임) → <b>원본 한글의 줄 간격을 그대로 반영</b>해 적정하게 벌림. 모든 점검기록표의 같은 서명 문구에 함께 적용. 미리보기·PDF·한글 출력 모두 동일하게 반영됩니다.', author:'개발'},
@@ -7667,7 +7674,7 @@ const MENUS = {
     {stage:'facility', label:'설비확인', ic:'shield'},
     {group:'기타'},
     {sub:'a-deadline', label:'기한 · 연계', ic:'clock'},
-    {sub:'a-creds', label:'발급 계정 관리', ic:'shield', gate:'creds'},   // 관리자·행정직원만
+    // 발급 계정 관리는 좌측 메뉴에서 빼고 「행정서류함」 모달 안으로 이동(권한자에게만 표시)
   ]},
   approvals:{title:'결재함', items:[
     {appr:'pending', label:'결재 대기', ic:'clip'},
