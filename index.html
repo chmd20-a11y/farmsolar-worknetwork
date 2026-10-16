@@ -4766,8 +4766,8 @@ function resolvePermit(d){
   // 인버터 무게 보충: 종류 미선택이어도 용량(kW) 일치 모델에서 무게 자동 보충(예: 125kW→84kg)
   if(!p.equip.invWeight){ const _iw=Object.values(COST_PRESET.inverters).find(v=>pNum(v.kw)===pNum(p.equip.invKW)); if(_iw&&_iw.weight!=null) p.equip.invWeight=String(_iw.weight); }
   // ★공급전압·주파수·준비기간 고정 — 영업 실계약에서 변경 불가(하드코딩). 모든 화면·양식에 반영.
-  //   공급전압 = 설비용량 500kW 기준 자동(미만 380V / 이상 22.9kV=22,900V)
-  p.biz.volt = ((pNum(p.biz.cap)||0)>=500) ? '22,900' : '380';
+  //   공급전압 = 설비용량 500kW 기준 자동(미만 380V / 이상 22.9kV) — 값·단위 함께 조건에 맞춰 저장
+  { const _hv=(pNum(p.biz.cap)||0)>=500; p.biz.volt=_hv?'22.9':'380'; p.biz.voltUnit=_hv?'kV':'V'; }
   p.biz.freq='60'; p.biz.prep='18';
   return p;
 }
@@ -5313,7 +5313,7 @@ function renderPermitForm(d, origin, fields){
       ${pr('사업의 종류','biz.kind',p.biz.kind)}
       ${pr('설비용량','biz.cap',p.biz.cap,{unit:'kW',type:'text'})}
       ${pr('설치장소','biz.place',p.biz.place)}
-      ${pr('공급전압','biz.volt',p.biz.volt,{unit:'V',lock:true})}
+      ${pr('공급전압','biz.volt',p.biz.volt,{unit:p.biz.voltUnit||'V',lock:true})}
       ${pr('주파수','biz.freq',p.biz.freq,{unit:'Hz',lock:true})}
       ${pr('준비기간','biz.prep',p.biz.prep,{unit:'개월',lock:true})}
       ${pr('접수 관청','office',p.office,{ph:'○○시청/군청'})}
@@ -5722,7 +5722,7 @@ function renderPermitPrint(d){
       <tr><td class="lbl" rowspan="5">신청내용</td><td class="lbl">사업의 종류</td><td colspan="4">${esc(p.biz.kind)}</td></tr>
       <tr><td class="lbl">설치장소</td><td colspan="4">${esc(p.biz.place)}</td></tr>
       <tr><td class="lbl">사업구역 또는 특정한 공급구역</td><td colspan="4"></td></tr>
-      <tr><td class="lbl">원동력의 종류</td><td colspan="4">태양광　　설비용량 : ${pComma(c.cap)} kW　　공급전압 : ${esc(p.biz.volt)} V　　주파수 : ${esc(p.biz.freq)} Hz</td></tr>
+      <tr><td class="lbl">원동력의 종류</td><td colspan="4">태양광　　설비용량 : ${pComma(c.cap)} kW　　공급전압 : ${esc(p.biz.volt)} ${esc(p.biz.voltUnit||'V')}　　주파수 : ${esc(p.biz.freq)} Hz</td></tr>
       <tr><td class="lbl">사업에 필요한 준비기간</td><td colspan="4">허가일로부터 ${esc(p.biz.prep)}개월</td></tr>
     </table>
     <div class="pp-note">「전기사업법」 제7조제1항 및 같은 법 시행규칙 제4조에 따라 위와 같이 전기사업의 허가를 신청합니다.</div>
@@ -5943,7 +5943,7 @@ function permitTokenMap(d){
     '§CKIMG_JUMIN§':ckimg('주민등록증'), '§CKIMG_YEOGWON§':ckimg('여권'), '§CKIMG_WAEGUK§':ckimg('외국인등록증'), '§CKIMG_MYEON§':ckimg('운전면허증'),
     '§CK_JUMIN§':cktx('주민등록증'), '§CK_YEOGWON§':cktx('여권'), '§CK_WAEGUK§':cktx('외국인등록증'), '§CK_MYEON§':cktx('운전면허증'),
     '§SP_INVTOT§':pComma((pNum(eq.invKW)||0)*(pNum(eq.invQty)||0)), '§SP_INVKW§':S(eq.invKW), '§SP_INVQTY§':S(eq.invQty),
-    '§SP_FREQ§':S(p.biz.freq), '§SP_VINLO§':S((inv[0]||'').trim()), '§SP_VINHI§':inv[1]?pComma(inv[1]):'', '§SP_VOLT§':S(p.biz.volt),
+    '§SP_FREQ§':S(p.biz.freq), '§SP_VINLO§':S((inv[0]||'').trim()), '§SP_VINHI§':inv[1]?pComma(inv[1]):'', '§SP_VOLT§':(S(p.biz.volt)+' '+S(p.biz.voltUnit||'V')).trim(),
     '§SP_SUPPLYV§': (pNum(p.biz.cap)||0)>=500 ? '22.9kV' : '380V',   // 전력수급방식 전압(설비 500kW 기준)
     '§SP_SUPPLY2§': (pNum(p.biz.cap)||0)>=500 ? '22.9KV' : '380/220V',   // 송전관계 일람도 공급방식 전압(설비 500kW 기준)
     // 모듈 상세 사양(원가표 종류 연동) + 인버터 정격전압
@@ -6205,7 +6205,7 @@ function ppaTokenMap(d){
     '§ADDR§':S(p.applicant.addr), '§PHONE§':S(p.applicant.phone),
     '§BIZNAME§':S(p.applicant.bizname)||S(p.outline.plantName), '§LOC§':loc,
     '§CAP§':pComma(c.cap), '§CAP_FAC§':pComma(facKW),
-    '§VOLT§':S(p.biz.volt)||'22,900 V', '§FREQ§':S(p.biz.freq)||'60 ㎐',
+    '§VOLT§':(S(p.biz.volt)?(S(p.biz.volt)+' '+S(p.biz.voltUnit||'V')):'22,900 V'), '§FREQ§':S(p.biz.freq)||'60 ㎐',
     '§SUPPLY§':'3상 4선식', '§BANGSIK§':'고정식',
     '§GUBUN§':'신설', '§USE§':'발전설비(역송)',
     '§DATE§':fmtKDate(permitApplyDate(d)),
@@ -6623,7 +6623,7 @@ function kepcoTokenMap(d){
     '§PLANT§':plantName, '§LOC§':loc,
     '§NAME§':applicantFullName(p), '§SIGN§':S(p.applicant.name),
     '§ADDR§':S(p.applicant.addr), '§PHONE§':S(p.applicant.phone),
-    '§CAP§':pComma(c.cap), '§VOLT§':S(p.biz.volt)||'22,900 V',
+    '§CAP§':pComma(c.cap), '§VOLT§':(S(p.biz.volt)?(S(p.biz.volt)+' '+S(p.biz.voltUnit||'V')):'22,900 V'),
     '§INV_KW§':pComma(eq.invKW), '§INV_QTY§':pComma(eq.invQty),
     '§INV_MAKER§':'', '§INV_MODEL§':'',              // 인버터 제조사·모델은 설치 실물 기준 → 한글서 직접(설정치도 동일)
     '§DATE§':fmtKDate(permitApplyDate(d)),
