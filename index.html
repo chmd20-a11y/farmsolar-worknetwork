@@ -3432,6 +3432,16 @@ async function apiLandChar(pnu){
     return { addr:f.ldCodeNm||'', jibun:f.mnnmSlno||'', jimok:f.lndcgrCodeNm||'', area:(f.lndpclAr!=null&&f.lndpclAr!==''?String(f.lndpclAr):''), zone:f.prposArea1Nm||'' };
   }catch(e){ return null; }
 }
+// 건축물대장 표제부(건축HUB, api/bldreg 서버리스) — PNU로 대표 건물의 건축면적·구조·용도·소재지. (건물명세서 자동채움용)
+async function apiBldReg(pnu){
+  if(!pnu) return {ok:false,reason:'nopnu'};
+  const P=_apiBase();
+  try{
+    const j=await fetch(`${P}/api/bldreg?pnu=${encodeURIComponent(pnu)}`).then(r=>r.json());
+    if(!j||!j.ok) return {ok:false, reason:(j&&j.reason)||'error'};
+    return {ok:true, primary:j.primary||null, items:j.items||[]};
+  }catch(e){ return {ok:false, reason:'fetch'}; }
+}
 let _KCODES=null;
 async function loadKCodes(){ if(_KCODES) return _KCODES; try{ _KCODES=await fetch('kepco_codes.json',{cache:'force-cache'}).then(r=>r.json()); }catch(e){ _KCODES=null; } return _KCODES; }
 const _METRO_ALIAS={'강원도':'강원특별자치도','전라북도':'전북특별자치도','전북':'전북특별자치도'};
@@ -5180,7 +5190,7 @@ function renderPermitBuilds(d, ro){
 // 명세서 자동채움 안내 + 불일치 안전장치(발전사업 허가에서만 노출) — 지번으로 공공데이터 조회해 현황값 자동채움, 소유자는 등기부 기준 수동.
 function renderPermitSiteHelp(d){
   const p=getPermit(d), isBld=p.installType==='건물';
-  const bldNote = isBld ? ' <b>건물명세서(건축면적·구조·용도)</b>는 건축물대장 연동 전까지 직접 입력합니다.' : '';
+  const bldNote = isBld ? ' 같은 지번의 <b>건물명세서(건축면적·구조·용도)</b>도 건축물대장에서 함께 자동으로 채웁니다.' : '';
   return `<div class="card pad" style="margin:4px 0 2px;border-left:3px solid var(--brand);background:color-mix(in srgb,var(--brand) 5%,transparent)">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <button class="btn dark sm" onclick="permitAutofill('${d.id}')">🛰 공공데이터로 자동 채우기</button>
@@ -5215,10 +5225,24 @@ async function permitAutofill(id){
     if(!vZone){ try{ vZone=(await apiZone(geo.lat,geo.lng))||''; }catch(_){ } }
     const t=p.lands[0]||(p.lands[0]={addr:'',jibun:'',jimok:'',area:'',owner:'',ownerAddr:'',zone:''});
     const set=[];
-    const fill=(k,v,label)=>{ if(v && !String(t[k]||'').trim()){ t[k]=v; set.push(label); } };
-    fill('addr',vAddr,'소재지'); fill('jibun',vJibun,'지번'); fill('jimok',vJimok,'지목'); fill('area',vArea,'면적'); fill('zone',vZone,'용도지역');
+    const fill=(o,k,v,label)=>{ if(v && !String(o[k]||'').trim()){ o[k]=v; set.push(label); } };
+    fill(t,'addr',vAddr,'소재지'); fill(t,'jibun',vJibun,'지번'); fill(t,'jimok',vJimok,'지목'); fill(t,'area',vArea,'면적'); fill(t,'zone',vZone,'용도지역');
+    // 건물 현장: 건축물대장(건축HUB)으로 건물명세서 첫 동도 자동채움(소유자 제외)
+    let bldNote='';
+    if(p.installType==='건물' && pnu){
+      const bg=await apiBldReg(pnu);
+      if(bg&&bg.ok&&bg.primary){
+        p.builds=p.builds||[];
+        const tb=p.builds[0]||(p.builds[0]={addr:'',jibun:'',bldArea:'',div:'',struct:'',use:'',owner:''});
+        const bAddr=(ch&&ch.addr)||bg.primary.addr||'';
+        const bJibun=(ch&&ch.jibun)|| ((bg.primary.bun||bg.primary.ji)? (String(parseInt(bg.primary.bun||'0',10))+(parseInt(bg.primary.ji||'0',10)?('-'+parseInt(bg.primary.ji,10)):'')):'');
+        fill(tb,'addr',bAddr,'건물 소재지'); fill(tb,'jibun',bJibun,'건물 지번');
+        fill(tb,'bldArea',bg.primary.bldArea,'건축면적'); fill(tb,'struct',bg.primary.struct,'구조'); fill(tb,'use',bg.primary.use,'용도');
+      } else if(bg&&bg.reason==='nokey'){ bldNote=' (건물명세서는 건축물대장 키 등록 후 자동채움)'; }
+      else { bldNote=' (이 지번에 등록된 건축물대장이 없어 건물명세서는 직접 입력)'; }
+    }
     persistDeal(d); refreshActive();
-    toast(set.length?('공공데이터로 '+set.join('·')+' 채움 — 등기부와 대조 확인하세요'):'이미 입력돼 있어 변경하지 않았습니다(빈 칸만 자동 채움)');
+    toast((set.length?('공공데이터로 '+set.join('·')+' 채움 — 등기부와 대조 확인하세요'):'이미 입력돼 있어 변경하지 않았습니다(빈 칸만 자동 채움)')+bldNote);
   }catch(e){ toast('조회 중 문제가 발생했습니다 — 잠시 후 다시 시도해 주세요'); }
   finally{ _permitAutofillBusy=false; }
 }
@@ -6929,7 +6953,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
-  {date:'2026-10-16', team:'행정', kind:'추가', title:'토지명세서 — 지번만으로 공공데이터 자동 채우기 켜짐(+등기부 대조 안전장치)', body:'발전사업 허가의 <b>토지명세서</b>를, 이제 <b>지번만으로 공공데이터를 조회해 자동으로 채웁니다</b>(실연동 완료). ① 명세서 위 <b>「🛰 공공데이터로 자동 채우기」</b> 버튼을 누르면, 입력한 <b>소재지(지번)</b>로 공공데이터를 조회해 <b>소재지·지번·지목·면적·용도지역</b>을 <b>첫 필지의 빈 칸</b>에 자동으로 채웁니다(이미 입력한 칸은 보존). ② <b>소유자(이름·주소)</b>는 개인정보라 공개 데이터에 없어 <b>등기부등본을 보고 직접 입력</b>하도록 분리하고, 칸에 <b>“·등기부”</b>로 표시했습니다. ③ <b>건물명세서(건축면적·구조·용도)</b>는 건축물대장 연동 전까지 직접 입력합니다. ④ <b>안전장치</b> — 자동으로 채운 값은 <b>“초안”</b>이며, 특히 <b>면적·소유자</b>는 올린 <b>등기부등본과 대조해 확인</b>하라는 안내를 상시 표시합니다(현황·면적은 <b>대장</b> 기준, 소유자는 <b>등기부</b> 기준이라 서로 다를 수 있기 때문). 편집 기능은 그대로입니다.', author:'개발'},
+  {date:'2026-10-16', team:'행정', kind:'추가', title:'토지·건물 명세서 — 지번만으로 공공데이터 자동 채우기(+등기부 대조 안전장치)', body:'발전사업 허가의 <b>토지·건물 명세서</b>를, 이제 <b>지번만으로 공공데이터를 조회해 자동으로 채웁니다</b>(실연동). ① 명세서 위 <b>「🛰 공공데이터로 자동 채우기」</b> 버튼을 누르면, 입력한 <b>소재지(지번)</b>로 조회해 <b>토지명세서</b>의 <b>소재지·지번·지목·면적·용도지역</b>을 <b>첫 필지의 빈 칸</b>에 자동으로 채웁니다(이미 입력한 칸은 보존). ② <b>건물(지붕) 현장</b>이면 같은 지번의 <b>건축물대장</b>에서 <b>건물명세서(건축면적·구조·용도)</b>도 함께 자동으로 채웁니다. ③ <b>소유자(이름·주소)</b>는 개인정보라 공개 데이터에 없어 <b>등기부등본을 보고 직접 입력</b>하도록 분리하고, 칸에 <b>“·등기부”</b>로 표시했습니다. ④ <b>안전장치</b> — 자동으로 채운 값은 <b>“초안”</b>이며, 특히 <b>면적·소유자</b>는 올린 <b>등기부등본과 대조해 확인</b>하라는 안내를 상시 표시합니다(현황·면적은 <b>대장</b> 기준, 소유자는 <b>등기부</b> 기준이라 서로 다를 수 있기 때문). 편집 기능은 그대로입니다.', author:'개발'},
   {date:'2026-10-16', team:'행정', kind:'수정', title:'발전사업 허가 — 토지·건물 명세서를 여기서 직접 입력 + 건물 현장은 둘 다 표시', body:'발전사업 허가 화면의 <b>부지 명세서</b>를 손봤습니다. ① 그동안 영업 「실계약」에서 입력하던 <b>명세서 초기값을, 이제 「발전사업 허가」 화면에서 직접 입력·수정</b>합니다(행정 담당자가 발급서류를 보면서 바로 채우도록). 한 번 입력하면 <b>이 현장의 모든 접수서류에 그대로 자동 반영</b>되고, 영업 「실계약」 등 다른 화면에서는 <b>읽기전용 미러</b>로 보입니다. ② 이름을 <b>“대상 토지 명세서 → 토지명세서”</b>, <b>“대상 건물 명세서 → 건물명세서”</b>로 바꿨습니다. ③ <b>토지(노지) 현장은 토지명세서만</b>, <b>건물(지붕) 현장은 토지명세서와 건물명세서를 함께</b> 보여줍니다(지붕 태양광도 그 아래 땅의 토지 정보가 필요하기 때문). 필지·건물은 ＋ 버튼으로 여러 건 추가할 수 있습니다.', author:'개발'},
   {date:'2026-10-16', team:'행정', kind:'수정', title:'발급 계정 관리 — 「행정서류함」 안으로 이동 + 관리자·행정직원만', body:'서류 발급 포털(정부24·세움터·인터넷등기소 등)의 <b>아이디·비밀번호를 등록하는 「발급 계정 관리」</b>를, 좌측 메뉴에서 빼고 <b>「행정서류함」 안으로 옮겼습니다</b>(발급서류를 발급받는 곳과 같은 화면에서 계정도 함께 관리). ① <b>관리자와 행정직원만</b> 행정서류함 안에서 이 <b>발급 계정 관리 섹션</b>을 보고 등록할 수 있습니다. ② 그 외 팀 직원은 행정서류함을 열어도 <b>발급 계정 부분(아이디·비밀번호)이 아예 보이지 않습니다</b> — 발급처 열기·파일 업로드 등 나머지는 그대로 사용합니다. ③ 섹션에 <b>관리자·행정직원 전용</b>임을 안내 문구로 명시했습니다. (관리자로 지정된 분은 소속 팀과 무관하게 볼 수 있습니다.)', author:'개발'},
   {date:'2026-10-16', team:'행정', kind:'추가', title:'행정서류함 — 관청 발급서류 발급·업로드를 한곳에 모음 + 내 신분증은 「내 계정」에서', body:'행정 화면 <b>우측 상단 「행정서류함」 버튼</b>을 실제 기능으로 만들었습니다. ① <b>관청에서 직접 발급받는 서류</b>(건축물대장·토지(임야)대장·지적도·토지이용계획확인서·건축물현황도·등기부등본)의 <b>발급처 열기 + 파일 업로드</b>를, 그동안 「발전사업 허가」 화면 맨 아래에 있던 것을 <b>행정서류함 팝업으로 옮겨</b> 한곳에서 관리합니다. ② 이 버튼은 <b>행정의 모든 메뉴(발전허가·개발행위·PPA·선로비·공사계획·한전수급·준공·사업개시·설비확인) 어디서나 우측 상단에 고정</b>으로 떠서, <b>지금 보고 있는 현장</b>의 발급서류를 바로 열 수 있습니다(현장은 보던 화면 기준으로 자동). ③ 올린(또는 재발급해 다시 올린) 파일은 <b>그 현장의 모든 접수서류(미리보기·PDF·한글)에 자동 반영</b>됩니다. ④ <b>대리인(위임받은 직원 본인) 신분증</b>은 이제 현장별이 아니라 <b>우측 상단 「내 계정」에서 개인이 직접 한 번만 등록</b>하면, <b>그 사람이 처리하는 모든 현장</b>의 「사업주/대리인 신분증」 양식에 자동으로 들어갑니다. (신분증 사진의 실제 공용 보관은 추후 서버 작업에서 지원 — 현재는 등록한 기기에 보관)', author:'개발'},
