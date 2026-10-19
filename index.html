@@ -2363,12 +2363,15 @@ function initSB(){
   }
 }
 const LS_KEY = 'fsnet_state_v1';
-function cacheLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify({DEALS, SITES, spawnSeq, dealSeq})); }catch(e){} }
+// ★ 데모 시드 버전 — 이 값을 올리면 다음 접속 때 공유(Supabase)·로컬 데이터가 새 시드로 자동 교체됩니다.
+//   (목업용 가상 데이터 정비 전용. 올리면 그동안의 데모 입력/편집이 새 시드로 초기화됨 — 예약행 회원·권한·개발요청·발급계정은 보존)
+const SEED_VERSION = 2;
+function cacheLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify({seedVer:SEED_VERSION, DEALS, SITES, spawnSeq, dealSeq})); }catch(e){} }
 function loadLocal(){
   try{ const s=JSON.parse(localStorage.getItem(LS_KEY)||'null');
-    if(s && Array.isArray(s.DEALS) && Array.isArray(s.SITES)){ PROJECTS=buildProjects(s.DEALS, s.SITES); spawnSeq=s.spawnSeq||0; dealSeq=s.dealSeq||1031; return true; }
+    if(s && (s.seedVer||0)>=SEED_VERSION && Array.isArray(s.DEALS) && Array.isArray(s.SITES)){ PROJECTS=buildProjects(s.DEALS, s.SITES); spawnSeq=s.spawnSeq||0; dealSeq=s.dealSeq||1031; return true; }
   }catch(e){}
-  return false;
+  return false;   // 구버전·없음 → 시드(PROJECTS 기본값) 사용
 }
 // 내 저장(upsert)이 realtime로 자기 자신에게 에코될 때, 화면을 다시 그려(refreshActive) 편집 중 입력(현장실측 체크리스트 등 DOM-only 상태)이 초기화되는 것을 방지.
 // 저장 직후 그 id를 '내 쓰기'로 표시 → 에코 수신 시 데이터만 갱신하고 화면 리렌더는 건너뜀.
@@ -2383,19 +2386,35 @@ async function loadShared(){
       const dq = await SB.from('fsnet_deals').select('*');
       const sq = await SB.from('fsnet_sites').select('*');
       if(dq.error || sq.error) throw (dq.error || sq.error);
+      const st = (dq.data||[]).find(r=>r.id===SETTINGS_ID);
+      // 예약행(회원·권한·개발요청·발급계정)은 시드 버전과 무관하게 항상 반영·보존
+      if(st && st.data && st.data.org) applyOrg(st.data.org);
+      const drRow = (dq.data||[]).find(r=>r.id===DEVREQS_ID);
+      if(drRow && drRow.data && Array.isArray(drRow.data.list)) applyDevreqs(drRow.data.list);
+      const pcRow = (dq.data||[]).find(r=>r.id===PERMIT_CREDS_ID);
+      if(pcRow && pcRow.data && pcRow.data.creds) applyPermitCreds(pcRow.data.creds);
+      // ★ 시드 버전이 올라갔으면 데모 데이터(비예약 행)를 새 시드로 교체 — 옛 이름·마스킹 데이터 자동 정리
+      const storedVer = (st && st.data && st.data.seedVer) || 0;
+      if(storedVer < SEED_VERSION){
+        const delDeals = (dq.data||[]).map(r=>r.id).filter(id=>!isReservedId(id));
+        const delSites = (sq.data||[]).map(r=>r.id).filter(id=>!isReservedId(id));
+        if(delDeals.length) await SB.from('fsnet_deals').delete().in('id', delDeals);
+        if(delSites.length) await SB.from('fsnet_sites').delete().in('id', delSites);
+        await Promise.all(DEAL_SEED.map(d=>SB.from('fsnet_deals').upsert({id:d.id, data:d})));
+        await Promise.all(SITE_SEED.map(s=>SB.from('fsnet_sites').upsert({id:s.id, data:s})));
+        const sData = Object.assign({}, (st && st.data) || {}, {seedVer:SEED_VERSION}); if(!sData.org) sData.org = ORG;
+        await SB.from('fsnet_deals').upsert({id:SETTINGS_ID, data:sData});
+        PROJECTS = buildProjects(DEAL_SEED.slice(), SITE_SEED.slice());   // 메모리도 새 시드로
+        cacheLocal(); return true;
+      }
+      // 통상 로드 — 공유된 데모 데이터 사용
       if(dq.data && dq.data.length){
-        const st = dq.data.find(r=>r.id===SETTINGS_ID);
-        if(st && st.data && st.data.org) applyOrg(st.data.org);   // 공유된 회원·권한 반영
-        const drRow = dq.data.find(r=>r.id===DEVREQS_ID);
-        if(drRow && drRow.data && Array.isArray(drRow.data.list)) applyDevreqs(drRow.data.list);  // 공유된 개발요청
-        const pcRow = dq.data.find(r=>r.id===PERMIT_CREDS_ID);
-        if(pcRow && pcRow.data && pcRow.data.creds) applyPermitCreds(pcRow.data.creds);   // 발급 계정(로그인 직원만)
         const dealRows = dq.data.filter(r=>!isReservedId(r.id));
         if(dealRows.length) setDeals(dealRows.map(r=>r.data));
         else await Promise.all(DEALS.map(d=>SB.from('fsnet_deals').upsert({id:d.id, data:d})));
-        if(!st) await SB.from('fsnet_deals').upsert({id:SETTINGS_ID, data:{org:ORG}});   // 최초 설정행 생성
+        if(!st) await SB.from('fsnet_deals').upsert({id:SETTINGS_ID, data:{org:ORG, seedVer:SEED_VERSION}});   // 최초 설정행 생성
       }
-      else { await Promise.all(DEALS.map(d=>SB.from('fsnet_deals').upsert({id:d.id, data:d}))); await SB.from('fsnet_deals').upsert({id:SETTINGS_ID, data:{org:ORG}}); }
+      else { await Promise.all(DEALS.map(d=>SB.from('fsnet_deals').upsert({id:d.id, data:d}))); await SB.from('fsnet_deals').upsert({id:SETTINGS_ID, data:{org:ORG, seedVer:SEED_VERSION}}); }
       if(sq.data && sq.data.length) setSites(sq.data.map(r=>r.data));
       else await Promise.all(SITES.map(s=>SB.from('fsnet_sites').upsert({id:s.id, data:s})));
       cacheLocal(); return true;
@@ -2510,9 +2529,9 @@ function dealSpec(d){
   const invKW = d.cap>=1200?125:100;
   const invType = d.cap>=1500?'중앙형 인버터':'스트링 인버터';
   return {
-    modMaker:'○○(제조사)', modModel:'Q'+modW, modW, modType,
+    modMaker:'한화큐셀', modModel:'Q'+modW, modW, modType,
     modQty: Math.round(d.cap*1000/modW),
-    invMaker:'○○(제조사)', invModel:'INV-'+invKW, invKW, invPhase:'3상 380V', invType,
+    invMaker:'화웨이', invModel:'INV-'+invKW, invKW, invPhase:'3상 380V', invType,
     invQty: Math.max(1, Math.round(d.cap/1.15/invKW)),
   };
 }
@@ -4585,7 +4604,7 @@ function renderRealContract(){
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
         <span class="pill prog"><span class="pd"></span>🔔 실측 완료 도착</span><span class="lr-s">${d.id} · 영업 ${esc(d.rep)}</span>
       </div>
-      ${contractDoc('공 사 도 급 계 약 서 (본계약)', [['계약 구분','본계약 (실계약)'],['현 장 명',d.site],['사 업 주','○○○ (가상)'],['설비용량',effCap(d).toLocaleString()+' kW ('+d.type+')'+(d.revisedProposal?' · 실측 반영 수정':' · 실측 반영')],['총 공사대금',won(d.revisedProposal?pNum(d.revisedProposal.total):dealBudget(d.cap))+' (VAT 별도)'],['계약금 / 잔금','10% 계약 시 / 90% 기성·준공'],['공사기간','착공일로부터 약 4개월'],['작성일','2026-09-18']])}
+      ${contractDoc('공 사 도 급 계 약 서 (본계약)', [['계약 구분','본계약 (실계약)'],['현 장 명',d.site],['사 업 주','사업주 (가상)'],['설비용량',effCap(d).toLocaleString()+' kW ('+d.type+')'+(d.revisedProposal?' · 실측 반영 수정':' · 실측 반영')],['총 공사대금',won(d.revisedProposal?pNum(d.revisedProposal.total):dealBudget(d.cap))+' (VAT 별도)'],['계약금 / 잔금','10% 계약 시 / 90% 기성·준공'],['공사기간','착공일로부터 약 4개월'],['작성일','2026-09-18']])}
       ${renderRealDrawings(d)}
       ${renderRevisedForContract(d)}
       ${renderPermitSalesForm(d)}
@@ -4680,8 +4699,8 @@ function defaultPermit(d){
     equip:{ modMaker:sp.modMaker, modModel:sp.modModel, modW, modType, modQty,
       modTilt:tilt, modInc:inc, modVoc:'49.7', modIsc:'16.5', modSize:(pNum(modW)>=640?'2,382':'2,278')+' x 1,134 x 30', modWeight:(pNum(modW)/19).toFixed(1),
       invKW, invQty, invType:sp.invType, invIn:'200~1000', invOut:'220/380', invFreq:60 },
-    lands: isBld ? [] : [{ addr:synPlace, jibun:synJibun, jimok:'답', area:Math.round(totalArea*0.5), owner:'(토지주)', ownerAddr:'', zone:'생산관리지역' }],
-    builds: isBld ? [{ addr:synPlace, jibun:synJibun, bldArea:useArea, div:'공장', struct:'철골조', use:'공장(제조업소)', owner:'(건물주)' }] : [],
+    lands: isBld ? [] : [{ addr:synPlace, jibun:synJibun, jimok:'답', area:Math.round(totalArea*0.5), owner:'토지소유자'+_n, ownerAddr:synAddr, zone:'생산관리지역' }],
+    builds: isBld ? [{ addr:synPlace, jibun:synJibun, bldArea:useArea, div:'공장', struct:'철골조', use:'공장(제조업소)', owner:'건물소유자'+_n }] : [],
     rep:{ title:'대표', name:synName, idno:synRRN, addr:synAddr, relation:'본인' },
     docs:{}
   };
@@ -7032,7 +7051,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
-  {date:'2026-10-19', team:'공통', kind:'수정', title:'데모 데이터 전면 교체 — 진행 10단계·현장 3종을 모두 담고, 개인정보는 가짜 숫자로 통일', body:'대시보드에 들어있던 <b>샘플(데모) 현장 데이터를 새로 만들었습니다</b>. ① <b>영업 검토 → 설계 접수 → 타당성 → 실측 → 설계 완료 → 인허가 → 시공 → 사용전검사 → 준공 완료 → 문제·반려</b>까지 <b>진행 상황 10가지가 각각 하나씩</b> 들어 있어, 어느 메뉴를 열어도 그 단계의 화면을 바로 확인할 수 있습니다. ② 현장 종류도 <b>노지형·지붕형·햇빛소득마을</b> 3가지를 고르게 넣어, 종류별 표시·서류가 모두 점검됩니다(기존 ‘수상형’은 제외하고 <b>햇빛소득마을</b>로 교체). ③ <b>사업주 성명·주민등록번호·주소·사업자번호·지번·허가번호</b> 등은 실제처럼 보이던 값을 모두 <b>알아보기 쉬운 가짜 숫자</b>(예: 주민번호 930101-1000001, 주소 ‘파주시 8로 80’, 지번 108-8)로 바꿨습니다 — <b>실제 고객 정보가 섞일 염려 없이</b> 서류 자동채움을 테스트할 수 있습니다. ④ 현장 이름도 <b>‘1호 노지형’·‘8호 햇빛소득마을’</b>처럼 번호로 정리했습니다. 종합현황판·각 팀 현황판·알림·서류 자동작성이 새 데이터와 어긋나지 않도록 함께 맞췄고, 화면 렌더링으로 전 항목을 확인했습니다.', author:'개발'},
+  {date:'2026-10-19', team:'공통', kind:'수정', title:'데모 데이터 전면 교체 — 진행 10단계·현장 3종을 모두 담고, 개인정보는 가짜 숫자로 통일', body:'대시보드에 들어있던 <b>샘플(데모) 현장 데이터를 새로 만들었습니다</b>. ① <b>영업 검토 → 설계 접수 → 타당성 → 실측 → 설계 완료 → 인허가 → 시공 → 사용전검사 → 준공 완료 → 문제·반려</b>까지 <b>진행 상황 10가지가 각각 하나씩</b> 들어 있어, 어느 메뉴를 열어도 그 단계의 화면을 바로 확인할 수 있습니다. ② 현장 종류도 <b>노지형·지붕형·햇빛소득마을</b> 3가지를 고르게 넣어, 종류별 표시·서류가 모두 점검됩니다(기존 ‘수상형’은 제외하고 <b>햇빛소득마을</b>로 교체). ③ <b>사업주 성명·주민등록번호·주소·사업자번호·지번·허가번호</b> 등은 실제처럼 보이던 값을 모두 <b>알아보기 쉬운 가짜 숫자</b>(예: 주민번호 930101-1000001, 주소 ‘파주시 8로 80’, 지번 108-8)로 바꿨습니다 — <b>실제 고객 정보가 섞일 염려 없이</b> 서류 자동채움을 테스트할 수 있습니다. ④ 현장 이름도 <b>‘1호 노지형’·‘8호 햇빛소득마을’</b>처럼 번호로 정리했습니다. ⑤ <b>주민등록번호가 ●●●●●●처럼 가려져 있으면 담당자가 업무를 볼 수 없어</b>, 발전사업 허가·시공 등 <b>모든 화면의 가림 표시(●·○○·000-0)를 없애고 실제처럼 쓸 수 있는 가짜 숫자</b>로 바꿨습니다(법인은 주민번호 대신 사업자번호). ⑥ <b>이미 접속해 쓰던 기기도 다음 접속 때 자동으로 새 데이터로 갱신</b>됩니다 — 예전에 저장돼 있던 옛 이름·가림 데이터가 남지 않도록, 접속하면 데모 데이터가 한 번 새로 맞춰집니다. 종합현황판·각 팀 현황판·알림·서류 자동작성이 새 데이터와 어긋나지 않도록 함께 맞췄고, 화면 렌더링으로 전 항목을 확인했습니다.', author:'개발'},
   {date:'2026-10-16', team:'시공', kind:'추가', title:'사용전 검사 — 수검자 서식에 수동 입력칸 신설(사양·식별값이 양식에 자동 반영)', body:'수검자 서식에는 자동으로 못 채우는 값이 있어 <b>직접 입력</b>해야 하는데, 그동안 메뉴에 <b>입력칸이 없었습니다</b>. 이제 <b>제품 데이터시트·설계로 미리 아는 사양·식별값</b>을 메뉴에서 바로 입력하면 <b>양식(미리보기·PDF·한글)에 그대로 들어갑니다</b>. ① <b>모듈 점검기록표</b> — 제조연월·제조번호(S/N) 대표·KS인증번호·태양전지 직렬(수). ② <b>인버터 점검기록표</b> — 제조연월·제조번호(S/N). ③ <b>감리 확인</b> — 감리원 성명. 입력하면 “여기서 입력” 표시가 붙고, <b>미리보기·PDF·한글 세 가지에 똑같이 반영</b>됩니다(배치 위치를 직접 렌더링으로 확인). ④ <b>현장에서 계측기로 재는 값</b>(모듈 개방전압·절연/접지저항, 인버터 보호계전 동작시험, 저압 차단기·절연저항 등)과 <b>체크(□) 항목</b>(설치위치·종류·극수 등)은 성격상 <b>검사 당일 현장에서 기입</b>하므로 각 양식 아래에 “📍 현장 계측” 안내로 남겨 두었습니다. 즉 <b>미리 아는 값은 입력→자동 반영, 현장값은 양식 공란</b>으로 역할을 나눴습니다.', author:'개발'},
   {date:'2026-10-16', team:'시공', kind:'수정', title:'사용전 검사 — 수검자 서식의 모든 양식(점검기록표 6종)을 각각 표시', body:'시공 「사용전 검사」의 <b>수검자 서식</b>은 <b>여러 장(측정/시험 총괄표 + 점검기록표 5종)</b>으로 이뤄져 있는데, 그동안 <b>총괄표 한 장만</b> 보였습니다. 이제 <b>양식 6종을 각각 섹션으로</b> 보여줍니다 — ① <b>측정/시험 총괄표</b>(발전소·사업주·소재지·용량·전압·점검일·점검자) ② <b>태양전지 모듈 점검기록표</b>(모듈 제조사·모델·정격출력) ③ <b>전력변환장치(인버터) 점검기록표</b>(인버터 제조사·모델·용량·출력전압) ④ <b>태양광 구조물 점검기록표</b>(구조물 제조사) ⑤ <b>저압설비(LV반)·보호장치 점검기록표</b> ⑥ <b>작성자·감리 확인</b>(점검자·감리원). <b>대시보드가 자동으로 채우는 값</b>은 양식마다 출처 뱃지와 함께 보이고, <b>현장에서 측정·기입하는 항목</b>(모듈 개방전압·절연저항, 인버터 보호계전 동작시험, 저압 차단기·접지저항 등)은 각 양식 아래에 <b>“📍 현장 계측 …”</b> 한 줄로 안내해, 어느 값이 어느 양식에 들어가는지 한눈에 볼 수 있습니다. (현장 계측값은 지금처럼 양식에 공란으로 출력되어 현장에서 기입)', author:'개발'},
   {date:'2026-10-16', team:'시공', kind:'수정', title:'사용전 검사 — 입력칸을 실제 양식 그대로 나눠 보이기 + 「시공서류함」 신설 + 출처 뱃지', body:'시공 <b>「사용전 검사」</b> 화면을 <b>실제 제출 양식과 똑같은 구분(섹션)</b>으로 다시 정리했습니다. ① 가운데 입력값들을 <b>「사용전검사 신청서」의 신청인(발전사업자)·시공자·검사받을 전기설비</b>, 그리고 <b>「수검자 서식」의 ‘1. 점검 및 시험성적서 측정/시험 총괄표’</b> 순서로 나눠, <b>어느 값이 양식 어디에 들어가는지 한눈에</b> 보이게 했습니다. 양식 섹션 이름을 그대로 써서 바로 대조할 수 있습니다. ② 그동안 화면에 없던 <b>시공자(㈜해피솔라에너지) 정보 5가지</b>(상호·대표자·전기공사업 등록번호·전화·주소)도 양식대로 보여줍니다. ③ <b>자동으로 가져온 값마다 「어디서 온 값인지」 작은 뱃지</b>를 붙였습니다 — <b>‘발전허가에서 입력’·‘설계에서 입력’·‘시공자 고정’·‘행정에서 입력’</b>처럼 표시되고, <b>뱃지를 누르면 그 값을 입력·수정하는 원래 화면으로 바로 이동</b>합니다(검사·점검 일정만 이 화면에서 직접 입력). 행정 화면과 똑같은 방식입니다. ④ 아래에 흩어져 있던 <b>제출서류 묶음(22종)</b>을, 행정의 「행정서류함」처럼 <b>우측 상단 「시공서류함」 버튼</b>으로 모았습니다 — <b>대시보드에 이미 있는 서류는 자동 연동, 외부 발급 서류만 업로드</b>하면 되고, 올린 파일은 접수서류(미리보기·PDF)에 그대로 반영됩니다. 화면이 한결 깔끔해지고, 값이 양식 어디에 쓰이는지 명확해졌습니다.', author:'개발'},
@@ -8175,24 +8194,29 @@ function voltLabel(v){ v=pNum(v); return v>=1000 ? (v/1000)+'kV' : (v||'')+'V'; 
 function defaultSiteMaster(s){
   const isBld=s.type==='지붕', isWater=s.type==='수상', cap=pNum(s.cap)||0;
   const sd=SITE_ACC_SEED[s.id]||{};
+  // 합성 폴백(SITE_ACC_SEED 없는 신규 현장도 숫자 합성값으로 — 빈칸·마스킹 방지)
+  const _n=(parseInt(String(s.id).replace(/\D/g,''),10)%90)+1, _pad=(v,k)=>String(v).padStart(k,'0');
+  const synName=`사업주${_n}`, synRRN=`930101-1${_pad(_n,6)}`, synBizno=`1${_pad(_n,2)}-00-${_pad(_n,5)}`;
+  const synPhone=`010-1000-${_pad(_n,4)}`, synAddr=`경기도 파주시 ${_n}로 ${_n}0`;
+  const synPlace=`경기도 파주시 제${_n}리 ${100+_n}-${_n}`, synJibun=`${100+_n}-${_n}`;
   const modW=640, modQty=Math.max(1,Math.round(cap*1000/modW)), invKW=110, invQty=Math.max(1,Math.round(cap/invKW));
   const voltN = cap>=500 ? 22900 : 380;
   const useArea=Math.round(cap*4.2), totalArea=isBld?useArea:Math.round(useArea*1.8);
   return {
     installType: isBld?'건물':'토지', office:'파주시청',
-    applicant:{ name: sd.owner||'(사업주)', corp:!!sd.corp, corpName: sd.corp?(sd.owner||''):'',
-      bizname: sitePlantName(s), bizno: sd.bizno||'000-00-00000', phone: sd.phone||'010-0000-0000',
-      addr: sd.ownerAddr||'', idno:'', idType:'주민등록증' },
-    biz:{ kind:'발전사업(태양광발전)', place: sd.place||'', cap, volt:voltN, freq:60, prep:18 },
+    applicant:{ name: sd.owner||synName, corp:!!sd.corp, corpName: sd.corp?(sd.owner||synName):'',
+      bizname: sitePlantName(s), bizno: sd.bizno||synBizno, phone: sd.phone||synPhone,
+      addr: sd.ownerAddr||synAddr, idno: sd.corp?'':(sd.idno||synRRN), idType:'주민등록증' },
+    biz:{ kind:'발전사업(태양광발전)', place: sd.place||synPlace, cap, volt:voltN, freq:60, prep:18 },
     outline:{ plantName: sitePlantName(s), method: isBld?'건물형(지붕)':isWater?'수상형':'노지형',
       genType:'고정식', supply: voltN>=22900?'22.9kV 교류 3상':'380V 교류 3상 4선식',
       useArea, totalArea, bldArea:isBld?useArea:0, annual: Math.round(cap*1460) },
     equip:{ modMaker:'한화큐셀', modModel:'Q.PEAK DUO XL-G11.7', modW, modType:'단결정', modQty,
       modVoc:'58.50', modVmp:'49.75', modIsc:'13.5', modImp:'12.87', modWeight:'32', modSize:'2,384 x 1,134 x 35',
       invMaker:'화웨이', invModel:'SUN2000-110KTL-M2', invKW, invQty, invOut:'380', invVdc:'1000', invEff:'98.14' },
-    lands: isBld ? [] : [{ addr: sd.place||'', jibun: sd.jibun||'', jimok: sd.jimok||(isWater?'유지':'답'),
-      area:Math.round(totalArea*0.5), owner:'(토지주)', ownerAddr:'', zone:'생산관리지역' }],
-    builds: isBld ? [{ addr: sd.place||'', jibun: sd.jibun||'', bldArea:useArea, div:'공장', struct:'철골조', use:'공장(제조업소)', owner:'(건물주)' }] : [],
+    lands: isBld ? [] : [{ addr: sd.place||synPlace, jibun: sd.jibun||synJibun, jimok: sd.jimok||(isWater?'유지':'답'),
+      area:Math.round(totalArea*0.5), owner:'토지소유자'+_n, ownerAddr:synAddr, zone:'생산관리지역' }],
+    builds: isBld ? [{ addr: sd.place||synPlace, jibun: sd.jibun||synJibun, bldArea:useArea, div:'공장', struct:'철골조', use:'공장(제조업소)', owner:'건물소유자'+_n }] : [],
     struct:{ maker:'(주)에스디레이저', method:'경사고정', base:'스파이럴+그라우팅', material:'포스맥',
       col:'ㅁ-100*100*2.1t', girder:'几-110*107*50*2.1t', purlin:'C-100*50*15*2.1t' },
     admin:{ devPermitNo: sd.devNo||'', constPlanNo: sd.planNo||'', bizChangeNo: sd.changeNo||'',
