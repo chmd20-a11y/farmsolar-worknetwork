@@ -1749,6 +1749,8 @@ button{font-family:inherit;cursor:pointer}
   <div class="dr-body">
     <div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:11px">팀별 현재 상태</div>
     <div class="dr-teams" id="drTeams"></div>
+    <div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:11px">출입 · 잠금장치 비밀번호</div>
+    <div id="drAccess" style="margin-bottom:20px"></div>
     <div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">전체 진행 타임라인</div>
     <div class="timeline" id="drTimeline"></div>
   </div>
@@ -7725,9 +7727,25 @@ function openDealDrawer(d){
         <div class="tl-sub">예정</div></div></div>`;
   });
   document.getElementById('drTimeline').innerHTML = tl;
+  document.getElementById('drAccess').innerHTML = drAccessHTML(d);
   document.getElementById('drawer').classList.add('open');
   document.getElementById('drawerScrim').classList.add('open');
   document.getElementById('drawer').setAttribute('aria-hidden','false');
+}
+// 현장 출입·잠금장치 비밀번호 — 정문/전기실/사다리 자물쇠 등 접근정보 자유 기재(현장별 저장·팀 공유)
+// 현장(SITE)·딜(DEAL) 드로어 공통. ent.access.notes 에 저장, 전체 객체를 공유 upsert.
+function accessGet(ent){ return (ent && ent.access && ent.access.notes) || ''; }
+function accessSet(id,val){
+  let ent = SITES.find(x=>x.id===id), persist = persistSite;
+  if(!ent){ ent = DEALS.find(x=>x.id===id); persist = persistDeal; }
+  if(!ent) return;
+  if(!ent.access) ent.access = {};
+  ent.access.notes = val;
+  persist(ent);
+}
+function drAccessHTML(ent){
+  return `<textarea class="ta" style="min-height:92px;font-size:13px;line-height:1.7" placeholder="예)&#10;정문 출입문 : 1234&#10;전기실 도어락 : 5678&#10;사다리 자물쇠 : 0000&#10;기타 특이사항 자유 기재" onchange="accessSet('${ent.id}',this.value)">${esc(accessGet(ent))}</textarea>
+  <div style="font-size:11px;color:var(--muted);margin-top:6px">🔒 입력하면 자동 저장되어 현장 담당자 모두가 공유합니다.</div>`;
 }
 function openDrawer(id){
   const site = SITES.find(s=>s.id===id);
@@ -7772,6 +7790,9 @@ function openDrawer(id){
       <div class="tc-stage">${esc(t.stage)}</div>
       <div class="tc-owner">담당 ${esc(t.owner)}</div>
     </div>`).join('');
+
+  // 출입·잠금장치 비밀번호
+  document.getElementById('drAccess').innerHTML = drAccessHTML(site);
 
   // 타임라인
   let tl='', lastPhase=null;
