@@ -981,6 +981,11 @@ button{font-family:inherit;cursor:pointer}
 
 /* ===== 발전사업 허가 (행정) ===== */
 .pm-modebar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+/* 사용전검사 상단 컨트롤바+안내 — .content 스크롤 시 상단 고정(툴바). .content padding(22px) 풀블리드 상쇄 */
+.pi-stickytop{position:sticky;top:0;z-index:8;background:var(--bg);margin:0 -22px 14px;padding:11px 22px 10px;border-bottom:1px solid var(--border);box-shadow:0 8px 16px -10px rgba(10,20,40,.22)}
+.pi-stickytop .pm-modebar{margin-bottom:0}
+.pi-stickytop .cred-warn{margin-top:10px}
+@media(max-width:860px){.pi-stickytop{position:static;margin:0 0 14px;padding:0;border:0;box-shadow:none}}
 .pm-datepick{border:1px solid var(--border-strong);background:var(--surface);color:var(--ink);border-radius:8px;padding:5px 9px;font-size:12.5px;font-weight:700;color-scheme:light dark;cursor:pointer}
 .pm-notes{margin-top:16px;border:1px solid color-mix(in srgb,var(--brand) 28%,transparent);background:color-mix(in srgb,var(--brand) 7%,transparent);border-radius:11px;padding:13px 15px}
 .pm-notes-h{font-weight:800;font-size:13px;color:var(--ink);margin-bottom:7px}
@@ -7051,6 +7056,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-19', team:'시공', kind:'수정', title:'사용전 검사 — 상단 조작바(대상 현장·신청일자·계약 법인·버튼) 스크롤 고정', body:'시공 <b>「사용전 검사」</b>는 신청서·수검자 서식까지 양이 많아 아래로 내리면 상단 조작부가 사라져 불편했습니다. 이제 <b>맨 위 조작바(대상 현장 선택 · 신청일자 · 계약 법인 · 시공서류함 · 접수서류 미리보기 · PDF · 양식(HWP))와 안내 문구</b>가 <b>스크롤을 내려도 화면 상단에 고정</b>됩니다 — 긴 서류를 검토하면서도 <b>현장 전환·날짜/법인 변경·출력 버튼</b>을 바로 쓸 수 있습니다. (모바일 화면에서는 고정 없이 평소대로 표시)', author:'개발'},
   {date:'2026-10-19', team:'시공', kind:'수정', title:'사용전 검사 — 서류별 한 섹션으로 정리 + 검사희망·사용개시일 기본값', body:'시공 <b>「사용전 검사」</b> 화면을 <b>서류 단위로 보기 쉽게</b> 정리했습니다. ① 그동안 <b>「사용전검사 신청서」</b>가 <b>신청인·시공자·검사설비 세 칸으로 나뉘어</b> 있어 한 서류인데도 흩어져 보였는데, 이제 <b>하나의 섹션 안에 ①신청인 ②시공자 ③검사받을 전기설비·검사일정 소제목</b>으로 묶어 <b>한 서류를 한 번에</b> 검토할 수 있습니다(수검자 서식은 점검기록표 양식마다 별개 서류라 그대로 양식별로 표시). ② <b>검사희망연월일·사용개시예정연월일</b>이 비어 있던 것을, <b>기본값(검사희망=오늘+7일, 사용개시=오늘+21일, 신청=오늘)</b>으로 채워 양식이 공란으로 나오지 않게 했습니다 — <b>달력에서 직접 고르면 그 날짜가 우선</b> 적용되고, 미리보기·PDF·한글파일에 모두 반영됩니다.', author:'개발'},
   {date:'2026-10-19', team:'시공', kind:'추가', title:'사용전 검사 — 「신청일자」·「계약 법인」 선택 추가(양식에 바로 반영)', body:'시공 <b>「사용전 검사」</b> 화면 상단에, 행정 「발전사업 허가」처럼 <b>📅 신청일자</b>와 <b>🏢 계약 법인</b>을 고르는 칸을 넣었습니다. ① <b>신청일자</b>를 달력에서 고르면 <b>「사용전검사 신청서」의 ‘신청 연월일’</b>에 그대로 들어갑니다(미지정이면 오늘 날짜). ② <b>계약 법인</b>은 그룹 3개 법인(<b>㈜해피솔라에너지·㈜팜솔라·㈜스마트솔라</b>) 중에서 고르며, 고른 법인이 <b>「사용전검사 신청서」의 시공자 상호</b>와 <b>「수검자 서식」(점검기록표)의 점검자 상호</b>에 반영됩니다. 대표자·전기공사업 등록번호·전화·주소는 그대로 공통입니다(행정 의향서와 같은 방식). ③ 두 값 모두 <b>미리보기·PDF·한글파일 모두 똑같이</b> 반영됩니다.', author:'개발'},
   {date:'2026-10-19', team:'공통', kind:'수정', title:'데모 데이터 전면 교체 — 진행 10단계·현장 3종을 모두 담고, 개인정보는 가짜 숫자로 통일', body:'대시보드에 들어있던 <b>샘플(데모) 현장 데이터를 새로 만들었습니다</b>. ① <b>영업 검토 → 설계 접수 → 타당성 → 실측 → 설계 완료 → 인허가 → 시공 → 사용전검사 → 준공 완료 → 문제·반려</b>까지 <b>진행 상황 10가지가 각각 하나씩</b> 들어 있어, 어느 메뉴를 열어도 그 단계의 화면을 바로 확인할 수 있습니다. ② 현장 종류도 <b>노지형·지붕형·햇빛소득마을</b> 3가지를 고르게 넣어, 종류별 표시·서류가 모두 점검됩니다(기존 ‘수상형’은 제외하고 <b>햇빛소득마을</b>로 교체). ③ <b>사업주 성명·주민등록번호·주소·사업자번호·지번·허가번호</b> 등은 실제처럼 보이던 값을 모두 <b>알아보기 쉬운 가짜 숫자</b>(예: 주민번호 930101-1000001, 주소 ‘파주시 8로 80’, 지번 108-8)로 바꿨습니다 — <b>실제 고객 정보가 섞일 염려 없이</b> 서류 자동채움을 테스트할 수 있습니다. ④ 현장 이름도 <b>‘1호 노지형’·‘8호 햇빛소득마을’</b>처럼 번호로 정리했습니다. ⑤ <b>주민등록번호가 ●●●●●●처럼 가려져 있으면 담당자가 업무를 볼 수 없어</b>, 발전사업 허가·시공 등 <b>모든 화면의 가림 표시(●·○○·000-0)를 없애고 실제처럼 쓸 수 있는 가짜 숫자</b>로 바꿨습니다(법인은 주민번호 대신 사업자번호). ⑥ <b>이미 접속해 쓰던 기기도 다음 접속 때 자동으로 새 데이터로 갱신</b>됩니다 — 예전에 저장돼 있던 옛 이름·가림 데이터가 남지 않도록, 접속하면 데모 데이터가 한 번 새로 맞춰집니다. 종합현황판·각 팀 현황판·알림·서류 자동작성이 새 데이터와 어긋나지 않도록 함께 맞췄고, 화면 렌더링으로 전 항목을 확인했습니다.', author:'개발'},
@@ -8514,7 +8520,7 @@ function renderPreInspectBiz(){
     {k:'moduleSerial', label:'모듈 시리얼넘버 정리'},
     {k:'docReady', label:'첨부서류 준비 (공사계획 신고수리서·설계도서·감리/자체감리 서류·전기안전관리자 선임신고증명서)'},
   ],'사용전 검사 체크리스트');
-  return head+bar+info+applyForm+sgSummary+consDocNote+chk+consHandoff(s,'preInspect',null,'사용전 검사','사용전 검사까지 완료되면 준공 단계로 넘어갑니다.');
+  return head+`<div class="pi-stickytop">${bar}${info}</div>`+applyForm+sgSummary+consDocNote+chk+consHandoff(s,'preInspect',null,'사용전 검사','사용전 검사까지 완료되면 준공 단계로 넘어갑니다.');
 }
 // 접수서류 미리보기 모달 — 전체 묶음(우리 양식 자동 + 업로드 자리). 절대양식이라 flow=false.
 let preInspectEscHandler=null;
