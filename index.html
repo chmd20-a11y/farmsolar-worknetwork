@@ -7051,6 +7051,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-19', team:'시공', kind:'추가', title:'사용전 검사 — 「신청일자」·「계약 법인」 선택 추가(양식에 바로 반영)', body:'시공 <b>「사용전 검사」</b> 화면 상단에, 행정 「발전사업 허가」처럼 <b>📅 신청일자</b>와 <b>🏢 계약 법인</b>을 고르는 칸을 넣었습니다. ① <b>신청일자</b>를 달력에서 고르면 <b>「사용전검사 신청서」의 ‘신청 연월일’</b>에 그대로 들어갑니다(미지정이면 오늘 날짜). ② <b>계약 법인</b>은 그룹 3개 법인(<b>㈜해피솔라에너지·㈜팜솔라·㈜스마트솔라</b>) 중에서 고르며, 고른 법인이 <b>「사용전검사 신청서」의 시공자 상호</b>와 <b>「수검자 서식」(점검기록표)의 점검자 상호</b>에 반영됩니다. 대표자·전기공사업 등록번호·전화·주소는 그대로 공통입니다(행정 의향서와 같은 방식). ③ 두 값 모두 <b>미리보기·PDF·한글파일 모두 똑같이</b> 반영됩니다.', author:'개발'},
   {date:'2026-10-19', team:'공통', kind:'수정', title:'데모 데이터 전면 교체 — 진행 10단계·현장 3종을 모두 담고, 개인정보는 가짜 숫자로 통일', body:'대시보드에 들어있던 <b>샘플(데모) 현장 데이터를 새로 만들었습니다</b>. ① <b>영업 검토 → 설계 접수 → 타당성 → 실측 → 설계 완료 → 인허가 → 시공 → 사용전검사 → 준공 완료 → 문제·반려</b>까지 <b>진행 상황 10가지가 각각 하나씩</b> 들어 있어, 어느 메뉴를 열어도 그 단계의 화면을 바로 확인할 수 있습니다. ② 현장 종류도 <b>노지형·지붕형·햇빛소득마을</b> 3가지를 고르게 넣어, 종류별 표시·서류가 모두 점검됩니다(기존 ‘수상형’은 제외하고 <b>햇빛소득마을</b>로 교체). ③ <b>사업주 성명·주민등록번호·주소·사업자번호·지번·허가번호</b> 등은 실제처럼 보이던 값을 모두 <b>알아보기 쉬운 가짜 숫자</b>(예: 주민번호 930101-1000001, 주소 ‘파주시 8로 80’, 지번 108-8)로 바꿨습니다 — <b>실제 고객 정보가 섞일 염려 없이</b> 서류 자동채움을 테스트할 수 있습니다. ④ 현장 이름도 <b>‘1호 노지형’·‘8호 햇빛소득마을’</b>처럼 번호로 정리했습니다. ⑤ <b>주민등록번호가 ●●●●●●처럼 가려져 있으면 담당자가 업무를 볼 수 없어</b>, 발전사업 허가·시공 등 <b>모든 화면의 가림 표시(●·○○·000-0)를 없애고 실제처럼 쓸 수 있는 가짜 숫자</b>로 바꿨습니다(법인은 주민번호 대신 사업자번호). ⑥ <b>이미 접속해 쓰던 기기도 다음 접속 때 자동으로 새 데이터로 갱신</b>됩니다 — 예전에 저장돼 있던 옛 이름·가림 데이터가 남지 않도록, 접속하면 데모 데이터가 한 번 새로 맞춰집니다. 종합현황판·각 팀 현황판·알림·서류 자동작성이 새 데이터와 어긋나지 않도록 함께 맞췄고, 화면 렌더링으로 전 항목을 확인했습니다.', author:'개발'},
   {date:'2026-10-16', team:'시공', kind:'추가', title:'사용전 검사 — 수검자 서식에 수동 입력칸 신설(사양·식별값이 양식에 자동 반영)', body:'수검자 서식에는 자동으로 못 채우는 값이 있어 <b>직접 입력</b>해야 하는데, 그동안 메뉴에 <b>입력칸이 없었습니다</b>. 이제 <b>제품 데이터시트·설계로 미리 아는 사양·식별값</b>을 메뉴에서 바로 입력하면 <b>양식(미리보기·PDF·한글)에 그대로 들어갑니다</b>. ① <b>모듈 점검기록표</b> — 제조연월·제조번호(S/N) 대표·KS인증번호·태양전지 직렬(수). ② <b>인버터 점검기록표</b> — 제조연월·제조번호(S/N). ③ <b>감리 확인</b> — 감리원 성명. 입력하면 “여기서 입력” 표시가 붙고, <b>미리보기·PDF·한글 세 가지에 똑같이 반영</b>됩니다(배치 위치를 직접 렌더링으로 확인). ④ <b>현장에서 계측기로 재는 값</b>(모듈 개방전압·절연/접지저항, 인버터 보호계전 동작시험, 저압 차단기·절연저항 등)과 <b>체크(□) 항목</b>(설치위치·종류·극수 등)은 성격상 <b>검사 당일 현장에서 기입</b>하므로 각 양식 아래에 “📍 현장 계측” 안내로 남겨 두었습니다. 즉 <b>미리 아는 값은 입력→자동 반영, 현장값은 양식 공란</b>으로 역할을 나눴습니다.', author:'개발'},
   {date:'2026-10-16', team:'시공', kind:'수정', title:'사용전 검사 — 수검자 서식의 모든 양식(점검기록표 6종)을 각각 표시', body:'시공 「사용전 검사」의 <b>수검자 서식</b>은 <b>여러 장(측정/시험 총괄표 + 점검기록표 5종)</b>으로 이뤄져 있는데, 그동안 <b>총괄표 한 장만</b> 보였습니다. 이제 <b>양식 6종을 각각 섹션으로</b> 보여줍니다 — ① <b>측정/시험 총괄표</b>(발전소·사업주·소재지·용량·전압·점검일·점검자) ② <b>태양전지 모듈 점검기록표</b>(모듈 제조사·모델·정격출력) ③ <b>전력변환장치(인버터) 점검기록표</b>(인버터 제조사·모델·용량·출력전압) ④ <b>태양광 구조물 점검기록표</b>(구조물 제조사) ⑤ <b>저압설비(LV반)·보호장치 점검기록표</b> ⑥ <b>작성자·감리 확인</b>(점검자·감리원). <b>대시보드가 자동으로 채우는 값</b>은 양식마다 출처 뱃지와 함께 보이고, <b>현장에서 측정·기입하는 항목</b>(모듈 개방전압·절연저항, 인버터 보호계전 동작시험, 저압 차단기·접지저항 등)은 각 양식 아래에 <b>“📍 현장 계측 …”</b> 한 줄로 안내해, 어느 값이 어느 양식에 들어가는지 한눈에 볼 수 있습니다. (현장 계측값은 지금처럼 양식에 공란으로 출력되어 현장에서 기입)', author:'개발'},
@@ -8054,6 +8055,9 @@ function consChk(id,key,item){ const s=SITES.find(x=>x.id===id); if(!s)return; c
 function consAtt(id,key,slot){ const s=SITES.find(x=>x.id===id); if(!s)return; const sub=consSub(s,key); sub.att=sub.att||{}; sub.att[slot]=sub.att[slot]?null:{name:slot,url:null}; persistSite(s); refreshActive(); }
 function consPhoto(id,key,item,pos){ const s=SITES.find(x=>x.id===id); if(!s)return; const sub=consSub(s,key); sub.photos=sub.photos||{}; const k=item+'||'+pos; sub.photos[k]=sub.photos[k]?null:{name:item+' '+pos,url:null}; persistSite(s); refreshActive(); }
 function consSet(id,key,path,val){ const s=SITES.find(x=>x.id===id); if(!s)return; const sub=consSub(s,key); const p=String(path).split('.'); let o=sub; for(let i=0;i<p.length-1;i++){ if(o[p[i]]==null)o[p[i]]={}; o=o[p[i]]; } o[p[p.length-1]]=val; persistSite(s); }  // 입력중 재렌더 없음(포커스 유지)
+// 사용전검사 계약 법인(시공자) — 그룹 3개 법인 중 선택(preInspect.vendorIdx). 시공자/점검자 '상호'에만 반영(대표자·전기공사업 등록번호·전화·주소는 해피솔라 공통 — 행정 의향서와 동일 방식).
+function consVendor(s){ const i=Math.max(0,Math.min(PERMIT_VENDORS.length-1,(consGet(s,'preInspect','vendorIdx')|0))); return PERMIT_VENDORS[i]; }
+function consContractorBiz(s){ return consVendor(s).label.replace('(주)','㈜'); }
 // 현장 선택(시공 전 메뉴 공통)
 let consSel=null;
 function consCurSite(){ const list=consSites(); if(!list.length) return null; if(!consSel||!list.find(s=>s.id===consSel)) consSel=list[0].id; return list.find(s=>s.id===consSel); }
@@ -8288,9 +8292,9 @@ function preInspectTokenMap(s){
   return {
     '§PI_NAME§':S(o.name), '§PI_PHONE§':S(o.phone), '§PI_BIZNAME§':S(o.bizname),
     '§PI_BIZNO§':S(o.bizno), '§PI_ADDR§':S(o.addr),
-    '§CO_NAME§':CO.name, '§CO_PHONE§':CO.phone, '§CO_BIZNAME§':CO.bizname, '§CO_ELECREG§':CO.elecReg, '§CO_ADDR§':CO.addr,
+    '§CO_NAME§':CO.name, '§CO_PHONE§':CO.phone, '§CO_BIZNAME§':consContractorBiz(s), '§CO_ELECREG§':CO.elecReg, '§CO_ADDR§':CO.addr,
     '§SITE_ADDR§':S(pl.place), '§CAP§':cap,
-    '§WANT_DATE§':fmtKDate(pi.wantDate), '§START_DATE§':fmtKDate(pi.startDate), '§APPLY_DATE§':fmtKDate(pi.applyDate),
+    '§WANT_DATE§':fmtKDate(pi.wantDate), '§START_DATE§':fmtKDate(pi.startDate), '§APPLY_DATE§':fmtKDate(pi.applyDate||new Date().toISOString().slice(0,10)),
   };
 }
 // 수검자서식 토큰맵 — 제원=현장 마스터(siteMaster) 자동 / 점검자=시공자 회사상수 / 점검일·사양식별값=입력. (실측값은 양식에서 공란)
@@ -8303,7 +8307,7 @@ function inspectorTokenMap(s){
   return {
     '§SG_PLANT§':S(ou.plantName), '§SG_OWNER§':S(o.name), '§SG_ADDR§':S(b.place),
     '§SG_CAP§':cap, '§SG_VOLT§':voltLabel(b.volt), '§SG_DATE§':fmtKDate(pi.inspectDate||pi.wantDate||''),
-    '§SG_COBIZ§':CO.bizname, '§SG_CONAME§':CO.name, '§SG_COPHONE§':CO.phone, '§SG_COEMAIL§':S(CO.email),
+    '§SG_COBIZ§':consContractorBiz(s), '§SG_CONAME§':CO.name, '§SG_COPHONE§':CO.phone, '§SG_COEMAIL§':S(CO.email),
     '§SG_MODMAKER§':S(eq.modMaker), '§SG_MODMODEL§':S(eq.modModel), '§SG_MODW§':S(eq.modW),
     '§SG_INVMAKER§':S(eq.invMaker), '§SG_INVMODEL§':S(eq.invModel), '§SG_INVKW§':S(eq.invKW), '§SG_INVVOUT§':S(eq.invOut),
     '§SG_STMAKER§':S(st.maker), '§SG_SUPER§':S(ad.supervisor), '§SG_SUPERNAME§':S(sg.superName),
@@ -8407,12 +8411,16 @@ function renderPreInspectBiz(){
       <select class="pm-dealsel" onchange="selectConsSite(this.value)">${consSites().map(x=>`<option value="${x.id}" ${x.id===s.id?'selected':''}>${esc(x.name)} · ${x.cap.toLocaleString()}kW (${x.id})</option>`).join('')}</select>
       ${consTypeTag(s)}
       <div style="flex:1"></div>
+      <span class="lr-s">📅 신청일자</span>
+      <input type="date" class="pm-datepick" value="${consGet(s,'preInspect','applyDate')||today}" onchange="consSet('${s.id}','preInspect','applyDate',this.value);refreshActive()" title="「사용전검사 신청서」 신청 연월일에 기입됩니다">
+      <span class="lr-s">🏢 계약 법인</span>
+      <select class="pm-datepick" onchange="consSet('${s.id}','preInspect','vendorIdx',+this.value);refreshActive()" title="시공자(점검자) 상호에 반영될 계약 법인 선택 (그룹 3개 법인 · 대표자·등록번호·전화·주소는 공통)">${PERMIT_VENDORS.map((v,i)=>`<option value="${i}" ${i===(consGet(s,'preInspect','vendorIdx')|0)?'selected':''}>${esc(v.label)}</option>`).join('')}</select>
       <button class="btn ghost sm" onclick="openConsDocBox('${s.id}')">🗂 시공서류함</button>
       <button class="btn ghost sm" onclick="openPreInspectModal('${s.id}')">🔍 접수서류 미리보기</button>
       <button class="btn primary sm" onclick="genPreInspectPDF('${s.id}')">📄 접수서류(PDF)</button>
       <button class="btn primary sm" onclick="printPreInspect('${s.id}')">📥 양식(HWP)</button>
     </div>`;
-  const info=`<div class="cred-warn" style="color:var(--ink-2);background:color-mix(in srgb,var(--prog) 10%,transparent);border-color:color-mix(in srgb,var(--prog) 30%,transparent)">🔗 아래 값은 <b>양식 섹션 그대로</b> 묶여 있습니다. <b style="color:#2e8b63">발전허가·설계</b>에서 넘어온 값은 <b>읽기전용</b>(출처 뱃지 클릭 시 원천 화면으로 이동), <b>시공자</b>는 ㈜해피솔라에너지 고정, <b>검사·점검 일정</b>만 직접 입력합니다. 모든 값은 양식에 <b style="color:#2e6fe8">파란색</b>으로 반영됩니다.</div>`;
+  const info=`<div class="cred-warn" style="color:var(--ink-2);background:color-mix(in srgb,var(--prog) 10%,transparent);border-color:color-mix(in srgb,var(--prog) 30%,transparent)">🔗 아래 값은 <b>양식 섹션 그대로</b> 묶여 있습니다. <b style="color:#2e8b63">발전허가·설계</b>에서 넘어온 값은 <b>읽기전용</b>(출처 뱃지 클릭 시 원천 화면으로 이동), <b>시공자(계약 법인)</b>는 상단에서 선택(그룹 3개 법인 · 상호만 바뀜), <b>신청일자·검사·점검 일정</b>은 직접 입력합니다. 모든 값은 양식에 <b style="color:#2e6fe8">파란색</b>으로 반영됩니다.</div>`;
 
   // ── 「사용전검사 신청서」(전기사업법 별지 제28호서식) ──
   const applyApplicant=piSec('#3f77a8','👤','「사용전검사 신청서」 · 신청인(발전사업자)','',
@@ -8423,9 +8431,10 @@ function renderPreInspectBiz(){
       ${ciAuto('전화번호',o.phone,CI_SRC_PERMIT)}
       ${ciAuto('주소',o.addr,CI_SRC_PERMIT)}
     </div>`);
-  const applyContractor=piSec('#8a8f98','🏗','「사용전검사 신청서」 · 시공자(㈜해피솔라에너지)','',
+  const CI_SRC_VENDOR={tag:'계약 법인 선택',color:'#8a8f98',title:'상단 「계약 법인」 선택에 따라 바뀝니다.'};
+  const applyContractor=piSec('#8a8f98','🏗','「사용전검사 신청서」 · 시공자(계약 법인)','',
     `<div class="pm-grid">
-      ${ciAuto('회사명 또는 상호',CO.bizname,CI_SRC_CO)}
+      ${ciAuto('회사명 또는 상호',consContractorBiz(s),CI_SRC_VENDOR)}
       ${ciAuto('대표자 성명',CO.name,CI_SRC_CO)}
       ${ciAuto('전기공사업 등록번호',CO.elecReg,CI_SRC_CO)}
       ${ciAuto('전화번호',CO.phone,CI_SRC_CO)}
@@ -8438,7 +8447,7 @@ function renderPreInspectBiz(){
       ${ciAuto('검사받을 공사공정','태양광발전설비',{tag:'고정',color:'#8a8f98',title:'검사 공정은 태양광발전설비로 고정입니다.'})}
       ${ciInput(s,'preInspect','wantDate','검사희망연월일',{type:'date'})}
       ${ciInput(s,'preInspect','startDate','사용개시예정연월일',{type:'date'})}
-      ${ciInput(s,'preInspect','applyDate','신청 연월일',{type:'date',def:today})}
+      ${ciAuto('신청 연월일',consGet(s,'preInspect','applyDate')||today,{tag:'상단에서 입력',color:'#8a8f98',title:'상단 「신청일자」에서 입력합니다'})}
     </div>`);
 
   // ── 「수검자 서식」 — 여러 양식(점검기록표). 각 양식에 들어가는 자동값 + 현장 계측 안내 ──
@@ -8452,7 +8461,7 @@ function renderPreInspectBiz(){
       ${ciAuto('설비용량',cap,CI_SRC_PERMIT)}
       ${ciAuto('공급전압',voltLabel(pl.volt),CI_SRC_DESIGN)}
       ${ciInput(s,'preInspect','inspectDate','점검일자',{type:'date',ph:'미입력 시 검사희망일 사용'})}
-      ${ciAuto('점검자 상호',CO.bizname,CI_SRC_CO)}
+      ${ciAuto('점검자 상호',consContractorBiz(s),CI_SRC_VENDOR)}
       ${ciAuto('점검자 성명',CO.name,CI_SRC_CO)}
       ${ciAuto('점검자 전화',CO.phone,CI_SRC_CO)}
     </div>`);
