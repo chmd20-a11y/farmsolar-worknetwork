@@ -5627,7 +5627,54 @@ function pickFile(accept, cb){
   inp.onchange=()=>{ const f=inp.files&&inp.files[0]; if(f) cb(f); setTimeout(done,0); };
   inp.click();
 }
-// 첨부서류 실제 파일 업로드 — 발급받은 서류(이미지/PDF)를 올리면 base64로 저장 → 접수 PDF 출력물의 해당 자리에 자동 삽입(이미지) 또는 업로드 확인(PDF)
+/* ============================================================
+   Cloudflare R2 첨부 저장 — 뼈대(서버 /api/r2-sign 가동 시 자동 사용, 미가동 시 기존 base64 폴백)
+   · R2 비밀키는 서버 env 전용(여기엔 없음). 프론트는 서명 PUT URL만 받아 파일을 R2로 직접 올림.
+   · 활성 조건: Vercel에 R2_* env 설정 → /api/r2-sign?ping=1 이 {ready:true} 반환 → 이후 업로드는 R2로.
+   · 미설정(지금): r2Ready()=false → r2UploadFile()이 null 반환 → 호출측이 기존 base64 저장으로 폴백.
+   ============================================================ */
+let _r2Ready = null;   // null=미확인, true/false=확인됨(세션 1회 캐시)
+async function r2Ready(){
+  if(_r2Ready!==null) return _r2Ready;
+  try{
+    const r = await fetch('/api/r2-sign?ping=1', {cache:'no-store'});
+    const j = await r.json();
+    _r2Ready = !!(j && j.ok && j.ready);
+  }catch(_){ _r2Ready = false; }
+  return _r2Ready;
+}
+// 파일(Blob/File) → R2 업로드. 성공 시 {r2_key,url,name,mime,size}, 미가동/실패 시 null(→호출측 base64 폴백)
+async function r2UploadFile(file, meta){   // meta:{owner, part, docKey, name}
+  try{
+    if(!(await r2Ready())) return null;
+    const nm = (meta&&meta.name) || file.name || 'file';
+    const ct = file.type || 'application/octet-stream';
+    const sr = await fetch('/api/r2-sign', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ filename:nm, contentType:ct, owner:(meta&&meta.owner)||'', part:(meta&&meta.part)||'', docKey:(meta&&meta.docKey)||'' }) });
+    const sg = await sr.json();
+    if(!sg || !sg.ok || !sg.uploadUrl || !sg.key) return null;
+    const put = await fetch(sg.uploadUrl, { method:'PUT', headers:{'Content-Type':ct}, body:file });
+    if(!put.ok) return null;
+    const rec = { r2_key:sg.key, url:sg.getUrl||'', name:nm, mime:ct, size:(file.size||0) };
+    r2SaveMeta(rec, meta);
+    return rec;
+  }catch(_){ return null; }
+}
+// 첨부 메타를 관계형 테이블(fsnet_attachments)에도 기록 — best-effort(실패해도 업로드엔 영향 없음·표시는 레코드로 함)
+function r2SaveMeta(rec, meta){
+  try{
+    if(!SB || !rec || !rec.r2_key) return;
+    SB.from('fsnet_attachments').insert({
+      owner_id:(meta&&meta.owner)||null, part:(meta&&meta.part)||null, doc_key:(meta&&meta.docKey)||null,
+      filename:rec.name||null, content_type:rec.mime||null, size:rec.size||null, r2_key:rec.r2_key,
+      uploaded_by:(typeof currentUser!=='undefined' && currentUser && currentUser.name)||null
+    }).then(()=>{}, ()=>{});
+  }catch(_){}
+}
+// 첨부 레코드 표시용 소스 — R2(url) 우선, 없으면 기존 base64(dataUrl)
+function docSrc(rec){ return rec ? (rec.url || rec.dataUrl || '') : ''; }
+
+// 첨부서류 실제 파일 업로드 — R2 가동 시 R2 저장(url), 미가동 시 기존 base64 저장 → 접수 PDF 출력물 자리에 자동 삽입(이미지)/업로드 확인(PDF)
 function permitDocPick(id,key){ pickFile('image/*,application/pdf', f=>permitDocUpload(id,key,f)); }
 function permitDocUpload(id,key,file){
   const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d); p.docs=p.docs||{};
@@ -5636,19 +5683,24 @@ function permitDocUpload(id,key,file){
   const isImg=/^image\//.test(file.type||'')||/\.(jpe?g|png|gif|webp|bmp|heic|heif)$/.test(nm);
   if(!isPdf&&!isImg){ toast('이미지 또는 PDF 파일만 업로드할 수 있습니다'); return; }
   if(file.size>10*1024*1024){ toast('파일이 너무 큽니다 (10MB 이하로 올려주세요)'); return; }
-  const save=(url,mime)=>{ p.docs[key]={attached:true, at:new Date().toLocaleString('ko-KR'), dataUrl:url, name:file.name, mime:mime};
-    persistDeal(d); toast(isPdf?'첨부했습니다 — 출력 시 “열기”로 PDF를 함께 제출하세요':'첨부했습니다 — 출력물 자리에 자동 삽입됩니다'); permitDocsRefresh(); };
+  const done=()=>{ persistDeal(d); toast(isPdf?'첨부했습니다 — 출력 시 “열기”로 PDF를 함께 제출하세요':'첨부했습니다 — 출력물 자리에 자동 삽입됩니다'); permitDocsRefresh(); };
+  // 최종 blob(mime) 확정 → R2 가동 시 R2 업로드(url 저장), 미가동/실패 시 base64 저장(폴백)
+  const finalize=(blob,mime)=>{ r2UploadFile(new File([blob],file.name,{type:mime}),{owner:id,part:'행정',docKey:key}).then(r2=>{
+    if(r2){ p.docs[key]={attached:true, at:new Date().toLocaleString('ko-KR'), r2_key:r2.r2_key, url:r2.url, name:file.name, mime:mime, size:r2.size}; done(); return; }
+    const fr=new FileReader(); fr.onload=e=>{ p.docs[key]={attached:true, at:new Date().toLocaleString('ko-KR'), dataUrl:e.target.result, name:file.name, mime:mime}; done(); };
+    fr.onerror=()=>toast('파일을 읽지 못했습니다'); fr.readAsDataURL(blob); }); };
+  if(isPdf){ finalize(file,'application/pdf'); return; }
   const rd=new FileReader();
-  if(isPdf){ rd.onload=e=>save(e.target.result,'application/pdf'); rd.onerror=()=>toast('파일을 읽지 못했습니다'); rd.readAsDataURL(file); return; }
-  rd.onload=e=>{ const img=new Image();                                     // 이미지 → 최대 1600px 축소 후 JPEG 저장
+  rd.onload=e=>{ const img=new Image();                                     // 이미지 → 최대 1600px 축소 후 JPEG
     img.onload=()=>{ const MX=1600; let w=img.width,h=img.height; if(w>MX||h>MX){ const r=Math.min(MX/w,MX/h); w=Math.round(w*r); h=Math.round(h*r); }
       const cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(img,0,0,w,h);
-      let url; try{ url=cv.toDataURL('image/jpeg',0.85); }catch(_){ url=e.target.result; } save(url,'image/jpeg'); };
+      cv.toBlob(b=>finalize(b||file,'image/jpeg'),'image/jpeg',0.85); };
     img.onerror=()=>toast('이미지를 읽지 못했습니다'); img.src=e.target.result; };
   rd.onerror=()=>toast('파일을 읽지 못했습니다'); rd.readAsDataURL(file);
 }
 function permitDocRemove(id,key){ const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d); if(p.docs&&p.docs[key]) delete p.docs[key]; persistDeal(d); toast('첨부를 취소했습니다'); permitDocsRefresh(); }
-function permitDocOpen(id,key){ const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d); const rec=p.docs&&p.docs[key]; if(!rec||!rec.dataUrl){ toast('첨부된 파일이 없습니다'); return; }
+function permitDocOpen(id,key){ const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d); const rec=p.docs&&p.docs[key]; if(!rec||!docSrc(rec)){ toast('첨부된 파일이 없습니다'); return; }
+  if(rec.url){ window.open(rec.url,'_blank'); return; }   // R2 저장본은 링크로 열기
   try{ const parts=rec.dataUrl.split(','); const mime=(parts[0].match(/data:([^;]+)/)||[])[1]||rec.mime||'application/octet-stream';
     const bin=atob(parts[1]); const arr=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
     window.open(URL.createObjectURL(new Blob([arr],{type:mime})),'_blank'); }
@@ -5669,7 +5721,7 @@ function renderPermitDocs(d){
     const req = isBld?x.bld:x.land;
     const rec = p.docs&&p.docs[x.key];
     const att = rec&&rec.attached;
-    const file = rec&&rec.dataUrl ? rec : null;                               // 실제 업로드된 파일
+    const file = rec&&docSrc(rec) ? rec : null;                               // 실제 업로드된 파일(R2 url 또는 base64)
     const isPdf = file && /pdf/i.test(file.mime||'');
     const ck = file ? `<div class="doc-ck" style="cursor:default" title="첨부됨">✓</div>`
                     : `<div class="doc-ck" onclick="toggleDoc('${d.id}','${esc(x.key)}')" title="표시만 체크">${att?'✓':''}</div>`;
@@ -5677,7 +5729,7 @@ function renderPermitDocs(d){
       ? `<span class="doc-badge" style="background:color-mix(in srgb,#2e8b63 16%,transparent);color:#2e8b63">${isPdf?'📄 PDF':'🖼 이미지'} 첨부 · ${esc(file.at||'')}</span>`
       : (att?`<span class="doc-badge" style="background:color-mix(in srgb,var(--ink-3) 14%,transparent)">표시 체크 · ${esc(rec.at||'')}</span>`:'');
     const actions = file
-      ? `${isPdf?'<span class="doc-badge" style="background:color-mix(in srgb,#2e8b63 12%,transparent);color:#2e8b63">📄 '+esc(file.name||'PDF')+'</span>':`<img src="${file.dataUrl}" alt="첨부" style="height:44px;border-radius:5px;border:1px solid var(--border)">`}
+      ? `${isPdf?'<span class="doc-badge" style="background:color-mix(in srgb,#2e8b63 12%,transparent);color:#2e8b63">📄 '+esc(file.name||'PDF')+'</span>':`<img src="${docSrc(file)}" alt="첨부" style="height:44px;border-radius:5px;border:1px solid var(--border)">`}
          <button class="btn ghost sm" onclick="permitDocOpen('${d.id}','${esc(x.key)}')">열기 ↗</button>
          <button class="btn ghost sm" onclick="permitDocPick('${d.id}','${esc(x.key)}')">다시 업로드</button>
          <button class="btn ghost sm" onclick="permitDocRemove('${d.id}','${esc(x.key)}')">첨부 취소</button>`
@@ -6368,7 +6420,7 @@ const DOC_UP={ '건축물대장':'건축물대장', '토지대장':'토지(임�
 function permitBundle(d){
   const p=getPermit(d);
   // 업로드 전 서류 = 자리표시. 체크리스트에 업로드된 파일이 있으면 그 자리에 삽입(up).
-  const _ph=(name, src)=>{ const k=DOC_UP[name]; const r=k&&p.docs&&p.docs[k]; return {ph:name, src:src, up:(r&&r.dataUrl)?r:null}; };
+  const _ph=(name, src)=>{ const k=DOC_UP[name]; const r=k&&p.docs&&p.docs[k]; return {ph:name, src:src, up:(r&&docSrc(r))?r:null}; };
   const corp=!!(p.applicant&&p.applicant.corp);                                           // true=법인 / false=개인
   const bld=((p.builds&&p.builds.length>0)) || /지붕|건물/.test(String(d.site||''));        // 건물형(지붕형)
   const L=[ _PF.sincheong, _PF.saup, _ph('배치도',_SRC.design), _ph('측면도',_SRC.design), _PF.ilramdo, _PF.dongui,
@@ -6398,12 +6450,12 @@ function permitBundle(d){
 }
 // 자리표시 1페이지(A4) — 서류명 + 가져오는 위치 마킹. up(업로드 파일)이 있으면 이미지=전면삽입 / PDF=업로드완료 확인.
 function permitPlaceholderPage(name, src, up, linked){
-  if(up && up.dataUrl){
+  if(up && docSrc(up)){
     const isImg = /^image\//.test(up.mime||'') || !/pdf/i.test(up.mime||'');
     if(isImg){                                                                  // 이미지 → 그 자리에 한 페이지로 삽입
       return "<div class=\"page\" style=\"width:210mm;height:297mm;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12mm 8mm;box-sizing:border-box\">"
         +"<div style=\"font-size:11pt;color:#64748b;letter-spacing:2px;margin-bottom:10px;word-break:keep-all\">"+esc(name)+"</div>"
-        +"<img src=\""+up.dataUrl+"\" alt=\""+esc(name)+"\" style=\"max-width:100%;max-height:262mm;object-fit:contain;border:1px solid #e2e8f0\">"
+        +"<img src=\""+docSrc(up)+"\" alt=\""+esc(name)+"\" style=\"max-width:100%;max-height:262mm;object-fit:contain;border:1px solid #e2e8f0\">"
         +"</div>";
     }
     return "<div class=\"page\" style=\"width:210mm;height:297mm;display:flex;align-items:center;justify-content:center\">"   // PDF → 본문 합본 불가 → 업로드 확인 페이지
@@ -8331,7 +8383,7 @@ const PRE_INSPECT_DOCS = [
 ];
 // 한 서류의 상태: {up:업로드파일} / {linked:true,src:출처} / {src:외부발급}
 function piDocState(s, d){
-  const sp=sitePermit(s), r=(sp.docs||{})[d.ph], up=(r&&r.dataUrl)?r:null;
+  const sp=sitePermit(s), r=(sp.docs||{})[d.ph], up=(r&&docSrc(r))?r:null;
   if(up) return {up:up, src:(d.from||d.src)};
   const linked = d.link ? !!d.link(sp,s) : false;
   return {up:null, linked:linked, src:(linked?d.from:(d.from||d.src))};
@@ -8404,19 +8456,23 @@ function piDocUpload(id,key,file){
   const isImg=/^image\//.test(file.type||'')||/\.(jpe?g|png|gif|webp|bmp|heic|heif)$/.test(nm);
   if(!isPdf&&!isImg){ toast('이미지 또는 PDF 파일만 업로드할 수 있습니다'); return; }
   if(file.size>10*1024*1024){ toast('파일이 너무 큽니다 (10MB 이하로 올려주세요)'); return; }
-  const save=(url,mime)=>{ P.docs[key]={attached:true, at:new Date().toLocaleString('ko-KR'), dataUrl:url, name:file.name, mime:mime};
-    persistSite(s); toast(isPdf?'첨부했습니다 — 출력 시 “열기”로 PDF를 함께 제출하세요':'첨부했습니다 — 출력물 자리에 자동 삽입됩니다'); piDocRefresh(); };
+  const done=()=>{ persistSite(s); toast(isPdf?'첨부했습니다 — 출력 시 “열기”로 PDF를 함께 제출하세요':'첨부했습니다 — 출력물 자리에 자동 삽입됩니다'); piDocRefresh(); };
+  const finalize=(blob,mime)=>{ r2UploadFile(new File([blob],file.name,{type:mime}),{owner:id,part:'시공',docKey:key}).then(r2=>{
+    if(r2){ P.docs[key]={attached:true, at:new Date().toLocaleString('ko-KR'), r2_key:r2.r2_key, url:r2.url, name:file.name, mime:mime, size:r2.size}; done(); return; }
+    const fr=new FileReader(); fr.onload=e=>{ P.docs[key]={attached:true, at:new Date().toLocaleString('ko-KR'), dataUrl:e.target.result, name:file.name, mime:mime}; done(); };
+    fr.onerror=()=>toast('파일을 읽지 못했습니다'); fr.readAsDataURL(blob); }); };
+  if(isPdf){ finalize(file,'application/pdf'); return; }
   const rd=new FileReader();
-  if(isPdf){ rd.onload=e=>save(e.target.result,'application/pdf'); rd.onerror=()=>toast('파일을 읽지 못했습니다'); rd.readAsDataURL(file); return; }
   rd.onload=e=>{ const img=new Image();
     img.onload=()=>{ const MX=1600; let w=img.width,h=img.height; if(w>MX||h>MX){ const r=Math.min(MX/w,MX/h); w=Math.round(w*r); h=Math.round(h*r); }
       const cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(img,0,0,w,h);
-      let url; try{ url=cv.toDataURL('image/jpeg',0.85); }catch(_){ url=e.target.result; } save(url,'image/jpeg'); };
+      cv.toBlob(b=>finalize(b||file,'image/jpeg'),'image/jpeg',0.85); };
     img.onerror=()=>toast('이미지를 읽지 못했습니다'); img.src=e.target.result; };
   rd.onerror=()=>toast('파일을 읽지 못했습니다'); rd.readAsDataURL(file);
 }
 function piDocRemove(id,key){ const s=SITES.find(x=>x.id===id); if(!s) return; const P=sitePermit(s); if(P.docs&&P.docs[key]) delete P.docs[key]; persistSite(s); toast('첨부를 취소했습니다'); piDocRefresh(); }
-function piDocOpen(id,key){ const s=SITES.find(x=>x.id===id); if(!s) return; const P=sitePermit(s); const rec=P.docs&&P.docs[key]; if(!rec||!rec.dataUrl){ toast('첨부된 파일이 없습니다'); return; }
+function piDocOpen(id,key){ const s=SITES.find(x=>x.id===id); if(!s) return; const P=sitePermit(s); const rec=P.docs&&P.docs[key]; if(!rec||!docSrc(rec)){ toast('첨부된 파일이 없습니다'); return; }
+  if(rec.url){ window.open(rec.url,'_blank'); return; }   // R2 저장본은 링크로 열기
   try{ const parts=rec.dataUrl.split(','); const mime=(parts[0].match(/data:([^;]+)/)||[])[1]||rec.mime||'application/octet-stream';
     const bin=atob(parts[1]); const arr=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
     window.open(URL.createObjectURL(new Blob([arr],{type:mime})),'_blank'); }
@@ -8443,7 +8499,7 @@ function renderPiDocs(s){
     if(file){ on=true;
       badge=`<span style="font-size:10.5px;font-weight:700;color:#2e8b63">${isPdf?'📄 PDF':'🖼 이미지'} 첨부 · ${esc(file.at||'')}</span>`;
       const thumb = isPdf ? `<span style="font-size:11px;color:var(--ink-2)">📄 ${esc(file.name||'PDF')}</span>`
-        : `<img src="${file.dataUrl}" alt="" style="width:38px;height:38px;object-fit:cover;border-radius:5px;border:1px solid var(--line)">`;
+        : `<img src="${docSrc(file)}" alt="" style="width:38px;height:38px;object-fit:cover;border-radius:5px;border:1px solid var(--line)">`;
       actions=`${thumb}<span class="sv-chip sm" onclick="piDocOpen('${s.id}','${esc(d.ph)}')">열기 ↗</span><span class="sv-chip sm" onclick="piDocPick('${s.id}','${esc(d.ph)}')">다시</span><span class="sv-chip sm" onclick="piDocRemove('${s.id}','${esc(d.ph)}')">취소</span>`;
     } else if(st.linked){ on=true;
       badge=`<span style="font-size:10.5px;font-weight:700;color:#16a34a">🔗 대시보드 연동 · ${esc(st.src)}</span>`;
