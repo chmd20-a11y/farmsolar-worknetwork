@@ -4331,25 +4331,26 @@ const SL = (function(){
     }catch(e){ setStatus('⚠️ 이미지 생성 실패.'); }
   }
 
-  // ---------- 캐드(DXF) 내보내기 ----------
-  // 가배치 데이터(LAYOUT)를 그대로 실척(m) R12 DXF로 변환. 2D/3D 어느 화면에서도 동작(지도 캡처가 아니라 좌표 기반).
-  function saveDxf(){
+  // ---------- 캐드(DXF) 내보내기 (2D 평면 / 3D 입체) ----------
+  // 가배치 데이터(LAYOUT)를 실척(m) R12 DXF로. is3D=true면 패널을 경사·지상고 반영 3DFACE로.
+  function saveDxf(is3D){
     const LO=LAYOUT;
     if(!LO || !LO.placed || !LO.placed.length){ setStatus('⚠️ 먼저 <b>배치 실행</b>으로 모듈을 배치한 뒤 내보내세요.'); return; }
     try{
       const az=LO.azRad||0, cosA=Math.cos(az), sinA=Math.sin(az);
       const rot=(x,y)=>[x*cosA - y*sinA, x*sinA + y*cosA]; // 작업프레임 → 실제 로컬미터(동=X, 북=Y)
       const wRow=LO.wRow, tilt=LO.tiltR||0, mLen=LO.mLen||0, intra=LO.intra||0, stack=LO.stack||1;
-      const md=mLen*Math.cos(tilt), stepMod=(mLen+intra)*Math.cos(tilt);
-      // 패널 사각형(테이블당 stack장) 복원
+      const md=mLen*Math.cos(tilt), stepMod=(mLen+intra)*Math.cos(tilt), sinT=Math.sin(tilt), base=LO.base||0;
+      // 패널 4모서리 [x,y,z]. 2D=z0 평면 / 3D=경사(sinT)+지상고(base) 반영. 테이블당 stack장 경사면 연속.
       const panels=[];
       LO.placed.forEach(([u,v])=>{ for(let k=0;k<stack;k++){ const v0=v+k*stepMod;
-        panels.push([[u,v0],[u+wRow,v0],[u+wRow,v0+md],[u,v0+md]].map(([x,y])=>rot(x,y))); } });
-      // 부지 외곽선 / 이격선
+        const sf=k*(mLen+intra), zf=is3D?(base+sf*sinT):0, zb=is3D?(base+(sf+mLen)*sinT):0;
+        panels.push([[u,v0,zf],[u+wRow,v0,zf],[u+wRow,v0+md,zb],[u,v0+md,zb]].map(([x,y,z])=>{ const r=rot(x,y); return [r[0],r[1],z]; })); } });
+      // 부지 외곽선 / 이격선 (지상 z=0)
       const outer=[], setb=[];
       (LO.regions||[]).forEach(R=>{ if(R.outerWl&&R.outerWl.length) outer.push(R.outerWl.map(p=>rot(p.x,p.y))); if(R.wl&&R.wl.length) setb.push(R.wl.map(p=>rot(p.x,p.y))); });
       if(!outer.length){ try{ REGIONS.forEach(rg=>{ const ll=ringLatLng(rg.layer); outer.push(ll.map(p=>[ (p.lng-LO.lng0)*LO.mLng, (p.lat-LO.lat0)*LO.mLat ])); }); }catch(e){} }
-      // 전체 바운딩박스
+      // 바운딩박스(x,y)
       let minx=Infinity,maxx=-Infinity,miny=Infinity,maxy=-Infinity;
       const acc=([x,y])=>{ if(x<minx)minx=x; if(x>maxx)maxx=x; if(y<miny)miny=y; if(y>maxy)maxy=y; };
       panels.forEach(p=>p.forEach(acc)); outer.forEach(p=>p.forEach(acc)); setb.forEach(p=>p.forEach(acc));
@@ -4364,9 +4365,9 @@ const SL = (function(){
       const typeTxt=LO.type==='roof'?'지붕':(LO.type==='carport'?'주차장(카포트)':'노지');
       const watt=(+$('sl-m-p').value)||0, modules=LO.placed.length*stack, kw=Math.round(modules*watt/1000);
       const mw=$('sl-m-w').value, mh=$('sl-m-h').value;
-      const info=['모듈 가배치 도면  (단위: m · 실척 1:1)','지번: '+(lastJibun||'-'),'설치유형: '+typeTxt,
+      const info=['모듈 가배치 도면 '+(is3D?'(3D 입체':'(2D 평면')+' · 단위: m · 실척 1:1)','지번: '+(lastJibun||'-'),'설치유형: '+typeTxt,
         '모듈 수: '+modules.toLocaleString()+' 장','설치용량: '+kw.toLocaleString()+' kWp',
-        '모듈 규격: '+mw+' x '+mh+' mm','경사각: '+Math.round(tilt*180/Math.PI)+'°  ·  모듈 방위: '+azTxt];
+        '모듈 규격: '+mw+' x '+mh+' mm','경사각: '+Math.round(tilt*180/Math.PI)+'°  ·  모듈 방위: '+azTxt+(is3D?('  ·  지상고: '+base+' m'):'')];
       const infoBaseX=minx, infoBaseY=miny, infoY=i=>infoBaseY - th*(3+i*1.7);
       info.forEach((_t,i)=>acc([infoBaseX, infoY(i)])); acc([ax+hw,ay+L]);
       // ----- DXF(R12/AC1009) 조립 -----
@@ -4388,20 +4389,25 @@ const SL = (function(){
       w(0,'SECTION'); w(2,'ENTITIES');
       const poly=(layer,pts,closed)=>{ w(0,'POLYLINE'); w(8,layer); w(66,1); w(70,closed?1:0); w(10,'0.0'); w(20,'0.0'); w(30,'0.0');
         pts.forEach(([x,y])=>{ w(0,'VERTEX'); w(8,layer); w(10,nf(x)); w(20,nf(y)); w(30,'0.0'); }); w(0,'SEQEND'); };
+      const face=(layer,p)=>{ w(0,'3DFACE'); w(8,layer);
+        w(10,nf(p[0][0])); w(20,nf(p[0][1])); w(30,nf(p[0][2]));
+        w(11,nf(p[1][0])); w(21,nf(p[1][1])); w(31,nf(p[1][2]));
+        w(12,nf(p[2][0])); w(22,nf(p[2][1])); w(32,nf(p[2][2]));
+        w(13,nf(p[3][0])); w(23,nf(p[3][1])); w(33,nf(p[3][2])); };
       const line=(layer,x1,y1,x2,y2)=>{ w(0,'LINE'); w(8,layer); w(10,nf(x1)); w(20,nf(y1)); w(30,'0.0'); w(11,nf(x2)); w(21,nf(y2)); w(31,'0.0'); };
       const text=(layer,x,y,h,str)=>{ w(0,'TEXT'); w(8,layer); w(10,nf(x)); w(20,nf(y)); w(30,'0.0'); w(40,nf(h)); w(1,esc(str)); };
       outer.forEach(p=>poly('SITE',p,true));
       setb.forEach(p=>poly('SETBACK',p,true));
-      panels.forEach(p=>poly('PANEL',p,true));
+      if(is3D) panels.forEach(p=>face('PANEL',p)); else panels.forEach(p=>poly('PANEL',p.map(c=>[c[0],c[1]]),true));
       arrow.forEach(a=>line('NORTH',a[0],a[1],a[2],a[3]));
       text('NORTH',ax+hw*0.4,ay+L,th*1.1,'N');
       info.forEach((t,i)=>text('INFO',infoBaseX, infoY(i), th, t));
       w(0,'ENDSEC'); w(0,'EOF');
       const a=document.createElement('a');
       a.href=URL.createObjectURL(new Blob([s],{type:'application/dxf;charset=utf-8'}));
-      a.download='모듈가배치_'+(lastJibun||'부지').replace(/[\\/:*?"<>|]/g,'_')+'.dxf'; a.click();
+      a.download='모듈가배치_'+(is3D?'3D_':'')+(lastJibun||'부지').replace(/[\\/:*?"<>|]/g,'_')+'.dxf'; a.click();
       setTimeout(()=>URL.revokeObjectURL(a.href),1500);
-      setStatus('📐 캐드(DXF)를 저장했습니다 — 실척(m) · 패널 '+modules.toLocaleString()+'장 · 부지경계/이격선/방위 포함.');
+      setStatus('📐 캐드(DXF) '+(is3D?'3D 입체':'2D 평면')+'를 저장했습니다 — 실척(m) · 패널 '+modules.toLocaleString()+'장'+(is3D?' (경사·지상고 반영)':'')+'.');
     }catch(e){ setStatus('⚠️ DXF 생성 실패: '+(e&&e.message||e)); }
   }
 
@@ -4415,7 +4421,8 @@ const SL = (function(){
     $('sl-btn-run').onclick=runLayout;
     $('sl-btn-manual').onclick=()=>{ manualMode?closeManual():openManual(); };
     $('sl-btn-png').onclick=savePng;
-    { const d=$('sl-btn-dxf'); if(d) d.onclick=saveDxf; }
+    { const d=$('sl-btn-dxf'); if(d) d.onclick=()=>saveDxf(false); }
+    { const d3=$('sl-btn-dxf3d'); if(d3) d3.onclick=()=>saveDxf(true); }
     { const q=$('sl-to-quote'); if(q) q.onclick=handoffQuote; }
     $('sl-v2d').onclick=show2D; $('sl-v3d').onclick=show3D;
     $('sl-sun').oninput=e=>{ sunT=parseFloat(e.target.value); const h=Math.floor(sunT), m=Math.round((sunT-h)*60); $('sl-v-sun').textContent=(h<10?'0':'')+h+':'+(m<10?'0':'')+m; updateSun3D(); };
@@ -4485,7 +4492,8 @@ const SL = (function(){
         <div class="sl-stat"><div class="k">구조물(테이블) 수</div><div class="v"><span id="sl-r-tables">0</span><small>개</small></div></div>
         <button class="btn primary sm" id="sl-to-quote" style="margin-top:12px;width:100%;justify-content:center">📄 이 배치로 견적서 작성 →</button>
         <button class="btn ghost sm" id="sl-btn-png" style="margin-top:8px;width:100%;justify-content:center">🖼️ 2D 이미지 저장</button>
-        <button class="btn ghost sm" id="sl-btn-dxf" style="margin-top:8px;width:100%;justify-content:center">📐 캐드(DXF) 내보내기</button>
+        <button class="btn ghost sm" id="sl-btn-dxf" style="margin-top:8px;width:100%;justify-content:center">📐 캐드(DXF) 2D 평면</button>
+        <button class="btn ghost sm" id="sl-btn-dxf3d" style="margin-top:8px;width:100%;justify-content:center">📦 캐드(DXF) 3D 입체</button>
         <div class="sl-disc">✅ 부지 경계·모듈규격 기반 수량/용량·이격·열간격·방위 반영<br>⚠️ 지형 경사·음영·전기(스트링) 설계·지자체 이격규정 차이는 미반영 — <b>개략 배치</b>입니다.</div>
       </div>
     </div>`;
