@@ -8680,6 +8680,13 @@ function sunWire(paper, id){
       sunStore();
     });
   });
+  // 서식1 신청전 체크리스트 — 모든 '예'를 기본 선택(마을별 1회 시드, 이후 수정 가능)
+  sunData.seeded=sunData.seeded||{};
+  if(id==='s0' && !sunData.seeded.s0){
+    sunData.seeded.s0=true;
+    if(cks.length===0){ ckEls.forEach((el,i)=>{ if(el.textContent.indexOf('예')>=0 && el.textContent.indexOf('아니오')<0){ ckMark(el,true); cks.push(i); } }); }
+    sunStore();
+  }
   paper.querySelectorAll('.fx-ph').forEach(td=>{ const fk=td.dataset.fk; sunPaintPhoto(td,id,fk); td.addEventListener('click',(e)=>{ if(e.target.classList.contains('fx-ph-x'))return; sunPickPhoto(id,fk); }); });
 }
 
