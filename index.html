@@ -1198,6 +1198,11 @@ button{font-family:inherit;cursor:pointer}
 @media(max-width:1180px){ .sl-wrap{grid-template-columns:1fr} .sl-left,.sl-right{position:static} #sl-map,#sl-three{height:calc(100vh - 360px);min-height:440px} }
 
 /* ===== 햇빛소득마을 사업계획서 작성 작업공간(suv-) + 양식 표(fx-) ===== */
+/* 툴바+안내 묶음을 제목부(page-head) 바로 아래에 고정(스크롤해도 유지) */
+.suv-top{position:sticky;top:var(--ph-h,86px);z-index:8;background:var(--bg);margin:0 -22px 14px;padding:10px 22px 0}
+.suv-top .suv-bar{margin-bottom:10px}
+.suv-top .suv-hint{margin-bottom:0}
+@media(max-width:860px){ .suv-top{position:static;margin:0 0 12px;padding:0} }
 .suv-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
 .suv-bar .suv-site{font-weight:800;font-size:13px;color:var(--ink);display:flex;align-items:center;gap:7px}
 .suv-bar .suv-spacer{flex:1}
@@ -1215,8 +1220,12 @@ button{font-family:inherit;cursor:pointer}
 .suv-navbtn.done .suv-nb-pct{color:var(--ok-ink)}
 .suv-ov{margin-top:11px;padding-top:11px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);line-height:1.6}
 .suv-main{min-width:0;display:flex}
-.suv-paper{flex:1;width:100%;background:#fff;color:#111;border:1px solid var(--border);border-radius:10px;padding:clamp(20px,2.4vw,40px) clamp(20px,3vw,52px);box-shadow:var(--shadow-sm);overflow-x:auto;min-height:calc(100vh - 232px)}
-.suv-paper h2{font-size:clamp(16px,1.4vw,20px);font-weight:800;text-align:center;letter-spacing:1px;color:#111;margin:0 0 18px}
+.suv-paper{flex:1;width:100%;display:flex;flex-direction:column;background:#fff;color:#111;border:1px solid var(--border);border-radius:10px;padding:clamp(20px,2.4vw,40px) clamp(20px,3vw,52px);box-shadow:var(--shadow-sm);overflow-x:auto;min-height:calc(100vh - var(--ph-h,88px) - 150px)}
+.suv-paper > h2{flex:0 0 auto;font-size:clamp(16px,1.4vw,20px);font-weight:800;text-align:center;letter-spacing:1px;color:#111;margin:0 0 18px}
+/* 양식을 종이(세로) 전체로 채움 — 마지막 표를 늘려 아래 여백 제거 */
+.suv-doc{flex:1 1 auto;display:flex;flex-direction:column;min-width:0;min-height:0}
+.suv-doc > .fx-t:last-child{flex:1 1 auto;height:0}
+.suv-doc > .fx-t:last-child > tbody{height:100%}
 /* 종이문서 — OS 강제 다크모드에도 글자색 고정 / 폭은 원본 colgroup 비율 유지 */
 .fx-t{border-collapse:collapse;width:100%;table-layout:fixed;margin:9px 0 15px}
 .fx-t td{border:1px solid #333;padding:5px 7px;font-size:clamp(10.5px,.78vw,12.5px);color:#111;background:#fff;vertical-align:middle;word-break:break-word;line-height:1.55}
@@ -8553,6 +8562,7 @@ function renderSunlightVillage(){
   const h=(typeof wfHead==='function')?wfHead('햇빛소득마을 · 사업계획서 자동작성','마을 자료 폴더를 연결하면 <b>AI가 공고 서식에 자동으로 채워</b> 드립니다. 서식을 한 장씩 확인·보완하고, 사진은 자리마다 올려 넣으세요.'):'';
   const rail=SUNLIGHT_FORMS.map((f,i)=>`<button class="suv-navbtn ${f.id===SUNLIGHT_CUR?'on':''}" data-fid="${f.id}" onclick="sunSelect('${f.id}')"><span class="suv-nb-n">${i+1}</span><span class="suv-nb-t" title="${esc(f.title)}">${esc(f.tab||f.title)}</span><span class="suv-nb-pct" id="suv-pct-${f.id}"></span></button>`).join('');
   return h+`
+  <div class="suv-top">
   <div class="suv-bar">
     <span class="suv-site">☀️ 예시마을 햇빛소득마을</span>
     <span class="suv-spacer"></span>
@@ -8564,6 +8574,7 @@ function renderSunlightVillage(){
     <button class="btn ghost sm" onclick="sunResetForm()">↺ 비우기</button>
   </div>
   <div class="suv-hint"><b>노란 칸</b>을 클릭해 직접 입력하고(칸마다 무엇을 넣을지 흐린 글씨로 안내), <b>□ 항목</b>은 눌러 선택합니다. 다 채우면 <b>「🔍 미리보기」</b>로 완성된 양식을 확인·인쇄(PDF)할 수 있습니다. · <b>「📁 자료 폴더 연결」</b> 시 폴더의 <b>한글·엑셀·사진</b>을 읽어 <b>있는 값은 자동으로 채우고 없는 값은 빈칸</b>으로 두며(AI·파란 칸=검토 필요), 폴더를 바꾼 뒤 <b>다시 연결</b>하면 갱신분이 반영됩니다. 사진은 사진 자리를 클릭해 올리면 되고 없으면 <b>“＋ 부지 사진”</b>으로 남습니다. · <b>개인정보</b>(주민번호·계좌 등)는 자동으로 채우지 않습니다.</div>
+  </div>
   <div class="suv-wrap">
     <aside class="suv-rail">
       <div class="suv-rail-h">공모 서식 ${SUNLIGHT_FORMS.length}종</div>
@@ -8581,6 +8592,7 @@ function renderSunlightVillage(){
 function initSunlightVillage(){
   sunPaint();
   sunUpdatePcts();
+  if(typeof syncStickyOffset==='function'){ syncStickyOffset(); setTimeout(syncStickyOffset,60); }  // 제목부 높이(--ph-h) 측정 → 툴바 고정 위치
   const fi=document.getElementById('suvFolderInput');
   if(fi) fi.onchange=()=>{ const files=[...fi.files].map(f=>({name:f.name, ext:(f.name.split('.').pop()||'').toLowerCase(), file:f})); fi.value=''; if(files.length) sunHandleFiles(files); };
 }
@@ -8590,7 +8602,7 @@ function sunSelect(id){ SUNLIGHT_CUR=id; document.querySelectorAll('.suv-navbtn'
 function sunPaint(){
   const f=SUNLIGHT_FORMS.find(x=>x.id===SUNLIGHT_CUR)||SUNLIGHT_FORMS[0];
   const paper=document.getElementById('suvPaper'); if(!paper||!f) return;
-  paper.innerHTML=`<h2>${esc(f.title)}</h2>`+f.html;
+  paper.innerHTML=`<h2>${esc(f.title)}</h2><div class="suv-doc">${f.html}</div>`;
   sunWire(paper, f.id);
 }
 
