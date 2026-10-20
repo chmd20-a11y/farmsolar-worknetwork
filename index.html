@@ -1503,36 +1503,8 @@ button{font-family:inherit;cursor:pointer}
           </div>
         </div>
 
-        <!-- 타당성검토 -->
-        <div class="subview" id="sub-s-feas">
-          <h3 class="section-title"><svg class="st-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>타당성 검토 — 가상A 노지 990kW</h3>
-          <div class="three-col">
-            <div class="card pad">
-              <div class="s-l" style="font-size:12px;color:var(--ink-2);font-weight:700">계통 연계</div>
-              <div style="font-size:24px;font-weight:800;margin:6px 0;letter-spacing:-.5px">여유 <span style="color:var(--ok-ink)">충분</span></div>
-              <div class="fi-meta" style="flex-direction:column;gap:4px"><span>인근 변전소 · 배전선로 여유 확인</span><span>추정 연계거리 1.2km</span></div>
-            </div>
-            <div class="card pad">
-              <div class="s-l" style="font-size:12px;color:var(--ink-2);font-weight:700">규제 판정</div>
-              <div style="font-size:24px;font-weight:800;margin:6px 0;letter-spacing:-.5px"><span style="color:var(--ok-ink)">허용</span></div>
-              <div class="fi-meta" style="flex-direction:column;gap:4px"><span>계획관리지역 · 이격거리 충족</span><span>개발행위 가능</span></div>
-            </div>
-            <div class="card pad">
-              <div class="s-l" style="font-size:12px;color:var(--ink-2);font-weight:700">예상 발전량</div>
-              <div style="font-size:24px;font-weight:800;margin:6px 0;letter-spacing:-.5px">1,340<small style="font-size:12px;color:var(--muted)">MWh/년</small></div>
-              <div class="fi-meta" style="flex-direction:column;gap:4px"><span>이용률 약 15.4%</span><span>발전시간 3.7h/일</span></div>
-            </div>
-          </div>
-          <div class="card pad" style="margin-top:14px">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-              <div>
-                <div style="font-size:13px;font-weight:800">경제성 요약</div>
-                <div style="font-size:12px;color:var(--ink-2);margin-top:5px">예상 총사업비 약 13.5억 · 연 매출 약 1.9억 · 단순회수 7.1년 <span style="color:var(--muted)">(가상 예시)</span></div>
-              </div>
-              <button class="btn primary" onclick="switchSub('sales','s-layout')">모듈 가배치 →</button>
-            </div>
-          </div>
-        </div>
+        <!-- 타당성검토 (동적 렌더) -->
+        <div class="subview" id="sub-s-feas"></div>
 
         <!-- 모듈 가배치 -->
         <div class="subview" id="sub-s-layout">
@@ -3316,18 +3288,28 @@ function renderIntake(){
    ============================================================ */
 const SOLAR_RULES = [
   {re:/개발제한구역/, eff:'bad', why:'개발제한구역(그린벨트)'},
-  {re:/농업진흥구역|진흥지역/, eff:'bad', why:'농업진흥구역(농지전용 매우 제한)'},
-  {re:/자연환경보전지역/, eff:'bad', why:'자연환경보전지역'},
-  {re:/문화재|매장문화재/, eff:'bad', why:'문화재 보호구역'},
+  {re:/통제보호구역/, eff:'bad', why:'군사 통제보호구역'},
+  {re:/비행안전구역/, eff:'bad', why:'비행안전구역'},
+  {re:/문화재|역사문화환경|매장문화재/, eff:'bad', why:'문화재 보호구역'},
   {re:/상수원보호구역/, eff:'bad', why:'상수원보호구역'},
-  {re:/하천구역|홍수관리구역/, eff:'bad', why:'하천·홍수관리구역'},
+  {re:/자연환경보전지역/, eff:'bad', why:'자연환경보전지역'},
+  {re:/생태.?경관보전|습지보호|야생생물|백두대간/, eff:'bad', why:'생태·자연 보호구역'},
+  {re:/자연공원|공원자연보존지구|공원자연환경지구|도시자연공원/, eff:'bad', why:'공원구역'},
+  {re:/접도구역/, eff:'bad', why:'접도구역'},
+  {re:/하천구역|소하천구역|홍수관리구역|연안침식/, eff:'bad', why:'하천·홍수관리구역'},
+  {re:/개발행위허가제한지역/, eff:'bad', why:'개발행위허가제한지역'},
+  {re:/농업진흥구역|진흥지역/, eff:'bad', why:'농업진흥구역(농지전용 매우 제한)'},
   {re:/주거지역|상업지역|공업지역/, eff:'bad', why:'도시 주거·상업·공업지역(지상 태양광 제약)'},
-  {re:/보전산지|보전임지/, eff:'warn', why:'보전산지(산지전용허가)'},
+  {re:/농업보호구역/, eff:'warn', why:'농업보호구역(농지전용 검토)'},
+  {re:/보전산지|보전임지|산지전용/, eff:'warn', why:'보전산지(산지전용허가)'},
   {re:/자연녹지지역|생산녹지지역|보전녹지지역/, eff:'warn', why:'녹지지역(개발행위허가)'},
   {re:/보전관리지역|생산관리지역/, eff:'warn', why:'관리지역(개발행위허가)'},
-  {re:/군사기지|군사시설\s?보호|제한보호구역/, eff:'warn', why:'군사시설 보호구역(군 협의)'},
-  {re:/성장관리계획구역/, eff:'warn', why:'성장관리계획구역(기준 준수)'},
+  {re:/제한보호구역|군사기지|군사시설\s?보호/, eff:'warn', why:'군사시설 보호구역(군 협의)'},
+  {re:/성장관리계획구역|성장관리방안/, eff:'warn', why:'성장관리계획구역(기준 준수)'},
   {re:/가축사육제한구역/, eff:'warn', why:'가축사육제한구역'},
+  {re:/절대보호구역|상대보호구역|교육환경보호/, eff:'warn', why:'교육환경 보호구역'},
+  {re:/전원개발사업/, eff:'warn', why:'전원개발사업예정구역'},
+  {re:/토지거래계약.*허가|토지거래허가/, eff:'warn', why:'토지거래허가구역'},
 ];
 function judgeSolarZones(names){
   if(!names || !names.length) return {lvl:'na', label:'용도 정보 없음', hits:[]};
@@ -3414,6 +3396,16 @@ function buildRows(p, type, real){
   }
   // ☎ 한전 선로확인 담당 연락처 (주소지 기준, 미해당 시 대표번호)
   if(p.gridTel){ rows.push({lvl:'na', t:'☎ 한전 선로확인 담당', d:(p.gridOffice||'한전')+(p.gridOffice&&p.gridOffice!=='한전 고객센터(대표)'?' 지사':''), tel:p.gridTel}); }
+  // ☀️ 일사량 (NASA POWER 10년 평균) — 실시간 조회값 있을 때만
+  if(p.ghiYear!=null){
+    push('na',`일사량 약 ${(+p.ghiYear).toFixed(0)} kWh/㎡·년`, `일 평균 ${(+p.ghiDaily).toFixed(2)} kWh/㎡ · ${p.prYear!=null?'연강수 '+Math.round(p.prYear)+'mm · ':''}NASA POWER 10년 평균 (발전량 참고)`);
+  }
+  // 🪧 개별공시지가 (실시간 조회값 있을 때만)
+  if(p.jiga!=null){
+    const h=p.jigaHistory||[]; const yr=h.length?h[h.length-1].year:'';
+    const trend=(h.length>=2)?(h[h.length-1].won>h[0].won?'↑ 상승 추세':h[h.length-1].won<h[0].won?'↓ 하락 추세':'보합'):'';
+    push('na',`개별공시지가 ${Number(p.jiga).toLocaleString('ko-KR')} 원/㎡`, `${yr?yr+'년 고시 · ':''}${trend?trend+' · ':''}세금·보상 기준(실매매가와 다름)`);
+  }
   const lvls=rows.map(r=>r.lvl);
   let worst,verdict,badge;
   if(lvls.includes('bad')){ worst='bad'; verdict='설치 제한'; badge='🔴'; }
@@ -3488,6 +3480,35 @@ async function apiLandChar(pnu){
     const f=fs[0];
     return { addr:f.ldCodeNm||'', jibun:f.mnnmSlno||'', jimok:f.lndcgrCodeNm||'', area:(f.lndpclAr!=null&&f.lndpclAr!==''?String(f.lndpclAr):''), zone:f.prposArea1Nm||'' };
   }catch(e){ return null; }
+}
+// 개별공시지가 추이 (NSDI getIndvdLandPriceAttr) — PNU로 연도별 원/㎡. (타당성 참고 · 세금/보상 기준, 실매매가 아님)
+async function apiLandPrice(pnu){
+  if(!pnu) return [];
+  const P=_apiBase();
+  try{
+    const j=await fetch(`${P}/ned/data/getIndvdLandPriceAttr?pnu=${encodeURIComponent(pnu)}&format=json&numOfRows=40&pageNo=1`).then(r=>r.json());
+    let f=(j&&j.indvdLandPrices&&j.indvdLandPrices.field)||[]; if(f&&!Array.isArray(f)) f=[f];
+    const by={}; f.map(x=>({year:+x.stdrYear, won:+x.pblntfPclnd})).filter(x=>x.year&&x.won).forEach(x=>{ by[x.year]=Math.max(by[x.year]||0, x.won); });
+    return Object.keys(by).map(y=>({year:+y, won:by[y]})).sort((a,b)=>a.year-b.year);
+  }catch(e){ return []; }
+}
+// 일사량·강수량 (NASA POWER, 키 없음·직접 호출) — 2015~2024 연평균. (타당성 발전량 참고)
+const _climateCache={};
+async function apiClimate(lat,lng){
+  if(!isFinite(lat)||!isFinite(lng)) return null;
+  const key=lat.toFixed(2)+','+lng.toFixed(2);
+  if(_climateCache[key]!==undefined) return _climateCache[key];
+  try{
+    const url=`https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=ALLSKY_SFC_SW_DWN,PRECTOTCORR&community=RE&longitude=${lng.toFixed(4)}&latitude=${lat.toFixed(4)}&start=2015&end=2024&format=JSON`;
+    const j=await fetch(url).then(r=>r.json());
+    const g=j.properties.parameter.ALLSKY_SFC_SW_DWN, pr=j.properties.parameter.PRECTOTCORR;
+    const gv=[],pv=[];
+    for(let y=2015;y<=2024;y++){ const k=y+'13'; if(g[k]>-900)gv.push(g[k]); if(pr[k]>-900)pv.push(pr[k]); }   // YYYY13 = 그 해 연평균(일 단위), -999=결측
+    if(!gv.length){ _climateCache[key]=null; return null; }
+    const ghiDaily=gv.reduce((a,b)=>a+b,0)/gv.length, prDaily=pv.length?pv.reduce((a,b)=>a+b,0)/pv.length:null;
+    const res={ ghiDaily, ghiYear:ghiDaily*365.25, prYear:(prDaily!=null?prDaily*365.25:null), years:gv.length };
+    _climateCache[key]=res; return res;
+  }catch(e){ _climateCache[key]=null; return null; }
 }
 // 건축물대장 표제부(건축HUB, api/bldreg 서버리스) — PNU로 대표 건물의 건축면적·구조·용도·소재지. (건물명세서 자동채움용)
 async function apiBldReg(pnu){
@@ -3570,12 +3591,17 @@ async function fetchRealDiagnosis(jibun){
   try{ slope=await apiSlope(pt.lng,pt.lat); }catch(e){}
   try{ if(parcel&&parcel.pnu) names=await apiLandUse(parcel.pnu); }catch(e){}
   try{ grid=await apiGridLive(pt.lat,pt.lng); }catch(e){}
+  let jiga=[],climate=null;
+  try{ if(parcel&&parcel.pnu) jiga=await apiLandPrice(parcel.pnu); }catch(e){}
+  try{ climate=await apiClimate(pt.lat,pt.lng); }catch(e){}
   return {p:{
     jibun:(parcel&&(parcel.addr||parcel.jibun))||jibun,
     jimok:(parcel&&parcel.jimok)||null, zone, names, river:null,
     slope: slope?slope.slope:null, elev: slope?slope.elev:null,
     gridFree: grid?grid.free:null, gridName: grid?grid.name:null, gridEmd: grid?grid.emd:null,
     gridTel: grid?grid.tel:null, gridOffice: grid?grid.office:null,
+    jiga: jiga.length?jiga[jiga.length-1].won:null, jigaHistory: jiga,
+    ghiYear: climate?climate.ghiYear:null, ghiDaily: climate?climate.ghiDaily:null, prYear: climate?climate.prYear:null,
     lat:pt.lat, lng:pt.lng, pnu:(parcel&&parcel.pnu)||''
   }};
 }
@@ -3612,6 +3638,53 @@ async function startFeasibility(id){
   await runDiagnosis(d);
 }
 
+// 타당성검토 (영업) — 부지 즉석 진단 도구(지번 하나로 바로 판정 · 설계 엔진 재사용). 특정 딜에 묶이지 않는 신규부지 타진용.
+let salesFeas = { jibun:'', type:'노지', result:null };
+function renderSalesFeasView(){
+  const f = salesFeas.result || {};
+  let panel;
+  if(f.pending){ panel = `<div class="feas-verdict warn"><span class="fv-b">⏳</span>설치 가능성 진단 중…<span class="fv-s">${esc(salesFeas.jibun)}</span></div>`; }
+  else if(f.error){ panel = `<div class="feas-verdict bad"><span class="fv-b">⚠️</span>진단 실패<span class="fv-s">${esc(f.error)}</span></div>`; }
+  else if(f.rows){
+    const modeTag = f.mode==='실시간' ? '🛰 국토부·한전 실시간' : '📊 추정치';
+    const fbNote = f.fallback ? `<div class="note" style="margin:6px 0 10px;color:var(--brand)">ⓘ ${esc(f.fallback)}</div>` : '';
+    panel = `<div class="feas-verdict ${f.worst}"><span class="fv-b">${f.badge}</span>${f.verdict}<span class="fv-s">${modeTag} · 최종은 설계 검토 확인</span></div>${fbNote}
+      <div class="feas-list">${f.rows.map(feasRowHTML).join('')}</div>
+      <div class="wf-actions" style="margin-top:12px"><button class="btn primary sm" onclick="switchSub('sales','s-layout')">이 부지로 모듈 가배치 →</button></div>`;
+  } else { panel = `<div class="note" style="margin:8px 0 10px">부지 지번을 입력하고 <b>🔍 진단 실행</b>을 누르면 설치 가능성이 판정됩니다.</div>`; }
+  const typeOpts = ['노지','지붕','수상'].map(t=>`<option value="${t}" ${t===salesFeas.type?'selected':''}>${t}형</option>`).join('');
+  return wfHead('타당성검토','신규 부지 지번을 넣으면 <b>설치 가능성</b>을 실시간(국토부·한전 API)으로 진단합니다. 지목·경사·용도지역·<b>태양광 규제 판정</b>·계통 여유·<b>일사량</b>·<b>개별공시지가</b> 종합 → 가능/조건부/제한.') +
+   `<div class="card pad" style="margin-bottom:14px">
+      <div class="section-title" style="font-size:12px;margin:0 0 8px">📋 부지 즉석 진단 — 지번 입력 → 실시간 판정</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+        <select class="tinput" id="sf-type" style="max-width:120px" onchange="salesFeas.type=this.value">${typeOpts}</select>
+        <input class="tinput" id="sf-jibun" style="flex:1;min-width:220px" value="${esc(salesFeas.jibun)}" placeholder="지번/도로명 (예: 경기도 파주시 문발동 66)" onkeydown="if(event.key==='Enter')runSalesDiag()">
+        <button class="btn primary sm" onclick="runSalesDiag()">🔍 진단 실행</button>
+      </div>
+      ${panel}
+    </div>`;
+}
+function rerenderSalesFeas(){ const el=document.getElementById('sub-s-feas'); if(el) el.innerHTML=renderSalesFeasView(); }
+async function runSalesDiag(){
+  const inp=document.getElementById('sf-jibun'), ts=document.getElementById('sf-type');
+  if(inp) salesFeas.jibun=inp.value.trim(); if(ts) salesFeas.type=ts.value;
+  const jibun=salesFeas.jibun;
+  salesFeas.result={pending:true}; rerenderSalesFeas();
+  if(jibun) toast('설치 가능성 진단 중… '+jibun);
+  let res;
+  try{
+    if(!jibun) throw new Error('nojibun');
+    const r=await fetchRealDiagnosis(jibun);
+    if(r.error){ res={error:r.error}; }
+    else { res=buildRows(r.p, salesFeas.type, true); }
+  }catch(e){
+    res=buildRows(parcelOf({id:'sf-'+jibun, type:salesFeas.type}), salesFeas.type, false);
+    res.fallback = e.message==='key' ? 'VWorld 인증키 오류 — 키/도메인 등록 확인 (지금은 추정치)'
+                 : e.message==='nojibun' ? '지번 미입력 — 예시 추정치 표시'
+                 : '실시간 미연결 — Vercel 배포·키 설정 후 실시간 전환 (지금은 추정치)';
+  }
+  salesFeas.result=res; rerenderSalesFeas();
+}
 // 타당성검토 (설계) — 지번 실시간 설치 가능성 진단(국토부·한전 API) + 승인·반려
 function renderFeasibility(){
   const cards = DEALS.filter(d=>d.stage==='feasibility').map(d=>{
@@ -7123,6 +7196,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-20', team:'공통', kind:'추가', title:'「타당성검토」 기능 개발 — 부지 지번만 넣으면 설치 가능성 즉석 진단(영업·설계)', body:'부지의 <b>지번(또는 도로명)만 입력</b>하면 <b>태양광 설치 가능성</b>을 실시간으로 진단하는 기능을 개발했습니다(국토부·한전 공공데이터 자동 조회). ① <b>영업 「타당성검토」</b>가 고정 예시 화면에서 <b>진짜 즉석 진단 도구</b>로 바뀌었습니다 — 부지 유형(노지/지붕/수상)과 지번을 넣고 「진단 실행」을 누르면, <b>지목·경사도·용도지역·태양광 규제 판정·계통(변전소) 여유·일사량·개별공시지가</b>를 종합해 <b>가능 🟢 / 조건부 🟡 / 제한 🔴</b> 신호등으로 보여줍니다. 신규 부지를 발굴했을 때 계약 전에 바로 타진할 수 있습니다. ② <b>설계 「타당성검토」</b>(기존 진단)도 함께 강화했습니다 — <b>태양광 행위제한 판정을 23종으로 세분화</b>(개발제한·통제보호·비행안전·접도·공원·교육환경·토지거래허가 등), <b>일사량(발전량 참고)</b>과 <b>개별공시지가 추이</b>를 새로 보여줍니다. ③ 두 화면 모두 <b>같은 진단 엔진</b>을 쓰며, 실시간 데이터가 닿지 않을 땐 추정치로 자동 표시되고 연결되면 실시간으로 전환됩니다.', author:'개발'},
   {date:'2026-10-19', team:'공통', kind:'수정', title:'상단 고정 시 바로 아래 내용이 제목·조작바에 가려지던 현상 — 전 메뉴 전수조사 후 해소', body:'상단(제목·조작바·안내박스)이 고정되면서 <b>바로 아래 첫 내용의 윗부분이 살짝 가려지던</b> 현상을, <b>영업·설계·행정·시공 전 메뉴를 하나씩 점검</b>해 모두 바로잡았습니다. ① <b>목록·현황판</b>(예: 행정 「설비확인」)은 <b>완료·진행·대기·문제 집계 줄</b>이, <b>서류 작성 화면</b>(예: 「발전사업 허가」·「사업개시」·기초공사 등)은 <b>맨 윗 항목 칸</b>이 가려졌는데, 이제 <b>고정 영역 바로 아래부터 깔끔하게</b> 시작합니다. ② <b>대상 현장 선택·날짜·계약법인 등 조작줄은 제목에 그대로 붙어</b> 고정되는 모양 그대로입니다(가리던 것만 아래로 밀어 해소). ③ <b>화면 종류별로 가림 정도가 조금씩 달라</b> 각각 측정해 딱 맞게 보정했고, <b>26개 메뉴 전부 가림 0</b>을 확인했습니다. (모바일 화면은 기존과 동일)', author:'개발'},
   {date:'2026-10-19', team:'공통', kind:'수정', title:'첨부파일 저장 구조 개선 준비 — 사진·문서를 파일 전용 저장소로 분리(화면 변화 없음)', body:'<b>지금은 화면에 변화가 없지만</b>, 앞으로 비용을 크게 줄이기 위한 <b>내부 구조 개선 준비</b>를 마쳤습니다. ① 지금은 올리신 <b>사진·문서(첨부파일)가 데이터베이스 안에 통째로 담겨</b> 저장되는데, 파일이 쌓일수록 <b>용량·비용·속도</b> 부담이 커집니다(파일을 글자처럼 변환해 넣는 방식이라 더 무겁습니다). ② 이를 <b>파일 전용 클라우드 저장소</b>로 옮기고, 데이터베이스에는 <b>파일을 가리키는 링크만</b> 두는 방식으로 바꾸는 <b>기반 작업(서버·화면·저장구조)을 모두 준비</b>했습니다 — 같은 저장량 기준 <b>비용이 수 배 저렴</b>하고, 조회가 많아도 <b>열람 비용이 들지 않는</b> 구조입니다. ③ <b>지금 당장은 쓰시던 그대로</b>입니다 — 업로드·열기·출력 방식, 이미 올려둔 첨부본 모두 <b>변화 없이 동일</b>하게 동작합니다. ④ 저장소 계정 준비가 끝나면 <b>설정만 연결해 자동 전환</b>되며, 그때 다시 안내드리겠습니다. (적용 범위: 행정 「발전사업 허가」 첨부서류, 시공 「시공서류함」 첨부)', author:'개발'},
   {date:'2026-10-19', team:'시공', kind:'수정', title:'「시공서류함」을 기초공사·자재입고·구조물·전기공사 메뉴에도 추가(같은 위치)', body:'그동안 <b>「시공서류함」</b> 버튼이 시공 <b>「사용전 검사」</b> 화면에만 있었는데, 이제 <b>기초공사·자재입고 확인·구조물·모듈 설치·전기 공사</b> 화면에서도 <b>상단바 오른쪽 같은 자리</b>에서 바로 열 수 있습니다. ① 어느 시공 단계에서 일하든 <b>화면을 옮겨 다니지 않고</b> 그 현장의 제조사 성적서·KS인증서·인버터 성적서·감리완료보고서 등 <b>제출·발급 서류를 한 곳에서 확인·업로드</b>할 수 있습니다. ② 버튼 위치는 <b>사용전 검사와 동일</b>(상단 조작바 오른쪽)이라 익숙하게 쓸 수 있습니다. ③ 올린 파일은 지금처럼 그 현장 서류에 그대로 이어집니다.', author:'개발'},
@@ -7702,6 +7776,7 @@ function renderCostSheet(){
 }
 function renderDynamicSub(sub){
   if(sub==='s-status'){ const el=document.getElementById('sub-s-status'); if(el) el.innerHTML=renderSitesProgressBoard('영업'); }
+  else if(sub==='s-feas'){ const el=document.getElementById('sub-s-feas'); if(el) el.innerHTML=renderSalesFeasView(); }
   else if(sub==='s-quote'){ const el=document.getElementById('sub-s-quote'); if(el){ el.innerHTML=renderSalesQuote(); initQuoteEditor(); } }
   else if(sub==='s-costsheet'){ const el=document.getElementById('sub-s-costsheet'); if(el) el.innerHTML=renderCostSheet(); }
   else if(sub==='a-creds'){ const el=document.getElementById('sub-a-creds'); if(el) el.innerHTML=renderPermitCreds(); }
