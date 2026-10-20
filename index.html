@@ -1247,6 +1247,14 @@ button{font-family:inherit;cursor:pointer}
 .fx-ph img{max-width:100%;max-height:120px;display:block;margin:0 auto}
 .fx-ph-x{position:absolute;top:3px;right:3px;border:0;background:rgba(20,28,40,.62);color:#fff;border-radius:6px;width:20px;height:20px;font-size:12px;cursor:pointer;line-height:1}
 .suv-hint{font-size:11px;color:var(--muted);background:color-mix(in srgb,var(--brand) 8%,transparent);border:1px solid color-mix(in srgb,var(--brand) 22%,transparent);border-radius:9px;padding:9px 12px;margin-bottom:12px;line-height:1.6}
+/* 내장 AI(WebLLM) 첫 다운로드 진행 오버레이 */
+.suv-prog-ov{position:fixed;inset:0;z-index:6000;background:rgba(14,20,34,.6);display:flex;align-items:center;justify-content:center;padding:20px}
+.suv-prog-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px 26px;max-width:450px;width:100%;box-shadow:0 20px 60px rgba(10,20,40,.4)}
+.suv-prog-t{font-size:16px;font-weight:800;color:var(--ink);margin-bottom:8px}
+.suv-prog-d{font-size:12.5px;color:var(--ink-2);line-height:1.65;margin-bottom:16px}
+.suv-prog-bar{height:10px;border-radius:999px;background:var(--surface-2);overflow:hidden;border:1px solid var(--line)}
+.suv-prog-bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--accent));transition:width .3s}
+.suv-prog-pct{text-align:right;font-size:12px;font-weight:800;color:var(--muted);margin-top:7px;font-variant-numeric:tabular-nums}
 /* 미리보기 모달 — 행정·시공처럼 완성된 종이 양식(읽기전용) */
 .suv-pv-ov{position:fixed;inset:0;z-index:5200;background:rgba(14,20,34,.58);display:flex;flex-direction:column;padding:18px;overflow:auto}
 .suv-pv-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%;max-width:210mm;margin:0 auto 12px;color:#fff}
@@ -8573,7 +8581,7 @@ function renderSunlightVillage(){
     <button class="btn ghost sm" onclick="sunPreview(true)">🖨 인쇄·PDF</button>
     <button class="btn ghost sm" onclick="sunResetForm()">↺ 비우기</button>
   </div>
-  <div class="suv-hint"><b>노란 칸</b>을 클릭해 직접 입력하고(칸마다 무엇을 넣을지 흐린 글씨로 안내), <b>□ 항목</b>은 눌러 선택합니다. 다 채우면 <b>「🔍 미리보기」</b>로 완성된 양식을 확인·인쇄(PDF)할 수 있습니다. · <b>「📁 자료 폴더 연결」</b> 시 폴더의 <b>한글·엑셀·사진</b>을 읽어 <b>있는 값은 자동으로 채우고 없는 값은 빈칸</b>으로 두며(AI·파란 칸=검토 필요), 폴더를 바꾼 뒤 <b>다시 연결</b>하면 갱신분이 반영됩니다. 사진은 사진 자리를 클릭해 올리면 되고 없으면 <b>“＋ 부지 사진”</b>으로 남습니다. · <b>개인정보</b>(주민번호·계좌 등)는 자동으로 채우지 않습니다.</div>
+  <div class="suv-hint"><b>노란 칸</b>을 클릭해 직접 입력하고(칸마다 무엇을 넣을지 흐린 글씨로 안내), <b>□ 항목</b>은 눌러 선택합니다. 다 채우면 <b>「🔍 미리보기」</b>로 완성된 양식을 확인·인쇄(PDF)할 수 있습니다. · <b>「📁 자료 폴더 연결」</b> 시 폴더의 <b>한글·엑셀·사진</b>을 <b>내장 AI</b>(이 기기 안에서 처리·무료·외부 전송 없음)가 읽어 <b>있는 값은 자동으로 채우고 없는 값은 빈칸</b>으로 두며(파란 칸=검토 필요), 폴더를 바꾼 뒤 <b>다시 연결</b>하면 갱신분이 반영됩니다. <span style="opacity:.8">※ 내장 AI는 <b>첫 1회만</b> 모델을 내려받고(이후 바로 작동), 최신 크롬·엣지에서 동작합니다.</span> 사진은 사진 자리를 클릭해 올리면 되고 없으면 <b>“＋ 부지 사진”</b>으로 남습니다. · <b>개인정보</b>(주민번호·계좌 등)는 자동으로 채우지 않습니다.</div>
   </div>
   <div class="suv-wrap">
     <aside class="suv-rail">
@@ -8709,6 +8717,47 @@ function sunStripXml(x){ return x.replace(/<[^>]+>/g,' ').replace(/&lt;/g,'<').r
 let _sunJszip=null;
 function sunLoadJSZip(){ if(window.JSZip)return Promise.resolve(); if(_sunJszip)return _sunJszip; _sunJszip=new Promise((res)=>{ const s=document.createElement('script'); s.src='https://unpkg.com/jszip@3.10.1/dist/jszip.min.js'; s.onload=()=>res(); s.onerror=()=>res(); document.head.appendChild(s); }); return _sunJszip; }
 
+/* ===== 브라우저 내장 AI(WebLLM) — Anthropic 키 불필요, 각 기기 내 처리(무료·자료 외부유출 0) ===== */
+let sunEngine=null, sunEngineLoading=null, sunEngineModel='';
+const SUN_WEBLLM_URL='https://esm.run/@mlc-ai/web-llm';
+function sunPickModel(webllm){
+  try{
+    const ids=((webllm.prebuiltAppConfig&&webllm.prebuiltAppConfig.model_list)||[]).map(m=>m.model_id);
+    const prefs=['Qwen2.5-3B-Instruct-q4f16_1-MLC','Qwen2.5-3B-Instruct-q4f32_1-MLC','Llama-3.2-3B-Instruct-q4f16_1-MLC','Qwen3-4B-q4f16_1-MLC','Phi-3.5-mini-instruct-q4f16_1-MLC'];
+    for(const p of prefs){ if(ids.includes(p)) return p; }
+    for(const key of ['Qwen2.5-3B','Qwen3-4B','Llama-3.2-3B','Qwen2.5-7B','mini-instruct','Llama-3.1-8B']){ const hit=ids.find(x=>x.includes(key)); if(hit) return hit; }
+    return ids[0]||'Qwen2.5-3B-Instruct-q4f16_1-MLC';
+  }catch(e){ return 'Qwen2.5-3B-Instruct-q4f16_1-MLC'; }
+}
+function sunProgOverlay(){
+  let ov=document.getElementById('suvProg');
+  if(!ov){ ov=document.createElement('div'); ov.id='suvProg'; ov.className='suv-prog-ov';
+    ov.innerHTML='<div class="suv-prog-box"><div class="suv-prog-t">🧠 내장 AI 준비 중…</div><div class="suv-prog-d">처음 한 번만 AI를 이 기기에 내려받습니다(다음부터는 바로 작동). 네트워크 상태에 따라 수 분 걸릴 수 있어요. 자료는 <b>기기 안에서만</b> 처리되어 외부로 나가지 않습니다.</div><div class="suv-prog-bar"><i id="suvProgBar"></i></div><div class="suv-prog-pct" id="suvProgPct">0%</div></div>';
+    document.body.appendChild(ov);
+  }
+  return {
+    set:(p,txt)=>{ const bar=document.getElementById('suvProgBar'), pct=document.getElementById('suvProgPct'); const v=Math.max(0,Math.min(100,Math.round((p||0)*100))); if(bar)bar.style.width=v+'%'; if(pct)pct.textContent=v+'%'; },
+    done:()=>{ const o=document.getElementById('suvProg'); if(o)o.remove(); },
+  };
+}
+async function sunGetEngine(){
+  if(sunEngine) return sunEngine;
+  if(!('gpu' in navigator)) throw new Error('NO_WEBGPU');
+  if(sunEngineLoading) return sunEngineLoading;
+  sunEngineLoading=(async()=>{
+    let adapter=null; try{ adapter=await navigator.gpu.requestAdapter(); }catch(e){}
+    if(!adapter) throw new Error('NO_WEBGPU');   // gpu 객체는 있어도 실제 어댑터가 없으면 미지원
+    const webllm=await import(SUN_WEBLLM_URL);
+    const model=sunPickModel(webllm); sunEngineModel=model;
+    const prog=sunProgOverlay();
+    try{
+      const eng=await webllm.CreateMLCEngine(model,{ initProgressCallback:(r)=>{ prog.set(r.progress, r.text); } });
+      prog.done(); sunEngine=eng; return eng;
+    }catch(e){ prog.done(); throw e; }
+  })();
+  try{ return await sunEngineLoading; }
+  catch(e){ sunEngineLoading=null; throw e; }
+}
 async function sunAIFill(corpus){
   corpus = (typeof corpus==='string' && corpus) ? corpus : (sunData._corpus||'');
   const st=document.getElementById('suvStatus');
@@ -8717,18 +8766,25 @@ async function sunAIFill(corpus){
   const fields=[]; const tmp=document.createElement('div'); tmp.innerHTML=f.html;
   tmp.querySelectorAll('.fx-v').forEach(td=>{ const lab=td.dataset.label||''; if(lab) fields.push({fk:td.dataset.fk, label:lab}); });
   if(!fields.length){ toast('이 서식은 자동채움할 라벨 항목이 없습니다 — 직접 입력해 주세요'); return; }
-  if(st)st.textContent='AI 자동채움 중…';
+  if(!('gpu' in navigator)){ toast('이 브라우저는 내장 AI(WebGPU)를 지원하지 않습니다 — 최신 크롬/엣지를 쓰거나 직접 입력해 주세요'); if(st)st.textContent='내장 AI 미지원(크롬/엣지 권장)'; return; }
+  if(st)st.textContent='내장 AI 준비 중…';
+  let eng;
+  try{ eng=await sunGetEngine(); }
+  catch(e){ if(String(e&&e.message)==='NO_WEBGPU') toast('이 브라우저는 내장 AI(WebGPU) 미지원 — 최신 크롬/엣지 권장'); else toast('내장 AI 로딩 실패: '+(e&&e.message||e)); if(st)st.textContent=''; return; }
+  if(st)st.textContent='AI 자동채움 중… (기기 내 처리)';
   try{
-    const r=await fetch('/api/sunlight-extract',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({title:f.title, fields, corpus})});
-    if(r.status===503){ toast('AI 자동채움은 관리자가 API 키를 등록하면 작동합니다. 지금은 직접 입력해 주세요.'); if(st)st.textContent='AI 키 미등록'; return; }
-    const j=await r.json().catch(()=>({}));
-    if(!r.ok){ toast('AI 자동채움 실패: '+((j&&j.message)||r.status)); if(st)st.textContent=''; return; }
-    const vals=sunVals(f.id), ai=sunAiFlags(f.id); let n=0;
-    Object.keys(j.values||{}).forEach(fk=>{ vals[fk]=j.values[fk]; ai[fk]=1; n++; });
+    const fieldList=fields.map(x=>'- '+x.fk+': '+x.label).join('\n');
+    const sys='당신은 한국 공공 행정서식 자동작성 도우미입니다. 주어진 "마을 자료"에서 각 필드에 들어갈 값만 정확히 추출합니다. 규칙: (1) 자료에서 근거를 찾을 수 있는 값만 채우고, 불확실하거나 자료에 없으면 그 필드는 생략(추측 금지). (2) 금액·용량 등 숫자는 라벨 단위에 맞춰 숫자만. (3) 주민등록번호·계좌번호 등 민감 고유식별정보는 채우지 말고 생략. (4) 출력은 JSON 객체 하나만.';
+    const user='[서식]\n'+f.title+'\n\n[채울 필드 — "키: 라벨"]\n'+fieldList+'\n\n[마을 자료]\n'+corpus.slice(0,24000)+'\n\n각 필드 키에 들어갈 값을 JSON 객체로만 출력. 예: {"f12":"OO영농조합법인"}. 근거 없으면 그 키는 넣지 마세요.';
+    const reply=await eng.chat.completions.create({ messages:[{role:'system',content:sys},{role:'user',content:user}], temperature:0, max_tokens:1200, response_format:{type:'json_object'} });
+    const text=(reply&&reply.choices&&reply.choices[0]&&reply.choices[0].message&&reply.choices[0].message.content)||'{}';
+    const m=text.match(/\{[\s\S]*\}/); let values={}; if(m){ try{ values=JSON.parse(m[0]); }catch(e){ values={}; } }
+    const allow=new Set(fields.map(x=>x.fk)); const vals=sunVals(f.id), ai=sunAiFlags(f.id); let n=0;
+    Object.keys(values).forEach(k=>{ if(allow.has(k) && values[k]!=null && String(values[k]).trim()){ vals[k]=String(values[k]).trim().slice(0,300); ai[k]=1; n++; } });
     sunStore(); sunPaint(); sunUpdatePcts();
-    if(st)st.textContent='AI가 '+n+'칸 채움 — 파란 칸을 확인하세요';
-    toast('AI 자동채움 완료 · '+n+'칸 (파란 칸은 검토 필요)');
-  }catch(e){ toast('AI 자동채움 오류: '+e.message); if(st)st.textContent=''; }
+    if(st)st.textContent='내장 AI가 '+n+'칸 채움 — 파란 칸을 확인하세요';
+    toast('내장 AI 자동채움 완료 · '+n+'칸 (기기 내 처리 · 파란 칸은 검토)');
+  }catch(e){ toast('내장 AI 자동채움 오류: '+(e&&e.message||e)); if(st)st.textContent=''; }
 }
 
 function renderDynamicSub(sub){
