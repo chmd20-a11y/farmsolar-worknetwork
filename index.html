@@ -1134,7 +1134,7 @@ button{font-family:inherit;cursor:pointer}
 .sl-searchbar .tinput{flex:1;min-width:200px}
 .sl-tools{display:flex;gap:5px;flex-wrap:wrap}
 .sl-maparea{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--border)}
-#sl-map,#sl-three{width:100%;height:560px}
+#sl-map,#sl-three{width:100%;height:calc(100vh - 300px);min-height:460px}
 #sl-three{display:none;background:#9fc0e0}
 #sl-viewtoggle{position:absolute;top:10px;left:10px;z-index:600;display:flex;gap:3px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:3px;box-shadow:0 2px 8px rgba(10,20,40,.18)}
 #sl-viewtoggle button{border:0;background:transparent;padding:5px 10px;border-radius:7px;font-size:12px;font-weight:700;color:var(--ink-2);cursor:pointer}
@@ -1174,7 +1174,7 @@ button{font-family:inherit;cursor:pointer}
 .sl-ms-del{border:1px solid #e5533c;background:#e5533c;color:#fff;border-radius:7px;padding:6px 11px;font-size:12px;font-weight:700;cursor:pointer}
 .sl-man-handle{width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 7px rgba(10,20,40,.3);cursor:move}
 .sl-man-handle.sel{background:#0e7c66}
-@media(max-width:1100px){ .sl-wrap{grid-template-columns:1fr} .sl-left,.sl-right{position:static} #sl-map,#sl-three{height:440px} }
+@media(max-width:1100px){ .sl-wrap{grid-template-columns:1fr} .sl-left,.sl-right{position:static} #sl-map,#sl-three{height:calc(100vh - 360px);min-height:380px} }
 
 </style>
 
@@ -3737,7 +3737,7 @@ const SL = (function(){
   let map=null, cr=null, panelLayer=null, bufferLayer=null, satGroup=null, pmOn=false;
   let REGIONS=[];                 // [{layer, parcel, roadGeom}]
   let LAYOUT=null;                // 배치 결과(중심 객체)
-  let three=null, view3D=false, sunT=13;
+  let three=null, view3D=false, sunT=13, _resizeHooked=false;
   const S={type:'ground',tilt:15,az:0,setback:2.0,pitchMode:'auto',pitch:2.5,stack:2,optimize:true,incidence:25};
   const stackGap=10;              // 적재 모듈 사이 간격(mm)
   let lastJibun='';
@@ -3787,14 +3787,25 @@ const SL = (function(){
   // ---------- 지도 ----------
   function tileLayers(){
     const P=base();
-    const esri=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:21,maxNativeZoom:19,crossOrigin:'anonymous',attribution:'© Esri · Maxar'});
-    const vsat=L.tileLayer(P+'/req/wmts/1.0.0/__KEY__/Satellite/{z}/{y}/{x}.jpeg',{maxZoom:21,maxNativeZoom:19,crossOrigin:'anonymous',attribution:'국토부 VWorld 항공영상'});
-    return L.layerGroup([esri, vsat]);   // ESRI 바닥 + VWorld 위에(한국 고해상). VWorld 타일 실패 시 ESRI 노출
+    const mk=(u,at)=>L.tileLayer(u,{maxZoom:21,maxNativeZoom:19,crossOrigin:'anonymous',attribution:at||''});
+    const ESRI='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+    const ESRIREF='https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}';
+    const SAT=P+'/req/wmts/1.0.0/__KEY__/Satellite/{z}/{y}/{x}.jpeg', HYB=P+'/req/wmts/1.0.0/__KEY__/Hybrid/{z}/{y}/{x}.png', BASE=P+'/req/wmts/1.0.0/__KEY__/Base/{z}/{y}/{x}.png';
+    // 각 지도는 별도 타일 인스턴스(한 타일레이어는 동시에 한 그룹만 가능). ESRI 바닥 + 국내 VWorld 위에(실패 시 ESRI 노출).
+    return {
+      '위성 + 지명':   L.layerGroup([mk(ESRI,'© Esri · Maxar'), mk(SAT,'국토부 VWorld 항공영상'), mk(HYB)]),
+      '위성 (고해상)': L.layerGroup([mk(ESRI,'© Esri · Maxar'), mk(SAT,'국토부 VWorld 항공영상')]),
+      '위성 (글로벌)': L.layerGroup([mk(ESRI,'© Esri · Maxar'), mk(ESRIREF)]),
+      '일반 지도':     mk(BASE,'국토부 VWorld 일반지도')
+    };
   }
   function buildMap(){
     map=L.map('sl-map',{preferCanvas:true, zoomControl:false}).setView([37.75,126.78],9);
     L.control.zoom({position:'bottomright'}).addTo(map);
-    satGroup=tileLayers().addTo(map);
+    const bases=tileLayers(), bk=Object.keys(bases);
+    satGroup=bases[bk[0]].addTo(map);                                   // 기본 = 위성 + 지명
+    L.control.layers(bases, null, {position:'topright', collapsed:true}).addTo(map);   // 🗺️ 지도 선택
+    if(!_resizeHooked){ _resizeHooked=true; addEventListener('resize',()=>{ if(map && !view3D){ try{ map.invalidateSize(); }catch(e){} } }); }
     cr=L.canvas({padding:0.5});
     panelLayer=L.layerGroup().addTo(map);
     bufferLayer=L.layerGroup().addTo(map);
@@ -7712,6 +7723,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-20', team:'영업', kind:'수정', title:'「모듈 가배치」 사용성 개선 — 지도 화면 전체폭 사용·창 크기 반응형 + 지도 선택', body:'「모듈 가배치」 지도가 화면 위쪽에만 작게 나오던 것을 개선했습니다. ① 지도를 <b>화면 높이에 맞춰 크게</b> 표시하고, <b>창 크기를 바꾸면 지도도 함께 커지거나 줄어듭니다</b>(반응형). ② 지도 우측 상단의 <b>🗺️ 지도 선택</b>으로 <b>위성+지명 / 위성(고해상) / 위성(글로벌) / 일반 지도</b> 중 골라 볼 수 있습니다(위성이 가려지는 접경지역은 글로벌 위성이나 일반 지도로 전환). ③ 「타당성검토 → 모듈 가배치」로 넘어갈 때 <b>상단 제목이 ‘타당성검토’로 남아 있던 것</b>을 ‘모듈 가배치’로 바르게 바뀌도록 고쳤습니다.', author:'개발'},
   {date:'2026-10-20', team:'영업', kind:'추가', title:'「모듈 가배치」 기능 개발 — 위성 지도에 패널 자동/수동 배치 + 용량·발전량 산출(2D·3D)', body:'영업 <b>「모듈 가배치」</b>를 고정 예시 화면에서 <b>실제 위성 지도 기반 배치 도구</b>로 개발했습니다. ① <b>위성 지도</b>에서 부지 경계를 <b>지번 검색(필지 자동 로드)</b> 또는 <b>직접 그리기</b>로 지정합니다. ② <b>자동 배치</b>는 모듈 규격(국산 현대645W·중국산 AIKO655W·직접입력)과 설치 유형(노지/지붕/주차장)에 맞춰, <b>패널 방위(정남/수동)·완충 이격·그림자 방지 열간격·2단 적재</b>를 반영해 패널을 채웁니다. ③ <b>수동 배치</b>로 패널 묶음을 <b>지도에서 끌어 옮기고(✥), 미세이동·영역 지우개</b>로 세밀하게 다듬을 수 있으며, 자동 배치를 줄 단위로 불러와 편집할 수도 있습니다. ④ 오른쪽에 <b>설치 용량(kWp)·총 모듈 수·부지 면적·면적 이용률·연간 예상 발전량·구조물(테이블) 수</b>가 실시간 산출됩니다. ⑤ <b>2D 지도 / 3D 미리보기</b>(패널·가대·태양 시간대)로 전환하고, <b>2D 이미지로 저장</b>할 수 있습니다. ⑥ 「타당성검토」에서 <b>「이 부지로 모듈 가배치 →」</b>로 지번이 그대로 이어집니다. ⑦ 위성영상은 <b>국토부 항공영상(고해상) + 글로벌 위성(보조)</b>을 사용합니다. <b>개략 배치</b>로 수량·용량 산정에 쓰며, 전기(스트링) 설계·지형 음영·지자체 이격 규정 차이는 반영하지 않습니다.', author:'개발'},
   {date:'2026-10-20', team:'공통', kind:'추가', title:'「타당성검토」 기능 개발 — 부지 지번만 넣으면 설치 가능성 즉석 진단(영업·설계)', body:'부지의 <b>지번(또는 도로명)만 입력</b>하면 <b>태양광 설치 가능성</b>을 실시간으로 진단하는 기능을 개발했습니다(국토부·한전 공공데이터 자동 조회). ① <b>영업 「타당성검토」</b>가 고정 예시 화면에서 <b>진짜 즉석 진단 도구</b>로 바뀌었습니다 — 부지 유형(노지/지붕/수상)과 지번을 넣고 「진단 실행」을 누르면, <b>지목·경사도·용도지역·태양광 규제 판정·계통(변전소) 여유·일사량·개별공시지가</b>를 종합해 <b>가능 🟢 / 조건부 🟡 / 제한 🔴</b> 신호등으로 보여줍니다. 신규 부지를 발굴했을 때 계약 전에 바로 타진할 수 있습니다. ② <b>설계 「타당성검토」</b>(기존 진단)도 함께 강화했습니다 — <b>태양광 행위제한 판정을 23종으로 세분화</b>(개발제한·통제보호·비행안전·접도·공원·교육환경·토지거래허가 등), <b>일사량(발전량 참고)</b>과 <b>개별공시지가 추이</b>를 새로 보여줍니다. ③ 두 화면 모두 <b>같은 진단 엔진</b>을 쓰며, 실시간 데이터가 닿지 않을 땐 추정치로 자동 표시되고 연결되면 실시간으로 전환됩니다.', author:'개발'},
   {date:'2026-10-19', team:'공통', kind:'수정', title:'상단 고정 시 바로 아래 내용이 제목·조작바에 가려지던 현상 — 전 메뉴 전수조사 후 해소', body:'상단(제목·조작바·안내박스)이 고정되면서 <b>바로 아래 첫 내용의 윗부분이 살짝 가려지던</b> 현상을, <b>영업·설계·행정·시공 전 메뉴를 하나씩 점검</b>해 모두 바로잡았습니다. ① <b>목록·현황판</b>(예: 행정 「설비확인」)은 <b>완료·진행·대기·문제 집계 줄</b>이, <b>서류 작성 화면</b>(예: 「발전사업 허가」·「사업개시」·기초공사 등)은 <b>맨 윗 항목 칸</b>이 가려졌는데, 이제 <b>고정 영역 바로 아래부터 깔끔하게</b> 시작합니다. ② <b>대상 현장 선택·날짜·계약법인 등 조작줄은 제목에 그대로 붙어</b> 고정되는 모양 그대로입니다(가리던 것만 아래로 밀어 해소). ③ <b>화면 종류별로 가림 정도가 조금씩 달라</b> 각각 측정해 딱 맞게 보정했고, <b>26개 메뉴 전부 가림 0</b>을 확인했습니다. (모바일 화면은 기존과 동일)', author:'개발'},
@@ -8731,6 +8743,8 @@ function showSub(tab, sub){
   renderDynamicSub(sub);
   if(view) view.querySelectorAll('.subview').forEach(v=>v.classList.toggle('active', v.id==='sub-'+sub));
   document.querySelectorAll('#ssNav .ss-item').forEach(b=>b.classList.toggle('active', b.dataset.sub===sub));
+  const navBtn = document.querySelector("#ssNav .ss-item[data-sub='"+sub+"']");
+  if(typeof applyPageHead==='function') applyPageHead(tab, navBtn);   // 상단 제목/설명도 선택 메뉴로 갱신(인라인 이동 시 제목 고정 버그 방지)
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function switchSub(tab, sub){ showSub(tab, sub); }
