@@ -1114,6 +1114,68 @@ button{font-family:inherit;cursor:pointer}
   #proposalPrintArea .qd-tbl,#proposalPrintArea .qd-fin,#proposalPrintArea .qd-photo-empty,#proposalPrintArea .qd-photo,#proposalPrintArea .qd-sec,#proposalPrintArea .qd-payback,#proposalPrintArea .dwg-sheet{break-inside:avoid}
   #proposalPrintArea .qd-title{font-size:24px}
 }
+
+/* ===== 모듈 가배치(sl-) ===== */
+/* ===== 모듈 가배치(sl-) 스코프 스타일 ===== */
+.sl-wrap{display:grid;grid-template-columns:230px 1fr 230px;gap:14px;align-items:start}
+.sl-left,.sl-right{position:sticky;top:0}
+.sl-center{min-width:0}
+.sl-seg{display:flex;gap:4px;margin-bottom:10px}
+.sl-seg button{flex:1;padding:7px 4px;border:1px solid var(--border-strong);background:var(--surface-2);border-radius:8px;font-size:11.5px;font-weight:700;color:var(--ink-2);cursor:pointer;line-height:1.25}
+.sl-seg button small{font-weight:500;color:var(--muted);font-size:10px}
+.sl-seg button.on{border-color:var(--accent);background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--accent)}
+.sl-grid2,.sl-grid2b{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sl-fld{display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;color:var(--ink-2);margin-bottom:9px}
+.sl-fld input[type=range]{width:100%}
+.sl-fld .tinput{font-size:12.5px;padding:7px 9px}
+.sl-lbl{font-size:11px;font-weight:700;color:var(--ink-2);margin:2px 0 6px}
+.sl-note2{font-size:10.5px;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:7px 9px;margin-bottom:9px}
+.sl-searchbar{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:9px}
+.sl-searchbar .tinput{flex:1;min-width:200px}
+.sl-tools{display:flex;gap:5px;flex-wrap:wrap}
+.sl-maparea{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--border)}
+#sl-map,#sl-three{width:100%;height:560px}
+#sl-three{display:none;background:#9fc0e0}
+#sl-viewtoggle{position:absolute;top:10px;left:10px;z-index:600;display:flex;gap:3px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:3px;box-shadow:0 2px 8px rgba(10,20,40,.18)}
+#sl-viewtoggle button{border:0;background:transparent;padding:5px 10px;border-radius:7px;font-size:12px;font-weight:700;color:var(--ink-2);cursor:pointer}
+#sl-viewtoggle button.on{background:var(--accent);color:#fff}
+#sl-sunbar{position:absolute;top:10px;right:10px;z-index:600;display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:6px 10px;box-shadow:0 2px 8px rgba(10,20,40,.18);font-size:12px}
+#sl-sunbar input{width:120px}
+#sl-status{margin-top:9px;font-size:12px;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:9px 12px;line-height:1.5}
+.sl-stat{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:8px}
+.sl-stat .k{font-size:11px;color:var(--muted);font-weight:700}
+.sl-stat .v{font-size:19px;font-weight:800;margin-top:3px;letter-spacing:-.3px}
+.sl-stat.hero{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 16%,var(--surface)),var(--surface-2))}
+.sl-stat.hero .v{font-size:24px}
+.sl-stat.green{background:color-mix(in srgb,var(--ok) 12%,var(--surface-2))}
+.sl-stat.green .v{color:var(--ok-ink)}
+.sl-disc{font-size:10.5px;color:var(--muted);line-height:1.6;margin-top:10px}
+/* 수동 배치 카드·선택바 (body 직속 부유) */
+.sl-man-card{position:fixed;left:16px;bottom:16px;z-index:3200;width:250px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 10px 30px rgba(10,20,40,.26);display:none;overflow:hidden}
+.sl-man-card.on{display:block}
+.sl-mc-head{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;border-bottom:1px solid var(--line)}
+.sl-mc-head h3{margin:0;font-size:13.5px}
+.sl-mc-x{border:0;background:transparent;font-size:18px;cursor:pointer;color:var(--muted)}
+.sl-mc-bd{padding:12px 13px}
+.sl-mc-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:9px}
+.sl-mc-fld{display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;color:var(--ink-2)}
+.sl-mc-fld input{border:1px solid var(--border-strong);background:var(--surface-2);border-radius:8px;padding:7px 9px;font-size:13px;color:var(--ink)}
+.sl-mc-add,.sl-mc-clear,.sl-mc-row2 button{width:100%;border:1px solid var(--border-strong);background:var(--surface-2);border-radius:9px;padding:9px;font-size:12.5px;font-weight:700;color:var(--ink);cursor:pointer}
+.sl-mc-add{background:var(--accent);color:#fff;border-color:var(--accent);margin-bottom:9px}
+.sl-mc-row2{display:flex;gap:6px;margin:9px 0}
+.sl-mc-row2 button.on{background:#e5533c;color:#fff;border-color:#e5533c}
+.sl-mc-meta{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-2);margin-bottom:4px}
+.sl-mc-hint{font-size:10.5px;color:var(--muted);line-height:1.55;margin:8px 0}
+.sl-man-selbar{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:3200;display:none;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:7px 11px;box-shadow:0 8px 24px rgba(10,20,40,.26)}
+.sl-man-selbar.on{display:flex}
+.sl-ms-nm{font-size:12px;color:var(--ink-2)}
+.sl-ms-nudge{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}
+.sl-ms-nudge button{border:1px solid var(--border-strong);background:var(--surface-2);border-radius:6px;width:28px;height:26px;cursor:pointer;font-size:11px;color:var(--ink)}
+.sl-ms-del{border:1px solid #e5533c;background:#e5533c;color:#fff;border-radius:7px;padding:6px 11px;font-size:12px;font-weight:700;cursor:pointer}
+.sl-man-handle{width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 7px rgba(10,20,40,.3);cursor:move}
+.sl-man-handle.sel{background:#0e7c66}
+@media(max-width:1100px){ .sl-wrap{grid-template-columns:1fr} .sl-left,.sl-right{position:static} #sl-map,#sl-three{height:440px} }
+
 </style>
 
 <!-- ============ 회원 로그인 / 회원가입 ============ -->
@@ -1506,30 +1568,8 @@ button{font-family:inherit;cursor:pointer}
         <!-- 타당성검토 (동적 렌더) -->
         <div class="subview" id="sub-s-feas"></div>
 
-        <!-- 모듈 가배치 -->
-        <div class="subview" id="sub-s-layout">
-          <div class="two-col">
-            <div>
-              <h3 class="section-title"><svg class="st-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>모듈 가배치 — 위성 기반 시뮬레이션</h3>
-              <div class="layout-ph">
-                <div class="panel-grid" id="panelGrid"></div>
-                <div class="layout-cap">배치 1,836장 · DC 990.4kW · 20°/정남 · 이격 충족</div>
-              </div>
-            </div>
-            <div>
-              <h3 class="section-title"><svg class="st-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v4H4zM4 12h10v8H4zM18 12h2v8h-2z"/></svg>배치 결과</h3>
-              <div class="card pad">
-                <div class="stat-grid">
-                  <div class="stat"><div class="s-l">모듈 수량</div><div class="s-v">1,836<small>장</small></div></div>
-                  <div class="stat"><div class="s-l">설비용량 DC</div><div class="s-v">990<small>kW</small></div></div>
-                  <div class="stat"><div class="s-l">인버터</div><div class="s-v">9<small>대</small></div></div>
-                  <div class="stat"><div class="s-l">면적 활용률</div><div class="s-v">78<small>%</small></div></div>
-                </div>
-                <button class="btn dark" style="width:100%;margin-top:14px;justify-content:center" onclick="switchSub('sales','s-quote')">이 배치로 견적 생성 →</button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <!-- 모듈 가배치 (동적 렌더) -->
+        <div class="subview" id="sub-s-layout"></div>
 
         <!-- 견적서 -->
         <div class="subview" id="sub-s-quote"></div>
@@ -3685,6 +3725,482 @@ async function runSalesDiag(){
   }
   salesFeas.result=res; rerenderSalesFeas();
 }
+/* ============================================================
+   모듈 가배치 — 위성 지도 위 태양광 패널 자동/수동 배치 + 2D/3D (자립 모듈)
+   · 지도 엔진(Leaflet/geoman/turf)·3D(Three.js)는 이 화면을 처음 열 때만 지연 로드.
+   · 위성영상=국토부 VWorld 위성타일(서버 프록시 /req, 키 서버보관) + ESRI World Imagery 폴백.
+   · 외부로 노출되는 전역은 renderSalesLayoutView / initSalesLayout 둘뿐. 나머지는 SL 내부.
+   · 의존(호스트 전역): _apiBase(), apiGeocode(), esc(), toast(), salesFeas(선택).
+   ============================================================ */
+const SL = (function(){
+  // ---------- 상태 ----------
+  let map=null, cr=null, panelLayer=null, bufferLayer=null, satGroup=null, pmOn=false;
+  let REGIONS=[];                 // [{layer, parcel, roadGeom}]
+  let LAYOUT=null;                // 배치 결과(중심 객체)
+  let three=null, view3D=false, sunT=13;
+  const S={type:'ground',tilt:15,az:0,setback:2.0,pitchMode:'auto',pitch:2.5,stack:2,optimize:true,incidence:25};
+  const stackGap=10;              // 적재 모듈 사이 간격(mm)
+  let lastJibun='';
+  const MANUAL=[]; let selId=null, seq=0, manualMode=false, uiLayer=null, svgR=null, erLayer=null, eraser=false, erStart=null, uiOn=false;
+
+  // ---------- 지연 로더 ----------
+  const _loaded={};
+  function loadCss(href){ return new Promise(res=>{ if(_loaded['css:'+href]) return res(); _loaded['css:'+href]=1; const l=document.createElement('link'); l.rel='stylesheet'; l.href=href; l.onload=res; l.onerror=res; document.head.appendChild(l); }); }
+  function loadJs(src){ return new Promise((res,rej)=>{ if(_loaded['js:'+src]) return res(); const s=document.createElement('script'); s.src=src; s.onload=()=>{ _loaded['js:'+src]=1; res(); }; s.onerror=()=>rej(new Error('load fail '+src)); document.head.appendChild(s); }); }
+  async function ensureMapLibs(){
+    if(window.L && window.L.PM && window.turf) return true;
+    await loadCss('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
+    await loadCss('https://unpkg.com/@geoman-io/leaflet-geoman-free@2.14.2/dist/leaflet-geoman.css');
+    await loadJs('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js');
+    await loadJs('https://unpkg.com/@geoman-io/leaflet-geoman-free@2.14.2/dist/leaflet-geoman.min.js');
+    await loadJs('https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js');
+    return !!(window.L && window.turf);
+  }
+  async function ensureThreeLibs(){
+    if(window.THREE && window.THREE.OrbitControls) return true;
+    await loadJs('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js');
+    await loadJs('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js');
+    return !!(window.THREE && window.THREE.OrbitControls);
+  }
+
+  // ---------- 헬퍼 ----------
+  const $=id=>document.getElementById(id);
+  function setStatus(h){ const e=$('sl-status'); if(e) e.innerHTML=h; }
+  function base(){ try{ return _apiBase(); }catch(e){ return ''; } }
+  function ringLatLng(layer){
+    const g=(layer.toGeoJSON().geometry)||{}; let ring;
+    if(g.type==='MultiPolygon'){ let best=(g.coordinates[0]||[[]])[0], ba=-1; g.coordinates.forEach(poly=>{ try{ const a=turf.area(turf.polygon(poly)); if(a>ba){ba=a; best=poly[0];} }catch(e){} }); ring=best; }
+    else if(g.type==='Polygon'){ ring=g.coordinates[0]; }
+    else { let c=g.coordinates||[]; while(Array.isArray(c[0])&&Array.isArray(c[0][0])) c=c[0]; ring=c; }
+    return (ring||[]).map(c=>({lng:c[0],lat:c[1]}));
+  }
+  function pnpoly(pt,ring){ let inside=false; for(let i=0,j=ring.length-1;i<ring.length;j=i++){ const xi=ring[i].x,yi=ring[i].y,xj=ring[j].x,yj=ring[j].y; if(((yi>pt.y)!==(yj>pt.y))&&(pt.x<(xj-xi)*(pt.y-yi)/(yj-yi)+xi)) inside=!inside; } return inside; }
+  function geomToLatLngs(geom){ const conv=ring=>ring.map(c=>[c[1],c[0]]); if(geom.type==='Polygon') return geom.coordinates.map(conv); if(geom.type==='MultiPolygon') return geom.coordinates.map(p=>p.map(conv)); return []; }
+
+  // ---------- 모듈 규격 프리셋 ----------
+  function applyPreset(m){
+    if(m==='kr'){ $('sl-m-w').value=1134; $('sl-m-h').value=2465; $('sl-m-p').value=645; }
+    else if(m==='cn'){ $('sl-m-w').value=1143; $('sl-m-h').value=2382; $('sl-m-p').value=655; }
+    document.querySelectorAll('#sl-seg-mod button').forEach(b=>b.classList.toggle('on', b.dataset.m===m));
+  }
+
+  // ---------- 지도 ----------
+  function tileLayers(){
+    const P=base();
+    const esri=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:21,maxNativeZoom:19,crossOrigin:'anonymous',attribution:'© Esri · Maxar'});
+    const vsat=L.tileLayer(P+'/req/wmts/1.0.0/__KEY__/Satellite/{z}/{y}/{x}.jpeg',{maxZoom:21,maxNativeZoom:19,crossOrigin:'anonymous',attribution:'국토부 VWorld 항공영상'});
+    return L.layerGroup([esri, vsat]);   // ESRI 바닥 + VWorld 위에(한국 고해상). VWorld 타일 실패 시 ESRI 노출
+  }
+  function buildMap(){
+    map=L.map('sl-map',{preferCanvas:true, zoomControl:false}).setView([37.75,126.78],9);
+    L.control.zoom({position:'bottomright'}).addTo(map);
+    satGroup=tileLayers().addTo(map);
+    cr=L.canvas({padding:0.5});
+    panelLayer=L.layerGroup().addTo(map);
+    bufferLayer=L.layerGroup().addTo(map);
+    uiLayer=L.layerGroup(); svgR=L.svg({padding:0.5}); erLayer=L.layerGroup();
+    // geoman 경계 그리기
+    map.on('pm:create', e=>{ clearBoundary(); const ly=e.layer; try{ ly.pm.enable({allowSelfIntersection:false}); }catch(_){}
+      REGIONS=[{layer:ly, parcel:null, roadGeom:null}]; try{ map.pm.disableDraw(); }catch(_){} setStatus('✏️ 경계를 그렸습니다 — <b>배치</b>를 눌러 패널을 채웁니다.'); runLayout(); });
+    map.on('click', ()=>{ if(manualMode && selId!=null){ selId=null; syncM(); } });
+  }
+  function clearBoundary(){ REGIONS.forEach(r=>{ try{ map.removeLayer(r.layer); }catch(_){} }); REGIONS=[]; }
+
+  // ---------- 지번 검색 + 필지 ----------
+  async function fetchParcelPolygon(lng,lat){
+    const dom=encodeURIComponent(location.hostname||'localhost');
+    const url=`${base()}/req/data?service=data&request=GetFeature&data=LP_PA_CBND_BUBUN&domain=${dom}&format=json&crs=EPSG:4326&geometry=true&attribute=true&size=1&geomFilter=${encodeURIComponent('POINT('+lng+' '+lat+')')}`;
+    try{ const j=await fetch(url).then(r=>r.json()); const fc=j&&j.response&&j.response.result&&j.response.result.featureCollection; return (fc&&fc.features&&fc.features.length)?fc.features[0]:null; }catch(e){ return null; }
+  }
+  async function doSearch(){
+    const inp=$('sl-addr'); const addr=(inp&&inp.value||'').trim(); if(!addr){ setStatus('지번/도로명을 입력하세요.'); return; }
+    lastJibun=addr; setStatus('🔎 주소 검색 중…');
+    let pt=null; try{ pt=await apiGeocode(addr); }catch(e){ setStatus(e&&e.message==='key'?'⚠️ VWorld 인증키 오류 — 키/도메인 등록을 확인하세요.':'⚠️ 지도 서버에 연결하지 못했습니다(배포·키 설정 후 가능).'); return; }
+    if(!pt){ setStatus('⚠️ 주소를 찾지 못했습니다 — 지번/도로명을 확인하세요.'); return; }
+    const f=await fetchParcelPolygon(pt.lng,pt.lat);
+    if(f && f.geometry){
+      let gj; try{ gj=turf.feature(f.geometry); }catch(e){ gj=null; }
+      const pr=f.properties||{};
+      const ly=L.polygon(geomToLatLngs(f.geometry),{color:'#ffd54a',weight:2,fillOpacity:.06}).addTo(map);
+      try{ ly.pm.enable({allowSelfIntersection:false}); }catch(_){}
+      clearBoundary(); REGIONS=[{layer:ly, parcel:{addr:pr.addr||'',jibun:pr.jibun||'',pnu:pr.pnu||''}, roadGeom:null}];
+      try{ map.fitBounds(ly.getBounds().pad(0.3)); }catch(e){ map.setView([pt.lat,pt.lng],18); }
+      setStatus(`✅ <b>${esc(pr.addr||pr.jibun||addr)}</b> 필지 로드 — <b>배치</b>를 눌러 패널을 채웁니다.`);
+      runLayout();
+    } else {
+      map.setView([pt.lat,pt.lng],18);
+      setStatus('필지 경계를 찾지 못했습니다 — <b>경계</b> 버튼으로 직접 그려 주세요.');
+    }
+  }
+
+  // ---------- 자동 배치 엔진 ----------
+  function resetStats(){ ['sl-r-count','sl-r-kw','sl-r-land','sl-r-ratio','sl-r-gen','sl-r-tables'].forEach(id=>{ const e=$(id); if(e) e.textContent='0'; }); }
+  function readOpts(){
+    S.setback=(+($('sl-o-set').value||20))/10;
+    S.az=+($('sl-o-az').value||0);
+    S.stack=Math.max(1,Math.min(6,+($('sl-m-stack').value||2)));
+    if($('sl-o-pitch')) S.pitch=+($('sl-o-pitch').value||2.5);
+  }
+  function runLayout(){
+    readOpts();
+    if(!REGIONS.length){ setStatus('⚠️ 먼저 <b>지번 검색</b>이나 <b>경계 그리기</b>로 부지를 지정하세요.'); return; }
+    panelLayer.clearLayers(); bufferLayer.clearLayers();
+    const mw=(+$('sl-m-w').value)/1000, mh=(+$('sl-m-h').value)/1000, watt=(+$('sl-m-p').value);
+    const portrait=$('sl-m-o').value==='portrait';
+    const wRow=portrait?mw:mh, lSlope1=portrait?mh:mw;
+    const intra=(stackGap/1000), gapU=0.02;
+    const tilt=S.tilt*Math.PI/180, alongSlope=S.stack*lSlope1+(S.stack-1)*intra, depth=alongSlope*Math.cos(tilt);
+    let pitch; if(S.pitchMode==='manual'){ pitch=depth+Math.max(0.1,S.pitch); } else { const incR=Math.max(5,S.incidence)*Math.PI/180; pitch=depth+alongSlope*Math.sin(tilt)/Math.tan(incR); }
+    const stepU=wRow+gapU;
+    let bestAz,bestDeg; if(S.optimize){ bestDeg=0; bestAz=0; } else { bestDeg=S.az; bestAz=S.az*Math.PI/180; }
+    const ringsLL=[]; REGIONS.forEach(rg=>{ try{ ringsLL.push({rg, ll:ringLatLng(rg.layer)}); }catch(e){} });
+    if(!ringsLL.length){ setStatus('⚠️ 부지 경계를 찾을 수 없습니다.'); return; }
+    let sx=0,sy=0,n=0; ringsLL.forEach(o=>o.ll.forEach(p=>{sx+=p.lng; sy+=p.lat; n++;}));
+    const lng0=sx/n, lat0=sy/n, mLat=110540, mLng=111320*Math.cos(lat0*Math.PI/180);
+    const toL=(lat,lng)=>({x:(lng-lng0)*mLng, y:(lat-lat0)*mLat});
+    const toLatLng=(x,y)=>[lat0+y/mLat, lng0+x/mLng];
+    const rot=(x,y,a)=>({x:x*Math.cos(a)-y*Math.sin(a), y:x*Math.sin(a)+y*Math.cos(a)});
+    const toWork=(lat,lng)=>{ const l=toL(lat,lng); return rot(l.x,l.y,-bestAz); };
+    const placedAll=[], regionsOut=[]; let grossArea=0,landArea=0,skipped=0;
+    const navy=S.type==='roof'?'#12406e':'#123a6e';
+    ringsLL.forEach(({rg,ll})=>{
+      const gjPoly=turf.polygon([[...ll.map(p=>[p.lng,p.lat]),[ll[0].lng,ll[0].lat]]]);
+      const ga=turf.area(gjPoly); grossArea+=ga; landArea+=ga;
+      let work=gjPoly;
+      if(S.setback>0){ const buf=turf.buffer(gjPoly,-S.setback,{units:'meters'}); if(!buf||!buf.geometry||turf.area(buf)<1){ skipped++; return; } work=buf; }
+      let wcoords=work.geometry.coordinates;
+      if(work.geometry.type==='MultiPolygon'){ wcoords=work.geometry.coordinates.slice().sort((a,b)=>turf.area(turf.polygon(b))-turf.area(turf.polygon(a)))[0]; }
+      const wringLL=wcoords[0].map(c=>({lng:c[0],lat:c[1]}));
+      const wl=wringLL.map(p=>toWork(p.lat,p.lng)), outerWl=ll.map(p=>toWork(p.lat,p.lng));
+      const xs=wl.map(p=>p.x), ys=wl.map(p=>p.y);
+      const minx=Math.min(...xs),maxx=Math.max(...xs),miny=Math.min(...ys),maxy=Math.max(...ys);
+      let guard=0; const cand=[];
+      for(let v=miny; v+depth<=maxy; v+=pitch){ for(let u=minx; u+wRow<=maxx; u+=stepU){ if(++guard>3000000){ v=maxy+1; break; }
+        const c=[{x:u,y:v},{x:u+wRow,y:v},{x:u+wRow,y:v+depth},{x:u,y:v+depth}]; if(!c.every(p=>pnpoly(p,wl))) continue; cand.push([u,v]); } }
+      const md=lSlope1*Math.cos(tilt), stepMod=(lSlope1+intra)*Math.cos(tilt);
+      cand.forEach(([u,v])=>{ placedAll.push([u,v]); for(let k=0;k<S.stack;k++){ const v0=v+k*stepMod;
+        const corners=[[u,v0],[u+wRow,v0],[u+wRow,v0+md],[u,v0+md]].map(([x,y])=>{ const r=rot(x,y,bestAz); return toLatLng(r.x,r.y); });
+        L.polygon(corners,{renderer:cr,color:'#8fb8ff',weight:.5,fillColor:navy,fillOpacity:.92}).addTo(panelLayer); } });
+      bufferLayer.addLayer(L.polygon(wringLL.map(p=>[p.lat,p.lng]),{color:'#ff8a3d',weight:1.5,dashArray:'6,5',fill:false}));
+      regionsOut.push({wl,outerWl});
+    });
+    const tables=placedAll.length, modules=tables*S.stack, kw=modules*watt/1000;
+    const occ=tables*wRow*depth, ratio=landArea>0?occ/landArea*100:0, yieldK=1300;
+    $('sl-r-count').textContent=modules.toLocaleString();
+    $('sl-r-kw').textContent=Math.round(kw).toLocaleString();
+    $('sl-r-land').textContent=Math.round(landArea).toLocaleString();
+    $('sl-r-ratio').textContent=ratio.toFixed(0);
+    $('sl-r-gen').textContent=(kw*yieldK/1000).toFixed(0);
+    $('sl-r-tables').textContent=tables.toLocaleString();
+    const base3d=S.type==='carport'?2.6:(S.type==='roof'?7.0:0.6);
+    LAYOUT={placed:placedAll, regions:regionsOut, wRow, alongSlope, depth, tiltR:tilt, azRad:bestAz, base:base3d,
+      lat0,lng0,mLat,mLng, mLen:lSlope1, intra, stack:S.stack,
+      wl:(regionsOut[0]?regionsOut[0].wl:[]), outerWl:(regionsOut[0]?regionsOut[0].outerWl:[]),
+      type:S.type, grossArea, landArea, regionCount:regionsOut.length};
+    if(view3D) rebuild3D();
+    const azTxt=bestDeg===0?'정남':(bestDeg<0?`남동 ${-bestDeg}°`:`남서 ${bestDeg}°`);
+    const skipTxt=skipped>0?` <span style="color:#d08a3a">(구역 ${skipped}개 완충거리 초과 제외)</span>`:'';
+    setStatus(`✅ 배치 완료 — <b>${modules.toLocaleString()}장</b> · <b>${Math.round(kw).toLocaleString()} kWp</b> · 이용률 ${ratio.toFixed(0)}% · 방위 ${S.optimize?'자동 ':''}${azTxt}${skipTxt}`);
+    if(MANUAL.length) syncM();
+  }
+
+  // ---------- 수동 배치 ----------
+  const rotp=(x,y,a)=>({x:x*Math.cos(a)-y*Math.sin(a), y:x*Math.sin(a)+y*Math.cos(a)});
+  function liveGeom(){
+    const mw=(+$('sl-m-w').value)/1000, mh=(+$('sl-m-h').value)/1000, watt=(+$('sl-m-p').value)||0;
+    const portrait=$('sl-m-o').value==='portrait', wRow=portrait?mw:mh, lSlope1=portrait?mh:mw;
+    const intra=(stackGap/1000), gapU=0.02, tilt=(S.tilt||15)*Math.PI/180, alongSlope=S.stack*lSlope1+(S.stack-1)*intra, depth=alongSlope*Math.cos(tilt);
+    let pitch; if(S.pitchMode==='manual'){ pitch=depth+Math.max(0.1,S.pitch); } else { const incR=Math.max(5,S.incidence||25)*Math.PI/180; pitch=depth+alongSlope*Math.sin(tilt)/Math.tan(incR); }
+    return {watt,wRow,lSlope1,intra,gapU,tilt,alongSlope,depth,pitch,stepU:wRow+gapU,stack:S.stack,base3d:(S.type==='carport'?2.6:(S.type==='roof'?7.0:0.6))};
+  }
+  function frameM(){
+    const g=liveGeom(), LO=LAYOUT;
+    if(LO&&LO.placed){ const tilt=LO.tiltR, along=LO.alongSlope; let pitch; if(S.pitchMode==='manual'){ pitch=LO.depth+Math.max(0.1,S.pitch); } else { const incR=Math.max(5,S.incidence||25)*Math.PI/180; pitch=LO.depth+along*Math.sin(tilt)/Math.tan(incR); }
+      return {lat0:LO.lat0,lng0:LO.lng0,mLat:LO.mLat,mLng:LO.mLng,azRad:LO.azRad,wRow:LO.wRow,depth:LO.depth,alongSlope:along,tilt,lSlope1:LO.mLen||g.lSlope1,intra:LO.intra||0,stack:LO.stack||1,base3d:LO.base,watt:g.watt,pitch,stepU:(LO.wRow+0.02),gapU:0.02}; }
+    let sx=0,sy=0,n=0; try{ REGIONS.forEach(rg=>{ ringLatLng(rg.layer).forEach(p=>{sx+=p.lng;sy+=p.lat;n++;}); }); }catch(e){}
+    let lat0,lng0; if(n){ lng0=sx/n; lat0=sy/n; } else { const c=map.getCenter(); lat0=c.lat; lng0=c.lng; }
+    const mLat=110540, mLng=111320*Math.cos(lat0*Math.PI/180);
+    return {lat0,lng0,mLat,mLng,azRad:(S.optimize?0:(S.az||0)*Math.PI/180),wRow:g.wRow,depth:g.depth,alongSlope:g.alongSlope,tilt:g.tilt,lSlope1:g.lSlope1,intra:g.intra,stack:g.stack,base3d:g.base3d,watt:g.watt,pitch:g.pitch,stepU:g.stepU,gapU:g.gapU};
+  }
+  const toUV=(lat,lng,F)=>{ const r=rotp((lng-F.lng0)*F.mLng,(lat-F.lat0)*F.mLat,-F.azRad); return {u:r.x,v:r.y}; };
+  const toLL=(u,v,F)=>{ const r=rotp(u,v,F.azRad); return [F.lat0+r.y/F.mLat, F.lng0+r.x/F.mLng]; };
+  function blockTables(blk,F){ const uc=toUV(blk.lat,blk.lng,F), bw=blk.cols*F.wRow+(blk.cols-1)*F.gapU, bh=(blk.rows-1)*F.pitch+F.depth, u0=uc.u-bw/2, v0=uc.v-bh/2, out=[]; for(let r=0;r<blk.rows;r++)for(let c=0;c<blk.cols;c++) out.push([u0+c*F.stepU, v0+r*F.pitch]); return out; }
+  function paintTables(tables,layer,F){ const navy=(S.type==='roof')?'#12406e':'#123a6e', md=F.lSlope1*Math.cos(F.tilt), stepMod=(F.lSlope1+F.intra)*Math.cos(F.tilt);
+    tables.forEach(([u,v])=>{ for(let k=0;k<F.stack;k++){ const v0k=v+k*stepMod; const corners=[[u,v0k],[u+F.wRow,v0k],[u+F.wRow,v0k+md],[u,v0k+md]].map(([x,y])=>toLL(x,y,F));
+      L.polygon(corners,{renderer:cr,color:'#8fb8ff',weight:.5,fillColor:navy,fillOpacity:.92,interactive:false}).addTo(layer); } }); }
+  let panelLayerM=null;
+  function drawPanelsM(F){ panelLayerM.clearLayers(); const t=[]; MANUAL.forEach(blk=>blockTables(blk,F).forEach(x=>t.push(x))); paintTables(t,panelLayerM,F); }
+  function drawAuto(F){ try{ panelLayer.clearLayers(); if(LAYOUT&&LAYOUT._auto&&LAYOUT._auto.length) paintTables(LAYOUT._auto,panelLayer,F); }catch(e){} }
+  function mergeLayout(F){
+    const manualTables=[]; MANUAL.forEach(blk=>blockTables(blk,F).forEach(t=>manualTables.push(t)));
+    if(LAYOUT&&LAYOUT.placed){ if(!LAYOUT._auto) LAYOUT._auto=LAYOUT.placed.slice(); LAYOUT.placed=LAYOUT._auto.concat(manualTables); }
+    else if(manualTables.length){ LAYOUT={placed:manualTables.slice(),_auto:[],regions:[],wRow:F.wRow,alongSlope:F.alongSlope,depth:F.depth,tiltR:F.tilt,azRad:F.azRad,base:F.base3d,lat0:F.lat0,lng0:F.lng0,mLat:F.mLat,mLng:F.mLng,mLen:F.lSlope1,intra:F.intra,stack:F.stack,wl:[],outerWl:[],type:S.type,grossArea:0,landArea:0,regionCount:0,_manualOnly:true}; }
+    const Lc=LAYOUT; if(Lc){ const tables=Lc.placed.length, modules=tables*(Lc.stack||1), kw=modules*F.watt/1000, occ=tables*(Lc.wRow||F.wRow)*(Lc.depth||F.depth), land=Lc.landArea||0;
+      $('sl-r-count').textContent=modules.toLocaleString(); $('sl-r-kw').textContent=Math.round(kw).toLocaleString(); $('sl-r-tables').textContent=tables.toLocaleString(); $('sl-r-gen').textContent=(kw*1300/1000).toFixed(0); if(land>0) $('sl-r-ratio').textContent=(occ/land*100).toFixed(0); }
+  }
+  function drawUiM(F){
+    uiLayer.clearLayers(); if(!manualMode||eraser){ updateSelbar(); return; }
+    MANUAL.forEach(blk=>{
+      if(blk.id===selId){ const uc=toUV(blk.lat,blk.lng,F), bw=blk.cols*F.wRow+(blk.cols-1)*F.gapU, bh=(blk.rows-1)*F.pitch+F.depth, m=0.5;
+        const box=[[-bw/2-m,-bh/2-m],[bw/2+m,-bh/2-m],[bw/2+m,bh/2+m],[-bw/2-m,bh/2+m]].map(([x,y])=>toLL(uc.u+x,uc.v+y,F));
+        L.polygon(box,{renderer:svgR,color:'#0e7c66',weight:2,dashArray:'5,4',fill:false,interactive:false}).addTo(uiLayer); }
+      const sel=(blk.id===selId);
+      const mk=L.marker([blk.lat,blk.lng],{draggable:true,keyboard:false,zIndexOffset:1200,icon:L.divIcon({className:'',html:'<div class="sl-man-handle'+(sel?' sel':'')+'">✥</div>',iconSize:[30,30],iconAnchor:[15,15]})}).addTo(uiLayer);
+      mk.on('click',L.DomEvent.stop); mk.on('click',()=>{ selId=blk.id; syncM(); });
+      mk.on('dragstart',()=>{ selId=blk.id; });
+      mk.on('drag',()=>{ const ll=mk.getLatLng(); blk.lat=ll.lat; blk.lng=ll.lng; const FF=frameM(); drawPanelsM(FF); mergeLayout(FF); });
+      mk.on('dragend',()=>{ const ll=mk.getLatLng(), FF=frameM(), uc=toUV(ll.lat,ll.lng,FF), nll=toLL(Math.round(uc.u),Math.round(uc.v),FF); blk.lat=nll[0]; blk.lng=nll[1]; syncM(); });
+    });
+    updateSelbar();
+  }
+  function syncM(){ const F=frameM(); drawPanelsM(F); mergeLayout(F); drawUiM(F); updateMetaM(); updateEditBtns(); try{ if(view3D&&LAYOUT) rebuild3D(); }catch(e){} }
+  function addBlock(){ const rows=Math.max(1,Math.min(30,parseInt($('sl-mc-rows').value)||3)), cols=Math.max(1,Math.min(60,parseInt($('sl-mc-cols').value)||10)), c=map.getCenter(); MANUAL.push({id:++seq,lat:c.lat,lng:c.lng,rows,cols}); selId=seq; syncM(); }
+  function delBlock(){ const i=MANUAL.findIndex(b=>b.id===selId); if(i<0)return; MANUAL.splice(i,1); selId=null; syncM(); }
+  function nudge(dx,dy){ const b=MANUAL.find(x=>x.id===selId); if(!b)return; const F=frameM(), uc=toUV(b.lat,b.lng,F), nll=toLL(uc.u+dx,uc.v+dy,F); b.lat=nll[0]; b.lng=nll[1]; syncM(); }
+  function clearManual(){ MANUAL.length=0; selId=null; panelLayerM.clearLayers(); uiLayer.clearLayers(); updateSelbar();
+    if(LAYOUT&&LAYOUT._manualOnly){ LAYOUT=null; resetStats(); } else if(LAYOUT&&LAYOUT._auto){ LAYOUT.placed=LAYOUT._auto.slice(); mergeLayout(frameM()); } updateMetaM(); try{ if(view3D&&LAYOUT) rebuild3D(); }catch(e){} }
+  function pushRun(us,v,F){ const cols=us.length; if(!cols)return; const bw=cols*F.wRow+(cols-1)*F.gapU, ll=toLL(us[0]+bw/2, v+F.depth/2, F); MANUAL.push({id:++seq,lat:ll[0],lng:ll[1],rows:1,cols}); }
+  function convertAutoToBlocks(){ const LO=LAYOUT; if(!LO||!LO._auto||!LO._auto.length){ if(LO&&LO.placed&&!LO._manualOnly){ LO._auto=LO.placed.slice(); } else return; }
+    const F=frameM(), rows={}; LO._auto.forEach(([u,v])=>{ const key=Math.round(v*100)/100; (rows[key]=rows[key]||{v:v,us:[]}).us.push(u); });
+    Object.keys(rows).forEach(vk=>{ const grp=rows[vk], v=grp.v, us=grp.us.slice().sort((a,b)=>a-b); let run=[us[0]]; for(let i=1;i<us.length;i++){ if(us[i]-us[i-1]<=F.stepU*1.5) run.push(us[i]); else { pushRun(run,v,F); run=[us[i]]; } } pushRun(run,v,F); });
+    LO._auto=[]; panelLayer.clearLayers(); syncM(); setStatus('✎ 자동 배치를 <b>줄 단위 블록</b>으로 불러왔습니다 — 드래그·삭제·미세이동 가능. (배치 다시 누르면 자동 복원)');
+  }
+  function setEraser(on){ eraser=on; const card=$('sl-man-card'), btn=card&&card.querySelector('.sl-mc-erase'); if(btn) btn.classList.toggle('on',on);
+    const cont=map.getContainer();
+    if(on){ try{map.dragging.disable();map.doubleClickZoom.disable();}catch(e){} cont.style.cursor='crosshair'; erLayer.addTo(map); cont.addEventListener('pointerdown',erDown); setStatus('🧹 <b>영역 지우개</b> — 지울 패널을 사각형으로 감싸 드래그. (다시 누르면 끄기)'); }
+    else { try{map.dragging.enable();map.doubleClickZoom.enable();}catch(e){} cont.style.cursor=''; cont.removeEventListener('pointerdown',erDown); erLayer.clearLayers(); erStart=null; } drawUiM(frameM()); }
+  function erDown(e){ if(e.button&&e.button!==0)return; erStart=map.mouseEventToLatLng(e); e.preventDefault(); const cont=map.getContainer(); cont.addEventListener('pointermove',erMove); cont.addEventListener('pointerup',erUp); try{cont.setPointerCapture(e.pointerId);}catch(_){} }
+  function erMove(e){ if(!erStart)return; e.preventDefault(); const cur=map.mouseEventToLatLng(e); erLayer.clearLayers(); L.rectangle(L.latLngBounds(erStart,cur),{renderer:svgR,color:'#e5533c',weight:2,dashArray:'5,4',fillColor:'#e5533c',fillOpacity:.14,interactive:false}).addTo(erLayer); }
+  function erUp(e){ const cont=map.getContainer(); cont.removeEventListener('pointermove',erMove); cont.removeEventListener('pointerup',erUp); if(!erStart)return; const end=map.mouseEventToLatLng(e), b=L.latLngBounds(erStart,end); erStart=null; erLayer.clearLayers(); if(Math.abs(b.getNorth()-b.getSouth())<1e-6&&Math.abs(b.getEast()-b.getWest())<1e-6)return; eraseIn(b); }
+  function eraseIn(b){ const F=frameM(); let removed=0; if(LAYOUT&&LAYOUT._auto&&LAYOUT._auto.length){ const before=LAYOUT._auto.length; LAYOUT._auto=LAYOUT._auto.filter(t=>{ const ll=toLL(t[0]+F.wRow/2,t[1]+F.depth/2,F); return !b.contains(L.latLng(ll[0],ll[1])); }); removed+=before-LAYOUT._auto.length; drawAuto(F); }
+    const mb=MANUAL.length; for(let i=MANUAL.length-1;i>=0;i--){ if(b.contains(L.latLng(MANUAL[i].lat,MANUAL[i].lng))) MANUAL.splice(i,1); } removed+=mb-MANUAL.length; if(selId!=null&&!MANUAL.find(x=>x.id===selId)) selId=null; syncM(); setStatus(removed?'🧹 영역 안 패널을 삭제했습니다.':'지운 패널이 없습니다 — 패널 위를 감싸도록 드래그하세요.'); }
+  function updateEditBtns(){ const c=$('sl-man-card'); if(!c)return; const hasAuto=!!((LAYOUT&&LAYOUT._auto&&LAYOUT._auto.length)||(LAYOUT&&LAYOUT.placed&&!LAYOUT._manualOnly&&LAYOUT.placed.length)); const e=c.querySelector('.sl-mc-edit'); if(e) e.style.display=hasAuto?'inline-flex':'none'; }
+  function updateMetaM(){ const c=$('sl-man-card'); if(!c)return; const cnt=MANUAL.reduce((s,b)=>s+b.rows*b.cols*(S.stack||1),0), kw=cnt*((+$('sl-m-p').value)||0)/1000, bEl=c.querySelector('.sl-mc-nblk'), mEl=c.querySelector('.sl-mc-nmod'); if(bEl) bEl.textContent=MANUAL.length; if(mEl) mEl.textContent=cnt.toLocaleString()+'장 · '+Math.round(kw).toLocaleString()+'kWp'; }
+  function updateSelbar(){ const bar=$('sl-man-selbar'); if(!bar)return; const b=MANUAL.find(x=>x.id===selId); if(b&&manualMode&&!eraser){ bar.querySelector('.sl-ms-nm b').textContent=b.rows+'줄×'+b.cols+'장'; bar.classList.add('on'); } else bar.classList.remove('on'); }
+  function ensureManUi(){
+    if($('sl-man-card')) return;
+    const card=document.createElement('div'); card.id='sl-man-card'; card.className='sl-man-card';
+    card.innerHTML='<div class="sl-mc-head"><h3>✥ 수동 배치</h3><button class="sl-mc-x" title="닫기">×</button></div>'+
+      '<div class="sl-mc-bd"><div class="sl-mc-row"><div class="sl-mc-fld"><label>줄 수</label><input type="number" id="sl-mc-rows" value="3" min="1" max="30"></div>'+
+      '<div class="sl-mc-fld"><label>줄당 장수</label><input type="number" id="sl-mc-cols" value="10" min="1" max="60"></div></div>'+
+      '<button class="sl-mc-add">＋ 패널 묶음 추가</button>'+
+      '<div class="sl-mc-meta"><span>블록 <b class="sl-mc-nblk">0</b>개</span><span class="sl-mc-nmod">0장 · 0kWp</span></div>'+
+      '<div class="sl-mc-row2"><button class="sl-mc-edit" style="display:none">✎ 자동배치 편집</button><button class="sl-mc-erase">🧹 영역 지우개</button></div>'+
+      '<div class="sl-mc-hint">규격·2단수·방위는 <b>옵션</b>을 따릅니다. 지도의 <b>✥</b>를 잡아 옮기고, 블록을 눌러 미세이동·삭제. 모두 용량·3D에 자동 반영.</div>'+
+      '<button class="sl-mc-clear">수동 배치 전체 지우기</button></div>';
+    document.body.appendChild(card);
+    card.querySelector('.sl-mc-x').onclick=closeManual;
+    card.querySelector('.sl-mc-add').onclick=addBlock;
+    card.querySelector('.sl-mc-edit').onclick=convertAutoToBlocks;
+    card.querySelector('.sl-mc-erase').onclick=()=>setEraser(!eraser);
+    card.querySelector('.sl-mc-clear').onclick=clearManual;
+    const bar=document.createElement('div'); bar.id='sl-man-selbar'; bar.className='sl-man-selbar';
+    bar.innerHTML='<div class="sl-ms-nm">선택 <b>—</b></div><div class="sl-ms-nudge"><button data-nx="0" data-ny="1">▲</button><button data-nx="-1" data-ny="0">◀</button><button data-nx="0" data-ny="-1">▼</button><button data-nx="1" data-ny="0">▶</button></div><button class="sl-ms-del">삭제</button>';
+    document.body.appendChild(bar);
+    bar.querySelectorAll('.sl-ms-nudge button[data-nx]').forEach(b=>b.onclick=()=>nudge(+b.dataset.nx*0.5,+b.dataset.ny*0.5));
+    bar.querySelector('.sl-ms-del').onclick=delBlock;
+  }
+  function openManual(){ manualMode=true; const mb=$('sl-btn-manual'); if(mb) mb.classList.add('on'); ensureManUi(); $('sl-man-card').classList.add('on'); if(!uiOn){ uiLayer.addTo(map); uiOn=true; } syncM(); updateEditBtns(); }
+  function closeManual(){ manualMode=false; const mb=$('sl-btn-manual'); if(mb) mb.classList.remove('on'); const c=$('sl-man-card'); if(c) c.classList.remove('on'); if(eraser) setEraser(false); selId=null; if(uiOn){ map.removeLayer(uiLayer); uiOn=false; } uiLayer.clearLayers(); updateSelbar(); }
+  function removeManUi(){ ['sl-man-card','sl-man-selbar'].forEach(id=>{ const e=document.getElementById(id); if(e) e.remove(); }); }
+
+  // ---------- 3D ----------
+  function initThree(){
+    const el=$('sl-three'); const scene=new THREE.Scene(); scene.background=new THREE.Color(0x9fc0e0);
+    const camera=new THREE.PerspectiveCamera(48, el.clientWidth/(el.clientHeight||1), 0.5, 8000);
+    const renderer=new THREE.WebGLRenderer({antialias:true, preserveDrawingBuffer:true});
+    renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(el.clientWidth, el.clientHeight);
+    renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+    renderer.outputEncoding=THREE.sRGBEncoding; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.05;
+    el.appendChild(renderer.domElement);
+    const controls=new THREE.OrbitControls(camera, renderer.domElement); controls.enableDamping=true; controls.dampingFactor=0.08; controls.maxPolarAngle=Math.PI*0.495;
+    const hemi=new THREE.HemisphereLight(0xbcd6f0,0x4b4436,0.55); scene.add(hemi);
+    const sun=new THREE.DirectionalLight(0xffffff,1.1); sun.castShadow=true; sun.shadow.mapSize.set(2048,2048); scene.add(sun); scene.add(sun.target);
+    const arrayGroup=new THREE.Group(); scene.add(arrayGroup);
+    const panelMat=new THREE.MeshStandardMaterial({color:0x14346a, roughness:.35, metalness:.25, side:THREE.DoubleSide});
+    three={el,scene,camera,renderer,controls,hemi,sun,arrayGroup,panelMat,ground:null};
+    addEventListener('resize',()=>{ if(view3D) onResize3D(); });
+    (function anim(){ requestAnimationFrame(anim); if(view3D&&three){ three.controls.update(); three.renderer.render(three.scene,three.camera); } })();
+  }
+  function onResize3D(){ if(!three)return; const el=three.el; three.camera.aspect=el.clientWidth/(el.clientHeight||1); three.camera.updateProjectionMatrix(); three.renderer.setSize(el.clientWidth, el.clientHeight); }
+  function rebuild3D(){
+    if(!three||!LAYOUT) return; const Lo=LAYOUT;
+    for(let i=three.arrayGroup.children.length-1;i>=0;i--){ const c=three.arrayGroup.children[i]; three.arrayGroup.remove(c); if(c.geometry)c.geometry.dispose(); }
+    three.arrayGroup.rotation.y=Lo.azRad;
+    const tiltR=Lo.tiltR, wRow=Lo.wRow, slope=Lo.alongSlope, depth=Lo.depth, bse=Lo.base;
+    if(Lo.placed.length){
+      const stack=Lo.stack||1, mLen=Lo.mLen||slope, intra=Lo.intra||0;
+      const geo=new THREE.BoxGeometry(wRow,mLen,0.05), inst=new THREE.InstancedMesh(geo,three.panelMat,Lo.placed.length*stack); inst.castShadow=true; inst.receiveShadow=true;
+      const d=new THREE.Object3D(); let mi=0;
+      Lo.placed.forEach(([u,v])=>{ for(let k=0;k<stack;k++){ const sc=k*(mLen+intra)+mLen/2; d.position.set(u+wRow/2, bse+sc*Math.sin(tiltR), -(v+sc*Math.cos(tiltR))); d.rotation.set(-Math.PI/2+tiltR,0,0); d.updateMatrix(); inst.setMatrixAt(mi++,d.matrix); } });
+      inst.instanceMatrix.needsUpdate=true; three.arrayGroup.add(inst);
+      if(Lo.type!=='roof'){ three.legMat=three.legMat||new THREE.MeshStandardMaterial({color:0x8b949e,metalness:0.55,roughness:0.5}); const legGeo=new THREE.BoxGeometry(0.09,1,0.09), legs=new THREE.InstancedMesh(legGeo,three.legMat,Lo.placed.length*2); legs.castShadow=true; legs.receiveShadow=true;
+        const o=new THREE.Object3D(), hTall=bse+slope*Math.sin(tiltR), hShort=Math.max(0.25,bse); let li=0;
+        Lo.placed.forEach(([u,v])=>{ const cx=u+wRow/2; o.rotation.set(0,0,0); o.position.set(cx,hTall/2,-(v+depth)); o.scale.set(1,hTall,1); o.updateMatrix(); legs.setMatrixAt(li++,o.matrix); o.position.set(cx,hShort/2,-(v)); o.scale.set(1,hShort,1); o.updateMatrix(); legs.setMatrixAt(li++,o.matrix); });
+        legs.instanceMatrix.needsUpdate=true; three.arrayGroup.add(legs); }
+    }
+    const mkLine=(ring,color,y)=>{ if(!ring||!ring.length)return; const pts=ring.map(p=>new THREE.Vector3(p.x,y,-p.y)); pts.push(pts[0].clone()); three.arrayGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({color}))); };
+    const regs=(Lo.regions&&Lo.regions.length)?Lo.regions:[{wl:Lo.wl,outerWl:Lo.outerWl}];
+    regs.forEach(r=>{ mkLine(r.outerWl,0xffd54a,0.30); mkLine(r.wl,0xff8a3d,0.28); });
+    let allx=[],ally=[]; regs.forEach(r=>{ (r.wl||[]).forEach(p=>{ allx.push(p.x); ally.push(p.y); }); }); if(!allx.length){ allx=[0]; ally=[0]; }
+    const span=Math.max(Math.max(...allx)-Math.min(...allx), Math.max(...ally)-Math.min(...ally))*1.8+24;
+    if(three.ground){ three.scene.remove(three.ground); three.ground.geometry.dispose(); }
+    const gmat=new THREE.MeshStandardMaterial({color:0x556b2f, roughness:1});
+    three.ground=new THREE.Mesh(new THREE.PlaneGeometry(span,span), gmat); three.ground.rotation.x=-Math.PI/2; three.ground.receiveShadow=true; three.scene.add(three.ground);
+    stitchGround(Lo.lat0,Lo.lng0,span).then(tex=>{ if(tex){ tex.encoding=THREE.sRGBEncoding; gmat.map=tex; gmat.color.set(0xffffff); gmat.needsUpdate=true; } });
+    const sd=span*0.7, sc=three.sun.shadow.camera; sc.left=-sd; sc.right=sd; sc.top=sd; sc.bottom=-sd; sc.near=1; sc.far=span*4; sc.updateProjectionMatrix();
+    three.controls.target.set(0,bse,0); three.camera.position.set(span*0.30, span*0.48, span*0.62); three.controls.minDistance=8; three.controls.maxDistance=2000;
+    updateSun3D();
+  }
+  function updateSun3D(){
+    if(!three)return; const t=sunT, tN=Math.min(1,Math.max(0,(t-6)/12)), elev=(62*Math.sin(Math.PI*tN))*Math.PI/180, th=(180*(t-6)/12)*Math.PI/180;
+    const dir=new THREE.Vector3(Math.cos(th)*Math.cos(elev), Math.max(0.05,Math.sin(elev)), Math.sin(th)*Math.cos(elev));
+    const span=(three.ground?three.ground.geometry.parameters.width:200); three.sun.position.copy(dir.multiplyScalar(span*1.1)); three.sun.target.position.set(0,0,0);
+    const day=Math.max(0,Math.sin(elev)); three.sun.intensity=0.3+1.1*day; three.hemi.intensity=0.35+0.4*day;
+    const warm=Math.min(1,Math.max(0,elev/(25*Math.PI/180))); three.sun.color.setRGB(1,0.62+0.36*warm,0.4+0.58*warm); three.scene.background=new THREE.Color().setRGB(0.35+0.28*day,0.48+0.28*day,0.62+0.25*day);
+  }
+  function stitchGround(lat,lng,spanM){
+    return new Promise(resolve=>{
+      const rad=lat*Math.PI/180, mpp0=156543.03392*Math.cos(rad); let z=18; for(let zz=18; zz>=13; zz--){ if(spanM/(mpp0/Math.pow(2,zz))<=1400){ z=zz; break; } }
+      const n=Math.pow(2,z), mpp=mpp0/n, worldPx=n*256, cx=(lng+180)/360*worldPx, cy=(1-Math.log(Math.tan(rad)+1/Math.cos(rad))/Math.PI)/2*worldPx;
+      const px=spanM/mpp, half=px/2, size=Math.min(2048,Math.ceil(px)), scale=size/px;
+      const cv=document.createElement('canvas'); cv.width=size; cv.height=size; const g=cv.getContext('2d'); g.fillStyle='#3d492c'; g.fillRect(0,0,size,size);
+      const x0=cx-half,y0=cy-half, tx0=Math.floor(x0/256),tx1=Math.floor((cx+half)/256),ty0=Math.floor(y0/256),ty1=Math.floor((cy+half)/256);
+      let pending=0, finished=false;
+      const done=()=>{ if(finished)return; finished=true; try{ g.getImageData(0,0,1,1); }catch(e){ resolve(null); return; } resolve(new THREE.CanvasTexture(cv)); };
+      const P=base();
+      for(let tx=tx0;tx<=tx1;tx++)for(let ty=ty0;ty<=ty1;ty++){ pending++; const dx=(tx*256-x0)*scale, dy=(ty*256-y0)*scale, dw=256*scale;
+        const draw=im=>{ try{ g.drawImage(im,dx,dy,dw,dw);}catch(e){} };
+        const esriSrc='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+z+'/'+ty+'/'+tx;
+        const img=new Image(); img.crossOrigin='anonymous'; img.onload=()=>{ draw(img); if(--pending<=0)done(); };
+        img.onerror=()=>{ const im2=new Image(); im2.crossOrigin='anonymous'; im2.onload=()=>{ draw(im2); if(--pending<=0)done(); }; im2.onerror=()=>{ if(--pending<=0)done(); }; im2.src=esriSrc; };
+        img.src=P+'/req/wmts/1.0.0/__KEY__/Satellite/'+z+'/'+ty+'/'+tx+'.jpeg'; }
+      if(pending===0) done(); setTimeout(()=>{ if(!finished) done(); },9000);
+    });
+  }
+  function show3D(){ if(!LAYOUT){ setStatus('먼저 <b>배치</b>를 해주세요 — 그 배치를 3D로 보여드립니다.'); return; }
+    ensureThreeLibs().then(ok=>{ if(!ok){ setStatus('3D 라이브러리를 불러오지 못했습니다(네트워크 확인).'); return; }
+      view3D=true; $('sl-map').style.display='none'; $('sl-three').style.display='block'; $('sl-v3d').classList.add('on'); $('sl-v2d').classList.remove('on'); $('sl-sunbar').style.display='flex';
+      if(!three) initThree(); onResize3D(); rebuild3D(); }); }
+  function show2D(){ view3D=false; $('sl-three').style.display='none'; $('sl-map').style.display='block'; $('sl-v2d').classList.add('on'); $('sl-v3d').classList.remove('on'); $('sl-sunbar').style.display='none'; if(map){ try{ map.invalidateSize(); }catch(e){} setTimeout(()=>{ try{ map.invalidateSize(); }catch(e){} },180); } }
+
+  // ---------- 2D PNG 저장 ----------
+  function savePng(){
+    if(view3D){ setStatus('⚠️ 먼저 <b>2D 지도</b>로 전환한 뒤 저장해주세요.'); return; }
+    if(!map){ return; } setStatus('이미지 생성 중…');
+    try{
+      const container=map.getContainer(), size=map.getSize(); if(!size.x||!size.y){ setStatus('⚠️ 지도 화면을 찾을 수 없습니다.'); return; }
+      const out=document.createElement('canvas'); out.width=size.x; out.height=size.y; const octx=out.getContext('2d');
+      octx.fillStyle='#0a1526'; octx.fillRect(0,0,size.x,size.y);
+      const b=container.getBoundingClientRect(); const place=el=>{ const r=el.getBoundingClientRect(); return {x:r.left-b.left,y:r.top-b.top,w:r.width,h:r.height}; };
+      container.querySelectorAll('img.leaflet-tile-loaded').forEach(img=>{ try{ const p=place(img); octx.drawImage(img,p.x,p.y,p.w,p.h); }catch(e){} });
+      container.querySelectorAll('canvas').forEach(cvs=>{ try{ const p=place(cvs); octx.drawImage(cvs,p.x,p.y,p.w,p.h); }catch(e){} });
+      let url; try{ url=out.toDataURL('image/png'); }catch(e){ setStatus('⚠️ 위성 타일 보안(CORS)으로 저장 불가 — 잠시 후 재시도.'); return; }
+      const a=document.createElement('a'); a.href=url; a.download='모듈가배치_'+(lastJibun||'부지').replace(/[\\/:*?"<>|]/g,'_')+'.png'; a.click(); setStatus('🖼️ 2D 이미지를 저장했습니다.');
+    }catch(e){ setStatus('⚠️ 이미지 생성 실패.'); }
+  }
+
+  // ---------- 세그/옵션 배선 ----------
+  function wireSeg(wrapId, attr, cb){ const w=$(wrapId); if(!w)return; w.querySelectorAll('button').forEach(btn=>btn.onclick=()=>{ w.querySelectorAll('button').forEach(x=>x.classList.remove('on')); btn.classList.add('on'); cb(btn.dataset[attr]); }); }
+  function wire(){
+    $('sl-search').onclick=doSearch;
+    const ai=$('sl-addr'); if(ai) ai.onkeydown=e=>{ if(e.key==='Enter') doSearch(); };
+    $('sl-btn-draw').onclick=()=>{ try{ map.pm.enableDraw('Polygon',{snappable:true,finishOn:'dblclick'}); setStatus('✏️ 지도에서 꼭짓점을 클릭해 부지를 그리고, 마지막 점을 더블클릭하세요.'); }catch(e){ setStatus('그리기를 시작할 수 없습니다.'); } };
+    $('sl-btn-clear').onclick=()=>{ try{ map.pm.disableDraw(); }catch(_){} clearBoundary(); panelLayer.clearLayers(); bufferLayer.clearLayers(); resetStats(); LAYOUT=null; setStatus('지웠습니다 — 새 부지를 지정하세요.'); };
+    $('sl-btn-run').onclick=runLayout;
+    $('sl-btn-manual').onclick=()=>{ manualMode?closeManual():openManual(); };
+    $('sl-btn-png').onclick=savePng;
+    $('sl-v2d').onclick=show2D; $('sl-v3d').onclick=show3D;
+    $('sl-sun').oninput=e=>{ sunT=parseFloat(e.target.value); const h=Math.floor(sunT), m=Math.round((sunT-h)*60); $('sl-v-sun').textContent=(h<10?'0':'')+h+':'+(m<10?'0':'')+m; updateSun3D(); };
+    wireSeg('sl-seg-mod','m', m=>{ if(m==='custom'){ return; } applyPreset(m); if(MANUAL.length) syncM(); });
+    wireSeg('sl-seg-type','t', t=>{ S.type=t; if(MANUAL.length) syncM(); });
+    wireSeg('sl-seg-opt','o', o=>{ S.optimize=(o==='1'); $('sl-az-manual').style.display=S.optimize?'none':'block'; if(MANUAL.length) syncM(); });
+    wireSeg('sl-seg-pitch','p', p=>{ S.pitchMode=p; $('sl-pitch-manual').style.display=(p==='manual')?'block':'none'; if(MANUAL.length) syncM(); });
+    $('sl-o-set').oninput=e=>{ $('sl-v-set').textContent=((+e.target.value)/10).toFixed(1)+' m'; };
+    $('sl-o-az').oninput=e=>{ const v=+e.target.value; $('sl-v-az').textContent=v===0?'정남':(v<0?'남동 '+(-v)+'°':'남서 '+v+'°'); S.az=v; if(MANUAL.length) syncM(); };
+    $('sl-m-stack').oninput=e=>{ $('sl-v-stack').textContent=e.target.value+' 장'; S.stack=+e.target.value; if(MANUAL.length) syncM(); };
+    ['sl-m-w','sl-m-h','sl-m-p','sl-m-o'].forEach(id=>{ const el=$(id); if(el) el.addEventListener('input',()=>{ if(MANUAL.length) syncM(); }); });
+  }
+
+  // ---------- HTML ----------
+  function render(){
+    const pre=(typeof salesFeas!=='undefined' && salesFeas && salesFeas.jibun)?salesFeas.jibun:'';
+    const h=(typeof wfHead==='function')?wfHead('모듈 가배치','위성 지도에 부지 경계를 잡고 태양광 패널을 <b>자동/수동</b>으로 배치해 <b>설치 용량·면적 활용률·연간 발전량</b>을 산출합니다. 2D·3D로 확인하세요.'):'';
+    return h+`<div class="sl-wrap">
+      <div class="sl-left card pad">
+        <div class="section-title" style="font-size:12px;margin:0 0 7px">📐 모듈 규격</div>
+        <div class="sl-seg" id="sl-seg-mod"><button data-m="kr" class="on">국산<br><small>현대 645W</small></button><button data-m="cn">중국산<br><small>AIKO 655W</small></button><button data-m="custom">직접입력</button></div>
+        <div class="sl-grid2">
+          <label class="sl-fld">가로(mm)<input class="tinput" type="number" id="sl-m-w" value="1134"></label>
+          <label class="sl-fld">세로(mm)<input class="tinput" type="number" id="sl-m-h" value="2465"></label>
+          <label class="sl-fld">출력(W)<input class="tinput" type="number" id="sl-m-p" value="645"></label>
+          <label class="sl-fld">설치방향<select class="tinput" id="sl-m-o"><option value="portrait">세로(길이↕)</option><option value="landscape">가로(길이↔)</option></select></label>
+        </div>
+        <label class="sl-fld">세로 적재(장) <b id="sl-v-stack">2 장</b><input type="range" id="sl-m-stack" min="1" max="6" value="2"></label>
+        <div class="section-title" style="font-size:12px;margin:14px 0 7px">⚙️ 배치 옵션</div>
+        <div class="sl-seg" id="sl-seg-type"><button data-t="ground" class="on">노지</button><button data-t="roof">지붕</button><button data-t="carport">주차장</button></div>
+        <div class="sl-note2">기본값 · 모듈각도 15° · 입사각 25° · 2단 간격 10mm</div>
+        <label class="sl-fld">완충 경계(안쪽 이격) <b id="sl-v-set">2.0 m</b><input type="range" id="sl-o-set" min="0" max="100" value="20"></label>
+        <div class="sl-lbl">패널 방위</div>
+        <div class="sl-seg" id="sl-seg-opt"><button data-o="1" class="on">자동(정남)</button><button data-o="0">수동 방위</button></div>
+        <label class="sl-fld" id="sl-az-manual" style="display:none">배열 방위(정남 기준) <b id="sl-v-az">정남</b><input type="range" id="sl-o-az" min="-90" max="90" value="0"></label>
+        <div class="sl-lbl">열 간격(그림자 방지)</div>
+        <div class="sl-seg" id="sl-seg-pitch"><button data-p="auto" class="on">자동</button><button data-p="manual">수동</button></div>
+        <label class="sl-fld" id="sl-pitch-manual" style="display:none">모듈 열 이격(m)<input class="tinput" type="number" id="sl-o-pitch" min="0" max="10" step="0.01" value="2.5"></label>
+      </div>
+      <div class="sl-center">
+        <div class="sl-searchbar">
+          <input class="tinput" id="sl-addr" placeholder="지번/도로명 검색 (예: 경기도 파주시 문발동 66)" value="${esc(pre)}">
+          <button class="btn primary sm" id="sl-search">🔎 검색</button>
+          <div class="sl-tools">
+            <button class="btn ghost sm" id="sl-btn-draw" title="부지 경계 직접 그리기">✏️ 경계</button>
+            <button class="btn ghost sm" id="sl-btn-clear" title="지우기">🗑️ 지우기</button>
+            <button class="btn dark sm" id="sl-btn-run" title="패널 자동 배치">▦ 배치</button>
+            <button class="btn ghost sm" id="sl-btn-manual" title="수동 배치">✥ 수동배치</button>
+          </div>
+        </div>
+        <div class="sl-maparea">
+          <div id="sl-map"></div><div id="sl-three"></div>
+          <div id="sl-viewtoggle"><button id="sl-v2d" class="on">🗺️ 2D</button><button id="sl-v3d">🧊 3D</button></div>
+          <div id="sl-sunbar" style="display:none">☀️ <input type="range" id="sl-sun" min="6" max="18" step="0.25" value="13"><b id="sl-v-sun">13:00</b></div>
+        </div>
+        <div id="sl-status">위 <b>지번 검색</b> 또는 <b>경계</b>로 부지를 지정하세요.</div>
+      </div>
+      <div class="sl-right card pad">
+        <div class="section-title" style="font-size:12px;margin:0 0 10px">📊 배치 결과</div>
+        <div class="sl-stat hero"><div class="k">설치 용량</div><div class="v"><span id="sl-r-kw">0</span> kWp</div></div>
+        <div class="sl-stat"><div class="k">총 모듈 수</div><div class="v"><span id="sl-r-count">0</span> 장</div></div>
+        <div class="sl-grid2b">
+          <div class="sl-stat"><div class="k">부지 면적</div><div class="v"><span id="sl-r-land">0</span> ㎡</div></div>
+          <div class="sl-stat"><div class="k">면적 이용률</div><div class="v"><span id="sl-r-ratio">0</span> %</div></div>
+        </div>
+        <div class="sl-stat green"><div class="k">연간 예상 발전량</div><div class="v"><span id="sl-r-gen">0</span> MWh</div></div>
+        <div class="sl-stat"><div class="k">구조물(테이블) 수</div><div class="v"><span id="sl-r-tables">0</span> 개</div></div>
+        <button class="btn sm" id="sl-btn-png" style="margin-top:10px;width:100%">🖼️ 2D 이미지 저장</button>
+        <div class="sl-disc">✅ 부지 경계·모듈규격 기반 수량/용량·이격·열간격·방위 반영<br>⚠️ 지형 경사·음영·전기(스트링) 설계·지자체 이격규정 차이는 미반영 — <b>개략 배치</b>입니다.</div>
+      </div>
+    </div>`;
+  }
+
+  // ---------- init (idempotent) ----------
+  async function init(){
+    const host=$('sl-map'); if(!host) return;
+    // 재진입: 이전 지도/3D/수동UI 정리 후 새로 구축(innerHTML이 매번 교체되므로)
+    if(map){ try{ map.remove(); }catch(e){} map=null; }
+    three=null; view3D=false; LAYOUT=null; REGIONS=[]; MANUAL.length=0; selId=null; manualMode=false; uiOn=false; eraser=false;
+    removeManUi();
+    let ok=false; try{ ok=await ensureMapLibs(); }catch(e){ ok=false; }
+    if(!ok){ setStatus('⚠️ 지도 라이브러리를 불러오지 못했습니다 — 네트워크(인터넷 연결)를 확인하세요.'); return; }
+    buildMap(); panelLayerM=L.layerGroup().addTo(map); wire();
+    setTimeout(()=>{ try{ map.invalidateSize(); }catch(e){} },120);
+    if(lastJibun){ const ai=$('sl-addr'); if(ai&&!ai.value) ai.value=lastJibun; }
+  }
+
+  return {render, init};
+})();
+function renderSalesLayoutView(){ return SL.render(); }
+function initSalesLayout(){ return SL.init(); }
+
 // 타당성검토 (설계) — 지번 실시간 설치 가능성 진단(국토부·한전 API) + 승인·반려
 function renderFeasibility(){
   const cards = DEALS.filter(d=>d.stage==='feasibility').map(d=>{
@@ -7196,6 +7712,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-20', team:'영업', kind:'추가', title:'「모듈 가배치」 기능 개발 — 위성 지도에 패널 자동/수동 배치 + 용량·발전량 산출(2D·3D)', body:'영업 <b>「모듈 가배치」</b>를 고정 예시 화면에서 <b>실제 위성 지도 기반 배치 도구</b>로 개발했습니다. ① <b>위성 지도</b>에서 부지 경계를 <b>지번 검색(필지 자동 로드)</b> 또는 <b>직접 그리기</b>로 지정합니다. ② <b>자동 배치</b>는 모듈 규격(국산 현대645W·중국산 AIKO655W·직접입력)과 설치 유형(노지/지붕/주차장)에 맞춰, <b>패널 방위(정남/수동)·완충 이격·그림자 방지 열간격·2단 적재</b>를 반영해 패널을 채웁니다. ③ <b>수동 배치</b>로 패널 묶음을 <b>지도에서 끌어 옮기고(✥), 미세이동·영역 지우개</b>로 세밀하게 다듬을 수 있으며, 자동 배치를 줄 단위로 불러와 편집할 수도 있습니다. ④ 오른쪽에 <b>설치 용량(kWp)·총 모듈 수·부지 면적·면적 이용률·연간 예상 발전량·구조물(테이블) 수</b>가 실시간 산출됩니다. ⑤ <b>2D 지도 / 3D 미리보기</b>(패널·가대·태양 시간대)로 전환하고, <b>2D 이미지로 저장</b>할 수 있습니다. ⑥ 「타당성검토」에서 <b>「이 부지로 모듈 가배치 →」</b>로 지번이 그대로 이어집니다. ⑦ 위성영상은 <b>국토부 항공영상(고해상) + 글로벌 위성(보조)</b>을 사용합니다. <b>개략 배치</b>로 수량·용량 산정에 쓰며, 전기(스트링) 설계·지형 음영·지자체 이격 규정 차이는 반영하지 않습니다.', author:'개발'},
   {date:'2026-10-20', team:'공통', kind:'추가', title:'「타당성검토」 기능 개발 — 부지 지번만 넣으면 설치 가능성 즉석 진단(영업·설계)', body:'부지의 <b>지번(또는 도로명)만 입력</b>하면 <b>태양광 설치 가능성</b>을 실시간으로 진단하는 기능을 개발했습니다(국토부·한전 공공데이터 자동 조회). ① <b>영업 「타당성검토」</b>가 고정 예시 화면에서 <b>진짜 즉석 진단 도구</b>로 바뀌었습니다 — 부지 유형(노지/지붕/수상)과 지번을 넣고 「진단 실행」을 누르면, <b>지목·경사도·용도지역·태양광 규제 판정·계통(변전소) 여유·일사량·개별공시지가</b>를 종합해 <b>가능 🟢 / 조건부 🟡 / 제한 🔴</b> 신호등으로 보여줍니다. 신규 부지를 발굴했을 때 계약 전에 바로 타진할 수 있습니다. ② <b>설계 「타당성검토」</b>(기존 진단)도 함께 강화했습니다 — <b>태양광 행위제한 판정을 23종으로 세분화</b>(개발제한·통제보호·비행안전·접도·공원·교육환경·토지거래허가 등), <b>일사량(발전량 참고)</b>과 <b>개별공시지가 추이</b>를 새로 보여줍니다. ③ 두 화면 모두 <b>같은 진단 엔진</b>을 쓰며, 실시간 데이터가 닿지 않을 땐 추정치로 자동 표시되고 연결되면 실시간으로 전환됩니다.', author:'개발'},
   {date:'2026-10-19', team:'공통', kind:'수정', title:'상단 고정 시 바로 아래 내용이 제목·조작바에 가려지던 현상 — 전 메뉴 전수조사 후 해소', body:'상단(제목·조작바·안내박스)이 고정되면서 <b>바로 아래 첫 내용의 윗부분이 살짝 가려지던</b> 현상을, <b>영업·설계·행정·시공 전 메뉴를 하나씩 점검</b>해 모두 바로잡았습니다. ① <b>목록·현황판</b>(예: 행정 「설비확인」)은 <b>완료·진행·대기·문제 집계 줄</b>이, <b>서류 작성 화면</b>(예: 「발전사업 허가」·「사업개시」·기초공사 등)은 <b>맨 윗 항목 칸</b>이 가려졌는데, 이제 <b>고정 영역 바로 아래부터 깔끔하게</b> 시작합니다. ② <b>대상 현장 선택·날짜·계약법인 등 조작줄은 제목에 그대로 붙어</b> 고정되는 모양 그대로입니다(가리던 것만 아래로 밀어 해소). ③ <b>화면 종류별로 가림 정도가 조금씩 달라</b> 각각 측정해 딱 맞게 보정했고, <b>26개 메뉴 전부 가림 0</b>을 확인했습니다. (모바일 화면은 기존과 동일)', author:'개발'},
   {date:'2026-10-19', team:'공통', kind:'수정', title:'첨부파일 저장 구조 개선 준비 — 사진·문서를 파일 전용 저장소로 분리(화면 변화 없음)', body:'<b>지금은 화면에 변화가 없지만</b>, 앞으로 비용을 크게 줄이기 위한 <b>내부 구조 개선 준비</b>를 마쳤습니다. ① 지금은 올리신 <b>사진·문서(첨부파일)가 데이터베이스 안에 통째로 담겨</b> 저장되는데, 파일이 쌓일수록 <b>용량·비용·속도</b> 부담이 커집니다(파일을 글자처럼 변환해 넣는 방식이라 더 무겁습니다). ② 이를 <b>파일 전용 클라우드 저장소</b>로 옮기고, 데이터베이스에는 <b>파일을 가리키는 링크만</b> 두는 방식으로 바꾸는 <b>기반 작업(서버·화면·저장구조)을 모두 준비</b>했습니다 — 같은 저장량 기준 <b>비용이 수 배 저렴</b>하고, 조회가 많아도 <b>열람 비용이 들지 않는</b> 구조입니다. ③ <b>지금 당장은 쓰시던 그대로</b>입니다 — 업로드·열기·출력 방식, 이미 올려둔 첨부본 모두 <b>변화 없이 동일</b>하게 동작합니다. ④ 저장소 계정 준비가 끝나면 <b>설정만 연결해 자동 전환</b>되며, 그때 다시 안내드리겠습니다. (적용 범위: 행정 「발전사업 허가」 첨부서류, 시공 「시공서류함」 첨부)', author:'개발'},
@@ -7777,6 +8294,7 @@ function renderCostSheet(){
 function renderDynamicSub(sub){
   if(sub==='s-status'){ const el=document.getElementById('sub-s-status'); if(el) el.innerHTML=renderSitesProgressBoard('영업'); }
   else if(sub==='s-feas'){ const el=document.getElementById('sub-s-feas'); if(el) el.innerHTML=renderSalesFeasView(); }
+  else if(sub==='s-layout'){ const el=document.getElementById('sub-s-layout'); if(el){ el.innerHTML=renderSalesLayoutView(); initSalesLayout(); } }
   else if(sub==='s-quote'){ const el=document.getElementById('sub-s-quote'); if(el){ el.innerHTML=renderSalesQuote(); initQuoteEditor(); } }
   else if(sub==='s-costsheet'){ const el=document.getElementById('sub-s-costsheet'); if(el) el.innerHTML=renderCostSheet(); }
   else if(sub==='a-creds'){ const el=document.getElementById('sub-a-creds'); if(el) el.innerHTML=renderPermitCreds(); }
