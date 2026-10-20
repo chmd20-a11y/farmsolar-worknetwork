@@ -1243,6 +1243,8 @@ button{font-family:inherit;cursor:pointer}
 .fx-ck{cursor:pointer;user-select:none;display:inline-block;border:1px solid #c4c9d2;border-radius:6px;padding:1px 7px;margin:1px 2px;background:#fff;color:#2c3340;font-weight:600;white-space:nowrap;line-height:1.5}
 .fx-ck:hover{border-color:#0e7c66;background:#f3fbf7}
 .fx-ck.on{background:#0e7c66;color:#fff;border-color:#0e7c66}
+.fx-ck-lock{pointer-events:none;cursor:default}
+.fx-ck-lock:not(.on){opacity:.4}
 .fx-ph{background:#f4f6f9;text-align:center;color:#8a8f98;cursor:pointer;font-size:0;padding:0;position:relative;height:84px}
 .fx-ph .fx-ph-ph{font-size:10.5px;color:#9aa0aa;line-height:1.5;display:inline-block;padding:6px}
 .fx-ph.has{background:#fff}
@@ -8671,21 +8673,21 @@ function sunWire(paper, id){
   });
   const ckEls=[...paper.querySelectorAll('.fx-ck')];
   const ckMark=(el,on)=>{ el.textContent=(on?'■':'□')+el.textContent.slice(1); el.classList.toggle('on',on); };
-  ckEls.forEach((el,i)=>{
-    if(cks.indexOf(i)>=0) ckMark(el,true);
-    el.addEventListener('click',()=>{
-      const on=!el.classList.contains('on'); ckMark(el,on);
-      const p=cks.indexOf(i); if(on&&p<0)cks.push(i); if(!on&&p>=0)cks.splice(p,1);
-      if(on){ const td=el.closest('td'); if(td) ckEls.forEach((o,j)=>{ if(o!==el && o.closest('td')===td && o.classList.contains('on')){ ckMark(o,false); const q=cks.indexOf(j); if(q>=0)cks.splice(q,1); } }); }  // 한 칸(예/아니오·동의/미동의) 안에서는 하나만 선택
-      sunStore();
-    });
-  });
-  // 서식1 신청전 체크리스트 — 모든 '예'를 기본 선택(마을별 1회 시드, 이후 수정 가능)
-  sunData.seeded=sunData.seeded||{};
-  if(id==='s0' && !sunData.seeded.s0){
-    sunData.seeded.s0=true;
-    if(cks.length===0){ ckEls.forEach((el,i)=>{ if(el.textContent.indexOf('예')>=0 && el.textContent.indexOf('아니오')<0){ ckMark(el,true); cks.push(i); } }); }
+  if(id==='s0'){
+    // 서식1 신청전 체크리스트 — 모두 '예'로 고정(변경·취소 불가)
+    cks.length=0;
+    ckEls.forEach((el,i)=>{ const yes=el.textContent.indexOf('예')>=0 && el.textContent.indexOf('아니오')<0; ckMark(el,yes); el.classList.add('fx-ck-lock'); if(yes) cks.push(i); });
     sunStore();
+  } else {
+    ckEls.forEach((el,i)=>{
+      if(cks.indexOf(i)>=0) ckMark(el,true);
+      el.addEventListener('click',()=>{
+        const on=!el.classList.contains('on'); ckMark(el,on);
+        const p=cks.indexOf(i); if(on&&p<0)cks.push(i); if(!on&&p>=0)cks.splice(p,1);
+        if(on){ const td=el.closest('td'); if(td) ckEls.forEach((o,j)=>{ if(o!==el && o.closest('td')===td && o.classList.contains('on')){ ckMark(o,false); const q=cks.indexOf(j); if(q>=0)cks.splice(q,1); } }); }  // 한 칸(예/아니오·동의/미동의) 안에서는 하나만 선택
+        sunStore();
+      });
+    });
   }
   paper.querySelectorAll('.fx-ph').forEach(td=>{ const fk=td.dataset.fk; sunPaintPhoto(td,id,fk); td.addEventListener('click',(e)=>{ if(e.target.classList.contains('fx-ph-x'))return; sunPickPhoto(id,fk); }); });
 }
