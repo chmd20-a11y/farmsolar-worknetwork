@@ -8755,7 +8755,7 @@ function renderSunlightVillage(){
   </div>
   <input type="file" id="suvPhotoInput" accept="image/*" style="display:none">
   <input type="file" id="suvAttachInput" accept="application/pdf,image/*" style="display:none">
-  <input type="file" id="suvFolderInput" multiple style="display:none">`;
+  <input type="file" id="suvFolderInput" webkitdirectory multiple style="display:none">`;
 }
 
 function initSunlightVillage(){
@@ -8899,7 +8899,7 @@ async function sunConnectFolder(){
     try{ const files=await sunReadDir(sunDirHandle); await sunHandleFiles(files); }
     catch(e){ toast('폴더 읽기 오류: '+e.message); if(st)st.textContent=''; }
   } else {
-    toast('이 브라우저는 폴더 통째 연결을 지원하지 않습니다 — 파일을 여러 개 선택하세요');
+    toast('열리는 창에서 마을 자료 폴더를 선택하세요 (지원 안 되는 기기는 파일 여러 개 선택)');
     const fi=document.getElementById('suvFolderInput'); if(fi)fi.click();
   }
 }
