@@ -90,7 +90,7 @@
 }
 
 *{box-sizing:border-box}
-html,body{margin:0;padding:0}
+html,body{margin:0;padding:0;height:100%;overflow:hidden}
 body{
   font-family:var(--sans);
   background:var(--bg);
@@ -105,7 +105,7 @@ button{font-family:inherit;cursor:pointer}
 /* ============================================================
    레이아웃 셸
    ============================================================ */
-.app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.app{display:flex;flex-direction:column;height:100%;overflow:hidden}
 
 /* ---------- 상단바: 브랜드 | 중앙 팀탭 | 우측 도구 ---------- */
 .topbar{
@@ -8734,10 +8734,11 @@ function sunAiFlags(id){ sunData.ai=sunData.ai||{}; return sunData.ai[id]||(sunD
 function sunCkSrc(id){ sunData.cksrc=sunData.cksrc||{}; return sunData.cksrc[id]||(sunData.cksrc[id]={}); }  // AI가 제안한 체크박스: {순번: 근거문}
 
 function renderSunlightVillage(){
-  const h=(typeof wfHead==='function')?wfHead('햇빛소득마을 · 사업계획서 자동작성','마을 자료 폴더를 연결하면 <b>AI가 공고 서식에 자동으로 채워</b> 드립니다. 서식을 한 장씩 확인·보완하고, 사진은 자리마다 올려 넣으세요.'):'';
+  const h=(typeof wfHead==='function')?wfHead('영업 · 햇빛소득마을','마을 자료 폴더를 연결하면 <b>AI가 공고 서식에 자동으로 채워</b> 드립니다. 서식을 한 장씩 확인·보완하고, 사진은 자리마다 올려 넣으세요.'):'';
   const rail=SUNLIGHT_FORMS.map((f,i)=>`<button class="suv-navbtn ${f.id===SUNLIGHT_CUR?'on':''}" data-fid="${f.id}" onclick="sunSelect('${f.id}')"><span class="suv-nb-n">${i+1}</span><span class="suv-nb-t" title="${esc(f.title)}">${esc(f.tab||f.title)}</span><span class="suv-nb-pct" id="suv-pct-${f.id}"></span></button>`).join('');
-  return h+`
+  return `
   <div class="suv-top">
+  ${h}
   <div class="suv-bar">
     <span class="suv-site">☀️ 마을</span>
     <select class="suv-vsel" id="suvVillageSel" onchange="sunSwitchVillage(this.value)" title="작업할 마을 선택(저장된 마을 불러오기)"></select>
@@ -8774,7 +8775,8 @@ function initSunlightVillage(){
   sunRenderVillageSel();
   sunPaint();
   sunUpdatePcts();
-  if(typeof syncStickyOffset==='function'){ syncStickyOffset(); setTimeout(syncStickyOffset,60); }  // 제목부 높이(--ph-h) 측정 → 툴바 고정 위치
+  // 제목을 고정 툴바(.suv-top) 안으로 승격했으므로 공유 제목부는 숨김(중복 방지) — applyPageHead가 놓쳐도 보장. 다른 메뉴로 가면 applyPageHead가 다시 표시.
+  const _ph=document.querySelector('.view.active .page-head'); if(_ph) _ph.style.display='none';
   const fi=document.getElementById('suvFolderInput');
   if(fi) fi.onchange=()=>{ const files=[...fi.files].map(f=>({name:f.name, ext:(f.name.split('.').pop()||'').toLowerCase(), file:f})); fi.value=''; if(files.length) sunHandleFiles(files); };
 }
@@ -9568,7 +9570,7 @@ function applyPageHead(tab, btn){
   const view = document.getElementById('view-'+tab); if(!view) return;
   const ph = view.querySelector('.page-head'); if(!ph) return;
   const sub = view.querySelector('.subview.active');
-  if(sub && sub.querySelector('.pi-stickytop')){ ph.style.display='none'; syncStickyOffset(); return; }   // 사용전검사: 자체 헤더를 상단에 고정(공유 page-head 숨김)
+  if(sub && (sub.querySelector('.pi-stickytop') || sub.querySelector('.suv-top'))){ ph.style.display='none'; syncStickyOffset(); return; }   // 사용전검사·햇빛소득마을: 자체 헤더(제목+툴바)를 통째로 상단 고정(공유 page-head 숨김)
   ph.style.display='';
   const h1 = ph.querySelector('h1'), p = ph.querySelector('p');
   const label = ((btn && btn.querySelector('span')) ? btn.querySelector('span').textContent : '').trim();
