@@ -8983,7 +8983,9 @@ function sunWire(paper, id){
   paper.querySelectorAll('.fx-v').forEach(td=>{
     const fk=td.dataset.fk;
     td.setAttribute('contenteditable','true');
-    if(vals[fk]!=null && vals[fk]!==''){ td.textContent=vals[fk]; td.classList.add('filled'); }
+    const narr=sunIsNarrCell(td);
+    if(narr){ td.style.textAlign='left'; td.style.verticalAlign='top'; td.style.whiteSpace='pre-wrap'; }
+    if(vals[fk]!=null && vals[fk]!==''){ td.textContent=narr?sunFmtNarr(vals[fk]):vals[fk]; td.classList.add('filled'); }
     if(ai[fk]){ td.setAttribute('data-ai','1'); if(src[fk]) td.title='🔎 AI가 채운 근거: '+src[fk]; }
     if(comp[fk]){ td.classList.add('computed'); td.title='🧮 자동 계산: '+comp[fk]; }
     td.addEventListener('input',()=>{ const t=td.textContent.trim(); if(t) vals[fk]=t; else delete vals[fk]; td.classList.toggle('filled', !!t); td.removeAttribute('data-ai'); td.classList.remove('computed'); td.removeAttribute('title'); delete ai[fk]; delete src[fk]; delete comp[fk]; });
@@ -9039,7 +9041,7 @@ function sunPreview(autoPrint){
     } else { div.innerHTML='<div style="padding:40px;text-align:center;color:#8a93a3;border:2px dashed #ccc;border-radius:12px">조합원 명부 스캔본이 아직 첨부되지 않았습니다.<br>원본을 스캔하여 첨부해 주세요.</div>'; }
   } else {
   div.innerHTML=f.html;
-  div.querySelectorAll('.fx-v').forEach(td=>{ const v=vals[td.dataset.fk]; td.classList.remove('fx-v'); td.classList.add('fx-vp'); td.removeAttribute('data-label'); td.textContent=(v!=null?v:''); });
+  div.querySelectorAll('.fx-v').forEach(td=>{ const v=vals[td.dataset.fk]; const narr=sunIsNarrCell(td); td.classList.remove('fx-v'); td.classList.add('fx-vp'); td.removeAttribute('data-label'); if(narr){ td.style.textAlign='left'; td.style.verticalAlign='top'; td.style.whiteSpace='pre-wrap'; } td.textContent=(v!=null?(narr?sunFmtNarr(v):v):''); });
   const ckEls=[...div.querySelectorAll('.fx-ck')];
   ckEls.forEach((el,i)=>{ if(cks.indexOf(i)>=0){ el.textContent='■'+el.textContent.slice(1); el.classList.add('on'); } });
   div.querySelectorAll('.fx-ph').forEach(td=>{ const url=photos[td.dataset.fk]; td.classList.add('has'); td.innerHTML = url ? '<img src="'+url+'" alt="부지 사진">' : '<span style="color:#c3c7cf;font-size:9px">(부지 사진)</span>'; });
@@ -9257,6 +9259,21 @@ function sunPrecedingHeading(td){
     p=p.previousElementSibling; hop++;
   }
   return '';
+}
+// 서술형 큰 칸(한 행에 칸 하나뿐인 전폭 셀) 여부 — 좌/상단 정렬+줄바꿈 대상.
+function sunIsNarrCell(td){ const tr=td&&td.closest&&td.closest('tr'); return !!(tr && tr.cells && tr.cells.length===1); }
+// 서술형 내용 정렬: 번호 항목(1) 2) 3)·①②③)마다 줄바꿈, 없으면 한국어 문장끝(…다. )마다 줄바꿈. 이미 줄바꿈 있으면 그대로.
+function sunFmtNarr(s){
+  s=String(s==null?'':s).replace(/\r\n?/g,'\n');
+  if(/\n/.test(s)) return s.replace(/[ \t]+\n/g,'\n').replace(/\n[ \t]+/g,'\n').trim();
+  s=s.replace(/\s+/g,' ').trim(); if(!s) return s;
+  const enumCount=(s.match(/\d+\)/g)||[]).length, circled=/[①-⑮㉠-㉯]/.test(s);
+  if(enumCount>=2 || circled){
+    s=s.replace(/\s*(?=\d+\))/g,'\n').replace(/\s*(?=[①-⑮㉠-㉯])/g,'\n');
+  } else {
+    s=s.replace(/([가-힣])\.\s+/g,'$1.\n');   // 한국어 문장 경계(…다. )
+  }
+  return s.replace(/^\n+/,'').replace(/\n{2,}/g,'\n').trim();
 }
 // 서식에서 AI가 채울 항목 수집: 텍스트빈칸(fx-v) + 드롭다운(fx-sel) + 체크박스 그룹(fx-ck). 개인 동의(동의/동의안함)·동의서 서식은 제외.
 function sunCollectFields(f){
