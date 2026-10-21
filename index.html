@@ -8935,29 +8935,53 @@ async function sunHandleFiles(files){
   if(f){ const slots=[...document.querySelectorAll('.fx-ph:not(.has)')]; for(let i=0;i<Math.min(slots.length,imgs.length);i++){ try{ const file=await sunGetFile(imgs[i]); await new Promise(res=>sunImgToURL(file,(url)=>{ sunPhotos(f.id)[slots[i].dataset.fk]=url; placed++; res(); })); }catch(e){} } if(placed){ sunStore(); sunPaint(); } }
   // 2) 텍스트 코퍼스 수집 (+ 파일별 읽기 결과 추적)
   if(st)st.textContent='자료 텍스트 추출 중…';
-  let corpus=''; const readOk=[], scanned=[], emptyDoc=[];
+  let corpus=''; const readOk=[], scannedPdf=[], emptyDoc=[];
   for(const d of docs){ if(corpus.length>160000)break; let t='';
     try{ t=await sunExtractText(d); }catch(e){}
     if(t && t.trim().length>20){ corpus+='\n\n===== '+d.name+' =====\n'+t.trim(); readOk.push(d.name); }
-    else if(d.ext==='pdf'){ scanned.push(d.name); }   // PDF인데 글자 거의 0 = 스캔(이미지)본
+    else if(d.ext==='pdf'){ scannedPdf.push(d); }   // PDF인데 글자 거의 0 = 스캔(이미지)본 → OCR 대상
     else { emptyDoc.push(d.name); }
   }
+  // 3) 스캔 PDF·이미지 OCR(Gemini 멀티모달) — 글자 못 뽑은 스캔본 + 이미지. 스캔본 우선, 총 제한.
+  const ocrList=[]; scannedPdf.forEach(d=>ocrList.push({item:d, mime:'application/pdf'})); imgs.forEach(im=>ocrList.push({item:im, mime:sunMimeOf(im.ext)}));
+  const ocrOk=[], ocrSkip=[]; const OCR_CAP=14;
+  for(let i=0;i<ocrList.length;i++){
+    if(i>=OCR_CAP || corpus.length>180000){ ocrSkip.push(ocrList[i].item.name); continue; }
+    const q=ocrList[i];
+    if(st)st.textContent='스캔·사진에서 글자 읽는 중… ('+(i+1)+'/'+Math.min(ocrList.length,OCR_CAP)+')';
+    try{
+      const file=await sunGetFile(q.item); if(!file){ ocrSkip.push(q.item.name); continue; }
+      let b64, mime=q.mime;
+      if(/^image\//.test(q.mime)){ const d=await sunDownscaleForOcr(file); b64=d.b64; mime=d.mime; }
+      else { if(file.size>4*1024*1024){ ocrSkip.push(q.item.name+' (용량 초과)'); continue; } b64=await sunFileToB64(file); }
+      if(!b64 || b64.length>5*1024*1024){ ocrSkip.push(q.item.name+' (용량 초과)'); continue; }
+      const r=await fetch('/api/sunlight-ocr',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:q.item.name, mimeType:mime, dataBase64:b64})});
+      if(!r.ok){ ocrSkip.push(q.item.name); continue; }
+      const j=await r.json().catch(()=>({}));
+      if(j.text && j.text.trim().length>15){ corpus+='\n\n===== (스캔·사진 OCR) '+q.item.name+' =====\n'+j.text.trim(); ocrOk.push(q.item.name); }
+      else { ocrSkip.push(q.item.name); }
+    }catch(e){ ocrSkip.push(q.item.name); }
+  }
   sunData._corpus=corpus;
-  if(st)st.textContent='읽은 자료 '+readOk.length+'건 · 사진 '+placed+'장'+(hwps.length?' · 못읽은 한글 '+hwps.length:'')+(scanned.length?' · 스캔PDF '+scanned.length:'');
-  sunShowReadReport({readOk, scanned, emptyDoc, hwps:hwps.map(x=>x.name), imgCount:imgs.length, placed});
+  if(st)st.textContent='읽은 자료 '+(readOk.length+ocrOk.length)+'건'+(ocrOk.length?('(OCR '+ocrOk.length+')'):'')+' · 사진 '+placed+'장'+(hwps.length?' · 못읽은 한글 '+hwps.length:'');
+  sunShowReadReport({readOk, ocrOk, ocrSkip, hwps:hwps.map(x=>x.name), placed});
   if(corpus.trim()){ await sunAIFill(corpus); }
-  else { toast('사진 '+placed+'장 배치 완료. 글자 자동채움은 읽을 텍스트 자료가 필요합니다 — 위 안내의 못 읽은 자료를 확인하세요.'); }
+  else { toast('읽을 텍스트 자료가 없습니다 — 위 안내의 못 읽은 자료를 확인하세요.'); }
 }
-// 폴더 연결 후: 어떤 자료를 읽었고 무엇을 왜 못 읽었는지 안내(대책 포함)
+function sunMimeOf(ext){ return ext==='png'?'image/png':(ext==='webp'?'image/webp':(ext==='gif'?'image/gif':'image/jpeg')); }
+function sunFileToB64(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>{ const s=String(r.result||''); res(s.slice(s.indexOf(',')+1)); }; r.onerror=rej; r.readAsDataURL(file); }); }
+// 이미지는 OCR용으로 ~1600px·jpeg로 축소(요청 크기·토큰 절감)
+function sunDownscaleForOcr(file){ return new Promise((res)=>{ const r=new FileReader(); r.onload=()=>{ const img=new Image(); img.onload=()=>{ const max=1600; let w=img.width,h=img.height; if(w>max||h>max){ const s=max/Math.max(w,h); w=Math.round(w*s); h=Math.round(h*s);} const cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(img,0,0,w,h); try{ const u=cv.toDataURL('image/jpeg',0.85); res({b64:u.slice(u.indexOf(',')+1), mime:'image/jpeg'}); }catch(e){ const s=String(r.result||''); res({b64:s.slice(s.indexOf(',')+1), mime:file.type||'image/jpeg'}); } }; img.onerror=()=>{ const s=String(r.result||''); res({b64:s.slice(s.indexOf(',')+1), mime:file.type||'image/jpeg'}); }; img.src=r.result; }; r.readAsDataURL(file); }); }
+// 폴더 연결 후: 무엇을 읽었고(OCR 포함) 무엇을 왜 못 읽었는지 안내(대책 포함)
 function sunShowReadReport(r){
   const box=document.getElementById('suvReadReport'); if(!box) return;
   const list=(arr)=>'<ul>'+arr.slice(0,12).map(n=>'<li>'+esc(n)+'</li>').join('')+(arr.length>12?'<li>… 외 '+(arr.length-12)+'개</li>':'')+'</ul>';
+  const ocrOk=r.ocrOk||[], ocrSkip=r.ocrSkip||[];
   let h='<button class="rr-x" onclick="this.parentNode.style.display=\'none\'" title="닫기">✕</button>';
-  h+='<div><span class="rr-ok">✅ 읽은 자료 '+r.readOk.length+'건</span>'+(r.placed?(' · 사진 '+r.placed+'장 배치'):'')+'</div>';
+  h+='<div><span class="rr-ok">✅ 읽은 자료 '+(r.readOk.length+ocrOk.length)+'건</span>'+(ocrOk.length?(' (스캔·사진 OCR '+ocrOk.length+'건 포함)'):'')+(r.placed?(' · 사진 '+r.placed+'장 배치'):'')+'</div>';
   const problems=[];
   if(r.hwps.length) problems.push('<div style="margin-top:6px"><span class="rr-warn">⚠ 한글 구형식(.hwp) '+r.hwps.length+'개 — 못 읽음.</span> 가장 중요한 <b>신청서</b>가 보통 이 형식입니다. 한글에서 <b>다른 이름으로 저장 → 형식을 <code>.hwpx</code> 또는 <code>.docx</code></b>로 바꿔 다시 넣으면 읽힙니다.'+list(r.hwps)+'</div>');
-  if(r.scanned.length) problems.push('<div style="margin-top:6px"><span class="rr-warn">⚠ 스캔(이미지) PDF '+r.scanned.length+'개 — 글자가 없어 못 읽음.</span> 설립인가증·토지대장·동의서 등 스캔본은 현재 글자 추출이 안 됩니다(사진 OCR 기능 준비 중).'+list(r.scanned)+'</div>');
-  if(r.imgCount) problems.push('<div style="margin-top:6px">🖼️ 이미지 '+r.imgCount+'개는 사진 자리 배치에만 쓰이고, 가배치도·명함 속 <b>글자는 아직 읽지 않습니다</b>(OCR 준비 중).</div>');
+  if(ocrSkip.length) problems.push('<div style="margin-top:6px"><span class="rr-warn">⚠ 못 읽은 스캔·이미지 '+ocrSkip.length+'개</span> — 용량이 크거나(4MB 초과) OCR에서 글자를 찾지 못했습니다(부지 사진 등은 정상).'+list(ocrSkip)+'</div>');
   if(problems.length){ h+=problems.join(''); box.style.display='block'; }
   else { box.style.display='none'; }
   box.innerHTML=h;
