@@ -1249,6 +1249,13 @@ button{font-family:inherit;cursor:pointer}
 .fx-sel:focus{outline:2px solid #2e8b63;outline-offset:-2px;background-color:#fff}
 .fx-sel.filled{background-color:#eef7f0;border-color:#bfe0cc}
 .fx-sel.ai-sug{background-color:#e7f0ff;border-color:#9cc2f5}
+.suv-readrep{margin:8px 0 0;border:1px solid #e6cd78;background:#fffbe9;border-radius:9px;padding:10px 12px;font-size:12px;line-height:1.6;color:#3a3324;position:relative}
+.suv-readrep .rr-x{position:absolute;top:6px;right:8px;cursor:pointer;color:#9a8c5a;font-size:13px;background:none;border:none}
+.suv-readrep b{color:#7a5a12}
+.suv-readrep .rr-ok{color:#2e7d52}
+.suv-readrep .rr-warn{color:#b9472e}
+.suv-readrep ul{margin:3px 0 0;padding-left:16px}
+.suv-readrep code{background:#f3ead0;border-radius:3px;padding:0 4px;font-size:11.5px}
 .fx-ck.ai-sug{box-shadow:0 0 0 2px #2f6df6}
 .fx-ck.ai-sug::before{content:'🔎';font-size:9px;margin-right:2px;opacity:.9}
 .fx-ph{background:#f4f6f9;text-align:center;color:#8a8f98;cursor:pointer;font-size:0;padding:0;position:relative;height:84px}
@@ -8746,6 +8753,7 @@ function renderSunlightVillage(){
     <button class="btn ghost sm" onclick="sunResetForm()">↺ 비우기</button>
   </div>
   <div class="suv-hint"><b>노란 칸</b>을 클릭해 직접 입력하고(칸마다 무엇을 넣을지 흐린 글씨로 안내), <b>□ 항목</b>은 눌러 선택합니다. 다 채우면 <b>「🔍 미리보기」</b>로 완성된 양식을 확인·인쇄(PDF)할 수 있습니다. · <b>「📁 자료 폴더 연결」</b> 시 폴더의 <b>한글(.hwpx)·PDF·엑셀·사진</b>을 <b>무료 AI</b>가 읽어 <b>있는 값은 자동으로 채우고(파란 칸·근거 표시) 없는 값은 빈칸</b>으로 둡니다. 폴더를 바꾼 뒤 <b>다시 연결</b>하면 갱신분이 반영됩니다. 사진은 사진 자리를 클릭해 올리면 되고 없으면 <b>“＋ 부지 사진”</b>으로 남습니다. <span style="opacity:.8">※ 자동으로 채운 <b>파란 칸</b>은 꼭 확인하세요 — <b>칸에 마우스를 올리면 근거(원문)</b>가 보입니다. 공모 서류에 필요한 <b>주민번호·사업자번호·계좌 등도 자료에 있으면 채웁니다</b>(값이 민감하니 꼭 확인 후 사용).</span></div>
+  <div id="suvReadReport" class="suv-readrep" style="display:none"></div>
   </div>
   <div class="suv-wrap">
     <aside class="suv-rail">
@@ -8921,18 +8929,38 @@ async function sunHandleFiles(files){
   const st=document.getElementById('suvStatus');
   const imgs=files.filter(f=>/^(jpe?g|png|webp|gif)$/.test(f.ext));
   const docs=files.filter(f=>/^(txt|csv|md|json|hml|hwpx|docx|xlsx|pdf)$/.test(f.ext));
-  const hasHwp=files.some(f=>f.ext==='hwp');
+  const hwps=files.filter(f=>f.ext==='hwp');
   // 1) 사진 자동배치 — 현재 서식의 빈 사진칸에 순서대로
   let placed=0; const f=SUNLIGHT_FORMS.find(x=>x.id===SUNLIGHT_CUR);
   if(f){ const slots=[...document.querySelectorAll('.fx-ph:not(.has)')]; for(let i=0;i<Math.min(slots.length,imgs.length);i++){ try{ const file=await sunGetFile(imgs[i]); await new Promise(res=>sunImgToURL(file,(url)=>{ sunPhotos(f.id)[slots[i].dataset.fk]=url; placed++; res(); })); }catch(e){} } if(placed){ sunStore(); sunPaint(); } }
-  // 2) 텍스트 코퍼스 수집
+  // 2) 텍스트 코퍼스 수집 (+ 파일별 읽기 결과 추적)
   if(st)st.textContent='자료 텍스트 추출 중…';
-  let corpus=''; let used=0;
-  for(const d of docs){ if(corpus.length>160000)break; try{ const t=await sunExtractText(d); if(t&&t.trim()){ corpus+='\n\n===== '+d.name+' =====\n'+t.trim(); used++; } }catch(e){} }
+  let corpus=''; const readOk=[], scanned=[], emptyDoc=[];
+  for(const d of docs){ if(corpus.length>160000)break; let t='';
+    try{ t=await sunExtractText(d); }catch(e){}
+    if(t && t.trim().length>20){ corpus+='\n\n===== '+d.name+' =====\n'+t.trim(); readOk.push(d.name); }
+    else if(d.ext==='pdf'){ scanned.push(d.name); }   // PDF인데 글자 거의 0 = 스캔(이미지)본
+    else { emptyDoc.push(d.name); }
+  }
   sunData._corpus=corpus;
-  if(st)st.textContent='파일 '+files.length+'개 · 텍스트 '+used+'건 · 사진 '+placed+'장'+(hasHwp?' (※구버전 .hwp는 못 읽음 → .hwpx로 저장)':'');
+  if(st)st.textContent='읽은 자료 '+readOk.length+'건 · 사진 '+placed+'장'+(hwps.length?' · 못읽은 한글 '+hwps.length:'')+(scanned.length?' · 스캔PDF '+scanned.length:'');
+  sunShowReadReport({readOk, scanned, emptyDoc, hwps:hwps.map(x=>x.name), imgCount:imgs.length, placed});
   if(corpus.trim()){ await sunAIFill(corpus); }
-  else { toast('사진 '+placed+'장 배치 완료. 글자 자동채움은 읽을 텍스트 자료가 필요합니다'+(hasHwp?' (구버전 .hwp는 .hwpx로 저장해 주세요)':'')+'.'); }
+  else { toast('사진 '+placed+'장 배치 완료. 글자 자동채움은 읽을 텍스트 자료가 필요합니다 — 위 안내의 못 읽은 자료를 확인하세요.'); }
+}
+// 폴더 연결 후: 어떤 자료를 읽었고 무엇을 왜 못 읽었는지 안내(대책 포함)
+function sunShowReadReport(r){
+  const box=document.getElementById('suvReadReport'); if(!box) return;
+  const list=(arr)=>'<ul>'+arr.slice(0,12).map(n=>'<li>'+esc(n)+'</li>').join('')+(arr.length>12?'<li>… 외 '+(arr.length-12)+'개</li>':'')+'</ul>';
+  let h='<button class="rr-x" onclick="this.parentNode.style.display=\'none\'" title="닫기">✕</button>';
+  h+='<div><span class="rr-ok">✅ 읽은 자료 '+r.readOk.length+'건</span>'+(r.placed?(' · 사진 '+r.placed+'장 배치'):'')+'</div>';
+  const problems=[];
+  if(r.hwps.length) problems.push('<div style="margin-top:6px"><span class="rr-warn">⚠ 한글 구형식(.hwp) '+r.hwps.length+'개 — 못 읽음.</span> 가장 중요한 <b>신청서</b>가 보통 이 형식입니다. 한글에서 <b>다른 이름으로 저장 → 형식을 <code>.hwpx</code> 또는 <code>.docx</code></b>로 바꿔 다시 넣으면 읽힙니다.'+list(r.hwps)+'</div>');
+  if(r.scanned.length) problems.push('<div style="margin-top:6px"><span class="rr-warn">⚠ 스캔(이미지) PDF '+r.scanned.length+'개 — 글자가 없어 못 읽음.</span> 설립인가증·토지대장·동의서 등 스캔본은 현재 글자 추출이 안 됩니다(사진 OCR 기능 준비 중).'+list(r.scanned)+'</div>');
+  if(r.imgCount) problems.push('<div style="margin-top:6px">🖼️ 이미지 '+r.imgCount+'개는 사진 자리 배치에만 쓰이고, 가배치도·명함 속 <b>글자는 아직 읽지 않습니다</b>(OCR 준비 중).</div>');
+  if(problems.length){ h+=problems.join(''); box.style.display='block'; }
+  else { box.style.display='none'; }
+  box.innerHTML=h;
 }
 async function sunGetFile(item){ return item.file || (item.handle && await item.handle.getFile()); }
 
@@ -9007,7 +9035,24 @@ function sunRowLabel(row){
 function sunCollectFields(f){
   const fields=[]; const ckGroupMap={}; const optMap={};
   const tmp=document.createElement('div'); tmp.innerHTML=f.html;
-  tmp.querySelectorAll('.fx-v').forEach(td=>{ const lab=td.dataset.label||''; if(lab) fields.push({fk:td.dataset.fk, label:lab}); });
+  // 텍스트 빈칸 — 라벨 보강: 라벨 없으면 행 맥락으로 유도, 중복 라벨은 앞쪽 섹션맥락 붙여 구분(담당자①②③·주민등록인구 등)
+  const vEls=[...tmp.querySelectorAll('.fx-v')];
+  const allTds=[...tmp.querySelectorAll('td')];
+  const plainText=(td)=> td.querySelector('.fx-v,.fx-sel,.fx-ck,table') ? '' : (td.textContent||'').replace(/\s+/g,' ').trim();
+  const baseOf=(td)=> (td.dataset.label||'').trim() || sunCtxLabel(td);
+  const bases=vEls.map(baseOf);
+  const freq={}; bases.forEach(b=>{ if(b) freq[b]=(freq[b]||0)+1; });
+  const used={};
+  vEls.forEach((td,i)=>{
+    const base=bases[i]; if(!base) return;   // 라벨도 맥락도 없으면 스킵(잘못 채움 방지)
+    let label=base;
+    if(freq[base]>1){                         // 중복 라벨 → 앞쪽 '동그라미 번호(①②③)' 섹션마커가 있으면 맥락으로 붙임
+      const pos=allTds.indexOf(td);
+      for(let k=pos-1;k>=0 && k>pos-40;k--){ const t=plainText(allTds[k]); if(t && t.length<=24 && /^[①-⑳➀-➓⓵-⓾]/.test(t) && /[가-힣]/.test(t)){ label=t+' / '+base; break; } }
+    }
+    if(used[label]){ used[label]++; label=label+' ('+used[label]+')'; } else { used[label]=1; }  // 최종 유일성(충돌 시 순번) — AI가 서로 다른 칸으로 인식
+    fields.push({fk:td.dataset.fk, label});
+  });
   tmp.querySelectorAll('.fx-sel').forEach(sel=>{ const fk=sel.dataset.fk; if(!fk)return; const opts=[...sel.querySelectorAll('option')].map(o=>o.value).filter(Boolean); if(!opts.length)return; optMap[fk]=opts; fields.push({fk, label:(sunCtxLabel(sel)||'선택 항목'), options:opts}); });
   const CONSENT_FORMS={s3:1,s6:1};   // 주민·조합원 개인정보 동의서 — 동의 의사는 AI가 대신 결정 금지
   if(!CONSENT_FORMS[f.id]){
