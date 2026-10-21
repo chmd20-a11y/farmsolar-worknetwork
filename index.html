@@ -4001,6 +4001,7 @@ const SL = (function(){
     S.az=+($('sl-o-az').value||0);
     S.stack=Math.max(1,Math.min(6,+($('sl-m-stack').value||2)));
     if($('sl-o-pitch')) S.pitch=+($('sl-o-pitch').value||2.5);
+    if($('sl-o-inc')) S.incidence=Math.max(10,+($('sl-o-inc').value||25));
   }
   function runLayout(){
     readOpts();
@@ -4426,6 +4427,126 @@ const SL = (function(){
     }catch(e){ setStatus('⚠️ DXF 생성 실패: '+(e&&e.message||e)); }
   }
 
+  // ---------- 배치도(샘플형) 다운로드 — 위성(ArcGIS) 배경 + 모듈 + 표제란 PNG ----------
+  // 고객 배부용이라 위성 배경은 상업사용 OK인 ArcGIS World Imagery를 현재 뷰에 맞춰 직접 받아 깐다(VWorld·라벨 없이 깨끗).
+  function renderEsriView(sz){
+    return new Promise(resolve=>{
+      const z=Math.round(map.getZoom());
+      const p0=map.project(map.containerPointToLatLng([0,0]), z);
+      const p1=map.project(map.containerPointToLatLng([sz.x,sz.y]), z);
+      const scale=sz.x/Math.max(1,(p1.x-p0.x));
+      const cv=document.createElement('canvas'); cv.width=sz.x; cv.height=sz.y;
+      const g=cv.getContext('2d'); g.fillStyle='#17324d'; g.fillRect(0,0,sz.x,sz.y);
+      const tx0=Math.floor(p0.x/256), tx1=Math.floor(p1.x/256), ty0=Math.floor(p0.y/256), ty1=Math.floor(p1.y/256);
+      let pending=0, finished=false;
+      const done=()=>{ if(finished)return; finished=true; resolve(cv); };
+      for(let tx=tx0;tx<=tx1;tx++)for(let ty=ty0;ty<=ty1;ty++){ pending++;
+        const dx=(tx*256-p0.x)*scale, dy=(ty*256-p0.y)*scale, dw=256*scale;
+        const im=new Image(); im.crossOrigin='anonymous';
+        im.onload=()=>{ try{ g.drawImage(im,dx,dy,dw,dw); }catch(e){} if(--pending<=0)done(); };
+        im.onerror=()=>{ if(--pending<=0)done(); };
+        im.src='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+z+'/'+ty+'/'+tx;
+      }
+      if(pending===0) done();
+      setTimeout(()=>{ if(!finished) done(); }, 9000);
+    });
+  }
+  async function saveLayoutSheet(){
+    if(view3D){ setStatus('⚠️ 먼저 <b>2D 지도</b>로 전환한 뒤 내려받으세요.'); return; }
+    const LO=LAYOUT;
+    if(!LO || !LO.placed || !LO.placed.length){ setStatus('⚠️ 먼저 <b>배치 실행</b>으로 모듈을 배치한 뒤 내려받으세요.'); return; }
+    if(!map){ return; }
+    setStatus('배치도 생성 중… (위성 배경을 받는 중)');
+    try{
+      const sz=map.getSize(); if(!sz.x||!sz.y){ setStatus('⚠️ 지도 화면을 찾을 수 없습니다.'); return; }
+      const mapCv=await renderEsriView(sz);                         // ① ArcGIS 위성 배경(현재 뷰)
+      const mctx=mapCv.getContext('2d');                            // ② 화면의 모듈·경계 캔버스 합성(동일 픽셀공간)
+      const container=map.getContainer(), b=container.getBoundingClientRect();
+      container.querySelectorAll('canvas').forEach(cvs=>{ try{ const r=cvs.getBoundingClientRect(); mctx.drawImage(cvs, r.left-b.left, r.top-b.top, r.width, r.height); }catch(e){} });
+      // ③ 사양 값(화면 결과패널과 동일하게)
+      const num=id=>{ const e=$(id); return e?(e.textContent||'').replace(/[, ]/g,''):''; };
+      const modules=parseInt(num('sl-r-count'))||(LO.placed.length*(LO.stack||1));
+      const kwTxt=(($('sl-r-kw')||{}).textContent||'').trim()||String(Math.round(modules*((+$('sl-m-p').value)||0)/1000));
+      const watt=(+$('sl-m-p').value)||0, tilt=LO.tiltR||0, incDeg=Math.round(S.incidence||25);
+      const incR=Math.max(5,S.incidence||25)*Math.PI/180;
+      const pitch=(S.pitchMode==='manual')?(LO.depth+Math.max(0.1,S.pitch)):(LO.depth+(LO.alongSlope||0)*Math.sin(tilt)/Math.tan(incR));
+      const rowGap=Math.max(0, pitch-(LO.depth||0));
+      const spec={ jibun:(lastJibun||'-'), tilt:Math.round(tilt*180/Math.PI), inc:incDeg, mod:rowGap.toFixed(1), edge:(S.setback||0).toFixed(1),
+        ea:modules.toLocaleString()+'EA × '+watt+'W = '+kwTxt+'kW' };
+      const url=composeSheet(mapCv, spec);                          // ④ 샘플형 시트 합성
+      const a=document.createElement('a'); a.href=url; a.download='배치도_'+(lastJibun||'부지').replace(/[\\/:*?"<>|]/g,'_')+'.png'; a.click();
+      setStatus('📄 배치도(샘플형)를 저장했습니다 — 위성 ArcGIS · 모듈 '+modules.toLocaleString()+'장.');
+    }catch(e){ setStatus('⚠️ 배치도 생성 실패: '+(e&&e.message||e)); }
+  }
+  function composeSheet(mapCv, spec){
+    const W=2000, H=1333, m=22;
+    const cv=document.createElement('canvas'); cv.width=W; cv.height=H; const c=cv.getContext('2d');
+    c.fillStyle='#ffffff'; c.fillRect(0,0,W,H);
+    c.strokeStyle='#111'; c.lineWidth=3; c.strokeRect(m,m,W-2*m,H-2*m);
+    c.lineWidth=1; c.strokeRect(m+6,m+6,W-2*m-12,H-2*m-12);
+    const innerL=m+6, innerR=W-m-6, innerT=m+6, innerB=H-m-6;
+    const TBW=360, tbX=innerR-TBW;
+    c.lineWidth=1.4; c.beginPath(); c.moveTo(tbX,innerT); c.lineTo(tbX,innerB); c.stroke();
+    // 지도 창 — 캡처 이미지에 꼭 맞춰 contain(레터박스 밴드 없이 테두리를 이미지에 붙임)
+    const mapL=innerL+6, mapT=innerT+6, mapR=tbX-8, botH=150, mapB=innerB-botH, bw=mapR-mapL, bh=mapB-mapT;
+    const s=Math.min(bw/mapCv.width, bh/mapCv.height), dw=mapCv.width*s, dh=mapCv.height*s, dx=mapL+(bw-dw)/2, dy=mapT+(bh-dh)/2;
+    c.drawImage(mapCv, dx,dy,dw,dh);
+    c.strokeStyle='#111'; c.lineWidth=1.2; c.strokeRect(dx,dy,dw,dh);
+    // 방위표(지도 좌상단) — 흰 원판 배경 + 검은 방위표(어떤 배경에도 선명)
+    { const ax=dx+48, ay=dy+58, r=22; c.save();
+      c.fillStyle='rgba(255,255,255,.88)'; c.beginPath(); c.arc(ax,ay,r+10,0,Math.PI*2); c.fill();
+      c.strokeStyle='#111'; c.fillStyle='#111'; c.lineWidth=1.8;
+      c.beginPath(); c.arc(ax,ay,r,0,Math.PI*2); c.stroke();
+      c.beginPath(); c.moveTo(ax,ay-r-8); c.lineTo(ax,ay+r); c.stroke();
+      c.beginPath(); c.moveTo(ax-r,ay); c.lineTo(ax+r,ay); c.stroke();
+      c.beginPath(); c.moveTo(ax,ay-r-15); c.lineTo(ax-6,ay-r-1); c.lineTo(ax+6,ay-r-1); c.closePath(); c.fill();
+      c.font='bold 19px sans-serif'; c.textAlign='center'; c.fillText('N', ax, ay-r-18); c.restore(); }
+    // 좌하단 사양문구
+    { let y=mapB+36; const x=innerL+16; c.textAlign='left'; c.fillStyle='#111'; c.font='bold 27px sans-serif';
+      c.fillText(spec.jibun, x, y); y+=37;
+      c.fillText('모듈각도 '+spec.tilt+'도, 음영각도 '+spec.inc+'도, 모듈이격 '+spec.mod+'M, 경계이격 '+spec.edge+'M', x, y); y+=37;
+      c.fillText(spec.ea, x, y); y+=33;
+      c.fillStyle='#d11'; c.font='bold 20px sans-serif';
+      c.fillText('※ 본 배치도는 가배치도이며, 현장 실측 결과에 따라 변경될 수 있습니다.', x, y); }
+    // 배치도 제목 + 스케일바(표제란 왼쪽)
+    { const cx=tbX-150, by=innerB-56; c.fillStyle='#111'; c.font='bold 52px sans-serif'; c.textAlign='center'; c.fillText('배치도', cx, by);
+      c.lineWidth=2; c.beginPath(); c.moveTo(cx-120,by+14); c.lineTo(cx+120,by+14); c.stroke();
+      const sx=cx-96, sy=by+40, r=12; c.lineWidth=1.4;
+      c.beginPath(); c.arc(sx,sy,r,0,Math.PI*2); c.stroke();
+      c.beginPath(); c.moveTo(sx-r,sy); c.lineTo(sx+r,sy); c.moveTo(sx,sy-r); c.lineTo(sx,sy+r); c.stroke();
+      c.font='bold 18px sans-serif'; c.textAlign='left'; c.fillText('SCALE : none', sx+r+10, sy+6); }
+    composeTitleBlock(c, tbX, innerT, TBW, innerB-innerT);
+    try{ return cv.toDataURL('image/png'); }catch(e){ throw new Error('위성 보안(CORS)로 이미지 저장 불가 — 잠시 후 재시도'); }
+  }
+  function composeTitleBlock(c, x, y, w, h){
+    const r=x+w, hline=(yy)=>{ c.beginPath(); c.moveTo(x,yy); c.lineTo(r,yy); c.stroke(); };
+    c.strokeStyle='#111'; c.lineWidth=1; c.textAlign='left'; c.fillStyle='#111';
+    let yy=y;
+    const h1=34; c.strokeRect(x,yy,w,h1); c.font='bold 19px sans-serif'; c.textAlign='center'; c.fillText('공  사  명', x+w/2, yy+23); c.textAlign='left'; yy+=h1;
+    const h2=110; c.strokeRect(x,yy,w,h2); c.font='12px sans-serif'; c.fillStyle='#666'; c.fillText('PROJECT NAME', x+10, yy+20); c.fillStyle='#111'; yy+=h2;
+    const scaleH=36, titleH=28, dateH=28, coH=182, revH=74;
+    const noteTop=yy, noteH=(y+h)-(scaleH+titleH+dateH+coH+revH)-noteTop;
+    c.strokeRect(x,yy,w,noteH); c.font='12px sans-serif'; c.fillStyle='#666'; c.fillText('특기사항 NOTE', x+10, yy+20); c.fillStyle='#111';
+    c.lineWidth=0.6; for(let ly=yy+40; ly<yy+noteH-10; ly+=26){ c.beginPath(); c.moveTo(x+10,ly); c.lineTo(r-10,ly); c.stroke(); } c.lineWidth=1; yy+=noteH;
+    const cols=[x, x+46, x+120, r-56, r], ch=revH/3; c.strokeRect(x,yy,w,revH); c.font='11px sans-serif'; c.textAlign='center';
+    for(let i=1;i<cols.length-1;i++){ c.beginPath(); c.moveTo(cols[i],yy); c.lineTo(cols[i],yy+revH); c.stroke(); }
+    hline(yy+ch); hline(yy+2*ch);
+    ['REV','DATE','DESCRIPTION','APP'].forEach((t,i)=>{ c.fillText(t,(cols[i]+cols[i+1])/2, yy+ch-7); });
+    c.textAlign='left'; yy+=revH;
+    c.strokeRect(x,yy,w,coH);
+    c.beginPath(); c.arc(x+30,yy+30,15,0,Math.PI*2); c.fillStyle='#e8820e'; c.fill(); c.fillStyle='#fff'; c.font='bold 16px sans-serif'; c.textAlign='center'; c.fillText('H', x+30, yy+36);
+    c.fillStyle='#111'; c.textAlign='left'; c.font='bold 18px sans-serif'; c.fillText('(주)해피솔라', x+52, yy+36);
+    c.font='12px sans-serif'; c.fillStyle='#222';
+    ['경기도 파주시 교하로 875번길 23, 2층','Tel ) 031-934-0392','Fax ) 062-443-4837','E-mail : parm4745@naver.com','Homepage','   : www.solarvil.com'].forEach((t,i)=>{ c.fillText(t, x+16, yy+62+i*20); });
+    yy+=coH;
+    const d=new Date(), dateStr=d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0');
+    c.strokeRect(x,yy,w,dateH); c.font='11px sans-serif'; c.fillStyle='#666'; c.fillText('작성일/DATE', x+8, yy+12); c.fillStyle='#111'; c.font='bold 15px sans-serif'; c.textAlign='right'; c.fillText(dateStr, r-10, yy+20); c.textAlign='left'; yy+=dateH;
+    c.strokeRect(x,yy,w,titleH); c.font='11px sans-serif'; c.fillStyle='#666'; c.fillText('도면명/TITLE', x+8, yy+12); c.fillStyle='#111'; c.font='bold 15px sans-serif'; c.textAlign='right'; c.fillText('배치도', r-10, yy+20); c.textAlign='left'; yy+=titleH;
+    c.strokeRect(x,yy,w,scaleH); c.beginPath(); c.moveTo(x+w/2,yy); c.lineTo(x+w/2,yy+scaleH); c.stroke();
+    c.font='11px sans-serif'; c.fillStyle='#666'; c.fillText('SCALE', x+8, yy+14); c.fillText('DRAWN BY', x+w/2+8, yy+14);
+    c.fillStyle='#111'; c.font='13px sans-serif'; c.fillText('none', x+8, yy+30);
+  }
+
   // ---------- 세그/옵션 배선 ----------
   function wireSeg(wrapId, attr, cb){ const w=$(wrapId); if(!w)return; w.querySelectorAll('button').forEach(btn=>btn.onclick=()=>{ w.querySelectorAll('button').forEach(x=>x.classList.remove('on')); btn.classList.add('on'); cb(btn.dataset[attr]); }); }
   function wire(){
@@ -4436,6 +4557,7 @@ const SL = (function(){
     $('sl-btn-run').onclick=runLayout;
     $('sl-btn-manual').onclick=()=>{ manualMode?closeManual():openManual(); };
     $('sl-btn-png').onclick=savePng;
+    { const sh=$('sl-btn-sheet'); if(sh) sh.onclick=saveLayoutSheet; }
     { const d=$('sl-btn-dxf'); if(d) d.onclick=()=>saveDxf(false); }
     { const d3=$('sl-btn-dxf3d'); if(d3) d3.onclick=()=>saveDxf(true); }
     { const q=$('sl-to-quote'); if(q) q.onclick=handoffQuote; }
@@ -4446,6 +4568,7 @@ const SL = (function(){
     wireSeg('sl-seg-opt','o', o=>{ S.optimize=(o==='1'); $('sl-az-manual').style.display=S.optimize?'none':'block'; if(MANUAL.length) syncM(); });
     wireSeg('sl-seg-pitch','p', p=>{ S.pitchMode=p; $('sl-pitch-manual').style.display=(p==='manual')?'block':'none'; if(MANUAL.length) syncM(); });
     $('sl-o-set').oninput=e=>{ $('sl-v-set').textContent=((+e.target.value)/10).toFixed(1)+' m'; };
+    { const ic=$('sl-o-inc'); if(ic) ic.oninput=e=>{ S.incidence=Math.max(10,+e.target.value); const b=$('sl-v-inc'); if(b) b.textContent=e.target.value+'°'; if(MANUAL.length) syncM(); }; }
     $('sl-o-az').oninput=e=>{ const v=+e.target.value; $('sl-v-az').textContent=v===0?'정남':(v<0?'남동 '+(-v)+'°':'남서 '+v+'°'); S.az=v; if(MANUAL.length) syncM(); };
     $('sl-m-stack').oninput=e=>{ $('sl-v-stack').textContent=e.target.value+' 장'; S.stack=+e.target.value; if(MANUAL.length) syncM(); };
     ['sl-m-w','sl-m-h','sl-m-p','sl-m-o'].forEach(id=>{ const el=$(id); if(el) el.addEventListener('input',()=>{ if(MANUAL.length) syncM(); }); });
@@ -4476,6 +4599,7 @@ const SL = (function(){
         <div class="sl-lbl">열 간격(그림자 방지)</div>
         <div class="sl-seg" id="sl-seg-pitch"><button data-p="auto" class="on">자동</button><button data-p="manual">수동</button></div>
         <label class="sl-fld" id="sl-pitch-manual" style="display:none">모듈 열 이격(m)<input class="tinput" type="number" id="sl-o-pitch" min="0" max="10" step="0.01" value="2.5"></label>
+        <label class="sl-fld">음영각도(입사각) <b id="sl-v-inc">25°</b><input type="range" id="sl-o-inc" min="15" max="40" value="25"></label>
       </div>
       <div class="sl-center">
         <div class="sl-searchbar">
@@ -4506,6 +4630,7 @@ const SL = (function(){
         <div class="sl-stat green"><div class="k">연간 예상 발전량</div><div class="v"><span id="sl-r-gen">0</span><small>MWh</small></div></div>
         <div class="sl-stat"><div class="k">구조물(테이블) 수</div><div class="v"><span id="sl-r-tables">0</span><small>개</small></div></div>
         <button class="btn primary sm" id="sl-to-quote" style="margin-top:12px;width:100%;justify-content:center">📄 이 배치로 견적서 작성 →</button>
+        <button class="btn dark sm" id="sl-btn-sheet" style="margin-top:8px;width:100%;justify-content:center">📄 배치도 다운로드 (샘플형)</button>
         <button class="btn ghost sm" id="sl-btn-png" style="margin-top:8px;width:100%;justify-content:center">🖼️ 2D 이미지 저장</button>
         <button class="btn ghost sm" id="sl-btn-dxf" style="margin-top:8px;width:100%;justify-content:center">📐 캐드(DXF) 2D 평면</button>
         <button class="btn ghost sm" id="sl-btn-dxf3d" style="margin-top:8px;width:100%;justify-content:center">📦 캐드(DXF) 3D 입체</button>
