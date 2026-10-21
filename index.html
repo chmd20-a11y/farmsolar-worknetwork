@@ -4429,27 +4429,59 @@ const SL = (function(){
 
   // ---------- 배치도(샘플형) 다운로드 — 위성(ArcGIS) 배경 + 모듈 + 표제란 PNG ----------
   // 고객 배부용이라 위성 배경은 상업사용 OK인 ArcGIS World Imagery를 현재 뷰에 맞춰 직접 받아 깐다(VWorld·라벨 없이 깨끗).
-  function renderEsriView(sz){
+  // 부지를 자동 프레이밍해 ArcGIS 위성(상업OK)을 네이티브 해상도로 렌더(줌≤19 클램프 → 'Map data not available' 방지) + 모듈·경계를 좌표기반 벡터로 그려 캐드 효과.
+  function buildMapImage(LO){
     return new Promise(resolve=>{
-      const z=Math.round(map.getZoom());
-      const p0=map.project(map.containerPointToLatLng([0,0]), z);
-      const p1=map.project(map.containerPointToLatLng([sz.x,sz.y]), z);
-      const scale=sz.x/Math.max(1,(p1.x-p0.x));
-      const cv=document.createElement('canvas'); cv.width=sz.x; cv.height=sz.y;
-      const g=cv.getContext('2d'); g.fillStyle='#17324d'; g.fillRect(0,0,sz.x,sz.y);
-      const tx0=Math.floor(p0.x/256), tx1=Math.floor(p1.x/256), ty0=Math.floor(p0.y/256), ty1=Math.floor(p1.y/256);
+      const capW=1600, capH=1144, RES=2, padFrac=0.14;              // 지도창 비율(≈1.40)·2배 해상도
+      const az=LO.azRad||0, cosA=Math.cos(az), sinA=Math.sin(az);
+      const toGeo=(x,y)=>{ const ex=x*cosA-y*sinA, ey=x*sinA+y*cosA; return [LO.lat0+ey/LO.mLat, LO.lng0+ex/LO.mLng]; };
+      const regs=(LO.regions&&LO.regions.length)?LO.regions:[{outerWl:LO.outerWl,wl:LO.wl}];
+      const gp=[]; regs.forEach(R=>(R.outerWl||[]).forEach(p=>gp.push(toGeo(p.x,p.y))));
+      (LO.placed||[]).forEach(a=>gp.push(toGeo(a[0],a[1])));
+      if(!gp.length){ resolve(null); return; }
+      let laMin=Infinity,laMax=-Infinity,lnMin=Infinity,lnMax=-Infinity;
+      gp.forEach(p=>{ if(p[0]<laMin)laMin=p[0]; if(p[0]>laMax)laMax=p[0]; if(p[1]<lnMin)lnMin=p[1]; if(p[1]>lnMax)lnMax=p[1]; });
+      const center=[(laMin+laMax)/2,(lnMin+lnMax)/2];
+      const sw=map.project([laMin,lnMin],20), ne=map.project([laMax,lnMax],20);          // 부지가 프레임의 (1-2pad) 차지하는 '분수 줌' 산출
+      const spanX=Math.max(1,Math.abs(ne.x-sw.x)), spanY=Math.max(1,Math.abs(ne.y-sw.y));
+      const fit=Math.min(Math.log2(capW*(1-2*padFrac)/spanX), Math.log2(capH*(1-2*padFrac)/spanY));
+      const zF=Math.max(10, Math.min(20.6, 20+fit));                                      // 화면 표시 줌(분수, 작은 부지는 확대해 꽉 차게)
+      const tileZ=Math.max(3, Math.min(19, Math.floor(zF)));                              // 실제 타일 줌은 ≤19(ArcGIS 네이티브) → 'Map data not available' 방지, 초과분은 확대
+      const upK=Math.pow(2, zF-tileZ), tileW=256*upK;                                     // z19 타일을 분수줌 크기로 확대
+      const cpx=map.project(center, zF), p0={x:cpx.x-capW/2, y:cpx.y-capH/2};
+      const toPx=(lat,lng)=>{ const pp=map.project([lat,lng],zF); return [ (pp.x-p0.x)*RES, (pp.y-p0.y)*RES ]; };
+      const cv=document.createElement('canvas'); cv.width=capW*RES; cv.height=capH*RES;
+      const g=cv.getContext('2d'); g.fillStyle='#9aa39b'; g.fillRect(0,0,cv.width,cv.height); g.imageSmoothingQuality='high';
+      const tx0=Math.floor(p0.x/tileW), tx1=Math.floor((p0.x+capW)/tileW), ty0=Math.floor(p0.y/tileW), ty1=Math.floor((p0.y+capH)/tileW);
       let pending=0, finished=false;
-      const done=()=>{ if(finished)return; finished=true; resolve(cv); };
+      const done=()=>{ if(finished)return; finished=true; try{ drawLayoutVectors(g, LO, toPx, RES); }catch(e){} resolve(cv); };
       for(let tx=tx0;tx<=tx1;tx++)for(let ty=ty0;ty<=ty1;ty++){ pending++;
-        const dx=(tx*256-p0.x)*scale, dy=(ty*256-p0.y)*scale, dw=256*scale;
+        const dx=(tx*tileW-p0.x)*RES, dy=(ty*tileW-p0.y)*RES, dw=tileW*RES;
         const im=new Image(); im.crossOrigin='anonymous';
         im.onload=()=>{ try{ g.drawImage(im,dx,dy,dw,dw); }catch(e){} if(--pending<=0)done(); };
         im.onerror=()=>{ if(--pending<=0)done(); };
-        im.src='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+z+'/'+ty+'/'+tx;
+        im.src='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+tileZ+'/'+ty+'/'+tx;
       }
       if(pending===0) done();
-      setTimeout(()=>{ if(!finished) done(); }, 9000);
+      setTimeout(()=>{ if(!finished) done(); }, 12000);
     });
+  }
+  // LAYOUT(실좌표)에서 모듈 패널·부지경계·이격선을 '벡터 선'으로 직접 그린다(스크린샷 아님 = 캐드 도면 효과).
+  function drawLayoutVectors(g, LO, toPx, RES){
+    const az=LO.azRad||0, cosA=Math.cos(az), sinA=Math.sin(az);
+    const geoPx=(x,y)=>{ const ex=x*cosA-y*sinA, ey=x*sinA+y*cosA; return toPx(LO.lat0+ey/LO.mLat, LO.lng0+ex/LO.mLng); };
+    const ring=(pts,close)=>{ if(!pts||!pts.length)return; g.beginPath(); pts.forEach((p,i)=>{ i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]); }); if(close)g.closePath(); };
+    const regs=(LO.regions&&LO.regions.length)?LO.regions:[{outerWl:LO.outerWl,wl:LO.wl}];
+    g.save(); g.setLineDash([9*RES,6*RES]); g.strokeStyle='#ff8a3d'; g.lineWidth=1.3*RES;       // 이격선(안쪽, 주황 점선)
+    regs.forEach(R=>{ if(R.wl&&R.wl.length){ ring(R.wl.map(p=>geoPx(p.x,p.y)),true); g.stroke(); } }); g.restore();
+    const wRow=LO.wRow, tilt=LO.tiltR||0, mLen=LO.mLen||0, intra=LO.intra||0, stack=LO.stack||1;  // 모듈 패널(파랑 채움+밝은 테두리)
+    const md=mLen*Math.cos(tilt), stepMod=(mLen+intra)*Math.cos(tilt);
+    g.lineWidth=Math.max(0.7, 0.9*RES); g.lineJoin='miter';
+    (LO.placed||[]).forEach(a=>{ const u=a[0],v=a[1]; for(let k=0;k<stack;k++){ const v0=v+k*stepMod;
+      const pts=[[u,v0],[u+wRow,v0],[u+wRow,v0+md],[u,v0+md]].map(q=>geoPx(q[0],q[1]));
+      ring(pts,true); g.fillStyle='rgba(22,78,165,.85)'; g.fill(); g.strokeStyle='#a9ddff'; g.stroke(); } });
+    g.strokeStyle='#ff2020'; g.lineWidth=3.2*RES; g.lineJoin='round';                            // 부지 경계(빨강 굵게, 맨 위)
+    regs.forEach(R=>{ if(R.outerWl&&R.outerWl.length){ ring(R.outerWl.map(p=>geoPx(p.x,p.y)),true); g.stroke(); } });
   }
   async function saveLayoutSheet(){
     if(view3D){ setStatus('⚠️ 먼저 <b>2D 지도</b>로 전환한 뒤 내려받으세요.'); return; }
@@ -4458,12 +4490,9 @@ const SL = (function(){
     if(!map){ return; }
     setStatus('배치도 생성 중… (위성 배경을 받는 중)');
     try{
-      const sz=map.getSize(); if(!sz.x||!sz.y){ setStatus('⚠️ 지도 화면을 찾을 수 없습니다.'); return; }
-      const mapCv=await renderEsriView(sz);                         // ① ArcGIS 위성 배경(현재 뷰)
-      const mctx=mapCv.getContext('2d');                            // ② 화면의 모듈·경계 캔버스 합성(동일 픽셀공간)
-      const container=map.getContainer(), b=container.getBoundingClientRect();
-      container.querySelectorAll('canvas').forEach(cvs=>{ try{ const r=cvs.getBoundingClientRect(); mctx.drawImage(cvs, r.left-b.left, r.top-b.top, r.width, r.height); }catch(e){} });
-      // ③ 사양 값(화면 결과패널과 동일하게)
+      const mapCv=await buildMapImage(LO);                          // ArcGIS 위성(부지 자동 프레이밍) + 모듈·경계 벡터 직접 렌더
+      if(!mapCv){ setStatus('⚠️ 배치 좌표를 찾지 못했습니다.'); return; }
+      // 사양 값(화면 결과패널과 동일하게)
       const num=id=>{ const e=$(id); return e?(e.textContent||'').replace(/[, ]/g,''):''; };
       const modules=parseInt(num('sl-r-count'))||(LO.placed.length*(LO.stack||1));
       const kwTxt=(($('sl-r-kw')||{}).textContent||'').trim()||String(Math.round(modules*((+$('sl-m-p').value)||0)/1000));
