@@ -45,7 +45,7 @@ module.exports = async (req, res) => {
     if (!/^(application\/pdf|image\/(png|jpe?g|webp|gif))$/.test(mimeType)) { res.status(415).json({ error: 'unsupported', message: 'PDF 또는 이미지만 지원' }); return; }
     if (dataBase64.length > 5 * 1024 * 1024) { res.status(413).json({ error: 'too_large', message: '파일이 큽니다(약 4MB 초과) — 건너뜀' }); return; }
 
-    const system = '당신은 한국 공공 행정서류(햇빛소득마을 공모)의 스캔본·사진에서 글자를 정확히 읽어내는 OCR 도우미입니다. 규칙: (1) 문서/이미지에 실제로 보이는 모든 텍스트·숫자·이름·번호·날짜·금액을 빠짐없이 그대로 추출합니다. (2) 표는 가능한 한 행/열 구조를 살려 적되, 셀 값은 보이는 그대로 적습니다. (3) 추정·창작·요약을 하지 않습니다 — 보이지 않는 값은 쓰지 않습니다. (4) 설명·머리말 없이 추출한 텍스트만 출력합니다.';
+    const system = '당신은 한국 공공 행정서류(햇빛소득마을 공모)의 스캔본·사진에서 글자를 정확히 읽어내는 OCR 도우미입니다. 규칙: (1) 문서/이미지에 실제로 보이는 모든 텍스트·숫자·이름·번호·날짜·금액을 빠짐없이 그대로 추출합니다. 주민등록번호·사업자등록번호·계좌번호 등 민감정보도 보이는 그대로 전부 적습니다(마스킹·별표·생략 금지 — 제출용 행정서류 원문 보존 목적). (2) 표는 가능한 한 행/열 구조를 살려 적되, 셀 값은 보이는 그대로 적습니다. (3) 추정·창작·요약을 하지 않습니다 — 보이지 않는 값은 쓰지 않습니다. (4) 설명·머리말 없이 추출한 텍스트만 출력합니다.';
     const parts = [
       { text: '다음 파일(' + name + ')에 보이는 모든 글자를 추출하세요:' },
       { inlineData: { mimeType, data: dataBase64 } },
@@ -65,4 +65,4 @@ module.exports = async (req, res) => {
   }
 };
 
-module.exports.config = { api: { bodyParser: { sizeLimit: '5mb' } } };
+module.exports.config = { api: { bodyParser: { sizeLimit: '5mb' } }, maxDuration: 60 };
