@@ -8752,7 +8752,7 @@ function renderSunlightVillage(){
     <button class="btn ghost sm" onclick="sunPreview(true)">🖨 인쇄·PDF</button>
     <button class="btn ghost sm" onclick="sunResetForm()">↺ 비우기</button>
   </div>
-  <div class="suv-hint"><b>노란 칸</b>을 클릭해 직접 입력하고(칸마다 무엇을 넣을지 흐린 글씨로 안내), <b>□ 항목</b>은 눌러 선택합니다. 다 채우면 <b>「🔍 미리보기」</b>로 완성된 양식을 확인·인쇄(PDF)할 수 있습니다. · <b>「📁 자료 폴더 연결」</b> 시 폴더의 <b>한글(.hwpx)·PDF·엑셀·사진</b>을 <b>무료 AI</b>가 읽어 <b>있는 값은 자동으로 채우고(파란 칸·근거 표시) 없는 값은 빈칸</b>으로 둡니다. 폴더를 바꾼 뒤 <b>다시 연결</b>하면 갱신분이 반영됩니다. 사진은 사진 자리를 클릭해 올리면 되고 없으면 <b>“＋ 부지 사진”</b>으로 남습니다. <span style="opacity:.8">※ 자동으로 채운 <b>파란 칸</b>은 꼭 확인하세요 — <b>칸에 마우스를 올리면 근거(원문)</b>가 보입니다. 공모 서류에 필요한 <b>주민번호·사업자번호·계좌 등도 자료에 있으면 채웁니다</b>(값이 민감하니 꼭 확인 후 사용).</span></div>
+  <div class="suv-hint"><b>노란 칸</b>을 클릭해 직접 입력하고(칸마다 무엇을 넣을지 흐린 글씨로 안내), <b>□ 항목</b>은 눌러 선택합니다. 다 채우면 <b>「🔍 미리보기」</b>로 완성된 양식을 확인·인쇄(PDF)할 수 있습니다. · <b>「📁 자료 폴더 연결」</b> 시 폴더의 <b>한글(.hwp·.hwpx)·PDF(스캔본 포함)·엑셀·사진</b>을 <b>무료 AI</b>가 읽어(스캔본·사진은 글자 인식) <b>있는 값은 자동으로 채우고(파란 칸·근거 표시) 없는 값은 빈칸</b>으로 둡니다. 폴더를 바꾼 뒤 <b>다시 연결</b>하면 갱신분이 반영됩니다. 사진은 사진 자리를 클릭해 올리면 되고 없으면 <b>“＋ 부지 사진”</b>으로 남습니다. <span style="opacity:.8">※ 자동으로 채운 <b>파란 칸</b>은 꼭 확인하세요 — <b>칸에 마우스를 올리면 근거(원문)</b>가 보입니다. 공모 서류에 필요한 <b>주민번호·사업자번호·계좌 등도 자료에 있으면 채웁니다</b>(값이 민감하니 꼭 확인 후 사용).</span></div>
   <div id="suvReadReport" class="suv-readrep" style="display:none"></div>
   </div>
   <div class="suv-wrap">
@@ -8928,18 +8928,19 @@ async function sunReadDir(dir){ const out=[]; for await (const entry of dir.valu
 async function sunHandleFiles(files){
   const st=document.getElementById('suvStatus');
   const imgs=files.filter(f=>/^(jpe?g|png|webp|gif)$/.test(f.ext));
-  const docs=files.filter(f=>/^(txt|csv|md|json|hml|hwpx|docx|xlsx|pdf)$/.test(f.ext));
-  const hwps=files.filter(f=>f.ext==='hwp');
+  const docs=files.filter(f=>/^(txt|csv|md|json|hml|hwpx|docx|xlsx|pdf|hwp)$/.test(f.ext));
   // 1) 사진 자동배치 — 현재 서식의 빈 사진칸에 순서대로
   let placed=0; const f=SUNLIGHT_FORMS.find(x=>x.id===SUNLIGHT_CUR);
   if(f){ const slots=[...document.querySelectorAll('.fx-ph:not(.has)')]; for(let i=0;i<Math.min(slots.length,imgs.length);i++){ try{ const file=await sunGetFile(imgs[i]); await new Promise(res=>sunImgToURL(file,(url)=>{ sunPhotos(f.id)[slots[i].dataset.fk]=url; placed++; res(); })); }catch(e){} } if(placed){ sunStore(); sunPaint(); } }
   // 2) 텍스트 코퍼스 수집 (+ 파일별 읽기 결과 추적)
   if(st)st.textContent='자료 텍스트 추출 중…';
-  let corpus=''; const readOk=[], scannedPdf=[], emptyDoc=[];
+  let corpus=''; const readOk=[], scannedPdf=[], hwpFail=[], emptyDoc=[];
   for(const d of docs){ if(corpus.length>160000)break; let t='';
+    if(st)st.textContent='자료 읽는 중… '+d.name.slice(0,24);
     try{ t=await sunExtractText(d); }catch(e){}
     if(t && t.trim().length>20){ corpus+='\n\n===== '+d.name+' =====\n'+t.trim(); readOk.push(d.name); }
     else if(d.ext==='pdf'){ scannedPdf.push(d); }   // PDF인데 글자 거의 0 = 스캔(이미지)본 → OCR 대상
+    else if(d.ext==='hwp'){ hwpFail.push(d.name); } // 아주 오래된 .hwp(3.0 등)·손상 → 파싱 실패
     else { emptyDoc.push(d.name); }
   }
   // 3) 스캔 PDF·이미지 OCR(Gemini 멀티모달) — 글자 못 뽑은 스캔본 + 이미지. 스캔본 우선, 총 제한.
@@ -8963,8 +8964,8 @@ async function sunHandleFiles(files){
     }catch(e){ ocrSkip.push(q.item.name); }
   }
   sunData._corpus=corpus;
-  if(st)st.textContent='읽은 자료 '+(readOk.length+ocrOk.length)+'건'+(ocrOk.length?('(OCR '+ocrOk.length+')'):'')+' · 사진 '+placed+'장'+(hwps.length?' · 못읽은 한글 '+hwps.length:'');
-  sunShowReadReport({readOk, ocrOk, ocrSkip, hwps:hwps.map(x=>x.name), placed});
+  if(st)st.textContent='읽은 자료 '+(readOk.length+ocrOk.length)+'건'+(ocrOk.length?('(OCR '+ocrOk.length+')'):'')+' · 사진 '+placed+'장'+(hwpFail.length?' · 못읽은 한글 '+hwpFail.length:'');
+  sunShowReadReport({readOk, ocrOk, ocrSkip, hwps:hwpFail, placed});
   if(corpus.trim()){ await sunAIFill(corpus); }
   else { toast('읽을 텍스트 자료가 없습니다 — 위 안내의 못 읽은 자료를 확인하세요.'); }
 }
@@ -8980,7 +8981,7 @@ function sunShowReadReport(r){
   let h='<button class="rr-x" onclick="this.parentNode.style.display=\'none\'" title="닫기">✕</button>';
   h+='<div><span class="rr-ok">✅ 읽은 자료 '+(r.readOk.length+ocrOk.length)+'건</span>'+(ocrOk.length?(' (스캔·사진 OCR '+ocrOk.length+'건 포함)'):'')+(r.placed?(' · 사진 '+r.placed+'장 배치'):'')+'</div>';
   const problems=[];
-  if(r.hwps.length) problems.push('<div style="margin-top:6px"><span class="rr-warn">⚠ 한글 구형식(.hwp) '+r.hwps.length+'개 — 못 읽음.</span> 가장 중요한 <b>신청서</b>가 보통 이 형식입니다. 한글에서 <b>다른 이름으로 저장 → 형식을 <code>.hwpx</code> 또는 <code>.docx</code></b>로 바꿔 다시 넣으면 읽힙니다.'+list(r.hwps)+'</div>');
+  if(r.hwps.length) problems.push('<div style="margin-top:6px"><span class="rr-warn">⚠ 한글 파일 '+r.hwps.length+'개는 못 읽었습니다</span> — 아주 오래된 형식(한글 3.0 등)이거나 손상일 수 있습니다. 한글에서 <b>다른 이름으로 저장 → <code>.hwpx</code> 또는 <code>.docx</code></b>로 바꿔 다시 넣어보세요.'+list(r.hwps)+'</div>');
   if(ocrSkip.length) problems.push('<div style="margin-top:6px"><span class="rr-warn">⚠ 못 읽은 스캔·이미지 '+ocrSkip.length+'개</span> — 용량이 크거나(4MB 초과) OCR에서 글자를 찾지 못했습니다(부지 사진 등은 정상).'+list(ocrSkip)+'</div>');
   if(problems.length){ h+=problems.join(''); box.style.display='block'; }
   else { box.style.display='none'; }
@@ -8993,6 +8994,7 @@ async function sunExtractText(item){
   if(/^(txt|csv|md|json)$/.test(ext)) return (await file.text()).slice(0,80000);
   if(ext==='hml'){ return sunStripXml(await file.text()).slice(0,80000); }
   if(ext==='pdf'){ return await sunExtractPdf(file); }
+  if(ext==='hwp'){ return await sunExtractHwp(file); }   // 한글 구형식(.hwp 5.0) — 브라우저에서 직접 파싱
   if(/^(hwpx|docx|xlsx)$/.test(ext)){ await sunLoadJSZip(); if(!window.JSZip)return ''; const zip=await window.JSZip.loadAsync(await file.arrayBuffer()); let t=''; const names=Object.keys(zip.files).filter(n=>/\.(xml)$/i.test(n) && /(sharedStrings|document|section|content|sheet)/i.test(n)); for(const n of names){ try{ const xml=await zip.files[n].async('string'); t+=' '+sunStripXml(xml); }catch(e){} if(t.length>80000)break; } return t.slice(0,80000); }
   return '';
 }
@@ -9006,6 +9008,26 @@ async function sunExtractPdf(file){
     const pdf=await pdfjs.getDocument({data:await file.arrayBuffer()}).promise; let t=''; const N=Math.min(pdf.numPages,40);
     for(let i=1;i<=N;i++){ const page=await pdf.getPage(i); const c=await page.getTextContent(); t+=' '+c.items.map(x=>(x.str||'')).join(' '); if(t.length>80000)break; }
     return t.slice(0,80000);
+  }catch(e){ return ''; }
+}
+/* 한글 구형식(.hwp 5.0 = OLE/CFB) 브라우저 파싱 — cfb+pako CDN 지연로딩, BodyText 섹션을 raw-inflate 후 HWPTAG_PARA_TEXT(67) 레코드에서 UTF-16LE 텍스트 추출. (스킬 sunlight-village-plan과 같은 자료를 담당자 PC 브라우저에서 바로 읽기) */
+let _sunCfb=null, _sunPako=null;
+function sunLoadCfb(){ if(window.CFB)return Promise.resolve(window.CFB); if(_sunCfb)return _sunCfb; _sunCfb=new Promise((res)=>{ const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/cfb@1.2.2/dist/cfb.min.js'; s.onload=()=>res(window.CFB); s.onerror=()=>res(null); document.head.appendChild(s); }); return _sunCfb; }
+function sunLoadPako(){ if(window.pako)return Promise.resolve(window.pako); if(_sunPako)return _sunPako; _sunPako=new Promise((res)=>{ const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js'; s.onload=()=>res(window.pako); s.onerror=()=>res(null); document.head.appendChild(s); }); return _sunPako; }
+const SUN_HWP_CTRL=[1,2,3,4,5,6,7,8,9,11,12,14,15,16,17,18,19,20,21,22,23];  // 8워드(16byte) 제어문자 → 건너뜀
+async function sunExtractHwp(file){
+  const CFB=await sunLoadCfb(), pako=await sunLoadPako(); if(!CFB||!pako) return '';
+  try{
+    const cfb=CFB.read(new Uint8Array(await file.arrayBuffer()),{type:'array'});
+    const find=(n)=>{ const i=cfb.FullPaths.findIndex(p=>p.endsWith(n)); return i>=0 ? new Uint8Array(cfb.FileIndex[i].content) : null; };
+    const fh=find('FileHeader'); const compressed = fh ? ((fh[36]&1)===1) : true;
+    const sec=(buf)=>{ const d = compressed ? pako.inflateRaw(buf) : buf; const dv=new DataView(d.buffer,d.byteOffset,d.byteLength); let out=[], p=0;
+      while(p+4<=d.length){ const h=dv.getUint32(p,true); p+=4; const tag=h&0x3FF; let size=(h>>20)&0xFFF; if(size===0xFFF){ size=dv.getUint32(p,true); p+=4; } if(p+size>d.length) break;
+        if(tag===67){ let s=''; for(let i=p;i+1<p+size;i+=2){ const c=dv.getUint16(i,true); if(c>=32) s+=String.fromCharCode(c); else if(c===13||c===10) s+='\n'; else if(SUN_HWP_CTRL.indexOf(c)>=0){ i+=14; s+=' '; } else s+=' '; } out.push(s); }
+        p+=size; }
+      return out.join('\n'); };
+    let full=''; for(let k=0;k<30;k++){ const b=find('Section'+k); if(b){ try{ full+=sec(b)+'\n'; }catch(e){} } if(full.length>80000)break; }
+    return full.slice(0,80000);
   }catch(e){ return ''; }
 }
 
