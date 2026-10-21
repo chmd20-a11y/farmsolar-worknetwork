@@ -982,7 +982,7 @@ button{font-family:inherit;cursor:pointer}
 /* ===== 발전사업 허가 (행정) ===== */
 .pm-modebar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
 /* 사용전검사 상단 헤더(제목·설명·버튼·조작바·안내) 통째 상단 고정. margin -22px=풀블리드 / 위쪽 box-shadow(배경색)=스크롤 시 상단 .content padding 틈 메움 */
-.pi-stickytop{position:sticky;top:0;z-index:9;background:var(--bg);margin:-22px -22px 22px;padding:16px 22px 11px;border-bottom:1px solid var(--border);box-shadow:0 -28px 0 0 var(--bg),0 8px 16px -10px rgba(10,20,40,.22)}
+.pi-stickytop{position:-webkit-sticky;position:sticky;top:0;z-index:9;background:var(--bg);margin:-22px -22px 22px;padding:16px 22px 11px;border-bottom:1px solid var(--border);box-shadow:0 -28px 0 0 var(--bg),0 8px 16px -10px rgba(10,20,40,.22)}
 .pi-stickytop .page-head{margin-bottom:11px}
 .pi-stickytop .pm-modebar{margin-bottom:0}
 .pi-stickytop .cred-warn{margin-top:10px}
@@ -990,12 +990,12 @@ button{font-family:inherit;cursor:pointer}
 /* ── 전 팀 메뉴 상단 고정 — 제목부(page-head)는 전 메뉴, 조작바(pm-modebar)는 그 아래 쌓아 고정. 사용전검사는 자체 pi-stickytop 사용 ── */
 :root{--ph-h:88px}
 /* 제목부 — 상단으로 끌어올려(margin-top:-22px) 스크롤 처음부터 고정(초기 밀림 제거). 아래 요소와 여백 0 → 동시 고정(순차 멈춤 제거) */
-#view-sales>.page-head,#view-design>.page-head,#view-admin>.page-head,#view-construction>.page-head{position:sticky;top:0;z-index:9;background:var(--bg);margin:-22px -22px 0;padding:16px 22px 12px;border-bottom:1px solid var(--border);box-shadow:0 -28px 0 0 var(--bg)}
+#view-sales>.page-head,#view-design>.page-head,#view-admin>.page-head,#view-construction>.page-head{position:-webkit-sticky;position:sticky;top:0;z-index:9;background:var(--bg);margin:-22px -22px 0;padding:16px 22px 12px;border-bottom:1px solid var(--border);box-shadow:0 -28px 0 0 var(--bg)}
 #view-sales>.page-head,#view-design>.page-head{margin-bottom:14px;box-shadow:0 -28px 0 0 var(--bg),0 7px 14px -11px rgba(10,20,40,.14)}
-#view-admin>.subview>.pm-modebar,#view-construction>.subview>.pm-modebar{position:sticky;top:var(--ph-h,88px);z-index:8;background:var(--bg);margin:0 -22px 0;padding:10px 22px;border-bottom:1px solid var(--border);box-shadow:0 -6px 0 0 var(--bg),0 8px 15px -10px rgba(10,20,40,.18)}
+#view-admin>.subview>.pm-modebar,#view-construction>.subview>.pm-modebar{position:-webkit-sticky;position:sticky;top:var(--ph-h,88px);z-index:8;background:var(--bg);margin:0 -22px 0;padding:10px 22px;border-bottom:1px solid var(--border);box-shadow:0 -6px 0 0 var(--bg),0 8px 15px -10px rgba(10,20,40,.18)}
 /* 조작바 바로 아래 안내박스(cred-warn)도 함께 고정 — 바 높이(--bar-h)만큼 더 내려 쌓음(여백 0=동시 고정). 반투명 배경이라 불투명 색으로 교체(비침 방지) */
 #view-admin>.subview>.pm-modebar:has(+.cred-warn){border-bottom-color:transparent;box-shadow:0 -6px 0 0 var(--bg)}
-#view-admin>.subview>.pm-modebar+.cred-warn{position:sticky;top:calc(var(--ph-h,88px) + var(--bar-h,0px));z-index:7;background:color-mix(in srgb,var(--brand) 9%,var(--bg))!important;margin:0 -22px 14px;padding:11px 22px;border-bottom:1px solid var(--border);box-shadow:0 -6px 0 0 var(--bg),0 8px 15px -10px rgba(10,20,40,.18)}
+#view-admin>.subview>.pm-modebar+.cred-warn{position:-webkit-sticky;position:sticky;top:calc(var(--ph-h,88px) + var(--bar-h,0px));z-index:7;background:color-mix(in srgb,var(--brand) 9%,var(--bg))!important;margin:0 -22px 14px;padding:11px 22px;border-bottom:1px solid var(--border);box-shadow:0 -6px 0 0 var(--bg),0 8px 15px -10px rgba(10,20,40,.18)}
 /* 고정 page-head의 끌어올림(-22px)이 가져간 상단 여백 22px 보정 — 모든 화면(현황판·목록·서류폼)에서 고정영역(제목+조작바+안내박스) 바로 아래 첫 내용이 가리지 않게. 조작바가 있어도 그 아래 content가 가려지므로 동일 적용. 사용전검사(.pi-stickytop)는 자체 헤더라 제외하고 그 블록 margin으로 처리 */
 @media(min-width:861px){#view-sales>.subview:not(:has(>.pi-stickytop)),#view-design>.subview:not(:has(>.pi-stickytop)),#view-admin>.subview:not(:has(>.pi-stickytop)),#view-construction>.subview:not(:has(>.pi-stickytop)){padding-top:22px}}
 @media(max-width:860px){#view-sales>.page-head,#view-design>.page-head,#view-admin>.page-head,#view-construction>.page-head,#view-admin>.subview>.pm-modebar,#view-construction>.subview>.pm-modebar,#view-admin>.subview>.pm-modebar+.cred-warn{position:static;margin:0 0 14px;padding:12px 14px;border:0;box-shadow:none}}
@@ -1199,7 +1199,7 @@ button{font-family:inherit;cursor:pointer}
 
 /* ===== 햇빛소득마을 사업계획서 작성 작업공간(suv-) + 양식 표(fx-) ===== */
 /* 툴바+안내 묶음을 제목부(page-head) 바로 아래에 고정(스크롤해도 유지) */
-.suv-top{position:-webkit-sticky;position:sticky;top:0;z-index:20;background:var(--bg);margin:0 -22px 14px;padding:10px 22px 0}
+.suv-top{position:-webkit-sticky;position:sticky;top:0;z-index:20;background:var(--bg);margin:-22px -22px 14px;padding:16px 22px 0;box-shadow:0 -28px 0 0 var(--bg),0 8px 16px -10px rgba(10,20,40,.18)}
 .suv-top .suv-bar{margin-bottom:10px}
 .suv-top .suv-hint{margin-bottom:0}
 @media(max-width:860px){ .suv-top{position:static;margin:0 0 12px;padding:0} }
