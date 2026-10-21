@@ -8735,7 +8735,7 @@ function renderSunlightVillage(){
     <button class="btn ghost sm" onclick="sunDeleteVillage()" title="이 마을 삭제">🗑</button>
     <span class="suv-spacer"></span>
     <span class="suv-st" id="suvStatus"></span>
-    <button class="btn dark sm" onclick="sunConnectFolder()">📁 자료 폴더 연결</button>
+    <label class="btn dark sm" for="suvFolderInput" onclick="sunConnectFolder(event)">📁 자료 폴더 연결</label>
     <button class="btn primary sm" onclick="sunAIFill()">✨ AI 자동채움</button>
     <button class="btn ghost sm" onclick="sunPreview(false)">🔍 미리보기</button>
     <button class="btn ghost sm" onclick="sunPreview(true)">🖨 인쇄·PDF</button>
@@ -8755,7 +8755,7 @@ function renderSunlightVillage(){
   </div>
   <input type="file" id="suvPhotoInput" accept="image/*" style="display:none">
   <input type="file" id="suvAttachInput" accept="application/pdf,image/*" style="display:none">
-  <input type="file" id="suvFolderInput" webkitdirectory multiple style="display:none">`;
+  <input type="file" id="suvFolderInput" webkitdirectory multiple style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0);pointer-events:none">`;
 }
 
 function initSunlightVillage(){
@@ -8890,18 +8890,23 @@ function sunPreview(autoPrint){
 function sunClosePreview(){ const ov=document.getElementById('suvPvOv'); if(ov)ov.remove(); document.body.style.overflow=''; if(sunPvEsc){ document.removeEventListener('keydown',sunPvEsc); sunPvEsc=null; } }
 
 /* ---- 폴더 연결 + 자료 처리 + AI 자동채움 ---- */
-async function sunConnectFolder(){
-  const st=document.getElementById('suvStatus');
+function sunConnectFolder(ev){
+  // 크롬/엣지: File System Access(showDirectoryPicker)로 폴더 선택 — label 기본동작(인풋 열기)은 막고 JS 경로 사용
   if(window.showDirectoryPicker){
-    try{ sunDirHandle=await window.showDirectoryPicker({mode:'read'}); }
-    catch(e){ if(e&&e.name==='AbortError')return; const fi=document.getElementById('suvFolderInput'); if(fi)fi.click(); return; }
-    if(st)st.textContent='폴더 읽는 중…';
-    try{ const files=await sunReadDir(sunDirHandle); await sunHandleFiles(files); }
-    catch(e){ toast('폴더 읽기 오류: '+e.message); if(st)st.textContent=''; }
-  } else {
-    toast('열리는 창에서 마을 자료 폴더를 선택하세요 (지원 안 되는 기기는 파일 여러 개 선택)');
-    const fi=document.getElementById('suvFolderInput'); if(fi)fi.click();
+    if(ev&&ev.preventDefault) ev.preventDefault();
+    sunPickDirFS();
+    return;
   }
+  // 사파리/파이어폭스: 프로그램 .click()은 막히므로, <label for="suvFolderInput"> 기본동작으로 네이티브 폴더창이 열림(여기선 안내만)
+  toast('열리는 창에서 마을 자료 폴더를 선택하세요 (지원 안 되는 기기는 파일 여러 개 선택)');
+}
+async function sunPickDirFS(){
+  const st=document.getElementById('suvStatus');
+  try{ sunDirHandle=await window.showDirectoryPicker({mode:'read'}); }
+  catch(e){ if(e&&e.name==='AbortError')return; const fi=document.getElementById('suvFolderInput'); if(fi)fi.click(); return; }
+  if(st)st.textContent='폴더 읽는 중…';
+  try{ const files=await sunReadDir(sunDirHandle); await sunHandleFiles(files); }
+  catch(e){ toast('폴더 읽기 오류: '+e.message); if(st)st.textContent=''; }
 }
 async function sunReadDir(dir){ const out=[]; for await (const entry of dir.values()){ if(entry.kind==='file'){ out.push({name:entry.name, ext:(entry.name.split('.').pop()||'').toLowerCase(), handle:entry}); } else if(entry.kind==='directory' && out.length<400){ try{ const sub=await sunReadDir(entry); out.push(...sub); }catch(e){} } } return out; }
 
