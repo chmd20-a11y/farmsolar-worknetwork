@@ -1210,6 +1210,8 @@ button{font-family:inherit;cursor:pointer}
 .suv-st{font-size:11.5px;color:var(--muted);white-space:nowrap}
 .suv-attbadge{display:inline-block;min-width:16px;padding:0 5px;margin-left:2px;border-radius:9px;background:rgba(255,255,255,.22);font-size:10.5px;font-weight:800;line-height:16px;text-align:center}
 .sun-docno{flex:none;display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;background:var(--brand,#c8a24a);color:#fff;font-size:11px;font-weight:800;font-variant-numeric:tabular-nums}
+.sejbu-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 18px}
+.sejbu-bar .sejbu-hint{font-size:11.5px;color:var(--muted)}
 .suv-wrap{display:grid;grid-template-columns:238px minmax(0,1fr);gap:16px;align-items:start}
 .suv-rail{position:sticky;top:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;box-shadow:var(--shadow-sm)}
 .suv-rail-h{font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.3px;margin:2px 2px 9px;text-transform:uppercase}
@@ -8917,6 +8919,50 @@ function sunDeleteVillage(){
 }
 function sunVals(id){ sunData.vals=sunData.vals||{}; return sunData.vals[id]||(sunData.vals[id]={}); }
 function sunCks(id){ sunData.cks=sunData.cks||{}; return sunData.cks[id]||(sunData.cks[id]=[]); }
+// ── 사업계획서(s4) '나. 세부 부지' 표: 부지가 6행보다 많으면 행을 추가. 추가행은 html에 끼워 넣어 렌더·AI수집·미리보기·작성률을 일관 처리(fk=sb{k}a/t/o/s/c). ──
+function sunBujiN(){ return (sunData.bujiN|0); }
+function sunBujiSet(n){ sunData.bujiN=Math.max(0,Math.min(40, n|0)); }
+function sunBujiRowHtml(k){
+  const selT='<select class="fx-sel" data-fk="sb'+k+'t"><option value="">선택</option><option value="지상형">지상형</option><option value="영농형">영농형</option><option value="건물형">건물형</option><option value="수상형">수상형</option></select>';
+  const selS='<select class="fx-sel" data-fk="sb'+k+'s"><option value="">선택</option><option value="O">O</option><option value="X">X</option></select>';
+  return '<tr style="height:51px"><td style="text-align:center"></td>'
+    +'<td class="fx-v" data-fk="sb'+k+'a" data-label="주소"></td>'
+    +'<td style="text-align:center">'+selT+'</td>'
+    +'<td class="fx-v" data-fk="sb'+k+'o" data-label="부지소유자(관리기관)"></td>'
+    +'<td style="text-align:center">'+selS+'</td>'
+    +'<td class="fx-v" data-fk="sb'+k+'c" data-label="설치용량(kW)"></td></tr>';
+}
+// 현재 마을의 추가행을 끼운 폼 html(렌더/AI수집/미리보기/작성률 공통 사용)
+function sunFormHtml(f){
+  if(f.id!=='s4') return f.html;
+  const n=sunBujiN(); if(n<=0) return f.html;
+  const anchor='<tr style="height:51px"><td colspan="5" style="text-align:center">합계</td>';
+  const idx=f.html.indexOf(anchor); if(idx<0) return f.html;
+  let extra=''; for(let k=0;k<n;k++) extra+=sunBujiRowHtml(k);
+  return f.html.slice(0,idx)+extra+f.html.slice(idx);
+}
+// 세부 부지표 '번호' 열을 1..N으로 다시 매김(주소칸 있는 데이터행 기준) — '···' 표기 교정 + 추가행 번호
+function sunRenumberSejbu(root){
+  const sum=root.querySelector('[data-fk="f135"]'); if(!sum) return;
+  const sumTr=sum.closest('tr'); if(!sumTr) return; const body=sumTr.parentNode; let n=0;
+  [...body.children].forEach(tr=>{ const addr=tr.querySelector('[data-label="주소"]'); if(addr){ n++; const c=tr.cells&&tr.cells[0]; if(c) c.textContent=String(n); } });
+}
+function sunAddBujiBar(paper){
+  const sum=paper.querySelector('[data-fk="f135"]'); if(!sum) return; const table=sum.closest('table'); if(!table) return;
+  if(paper.querySelector('.sejbu-bar')) return;
+  const bar=document.createElement('div'); bar.className='sejbu-bar';
+  bar.innerHTML='<button class="btn ghost sm" onclick="sunBujiAdd()">＋ 부지 추가</button>'
+    +(sunBujiN()>0?'<button class="btn ghost sm" onclick="sunBujiDel()">－ 마지막 행 삭제</button>':'')
+    +'<span class="sejbu-hint">부지가 더 있으면 <b>행을 추가</b>해 입력하세요(자료 폴더 연결 시 추가행도 AI가 채웁니다). 번호·합계·총 용량은 자동 반영됩니다.</span>';
+  table.parentNode.insertBefore(bar, table.nextSibling);
+}
+function sunBujiAdd(){ sunBujiSet(sunBujiN()+1); sunStore(); sunPaint(); sunUpdatePcts(); }
+function sunBujiDel(){ const k=sunBujiN()-1; if(k<0) return;
+  const vals=sunVals('s4'), ai=sunAiFlags('s4'), src=sunSrc('s4'), comp=sunComp('s4');
+  const keys=['a','t','o','s','c'].map(s=>'sb'+k+s);
+  if(keys.some(x=>vals[x]&&String(vals[x]).trim()) && !confirm('마지막에 추가한 부지 행을 삭제할까요?')) return;
+  keys.forEach(x=>{ delete vals[x]; delete ai[x]; delete src[x]; delete comp[x]; });
+  sunBujiSet(k); sunStore(); sunPaint(); sunUpdatePcts(); }
 function sunPhotos(id){ sunData.photos=sunData.photos||{}; return sunData.photos[id]||(sunData.photos[id]={}); }
 function sunAttGet(id){ sunData.att=sunData.att||{}; return sunData.att[id]||null; }
 function sunAttSet(id,v){ sunData.att=sunData.att||{}; if(v) sunData.att[id]=v; else delete sunData.att[id]; }
@@ -8966,6 +9012,7 @@ function renderSunlightVillage(){
 function initSunlightVillage(){
   sunRenderVillageSel();
   sunPaint();
+  if(SUNLIGHT_CUR==='s4') sunCompute('s4');   // 총 용량·세부 합계 즉시 자동계산(재진입 시)
   sunUpdatePcts();
   // 제목을 고정 툴바(.suv-top) 안으로 승격했으므로 공유 제목부는 숨김(중복 방지) — applyPageHead가 놓쳐도 보장. 다른 메뉴로 가면 applyPageHead가 다시 표시.
   const _ph=document.querySelector('.view.active .page-head'); if(_ph) _ph.style.display='none';
@@ -8984,8 +9031,9 @@ function sunPaint(){
     if(slot) slot.addEventListener('click',(e)=>{ if(e.target.classList.contains('suv-att-del'))return; sunPickAttach('s5'); });
     return;
   }
-  paper.innerHTML=`<h2>${esc(f.title)}</h2><div class="suv-doc">${f.html}</div>`;
+  paper.innerHTML=`<h2>${esc(f.title)}</h2><div class="suv-doc">${sunFormHtml(f)}</div>`;
   sunWire(paper, f.id);
+  if(f.id==='s4'){ sunRenumberSejbu(paper); sunAddBujiBar(paper); }
 }
 function sunAttachHTML(id){
   const a=sunAttGet(id);
@@ -9093,7 +9141,7 @@ function sunPickPhoto(id,fk){ const inp=document.getElementById('suvPhotoInput')
 function sunDelPhoto(id,fk){ delete sunPhotos(id)[fk]; sunStore(); const td=document.querySelector('.fx-ph[data-fk="'+fk+'"]'); if(td)sunPaintPhoto(td,id,fk); }
 function sunImgToURL(file,cb){ const r=new FileReader(); r.onload=()=>{ const img=new Image(); img.onload=()=>{ const max=1100; let w=img.width,h=img.height; if(w>max||h>max){ const s=max/Math.max(w,h); w=Math.round(w*s); h=Math.round(h*s);} const cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(img,0,0,w,h); try{ cb(cv.toDataURL('image/jpeg',0.82)); }catch(e){ cb(r.result); } }; img.onerror=()=>cb(r.result); img.src=r.result; }; r.readAsDataURL(file); }
 
-function sunUpdatePcts(){ SUNLIGHT_FORMS.forEach(f=>{ const el=document.getElementById('suv-pct-'+f.id); if(!el)return; if(f.id==='s5'){ const has=!!sunAttGet('s5'); el.textContent= has?'첨부됨':''; const b=el.closest('.suv-navbtn'); if(b) b.classList.toggle('done', has); return; } const total=(f.html.match(/class="fx-v"/g)||[]).length + (f.html.match(/class="fx-sel"/g)||[]).length; const v=sunVals(f.id); const done=Object.keys(v).filter(k=>v[k]&&String(v[k]).trim()).length; const pct= total?Math.round(done/total*100):0; el.textContent= total? pct+'%':''; const b=el.closest('.suv-navbtn'); if(b) b.classList.toggle('done', pct>=100 && total>0); }); }
+function sunUpdatePcts(){ SUNLIGHT_FORMS.forEach(f=>{ const el=document.getElementById('suv-pct-'+f.id); if(!el)return; if(f.id==='s5'){ const has=!!sunAttGet('s5'); el.textContent= has?'첨부됨':''; const b=el.closest('.suv-navbtn'); if(b) b.classList.toggle('done', has); return; } const fh=sunFormHtml(f); const total=(fh.match(/class="fx-v"/g)||[]).length + (fh.match(/class="fx-sel"/g)||[]).length; const v=sunVals(f.id); const done=Object.keys(v).filter(k=>v[k]&&String(v[k]).trim()).length; const pct= total?Math.round(done/total*100):0; el.textContent= total? pct+'%':''; const b=el.closest('.suv-navbtn'); if(b) b.classList.toggle('done', pct>=100 && total>0); }); }
 
 function sunResetForm(){ const f=SUNLIGHT_FORMS.find(x=>x.id===SUNLIGHT_CUR); if(!f)return; if(!confirm('‘'+f.title+'’의 입력·체크·사진을 모두 비울까요?'))return; if(sunData.vals)delete sunData.vals[f.id]; if(sunData.cks)delete sunData.cks[f.id]; if(sunData.photos)delete sunData.photos[f.id]; if(sunData.ai)delete sunData.ai[f.id]; if(sunData.cksrc)delete sunData.cksrc[f.id]; if(sunData.att)delete sunData.att[f.id]; sunStore(); sunPaint(); sunUpdatePcts(); }
 /* 미리보기 — 입력값이 반영된 완성 양식(읽기전용, 행정·시공처럼) */
@@ -9109,7 +9157,8 @@ function sunPreview(autoPrint){
                             : '<img src="'+a.data+'" alt="조합원 명부 스캔본" style="max-width:100%;display:block;margin:0 auto;border:1px solid #ccc">';
     } else { div.innerHTML='<div style="padding:40px;text-align:center;color:#8a93a3;border:2px dashed #ccc;border-radius:12px">조합원 명부 스캔본이 아직 첨부되지 않았습니다.<br>원본을 스캔하여 첨부해 주세요.</div>'; }
   } else {
-  div.innerHTML=f.html;
+  div.innerHTML=sunFormHtml(f);
+  if(f.id==='s4') sunRenumberSejbu(div);   // 번호 재매김은 fx-v→fx-vp 변환 전에(주소칸 라벨 기준)
   div.querySelectorAll('.fx-v').forEach(td=>{ const v=vals[td.dataset.fk]; const narr=sunIsNarrCell(td); td.classList.remove('fx-v'); td.classList.add('fx-vp'); td.removeAttribute('data-label'); if(narr){ td.style.textAlign='left'; td.style.verticalAlign='top'; td.style.whiteSpace='pre-wrap'; } td.textContent=(v!=null?(narr?sunFmtNarr(v):v):''); });
   const ckEls=[...div.querySelectorAll('.fx-ck')];
   ckEls.forEach((el,i)=>{ if(cks.indexOf(i)>=0){ el.textContent='■'+el.textContent.slice(1); el.classList.add('on'); } });
@@ -9288,6 +9337,16 @@ function sunCompute(fid){
   const own=cells.find(c=>/자기자본|자부담/.test(c.lab) && !/계획서|증빙|서류|확보계획/.test(c.lab));
   const total=findVal(/총사업비|총\s*예상.*설치비|총\s*예상\s*태양광/);
   if(own && total){ put(own, fmt(total.n*0.15), '총사업비 '+total.n+' × 15%'); }
+  // ③ 세부 부지 '설치용량(kW)' 합계 → 세부 합계(f135) + 총괄표 '총 용량'(f310). 폴더에 없어도 부지 용량에서 자동 산출(fk로 정확히 지정)
+  const capCells=cells.filter(c=>c.lab==='설치용량(kW)');   // 세부 부지 행(추가행 포함). '설치계획용량'(참고자료)은 제외됨
+  if(capCells.some(c=>num(c.v)!=null)){
+    const capSum=capCells.reduce((s,c)=>{ const nn=num(c.v); return s+(nn||0); },0);
+    const fmt2=v=>String(Math.round(v*100)/100);   // 용량은 소수 2자리 보존(971.37 유지)
+    const sumCell=cells.find(c=>c.fk==='f135');   // 세부 합계
+    if(sumCell) put(sumCell, fmt2(capSum), '세부 부지 설치용량 합계');
+    const totCell=cells.find(c=>c.fk==='f310');   // 총괄표 총 용량
+    if(totCell) put(totCell, fmt2(capSum), '세부 부지 설치용량 합계 = 총 용량');
+  }
   if(changed){ sunStore(); sunPaint(); }
   return changed;
 }
@@ -9347,7 +9406,7 @@ function sunFmtNarr(s){
 // 서식에서 AI가 채울 항목 수집: 텍스트빈칸(fx-v) + 드롭다운(fx-sel) + 체크박스 그룹(fx-ck). 개인 동의(동의/동의안함)·동의서 서식은 제외.
 function sunCollectFields(f){
   const fields=[]; const ckGroupMap={}; const optMap={};
-  const tmp=document.createElement('div'); tmp.innerHTML=f.html;
+  const tmp=document.createElement('div'); tmp.innerHTML=sunFormHtml(f);
   // 텍스트 빈칸 — 라벨 보강: 라벨 없으면 행 맥락으로 유도, 중복 라벨은 앞쪽 섹션맥락 붙여 구분(담당자①②③·주민등록인구 등)
   const vEls=[...tmp.querySelectorAll('.fx-v')];
   const allTds=[...tmp.querySelectorAll('td')];
