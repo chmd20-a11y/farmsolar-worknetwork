@@ -9473,15 +9473,27 @@ function sunCompute(fid){
   const own=cells.find(c=>/자기자본|자부담/.test(c.lab) && !/계획서|증빙|서류|확보계획/.test(c.lab));
   const total=findVal(/총사업비|총\s*예상.*설치비|총\s*예상\s*태양광/);
   if(own && total){ put(own, fmt(total.n*0.15), '총사업비 '+total.n+' × 15%'); }
-  // ③ 세부 부지 '설치용량(kW)' 합계 → 세부 합계(f135) + 총괄표 '총 용량'(f310). 폴더에 없어도 부지 용량에서 자동 산출(fk로 정확히 지정)
+  // ③ 세부 부지 '설치용량(kW)' → 세부 합계(f135) + 총괄표 '총 용량'(f310).
+  //    전 필지가 같은 값이면 '프로젝트 총 용량을 필지마다 반복 기재'로 보고 합산하지 않고 그 값을 총량으로(원본 양식). 서로 다르면 합산.
   const capCells=cells.filter(c=>c.lab==='설치용량(kW)');   // 세부 부지 행(추가행 포함). '설치계획용량'(참고자료)은 제외됨
-  if(capCells.some(c=>num(c.v)!=null)){
-    const capSum=capCells.reduce((s,c)=>{ const nn=num(c.v); return s+(nn||0); },0);
-    const fmt2=v=>String(Math.round(v*100)/100);   // 용량은 소수 2자리 보존(971.37 유지)
-    const sumCell=cells.find(c=>c.fk==='f135');   // 세부 합계
-    if(sumCell) put(sumCell, fmt2(capSum), '세부 부지 설치용량 합계');
-    const totCell=cells.find(c=>c.fk==='f310');   // 총괄표 총 용량
-    if(totCell) put(totCell, fmt2(capSum), '세부 부지 설치용량 합계 = 총 용량');
+  const capVals=capCells.map(c=>num(c.v)).filter(v=>v!=null);
+  const fmt2=v=>String(Math.round(v*100)/100);   // 용량은 소수 2자리 보존(971.37 유지)
+  if(capVals.length){
+    const uniq=[...new Set(capVals.map(v=>Math.round(v*100)/100))];
+    const capTot=(uniq.length===1)?uniq[0]:capVals.reduce((s,v)=>s+v,0);
+    const note=(uniq.length===1)?'세부 부지 설치용량(전 필지 동일 = 프로젝트 총 용량)':'세부 부지 설치용량 합계';
+    const sumCell=cells.find(c=>c.fk==='f135'); if(sumCell) put(sumCell, fmt2(capTot), note);
+    const totCell=cells.find(c=>c.fk==='f310'); if(totCell) put(totCell, fmt2(capTot), note+' = 총 용량');
+    // 설치형태별 용량: 부지 설치형태가 한 종류면 그 칸에만 총 용량, 나머지(AI/계산 오입력)는 비움 — 원본 양식과 일치
+    const TYPES=['지상형','영농형','건물형','수상형'], typeFk={'지상형':'f311','영농형':'f312','건물형':'f313','수상형':'f314'};
+    const bt=[...new Set([...paper.querySelectorAll('.fx-sel')].map(s=>(vals[s.dataset.fk]||'').trim()).filter(v=>TYPES.indexOf(v)>=0))];
+    if(bt.length===1){
+      const t=bt[0];
+      TYPES.forEach(tp=>{ const fk=typeFk[tp]; const cell=cells.find(c=>c.fk===fk); if(!cell) return;
+        if(tp===t){ put(cell, fmt2(capTot), '설치형태('+t+') = 총 용량 자동'); }
+        else if(vals[fk]!=null && String(vals[fk]).trim()!=='' && (ai[fk]||comp[fk])){ delete vals[fk]; delete comp[fk]; delete ai[fk]; delete src[fk]; changed++; }   // 다른 형태의 AI/계산 오입력만 비움(수동 입력은 보존)
+      });
+    }
   }
   // ④ 사업계획서 서술형 기본문안(A: 구조화 데이터 템플릿 + 공통 보일러플레이트). AI(B)·수동 입력값은 보존(우선순위 수동>AI>템플릿)
   if(cells.some(c=>c.fk==='f515'||c.fk==='f516'||c.fk==='f517')){
