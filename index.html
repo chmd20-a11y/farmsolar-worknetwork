@@ -1295,9 +1295,9 @@ button{font-family:inherit;cursor:pointer}
 .suv-pv-head .t{font-weight:800;font-size:14px}
 .suv-pv-head .sp{flex:1}
 .suv-pv-paper{background:#fff;color:#111;max-width:200mm;width:100%;margin:0 auto;padding:24mm 17mm;box-shadow:0 8px 34px rgba(0,0,0,.42)}
-.suv-pv-paper h2{font-size:17px;font-weight:800;text-align:center;letter-spacing:1px;color:#111;margin:0 0 16px}
-.suv-pv-paper .sun-h{font-weight:700;color:#000}
-.suv-pv-paper .fx-p.sun-h{font-size:12px}
+.suv-pv-paper h2{font-size:12.5px;font-weight:700;text-align:left;letter-spacing:0;color:#111;margin:0 0 7px}
+.suv-pv-paper .fx-p.sun-h{font-weight:700;color:#000;font-size:12px}
+.suv-pv-paper .fx-p.sun-h1{font-weight:700;color:#000;font-size:13.5px;border-bottom:2px solid #65CE95;padding-bottom:4px;margin:14px 0 9px}
 .suv-pv-paper .fx-t td.sun-lbl{font-weight:700;color:#000}
 .suv-pv-paper .fx-v,.suv-pv-paper .fx-vp{box-shadow:none;background:transparent;border-radius:0;color:#111}
 .suv-pv-paper .fx-v:empty::before{content:''}
@@ -9192,7 +9192,7 @@ function sunPreview(autoPrint){
   div.querySelectorAll('.fx-ph').forEach(td=>{ const url=photos[td.dataset.fk]; td.classList.add('has'); td.innerHTML = url ? '<img src="'+url+'" alt="부지 사진">' : '<span style="color:#c3c7cf;font-size:9px">(부지 사진)</span>'; });
   div.querySelectorAll('.fx-sel').forEach(sel=>{ const v=vals[sel.dataset.fk]||''; const sp=document.createElement('span'); sp.className='fx-vp'; sp.textContent=v; sel.replaceWith(sp); });
   // 출력 타이포(원본 서식과 동일): 섹션/소제목·불릿은 볼드, 표의 라벨·머리글 셀은 볼드(값·주석은 평문 유지)
-  div.querySelectorAll('.fx-p').forEach(p=>{ const t=(p.textContent||'').trim(); if(/^(\d+\.|[가-힣]\.(\s|$)|○|●|■|▪|[①-⑳])/.test(t)) p.classList.add('sun-h'); });
+  div.querySelectorAll('.fx-p').forEach(p=>{ const t=(p.textContent||'').trim(); if(/^\d+\./.test(t)) p.classList.add('sun-h1'); else if(/^([가-힣]\.(\s|$)|○|●|■|▪|[①-⑳])/.test(t)) p.classList.add('sun-h'); });
   div.querySelectorAll('.fx-t td').forEach(td=>{ if(td.classList.contains('fx-vp')||td.querySelector('.fx-vp,.fx-ph,.fx-ck')) return; if((td.textContent||'').trim()) td.classList.add('sun-lbl'); });
   }
   sunClosePreview();
