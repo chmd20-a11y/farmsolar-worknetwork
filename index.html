@@ -8986,7 +8986,7 @@ function sunGaHtml(){
     +'<td class="fx-v" style="'+cL+'" data-fk="f'+fk0+'" data-label="'+key+' 성명"></td>'
     +'<td class="fx-v" style="'+cL+'" data-fk="f'+(fk0+1)+'" data-label="'+key+' 생년월일(YYMMDD 6자리, 주민등록번호 뒷자리 제외)"></td>'
     +'<td class="fx-v" data-fk="f'+(fk0+2)+'" data-label="'+key+' 주소"></td>'
-    +'<td class="fx-v" style="'+cL+'" data-fk="f'+(fk0+3)+'" data-label="'+key+' 연락처(휴대전화)"></td></tr>';
+    +'<td class="fx-v" style="'+cL+';white-space:nowrap" data-fk="f'+(fk0+3)+'" data-label="'+key+' 연락처(휴대전화)"></td></tr>';
   const imrows=imrow('이사장','이사장',530)+imrow('이사','이사 1',534)+imrow('이사','이사 2',538)+imrow('이사','이사 3',542)+imrow('이사','이사 4',546)+imrow('감사','감사',550);
   const minju=[['조합원 가입조건','거주요건·조합 목적 동의 등 정관 규정',520],['조합원 의결권','출자좌수와 무관하게 1인 1의결권·선거권 등 정관 규정',521],['출자 한도','한 조합원 출자좌수 한도(총 출자좌수의 10% 등) 정관 규정',522],['임원 선임','이사·감사·이사장 선출 방식 등 정관 규정',523],['특별의결','정관변경·합병·해산·제명·출자금 환급 등 특별의결 요건 정관 규정',524],['마을 총회','회계결산·운영현황 보고 등 마을총회 관련 정관 규정',525],['마을총회 의견수렴','발전시설 추진·부지 사용·수익배분 변경 등 마을총회 의결사항 정관 규정',526]];
   const minjurows=minju.map(a=>'<tr style="height:40px"><td class="fx-hd">'+a[0]+'</td><td class="fx-v" style="text-align:left;vertical-align:top" data-fk="f'+a[2]+'" data-label="'+a[0]+' — '+a[1]+'"></td></tr>').join('');
@@ -8994,7 +8994,7 @@ function sunGaHtml(){
     +'<div class="fx-p">○ 의사결정 기구 (정관 명시)</div>'
     +'<table class="fx-t"><colgroup><col style="width:100.000%"/></colgroup><tr style="height:96px"><td class="fx-v" style="vertical-align:top;text-align:left" data-fk="f103" data-label="의사결정 기구 — 총회·이사회·감사의 구성·역할·정관 근거조문"></td></tr></table>'
     +'<div class="fx-p">○ 임원 현황 (창립총회 선출)</div>'
-    +'<table class="fx-t"><colgroup><col style="width:12.000%"/><col style="width:16.000%"/><col style="width:17.000%"/><col style="width:39.000%"/><col style="width:16.000%"/></colgroup>'
+    +'<table class="fx-t"><colgroup><col style="width:11.000%"/><col style="width:14.000%"/><col style="width:15.000%"/><col style="width:40.000%"/><col style="width:20.000%"/></colgroup>'
     +'<tr style="height:30px"><td class="fx-hd">직위</td><td class="fx-hd">성명</td><td class="fx-hd">생년월일</td><td class="fx-hd">주소</td><td class="fx-hd">연락처</td></tr>'
     +imrows+'</table>'
     +'<div class="fx-p">○ 의사결정의 민주성 확보 방안 (정관 규정)</div>'
