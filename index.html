@@ -1299,6 +1299,10 @@ button{font-family:inherit;cursor:pointer}
 .suv-pv-paper .fx-p.sun-h{font-weight:700;color:#000;font-size:12px}
 .suv-pv-paper .fx-p.sun-h1{font-weight:700;color:#000;font-size:13.5px;border-bottom:2px solid #65CE95;padding-bottom:4px;margin:14px 0 9px}
 .suv-pv-paper .fx-t td.sun-lbl{font-weight:700;color:#000}
+/* 중앙 편집영역도 미리보기와 동일한 출력 타이포(입력 노란칸·AI파란값은 그대로 유지) */
+.suv-doc .fx-p.sun-h{font-weight:700;color:#000;font-size:11.5px}
+.suv-doc .fx-p.sun-h1{font-weight:700;color:#000;font-size:13px;border-bottom:2px solid #65CE95;padding-bottom:4px;margin:14px 0 9px}
+.suv-doc .fx-t td.sun-lbl{font-weight:700;color:#000}
 .suv-pv-paper .fx-v,.suv-pv-paper .fx-vp{box-shadow:none;background:transparent;border-radius:0;color:#111}
 .suv-pv-paper .fx-v:empty::before{content:''}
 .suv-pv-paper .fx-ck{border:0;padding:0;margin:0 3px 0 0;background:transparent;color:#111;font-weight:700}
@@ -9055,6 +9059,9 @@ function sunPaint(){
   paper.innerHTML=`<h2>${esc(f.title)}</h2><div class="suv-doc">${sunFormHtml(f)}</div>`;
   sunWire(paper, f.id);
   if(f.id==='s4'){ sunRenumberSejbu(paper); sunAddBujiBar(paper); }
+  // 중앙 편집영역도 미리보기와 동일한 출력 타이포(섹션 볼드·녹색밑줄 / 소제목 볼드 / 표 라벨 볼드) — 노란 입력칸은 제외
+  paper.querySelectorAll('.fx-p').forEach(p=>{ const t=(p.textContent||'').trim(); if(/^\d+\./.test(t)) p.classList.add('sun-h1'); else if(/^([가-힣]\.(\s|$)|○|●|■|▪|[①-⑳])/.test(t)) p.classList.add('sun-h'); });
+  paper.querySelectorAll('.fx-t td').forEach(td=>{ if(td.classList.contains('fx-v')||td.querySelector('.fx-v,.fx-sel,.fx-ck,.fx-ph')) return; if((td.textContent||'').trim()) td.classList.add('sun-lbl'); });
 }
 function sunAttachHTML(id){
   const a=sunAttGet(id);
