@@ -9030,8 +9030,10 @@ function sunDaHtml(){
   if(mode==='narr'){
     return toggle+'<table class="fx-t"><colgroup><col style="width:100.000%"/></colgroup><tr style="height:300px"><td class="fx-v" style="vertical-align:top;text-align:left" data-fk="f300" data-label="출자·수입 구조 — ① 출자 구조(1좌 금액·기본 출자좌수·개인/법인 출자한도·초기 출자금 총액, 정관 제22조) ② 수익금 배분 구조(법정적립 후 잔여금의 적립 비율·용도, 정관 제27조의3·4)"></td></tr></table>';
   }
-  const chulja=[['1좌당 금액','f570','f571'],['기본 출자좌수','f572','f573'],['개인 출자 한도','f574','f575'],['법인 출자 한도','f576','f577'],['초기 출자금 총액','f578','f579']];
-  const chuljaRows=chulja.map(a=>'<tr style="height:33px"><td class="fx-hd">'+a[0]+'</td><td class="fx-v" style="text-align:left;vertical-align:top" data-fk="'+a[1]+'" data-label="'+a[0]+' 내용"></td><td class="fx-v" style="text-align:center;vertical-align:top" data-fk="'+a[2]+'" data-label="'+a[0]+' 근거(정관 조문)"></td></tr>').join('');
+  const dvals=sunVals('s4'); const mStr=String(dvals['f90']||'').replace(/[^0-9]/g,''); const mN=mStr?parseInt(mStr,10):null;
+  const chokiGg=(mN!=null)?('('+mN+'명 × 10좌 = '+(mN*10)+'좌)'):'(조합원 수 × 10좌)';
+  const chulja=[['1좌당 금액','f570','정관 제22조③'],['기본 출자좌수','f572','정관 제22조③'],['개인 출자 한도','f574','정관 제22조②'],['법인 출자 한도','f576','정관 제22조②'],['초기 출자금 총액','f578',chokiGg]];
+  const chuljaRows=chulja.map(a=>'<tr style="height:33px"><td class="fx-hd">'+a[0]+'</td><td class="fx-v" style="text-align:left;vertical-align:top" data-fk="'+a[1]+'" data-label="'+a[0]+' 내용"></td><td style="text-align:center;vertical-align:middle;font-size:11px;color:#555">'+a[2]+'</td></tr>').join('');
   const baebun=[['필수 운영비 및 제세공과금','20%','f582'],['시설 유지보수 및 교체 적립금','20%','f583'],['마을 공동기금','40%','f584'],['마을복지 및 장학사업','10%','f585']];
   const baebunRows=baebun.map(a=>'<tr style="height:44px"><td class="fx-hd">'+a[0]+'</td><td class="fx-hd" style="text-align:center">'+a[1]+'</td><td class="fx-v" style="text-align:left;vertical-align:top" data-fk="'+a[2]+'" data-label="'+a[0]+' 용도"></td></tr>').join('');
   return toggle
@@ -9561,15 +9563,10 @@ function sunCompute(fid){
         const memN=num(gfk('f90'));
         const choki=(memN!=null)?((memN*100000).toLocaleString('en-US')+'원 (조합원 '+memN+'명 × 10좌)'):'조합원 수 × 10좌 × 10,000원';
         putNarr('f570','10,000원','표준 정관사항 자동(수정 가능)');
-        putNarr('f571','정관 제22조③','표준 정관사항 자동(수정 가능)');
         putNarr('f572','1인 10좌(100,000원) — 전 조합원 동일','표준 정관사항 자동(수정 가능)');
-        putNarr('f573','정관 제22조③','표준 정관사항 자동(수정 가능)');
         putNarr('f574','총 출자좌수의 100분의 10 이내','표준 정관사항 자동(수정 가능)');
-        putNarr('f575','정관 제22조②','표준 정관사항 자동(수정 가능)');
         putNarr('f576','총 출자좌수의 100분의 30 이내','표준 정관사항 자동(수정 가능)');
-        putNarr('f577','정관 제22조②','표준 정관사항 자동(수정 가능)');
         putNarr('f578',choki,(memN!=null)?'조합원 수(1인 10좌·1좌 10,000원)에서 자동 산출':'표준 정관사항 자동(수정 가능)');
-        putNarr('f579','정관 제22조③','표준 정관사항 자동(수정 가능)');
         putNarr('f580','특정인의 조합 지배를 방지하고, 출자좌수와 무관한 1인 1표 원칙과 함께 민주적 지배구조를 확보한다. 운영상 추가 출자금이 필요하여 총회에서 의결한 경우 전 조합원이 동일 금액을 추가 납입한다(정관 제22조③).','표준 정관사항 자동(수정 가능)');
         const bun='조합은 발전사업 매출수익과 대출원리금 상환금·수수료·유지관리비 등을 햇빛소득마을 전용계좌로 처리하며(정관 제27조의2), 매 회계연도 수익금에서 법정적립금(잉여금의 100분의 10 이상)을 공제한 잔여 금액을 아래 비율로 적립하고 적립금을 공제한 금액을 마을주민 수익 배분에 사용한다(정관 제27조의3).';
         putNarr('f581',bun,'표준 정관사항 자동(수정 가능)');
@@ -9698,7 +9695,7 @@ async function sunAIFill(corpus){
   if(!fields.length){ toast('이 서식은 자동채움할 항목이 없습니다 — 직접 입력해 주세요'); return; }
   // 이미 채워진 칸은 빼고(재실행 시 빈 칸만), 남은 칸을 작은 묶음으로 나눠 여러 번 요청 → 큰 서식도 타임아웃 없이 채움
   const vals=sunVals(f.id), ai=sunAiFlags(f.id), src=sunSrc(f.id), cks=sunCks(f.id), cksrc=sunCkSrc(f.id), comp=sunComp(f.id);
-  const NARR_TPL=['f515','f516','f517','f103','f520','f521','f522','f523','f524','f525','f526','f560','f104','f561','f562','f300','f570','f571','f572','f573','f574','f575','f576','f577','f579','f580','f581','f582','f583','f584','f585'];  // 자동 템플릿 서술칸 — 값이 있어도 AI가 자료 기반으로 덮어씀(A+B). 계산값(f578 초기출자금 등 목록 밖)은 보호
+  const NARR_TPL=['f515','f516','f517','f103','f520','f521','f522','f523','f524','f525','f526','f560','f104','f561','f562','f300','f570','f572','f574','f576','f580','f581','f582','f583','f584','f585'];  // 자동 템플릿 서술칸 — 값이 있어도 AI가 자료 기반으로 덮어씀(A+B). 계산값(f578 초기출자금 등 목록 밖)은 보호
   const isFilled=(fd)=> ckGroupMap[fd.fk] ? ckGroupMap[fd.fk].some(m=>cks.indexOf(m.idx)>=0) : (vals[fd.fk]!=null && String(vals[fd.fk]).trim()!=='' && !(NARR_TPL.indexOf(fd.fk)>=0 && comp[fd.fk] && !ai[fd.fk]));
   const pending=fields.filter(fd=>!isFilled(fd));
   const useFields = pending.length ? pending : fields;   // 다 찬 상태에서 다시 누르면 전체 재채움 허용
