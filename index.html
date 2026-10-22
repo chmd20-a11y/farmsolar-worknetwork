@@ -1212,6 +1212,8 @@ button{font-family:inherit;cursor:pointer}
 .suv-vsel{border:1px solid var(--border-strong);background:var(--surface-2);border-radius:8px;padding:6px 9px;font-size:12.5px;font-weight:800;color:var(--ink);max-width:240px;cursor:pointer}
 .suv-bar .suv-spacer{flex:1}
 .suv-st{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.suv-st.suv-st-ok{color:#1a7f4b;font-weight:700;white-space:normal}
+.suv-st.suv-st-warn{color:#c0392b;font-weight:700;white-space:normal}
 .suv-prog{display:none;width:132px;height:8px;border-radius:5px;background:var(--surface-2);border:1px solid var(--border);overflow:hidden;vertical-align:middle;margin-left:4px}
 .suv-prog > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brand,#c8a24a),#e6c266);border-radius:5px;transition:width .5s ease}
 .suv-attbadge{display:inline-block;min-width:16px;padding:0 5px;margin-left:2px;border-radius:9px;background:rgba(255,255,255,.22);font-size:10.5px;font-weight:800;line-height:16px;text-align:center}
@@ -9803,7 +9805,7 @@ async function sunAIFill(corpus){
   const useFields = pending.length ? pending : fields;   // 다 찬 상태에서 다시 누르면 전체 재채움 허용
   const CHUNK=30;   // 한 요청에 담는 필드 수. 너무 크면 느리고(출력↑) 너무 작으면 요청수↑. 30이 절충
   const chunks=[]; for(let i=0;i<useFields.length;i+=CHUNK) chunks.push(useFields.slice(i,i+CHUNK));
-  if(st)st.textContent='AI가 자료를 읽고 채우는 중… ('+chunks.length+'묶음)';
+  if(st){ st.classList.remove('suv-st-ok','suv-st-warn'); st.textContent='AI가 자료를 읽고 채우는 중… ('+chunks.length+'묶음)'; }
   sunProgStart();
   const allValues={}, allSources={};
   let failedChunks=0, busyFlag=false, noKey=false, done=0;
@@ -9850,12 +9852,16 @@ async function sunAIFill(corpus){
   sunProgDone();
   const parts=[]; if(n)parts.push(n+'칸'); if(nck)parts.push('선택 '+nck+'개'); if(nc)parts.push('계산 '+nc+'칸');
   const summary=parts.length?parts.join(' + '):'해당 없음';
+  const okN=chunks.length-failedChunks;   // 성공한 묶음 수
+  if(st) st.classList.remove('suv-st-ok','suv-st-warn');
   if(failedChunks){
-    if(st)st.textContent='일부 완료 — 「AI 자동채움」 한 번 더 누르면 나머지';
-    toast('AI 자동채움: '+summary+' 채웠습니다. 일부 '+failedChunks+'묶음은 '+(busyFlag?'AI 혼잡':'오류')+'으로 못 받았어요 — 「✨ AI 자동채움」을 한 번 더 누르면 나머지를 이어서 채웁니다.');
+    // 혼잡/오류로 일부 묶음 실패 → '완벽히 가져온 게 아님'을 분명히 표시
+    if(st){ st.classList.add('suv-st-warn'); st.textContent='⚠ 일부만 채움 — '+chunks.length+'묶음 중 '+okN+'개만 성공('+failedChunks+'개 '+(busyFlag?'혼잡':'오류')+' 실패). 「✨ AI 자동채움」을 다시 누르면 빠진 부분을 완성합니다'; }
+    toast('⚠ AI 자동채움 일부만 완료 — '+summary+' 채웠으나 '+failedChunks+'묶음이 '+(busyFlag?'AI 혼잡':'오류')+'으로 빠졌습니다. 「✨ AI 자동채움」을 한 번 더 누르면 나머지를 이어서 채웁니다.');
   } else {
-    if(st)st.textContent='AI 자동채움: '+summary+' — 파란 표시는 검토(마우스 올리면 근거)';
-    toast(parts.length ? ('AI 자동채움 완료 · '+summary+' (파란 표시는 검토 · 근거는 마우스 올려 확인)') : 'AI 자동채움 — 자료에서 근거를 찾지 못해 채운 항목이 없습니다(직접 입력해 주세요)');
+    // 전 묶음 성공 → 자료의 값을 완전히 가져옴(혼잡으로 빠진 것 없음)
+    if(st){ st.classList.add('suv-st-ok'); st.textContent= parts.length ? ('✅ 완벽하게 채움 — 자료의 값을 모두 가져왔습니다 (전 '+chunks.length+'묶음 성공 · '+summary+')') : ('✅ 완료 — 혼잡 없이 전 '+chunks.length+'묶음 확인. 새로 채운 값은 없음(이미 채워졌거나 자료에 해당 값이 없음)'); }
+    toast(parts.length ? ('✅ AI 자동채움 완료 — '+summary+' (전 묶음 성공 · 혼잡으로 빠진 항목 없음 · 파란 표시는 근거 확인)') : '✅ AI 자동채움 완료 — 혼잡 없이 모두 확인했으나 자료에서 새로 채울 값이 없었습니다(이미 채워졌거나 자료에 없음)');
   }
 }
 
