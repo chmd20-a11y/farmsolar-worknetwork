@@ -35,11 +35,12 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') { res.status(405).json({ error: 'method', message: 'POST only' }); return; }
   const key = process.env.GEMINI_API_KEY;
   if (!key) { res.status(503).json({ error: 'no_key', message: 'GEMINI_API_KEY 미설정 — Google AI Studio 무료 키를 Vercel 환경변수에 등록하면 AI 자동채움이 작동합니다(무료).' }); return; }
-  const model = process.env.SUNLIGHT_GEMINI_MODEL || 'gemini-flash-lite-latest';
+  let model = process.env.SUNLIGHT_GEMINI_MODEL || 'gemini-flash-lite-latest';
   try {
     let b = req.body;
     if (typeof b === 'string') { try { b = JSON.parse(b); } catch (e) { b = {}; } }
     b = b || {};
+    if (typeof b.model === 'string' && /^gemini-[a-z0-9.\-]+$/i.test(b.model)) model = b.model;   // 선택적 모델 지정(정확도 A/B·관리자용, gemini-* 만 허용)
     const title = String(b.title || '서식');
     const fields = Array.isArray(b.fields) ? b.fields : [];
     const corpus = String(b.corpus || '').slice(0, 200000);
