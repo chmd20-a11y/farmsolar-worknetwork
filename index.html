@@ -1219,7 +1219,7 @@ button{font-family:inherit;cursor:pointer}
 .sejbu-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 18px}
 .sejbu-bar .sejbu-hint{font-size:11.5px;color:var(--muted)}
 .suv-wrap{display:grid;grid-template-columns:238px minmax(0,1fr);gap:16px;align-items:start}
-.suv-rail{position:-webkit-sticky;position:sticky;top:calc(var(--suv-top-h,0px) + 8px);background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;box-shadow:var(--shadow-sm);max-height:calc(100vh - var(--suv-top-h,0px) - 24px);overflow-y:auto}
+.suv-rail{position:-webkit-sticky;position:sticky;top:var(--suv-rail-top, calc(var(--suv-top-h,0px) + 14px));background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;box-shadow:var(--shadow-sm);max-height:calc(100vh - var(--suv-top-h,0px) - 24px);overflow-y:auto}
 .suv-rail-h{font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.3px;margin:2px 2px 9px;text-transform:uppercase}
 .suv-navbtn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:1px solid transparent;background:transparent;border-radius:9px;padding:8px 9px;margin-bottom:3px;cursor:pointer;color:var(--ink-2);font-size:12px;font-weight:600;line-height:1.3}
 .suv-navbtn:hover{background:var(--surface-2)}
@@ -9548,10 +9548,14 @@ async function sunAIFill(corpus){
   try{
     const r=await fetch('/api/sunlight-extract',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({title:f.title, fields, corpus}),signal:_aictrl.signal});
     clearTimeout(_aito);
-    if(r.status===503){ sunProgDone(); toast('AI 자동채움을 쓰려면 관리자가 무료 Gemini 키를 한 번 등록해야 합니다(무료). 지금은 직접 입력해 주세요.'); if(st)st.textContent='AI 키 미등록(무료 Gemini)'; return; }
-    if(r.status===504 || r.status===502){ sunProgDone(); toast('AI 자동채움이 시간을 초과했어요 — 자료가 많으면 느릴 수 있습니다. 잠시 후 「✨ AI 자동채움」을 다시 눌러 주세요.'); if(st)st.textContent='시간 초과 — 다시 시도'; return; }
     const j=await r.json().catch(()=>({}));
-    if(!r.ok){ sunProgDone(); toast('AI 자동채움 실패: '+((j&&j.message)||r.status)); if(st)st.textContent=''; return; }
+    if(!r.ok){
+      sunProgDone();
+      if(r.status===503 && j.error==='no_key'){ toast('AI 자동채움을 쓰려면 관리자가 무료 Gemini 키를 한 번 등록해야 합니다(무료). 지금은 직접 입력해 주세요.'); if(st)st.textContent='AI 키 미등록(무료 Gemini)'; return; }
+      if(r.status===503 || j.error==='busy'){ toast('AI 서버(Gemini)가 잠시 혼잡합니다 — 10~20초 뒤 「✨ AI 자동채움」을 다시 눌러 주세요(자료 연결은 유지됩니다).'); if(st)st.textContent='AI 혼잡 — 잠시 후 재시도'; return; }
+      if(r.status===504){ toast('AI 응답이 지연됐어요 — 잠시 후 「✨ AI 자동채움」을 다시 눌러 주세요.'); if(st)st.textContent='시간 초과 — 다시 시도'; return; }
+      toast('AI 자동채움 실패: '+((j&&j.message)||r.status)); if(st)st.textContent=''; return;
+    }
     const vals=sunVals(f.id), ai=sunAiFlags(f.id), src=sunSrc(f.id), cks=sunCks(f.id), cksrc=sunCkSrc(f.id);
     const values=j.values||{}, sources=j.sources||{}; let n=0, nck=0;
     const norm=s=>String(s).replace(/\s/g,'');
@@ -9993,6 +9997,16 @@ function syncStickyOffset(){
   const suvTop=v.querySelector('.suv-top'); let sh=0;
   if(suvTop && suvTop.offsetParent!==null && getComputedStyle(suvTop).position==='sticky'){ sh=suvTop.offsetHeight; }
   document.documentElement.style.setProperty('--suv-top-h', sh+'px');
+  // 좌측 서식목록을 '완전 고정'(움직임 0): 레일의 자연 위치를 측정해 바로 그 지점을 sticky top으로 지정
+  const rail=v.querySelector('.suv-rail');
+  if(rail && suvTop && sh>0){
+    let sc=rail.parentElement; while(sc){ const cs=getComputedStyle(sc); if(/(auto|scroll)/.test(cs.overflowY) && sc.scrollHeight>sc.clientHeight) break; sc=sc.parentElement; }
+    sc = sc || document.scrollingElement;
+    const prev=rail.style.position; rail.style.position='static';
+    const natural=rail.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop;
+    rail.style.position=prev;
+    document.documentElement.style.setProperty('--suv-rail-top', Math.max(0,Math.round(natural))+'px');
+  }
 }
 window.addEventListener('resize', syncStickyOffset);
 // 선택한 메뉴명을 페이지 상단 메인 제목("{팀} · {메뉴}")으로 승격. 화면 안의 제목 블록(.wf-head)은 숨겨 중복 제거.
