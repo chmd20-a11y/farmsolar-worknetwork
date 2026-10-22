@@ -9572,9 +9572,12 @@ function sunCompute(fid){
   }
   // ④ 사업계획서 서술형 기본문안(A: 구조화 데이터 템플릿 + 공통 보일러플레이트). AI(B)·수동 입력값은 보존(우선순위 수동>AI>템플릿)
   if(cells.some(c=>c.fk==='f515'||c.fk==='f516'||c.fk==='f517')){
+    // 나.운영체계 등 전 마을 공통 '표준 정관문안' 칸 — AI의 부분 추출보다 완전한 표준문안이 우선(단, 사용자 수동 편집은 보존)
+    const FORCE_TPL=['f561','f562','f104'];
     const putNarr=(fk,value,note)=>{
       const cell=cells.find(c=>c.fk===fk); if(!cell) return;
-      if(cell.v && (ai[fk] || !comp[fk])) return;   // 수동·AI 입력은 덮지 않음(빈칸/이전 템플릿만 갱신)
+      if(FORCE_TPL.indexOf(fk)>=0){ if(cell.v && !ai[fk] && !comp[fk]) return; }   // 강제 템플릿: 수동 편집(플래그 없음)만 보존, AI값·이전 템플릿은 갱신
+      else if(cell.v && (ai[fk] || !comp[fk])) return;   // 일반: 수동·AI 입력은 덮지 않음(빈칸/이전 템플릿만 갱신)
       const s=String(value);
       if(vals[fk]===s && comp[fk]===note) return;
       vals[fk]=s; comp[fk]=note; delete ai[fk]; delete src[fk]; changed++;
