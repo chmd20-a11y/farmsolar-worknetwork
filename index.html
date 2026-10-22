@@ -9801,7 +9801,7 @@ async function sunAIFill(corpus){
   const isFilled=(fd)=> ckGroupMap[fd.fk] ? ckGroupMap[fd.fk].some(m=>cks.indexOf(m.idx)>=0) : (vals[fd.fk]!=null && String(vals[fd.fk]).trim()!=='' && !(NARR_TPL.indexOf(fd.fk)>=0 && comp[fd.fk] && !ai[fd.fk]));
   const pending=fields.filter(fd=>!isFilled(fd));
   const useFields = pending.length ? pending : fields;   // 다 찬 상태에서 다시 누르면 전체 재채움 허용
-  const CHUNK=18;
+  const CHUNK=50;   // 한 요청에 담는 필드 수(↑ = 요청 수·폴더 재전송·혼잡 ↓). s4 336필드 기준 약 7묶음
   const chunks=[]; for(let i=0;i<useFields.length;i+=CHUNK) chunks.push(useFields.slice(i,i+CHUNK));
   if(st)st.textContent='AI가 자료를 읽고 채우는 중… ('+chunks.length+'묶음)';
   sunProgStart();

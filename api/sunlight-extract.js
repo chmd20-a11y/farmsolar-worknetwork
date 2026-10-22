@@ -7,7 +7,7 @@
 const https = require('https');
 
 function gemini(key, model, system, user) {
-  const gc = { responseMimeType: 'application/json', temperature: 0, maxOutputTokens: 8192 };
+  const gc = { responseMimeType: 'application/json', temperature: 0, maxOutputTokens: 16384 };   // 묶음이 커져(50필드) 값+근거 출력이 길어질 수 있어 상향
   if (/2\.5|3\.\d|4\.\d|flash-latest|pro-latest|thinking/i.test(model)) gc.thinkingConfig = { thinkingBudget: 0 };   // 사고형 모델만 thinking 끔(구형 비사고형은 미지원→에러)
   const payload = JSON.stringify({
     systemInstruction: { parts: [{ text: system }] },
