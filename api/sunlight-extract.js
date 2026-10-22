@@ -10,7 +10,7 @@ function gemini(key, model, system, user) {
   const payload = JSON.stringify({
     systemInstruction: { parts: [{ text: system }] },
     contents: [{ role: 'user', parts: [{ text: user }] }],
-    generationConfig: { responseMimeType: 'application/json', temperature: 0, maxOutputTokens: 8192 },
+    generationConfig: { responseMimeType: 'application/json', temperature: 0, maxOutputTokens: 8192, thinkingConfig: { thinkingBudget: 0 } },
   });
   const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(key);
   return new Promise((resolve, reject) => {
