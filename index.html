@@ -9801,7 +9801,7 @@ async function sunAIFill(corpus){
   const isFilled=(fd)=> ckGroupMap[fd.fk] ? ckGroupMap[fd.fk].some(m=>cks.indexOf(m.idx)>=0) : (vals[fd.fk]!=null && String(vals[fd.fk]).trim()!=='' && !(NARR_TPL.indexOf(fd.fk)>=0 && comp[fd.fk] && !ai[fd.fk]));
   const pending=fields.filter(fd=>!isFilled(fd));
   const useFields = pending.length ? pending : fields;   // 다 찬 상태에서 다시 누르면 전체 재채움 허용
-  const CHUNK=50;   // 한 요청에 담는 필드 수(↑ = 요청 수·폴더 재전송·혼잡 ↓). s4 336필드 기준 약 7묶음
+  const CHUNK=30;   // 한 요청에 담는 필드 수. 너무 크면 느리고(출력↑) 너무 작으면 요청수↑. 30이 절충
   const chunks=[]; for(let i=0;i<useFields.length;i+=CHUNK) chunks.push(useFields.slice(i,i+CHUNK));
   if(st)st.textContent='AI가 자료를 읽고 채우는 중… ('+chunks.length+'묶음)';
   sunProgStart();
@@ -9819,10 +9819,10 @@ async function sunAIFill(corpus){
     }catch(e){ clearTimeout(to); failedChunks++; if(e&&e.name==='AbortError') busyFlag=true; }
     done++; sunProgSet(done/chunks.length);
   };
-  // 동시 3개까지 처리(무료 등급 한도 안)
+  // 동시 2개까지 처리(무료 Gemini는 동시 3개부터 한 요청이 수십초로 밀림 — 혼잡 완화 위해 2로)
   let qi=0;
   const worker=async()=>{ while(qi<chunks.length && !noKey){ const my=qi++; await doChunk(chunks[my]); } };
-  await Promise.all(Array.from({length:Math.min(3,chunks.length)}, worker));
+  await Promise.all(Array.from({length:Math.min(2,chunks.length)}, worker));
   if(noKey){ sunProgDone(); toast('AI 자동채움을 쓰려면 관리자가 무료 Gemini 키를 한 번 등록해야 합니다(무료). 지금은 직접 입력해 주세요.'); if(st)st.textContent='AI 키 미등록(무료 Gemini)'; return; }
   // 받은 값 적용
   let n=0, nck=0;
