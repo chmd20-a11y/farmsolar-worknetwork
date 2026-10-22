@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') { res.status(405).json({ error: 'method', message: 'POST only' }); return; }
   const key = process.env.GEMINI_API_KEY;
   if (!key) { res.status(503).json({ error: 'no_key', message: 'GEMINI_API_KEY 미설정 — Google AI Studio 무료 키를 Vercel 환경변수에 등록하면 AI 자동채움이 작동합니다(무료).' }); return; }
-  const model = process.env.SUNLIGHT_GEMINI_MODEL || 'gemini-flash-latest';
+  const model = process.env.SUNLIGHT_GEMINI_MODEL || 'gemini-flash-lite-latest';
   try {
     let b = req.body;
     if (typeof b === 'string') { try { b = JSON.parse(b); } catch (e) { b = {}; } }
