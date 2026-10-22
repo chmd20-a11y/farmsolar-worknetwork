@@ -9150,7 +9150,7 @@ function sunWire(paper, id){
     if(vals[fk]!=null && vals[fk]!==''){ if(!narr){ const cl=sunStripDupUnit(td, String(vals[fk])); if(cl!==String(vals[fk])) vals[fk]=cl; } td.textContent=narr?sunFmtNarr(vals[fk]):vals[fk]; td.classList.add('filled'); }
     if(ai[fk]){ td.setAttribute('data-ai','1'); if(src[fk]) td.title='🔎 AI가 채운 근거: '+src[fk]; }
     if(comp[fk]){ td.classList.add('computed'); td.title='🧮 자동 계산: '+comp[fk]; }
-    td.addEventListener('input',()=>{ const t=td.textContent.trim(); if(t) vals[fk]=t; else delete vals[fk]; td.classList.toggle('filled', !!t); td.removeAttribute('data-ai'); td.classList.remove('computed'); td.removeAttribute('title'); delete ai[fk]; delete src[fk]; delete comp[fk]; });
+    td.addEventListener('input',()=>{ const t=td.textContent.trim(); if(narr) sunNarrMan(id)[fk]=1; if(t) vals[fk]=t; else delete vals[fk]; td.classList.toggle('filled', !!t); td.removeAttribute('data-ai'); td.classList.remove('computed'); td.removeAttribute('title'); delete ai[fk]; delete src[fk]; delete comp[fk]; });
     td.addEventListener('blur',()=>{ sunStore(); sunUpdatePcts(); sunCompute(id); });
   });
   const ckEls=[...paper.querySelectorAll('.fx-ck')];
@@ -9188,7 +9188,7 @@ function sunImgToURL(file,cb){ const r=new FileReader(); r.onload=()=>{ const im
 
 function sunUpdatePcts(){ SUNLIGHT_FORMS.forEach(f=>{ const el=document.getElementById('suv-pct-'+f.id); if(!el)return; if(f.id==='s5'){ const has=!!sunAttGet('s5'); el.textContent= has?'첨부됨':''; const b=el.closest('.suv-navbtn'); if(b) b.classList.toggle('done', has); return; } const fh=sunFormHtml(f); const total=(fh.match(/class="fx-v"/g)||[]).length + (fh.match(/class="fx-sel"/g)||[]).length; const v=sunVals(f.id); const done=Object.keys(v).filter(k=>v[k]&&String(v[k]).trim()).length; const pct= total?Math.round(done/total*100):0; el.textContent= total? pct+'%':''; const b=el.closest('.suv-navbtn'); if(b) b.classList.toggle('done', pct>=100 && total>0); }); }
 
-function sunResetForm(){ const f=SUNLIGHT_FORMS.find(x=>x.id===SUNLIGHT_CUR); if(!f)return; if(!confirm('‘'+f.title+'’의 입력·체크·사진을 모두 비울까요?'))return; if(sunData.vals)delete sunData.vals[f.id]; if(sunData.cks)delete sunData.cks[f.id]; if(sunData.photos)delete sunData.photos[f.id]; if(sunData.ai)delete sunData.ai[f.id]; if(sunData.cksrc)delete sunData.cksrc[f.id]; if(sunData.att)delete sunData.att[f.id]; sunStore(); sunPaint(); sunUpdatePcts(); }
+function sunResetForm(){ const f=SUNLIGHT_FORMS.find(x=>x.id===SUNLIGHT_CUR); if(!f)return; if(!confirm('‘'+f.title+'’의 입력·체크·사진을 모두 비울까요?'))return; if(sunData.vals)delete sunData.vals[f.id]; if(sunData.cks)delete sunData.cks[f.id]; if(sunData.photos)delete sunData.photos[f.id]; if(sunData.ai)delete sunData.ai[f.id]; if(sunData.cksrc)delete sunData.cksrc[f.id]; if(sunData.att)delete sunData.att[f.id]; if(sunData.narrman)delete sunData.narrman[f.id]; sunStore(); sunPaint(); sunUpdatePcts(); }
 /* 미리보기 — 입력값이 반영된 완성 양식(읽기전용, 행정·시공처럼) */
 let sunPvEsc=null;
 function sunPreview(autoPrint){
@@ -9359,6 +9359,7 @@ async function sunExtractHwp(file){
 /* ===== AI 자동채움 = 무료 Google Gemini(서버 경유) — 키는 서버 env만, 무료등급이라 전 담당자 공유 OK(비용 0) ===== */
 function sunSrc(id){ sunData.src=sunData.src||{}; return sunData.src[id]||(sunData.src[id]={}); }
 function sunComp(id){ sunData.comp=sunData.comp||{}; return sunData.comp[id]||(sunData.comp[id]={}); }
+function sunNarrMan(id){ sunData.narrman=sunData.narrman||{}; return sunData.narrman[id]||(sunData.narrman[id]={}); }  // 사용자가 직접 수정·삭제한 서술형 칸 — 자동 템플릿이 다시 덮지 않도록 표시
 /* 계산 필드 정확 계산 — 자기자본(15%)·동의율은 AI 추측이 아니라 공식으로 정확히(법적 서류 숫자 오차 방지).
    안전장치: 값 셀을 라벨로 확실히 찾을 때만, 사용자가 직접 입력한 값은 덮지 않음, 근거(공식) 툴팁 표시. */
 function sunCompute(fid){
@@ -9400,6 +9401,7 @@ function sunCompute(fid){
   if(cells.some(c=>c.fk==='f515'||c.fk==='f516'||c.fk==='f517')){
     const putNarr=(fk,value,note)=>{
       const cell=cells.find(c=>c.fk===fk); if(!cell) return;
+      if(sunNarrMan(fid)[fk]) return;   // 사용자가 손댄(수정·삭제) 칸은 자동이 다시 덮지 않음 — 빈칸으로 둬도 유지
       if(cell.v && (ai[fk] || !comp[fk])) return;   // 수동·AI 입력은 덮지 않음(빈칸/이전 템플릿만 갱신)
       const s=String(value);
       if(vals[fk]===s && comp[fk]===note) return;
@@ -9425,6 +9427,31 @@ function sunCompute(fid){
         if(vRate) t+='(동의율 '+(/[%％]/.test(vRate)?vRate:vRate+'%')+')';
         t+='하였으며, 마을총회 의결을 거쳐 사업 추진의 정당성과 주민 수용성을 확보하였다.';
         putNarr('f517', t, '마을규약 인구·동의 인원·동의율에서 자동 작성(수정 가능)');
+      }
+      // ④ 가. 협동조합의 의사결정 구조(원본 양식 구조) — 임원 명단은 마을별로 달라 빈 서식, 표준 정관사항은 자동(다른 마을 재사용)
+      if(cells.some(c=>c.fk==='f103')){
+        const byFk=k=>{ const c=cells.find(x=>x.fk===k); return c?c.v.trim():''; };
+        const vChair=byFk('f86'); const nm2=(vMaeul||'본 마을');
+        const t103=
+          '○ 의사결정 기구 (정관 명시) : 총회 → 이사회 → 감사\n'
+         +' - 총회 : 협동조합기본법에 따른 최고 의결기구로, 조합원 1인 1표 원칙으로 운영\n'
+         +' - 이사회 : 이사장 1인과 이사로 구성되어 조합의 업무집행을 결정\n'
+         +' - 감사 : 조합의 재산 상태와 업무 집행상황을 감사\n'
+         +'\n'
+         +'○ 임원 현황 (창립총회 선출)  ※ 임원 명부대로 직위·성명·생년월일·주소·연락처 기재\n'
+         +' - 이사장 : '+(vChair?vChair+' ':'')+'(생년월일 / 주소 / 연락처)\n'
+         +' - 이사 : (성명 / 생년월일 / 주소 / 연락처)\n'
+         +' - 감사 : (성명 / 생년월일 / 주소 / 연락처)\n'
+         +'\n'
+         +'○ 의사결정의 민주성 확보 방안 (정관 규정)\n'
+         +' - 조합원 가입조건 : '+nm2+'에 주민등록을 두고 1년 이상 계속 거주하며 조합 목적에 동의한 마을 주민\n'
+         +' - 조합원 의결권 : 출자좌수와 관계없이 각각 1개의 의결권과 선거권 보유\n'
+         +' - 출자 한도 : 한 조합원의 출자좌수는 총 출자좌수의 100분의 10을 초과할 수 없음\n'
+         +' - 임원 선임 : 이사·감사는 총회가 조합원 중에서 선출하고, 이사장은 이사 중에서 총회에서 선출\n'
+         +' - 특별의결 : 정관 변경, 합병·분할·해산, 조합원 제명, 출자금 환급 등은 조합원 과반수 출석과 출석조합원 3분의 2 이상 찬성으로 의결\n'
+         +' - 마을 총회 : 조합은 마을총회 의결을 존중하며 연 1회 이상 회계결산·사업 운영현황을 보고\n'
+         +' - 마을총회 의견수렴 : 재생에너지 발전시설 추진 승인, 사업부지 사용 승낙, 수익 배분 구조 변경, 조합 해산·합병 등은 마을총회 특별의결을 거침';
+        putNarr('f103', t103, '원본 사업계획서 구조(의사결정 기구·임원 현황·민주성 확보 방안)로 자동 작성 — 임원 명단은 직접/AI 입력, 수정 가능');
       }
     }
   }
