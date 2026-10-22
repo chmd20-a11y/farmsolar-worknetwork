@@ -9050,10 +9050,10 @@ function initSunlightVillage(){
   if(fi) fi.onchange=()=>{ const files=[...fi.files].map(f=>({name:f.name, ext:(f.name.split('.').pop()||'').toLowerCase(), file:f})); fi.value=''; if(files.length) sunHandleFiles(files); };
   if(typeof syncStickyOffset==='function'){ requestAnimationFrame(()=>{ try{ syncStickyOffset(); }catch(e){} }); }   // 좌측 서식목록 고정 위치(툴바 높이) 측정
 }
-/* ===== AI 자동채움 진행바 ===== */
-let _sunProgTimer=null;
-function sunProgStart(){ const p=document.getElementById('suvProg'); if(!p)return; const bar=p.querySelector('i'); p.style.display='inline-block'; let w=3; bar.style.width='3%'; clearInterval(_sunProgTimer); _sunProgTimer=setInterval(()=>{ w+=Math.max(0.5,(93-w)*0.05); if(w>93)w=93; bar.style.width=w.toFixed(1)+'%'; },450); }
-function sunProgDone(){ const p=document.getElementById('suvProg'); if(!p)return; const bar=p.querySelector('i'); clearInterval(_sunProgTimer); bar.style.width='100%'; setTimeout(()=>{ p.style.display='none'; bar.style.width='0%'; },650); }
+/* ===== AI 자동채움 진행바(묶음 완료마다 실제 진행률 갱신) ===== */
+function sunProgStart(){ const p=document.getElementById('suvProg'); if(!p)return; p.style.display='inline-block'; p.querySelector('i').style.width='4%'; }
+function sunProgSet(frac){ const p=document.getElementById('suvProg'); if(!p)return; p.querySelector('i').style.width=Math.max(4,Math.min(100,Math.round(frac*100)))+'%'; }
+function sunProgDone(){ const p=document.getElementById('suvProg'); if(!p)return; const bar=p.querySelector('i'); bar.style.width='100%'; setTimeout(()=>{ p.style.display='none'; bar.style.width='0%'; },650); }
 
 function sunSelect(id){ SUNLIGHT_CUR=id; document.querySelectorAll('.suv-navbtn').forEach(b=>b.classList.toggle('on', b.dataset.fid===id)); sunPaint(); }
 
@@ -9542,48 +9542,63 @@ async function sunAIFill(corpus){
   if(f.id==='s5'){ toast('조합원 명부는 원본 스캔본을 첨부하는 서식입니다 — 자동채움 대상이 아닙니다'); return; }
   const {fields, ckGroupMap, optMap}=sunCollectFields(f);
   if(!fields.length){ toast('이 서식은 자동채움할 항목이 없습니다 — 직접 입력해 주세요'); return; }
-  if(st)st.textContent='AI가 자료를 읽고 채우는 중… (최대 1분)';
+  // 이미 채워진 칸은 빼고(재실행 시 빈 칸만), 남은 칸을 작은 묶음으로 나눠 여러 번 요청 → 큰 서식도 타임아웃 없이 채움
+  const vals=sunVals(f.id), ai=sunAiFlags(f.id), src=sunSrc(f.id), cks=sunCks(f.id), cksrc=sunCkSrc(f.id);
+  const isFilled=(fd)=> ckGroupMap[fd.fk] ? ckGroupMap[fd.fk].some(m=>cks.indexOf(m.idx)>=0) : (vals[fd.fk]!=null && String(vals[fd.fk]).trim()!=='');
+  const pending=fields.filter(fd=>!isFilled(fd));
+  const useFields = pending.length ? pending : fields;   // 다 찬 상태에서 다시 누르면 전체 재채움 허용
+  const CHUNK=18;
+  const chunks=[]; for(let i=0;i<useFields.length;i+=CHUNK) chunks.push(useFields.slice(i,i+CHUNK));
+  if(st)st.textContent='AI가 자료를 읽고 채우는 중… ('+chunks.length+'묶음)';
   sunProgStart();
-  const _aictrl=new AbortController(); const _aito=setTimeout(()=>_aictrl.abort(),75000);
-  try{
-    const r=await fetch('/api/sunlight-extract',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({title:f.title, fields, corpus}),signal:_aictrl.signal});
-    clearTimeout(_aito);
-    const j=await r.json().catch(()=>({}));
-    if(!r.ok){
-      sunProgDone();
-      if(r.status===503 && j.error==='no_key'){ toast('AI 자동채움을 쓰려면 관리자가 무료 Gemini 키를 한 번 등록해야 합니다(무료). 지금은 직접 입력해 주세요.'); if(st)st.textContent='AI 키 미등록(무료 Gemini)'; return; }
-      if(r.status===503 || j.error==='busy'){ toast('AI 서버(Gemini)가 잠시 혼잡합니다 — 10~20초 뒤 「✨ AI 자동채움」을 다시 눌러 주세요(자료 연결은 유지됩니다).'); if(st)st.textContent='AI 혼잡 — 잠시 후 재시도'; return; }
-      if(r.status===504){ toast('AI 응답이 지연됐어요 — 잠시 후 「✨ AI 자동채움」을 다시 눌러 주세요.'); if(st)st.textContent='시간 초과 — 다시 시도'; return; }
-      toast('AI 자동채움 실패: '+((j&&j.message)||r.status)); if(st)st.textContent=''; return;
+  const allValues={}, allSources={};
+  let failedChunks=0, busyFlag=false, noKey=false, done=0;
+  const doChunk=async(chunk)=>{
+    const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),70000);
+    try{
+      const r=await fetch('/api/sunlight-extract',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({title:f.title, fields:chunk, corpus}),signal:ctrl.signal});
+      clearTimeout(to);
+      const j=await r.json().catch(()=>({}));
+      if(r.ok){ Object.assign(allValues, j.values||{}); Object.assign(allSources, j.sources||{}); }
+      else if(r.status===503 && j.error==='no_key'){ noKey=true; }
+      else { failedChunks++; if(r.status===503||r.status===504||j.error==='busy'||j.error==='timeout') busyFlag=true; }
+    }catch(e){ clearTimeout(to); failedChunks++; if(e&&e.name==='AbortError') busyFlag=true; }
+    done++; sunProgSet(done/chunks.length);
+  };
+  // 동시 3개까지 처리(무료 등급 한도 안)
+  let qi=0;
+  const worker=async()=>{ while(qi<chunks.length && !noKey){ const my=qi++; await doChunk(chunks[my]); } };
+  await Promise.all(Array.from({length:Math.min(3,chunks.length)}, worker));
+  if(noKey){ sunProgDone(); toast('AI 자동채움을 쓰려면 관리자가 무료 Gemini 키를 한 번 등록해야 합니다(무료). 지금은 직접 입력해 주세요.'); if(st)st.textContent='AI 키 미등록(무료 Gemini)'; return; }
+  // 받은 값 적용
+  let n=0, nck=0;
+  const norm=s=>String(s).replace(/\s/g,'');
+  Object.keys(allValues).forEach(k=>{
+    const val=(allValues[k]!=null)?String(allValues[k]).trim():''; if(!val) return;
+    if(ckGroupMap[k]){
+      const members=ckGroupMap[k];
+      const parts=String(val).split(/[,、·/]|및|그리고/).map(s=>s.trim()).filter(Boolean);
+      const hits=[];
+      parts.forEach(p=>{ const h=members.find(m=>m.opt===p)||members.find(m=>norm(m.opt)===norm(p)); if(h&&hits.indexOf(h)<0)hits.push(h); });
+      if(!hits.length) return;
+      members.forEach(m=>{ const p=cks.indexOf(m.idx); if(p>=0)cks.splice(p,1); if(cksrc[m.idx])delete cksrc[m.idx]; });
+      hits.forEach(h=>{ cks.push(h.idx); if(allSources[k]) cksrc[h.idx]=String(allSources[k]).slice(0,300); }); nck++;
+    } else {
+      if(optMap[k] && !optMap[k].some(o=>norm(o)===norm(val))) return;
+      vals[k]=val.slice(0,1500); ai[k]=1; if(allSources[k]) src[k]=String(allSources[k]).slice(0,300); n++;
     }
-    const vals=sunVals(f.id), ai=sunAiFlags(f.id), src=sunSrc(f.id), cks=sunCks(f.id), cksrc=sunCkSrc(f.id);
-    const values=j.values||{}, sources=j.sources||{}; let n=0, nck=0;
-    const norm=s=>String(s).replace(/\s/g,'');
-    Object.keys(values).forEach(k=>{
-      const val=(values[k]!=null)?String(values[k]).trim():''; if(!val) return;
-      if(ckGroupMap[k]){ // 체크박스 그룹 → 해당 선택지 체크(여러 개 해당 시 모두 체크, 같은 칸 내 나머지는 해제)
-        const members=ckGroupMap[k];
-        const parts=String(val).split(/[,、·/]|및|그리고/).map(s=>s.trim()).filter(Boolean);
-        const hits=[];
-        parts.forEach(p=>{ const h=members.find(m=>m.opt===p)||members.find(m=>norm(m.opt)===norm(p)); if(h&&hits.indexOf(h)<0)hits.push(h); });
-        if(!hits.length) return;
-        members.forEach(m=>{ const p=cks.indexOf(m.idx); if(p>=0)cks.splice(p,1); if(cksrc[m.idx])delete cksrc[m.idx]; });
-        hits.forEach(h=>{ cks.push(h.idx); if(sources[k]) cksrc[h.idx]=String(sources[k]).slice(0,300); }); nck++;
-      } else { // 텍스트 / 드롭다운
-        if(optMap[k] && !optMap[k].some(o=>norm(o)===norm(val))) return;   // 드롭다운은 선택지에 있는 값만
-        vals[k]=val.slice(0,1500); ai[k]=1; if(sources[k]) src[k]=String(sources[k]).slice(0,300); n++;
-      }
-    });
-    sunStore(); sunPaint(); sunUpdatePcts();
-    const nc=sunCompute(f.id);   // 자기자본(15%)·동의율 등은 공식으로 정확히 다시 계산(초록 칸)
-    sunProgDone();
-    const parts=[]; if(n)parts.push(n+'칸'); if(nck)parts.push('선택 '+nck+'개'); if(nc)parts.push('계산 '+nc+'칸');
-    const summary=parts.length?parts.join(' + '):'해당 없음';
+  });
+  sunStore(); sunPaint(); sunUpdatePcts();
+  const nc=sunCompute(f.id);
+  sunProgDone();
+  const parts=[]; if(n)parts.push(n+'칸'); if(nck)parts.push('선택 '+nck+'개'); if(nc)parts.push('계산 '+nc+'칸');
+  const summary=parts.length?parts.join(' + '):'해당 없음';
+  if(failedChunks){
+    if(st)st.textContent='일부 완료 — 「AI 자동채움」 한 번 더 누르면 나머지';
+    toast('AI 자동채움: '+summary+' 채웠습니다. 일부 '+failedChunks+'묶음은 '+(busyFlag?'AI 혼잡':'오류')+'으로 못 받았어요 — 「✨ AI 자동채움」을 한 번 더 누르면 나머지를 이어서 채웁니다.');
+  } else {
     if(st)st.textContent='AI 자동채움: '+summary+' — 파란 표시는 검토(마우스 올리면 근거)';
     toast(parts.length ? ('AI 자동채움 완료 · '+summary+' (파란 표시는 검토 · 근거는 마우스 올려 확인)') : 'AI 자동채움 — 자료에서 근거를 찾지 못해 채운 항목이 없습니다(직접 입력해 주세요)');
-  }catch(e){ clearTimeout(_aito); sunProgDone();
-    if(e&&e.name==='AbortError'){ toast('AI 자동채움이 시간을 초과했어요 — 자료가 많으면 느릴 수 있습니다. 잠시 후 「✨ AI 자동채움」을 다시 눌러 주세요(연결은 유지됩니다).'); if(st)st.textContent='시간 초과 — 다시 시도'; }
-    else { toast('AI 자동채움 오류: '+(e&&e.message||e)); if(st)st.textContent=''; }
   }
 }
 
