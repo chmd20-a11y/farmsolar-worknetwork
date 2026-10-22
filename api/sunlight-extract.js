@@ -7,10 +7,12 @@
 const https = require('https');
 
 function gemini(key, model, system, user) {
+  const gc = { responseMimeType: 'application/json', temperature: 0, maxOutputTokens: 8192 };
+  if (/2\.5|flash-latest|thinking|gemini-pro|2\.0-flash-thinking/i.test(model)) gc.thinkingConfig = { thinkingBudget: 0 };   // 사고형 모델만 thinking 끔(2.0-flash 등 비사고형은 미지원→에러)
   const payload = JSON.stringify({
     systemInstruction: { parts: [{ text: system }] },
     contents: [{ role: 'user', parts: [{ text: user }] }],
-    generationConfig: { responseMimeType: 'application/json', temperature: 0, maxOutputTokens: 8192, thinkingConfig: { thinkingBudget: 0 } },
+    generationConfig: gc,
   });
   const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(key);
   return new Promise((resolve, reject) => {
@@ -33,7 +35,7 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') { res.status(405).json({ error: 'method', message: 'POST only' }); return; }
   const key = process.env.GEMINI_API_KEY;
   if (!key) { res.status(503).json({ error: 'no_key', message: 'GEMINI_API_KEY 미설정 — Google AI Studio 무료 키를 Vercel 환경변수에 등록하면 AI 자동채움이 작동합니다(무료).' }); return; }
-  const model = process.env.SUNLIGHT_GEMINI_MODEL || 'gemini-flash-latest';
+  const model = process.env.SUNLIGHT_GEMINI_MODEL || 'gemini-2.0-flash';
   try {
     let b = req.body;
     if (typeof b === 'string') { try { b = JSON.parse(b); } catch (e) { b = {}; } }
