@@ -9039,8 +9039,8 @@ function sunNaHtml(){
   return toggle
     +'<table class="fx-t"><colgroup><col style="width:24.000%"/><col style="width:76.000%"/></colgroup>'
     +'<tr style="height:30px"><td class="fx-hd">항목</td><td class="fx-hd">내용</td></tr>'
-    +'<tr style="height:72px"><td class="fx-hd">운영 정보 공개</td><td class="fx-v" style="text-align:left;vertical-align:top" data-fk="f561" data-label="운영 정보 공개 — 게재 주기·게재 내용·사무소 비치서류 등 정관 규정"></td></tr>'
-    +'<tr style="height:72px"><td class="fx-hd">의사결정 과정의 공개</td><td class="fx-v" style="text-align:left;vertical-align:top" data-fk="f562" data-label="의사결정 과정의 공개 — 의사록 작성·보관·조합원 열람권, 주요 의결사항 게시 등"></td></tr></table>';
+    +'<tr style="height:132px"><td class="fx-hd">운영 정보 공개</td><td class="fx-v" style="text-align:left;vertical-align:top;white-space:pre-wrap" data-fk="f561" data-label="운영 정보 공개 — 게재 주기·게재 내용·사무소 비치서류 등 정관 규정"></td></tr>'
+    +'<tr style="height:96px"><td class="fx-hd">의사결정 과정의 공개</td><td class="fx-v" style="text-align:left;vertical-align:top;white-space:pre-wrap" data-fk="f562" data-label="의사결정 과정의 공개 — 의사록 작성·보관·조합원 열람권, 주요 의결사항 게시 등"></td></tr></table>';
 }
 // 다. 출자, 수입의 적립, 배분 등 구조 — 표/서술형
 function sunDaMode(){ return (sunData.daMode==='narr')?'narr':'table'; }
@@ -9636,13 +9636,26 @@ function sunCompute(fid){
          +' - 마을총회 의견수렴 : 발전시설 추진 승인·사업부지 사용 승낙·수익 배분 구조 변경 등은 마을총회 특별의결을 거침',
           '서술형 표준 구조 자동 작성(수정 가능)');
       }
-      // 나. 운영체계 — 표/서술형 공통 표준 정관문안
+      // 나. 운영체계 — 표/서술형 공통 표준 정관문안(원본 구성: ○머리말+세부 불릿, 줄바꿈 유지)
       {
-        const naPub='연 1회 이상 결산일로부터 4개월 이내 지정 인터넷 사이트와 햇빛소득마을 통합플랫폼에 게재하며(정관 제60조), 게재 내용은 정관·규약·규정, 회계감사 보고서, 총회·이사회 활동상황, 사업결과 보고서, 발전량·수익현황·배당내역·공동기금 집행내역이다. 정관·규약·규정, 총회·이사회 의사록, 회계장부, 조합원 명부를 주된 사무소에 비치한다.';
-        const naDec='총회·이사회 의사록을 작성·보관(5년 이상)하고 조합원 열람권을 보장한다. 주요 의결사항은 마을회관에 상시 게시하며, 회계장부·증빙서류는 조합원·감사가 상시 열람할 수 있다.';
-        putNarr('f561', naPub, '표준 정관사항 자동(수정 가능)');
-        putNarr('f562', naDec, '표준 정관사항 자동(수정 가능)');
-        putNarr('f104', '○ 운영 정보 공개\n'+naPub+'\n\n○ 의사결정 과정의 공개\n'+naDec, '운영체계 표준문안 자동(수정 가능)');
+        const naPubList=[
+          '연 1회 이상 결산일로부터 4개월 이내 기획예산처장관이 지정하는 인터넷 사이트와 햇빛소득마을 사업 통합플랫폼에 게재(정관 제60조⑥)',
+          '게재 내용: 정관·규약·규정, 회계감사 보고서, 총회·이사회 활동 상황, 사업결과 보고서, 발전량·수익현황·배당내역·공동기금 집행 내역(정관 제60조⑥)',
+          '정관·규약·규정, 총회·이사회 의사록, 회계장부, 조합원 명부를 주된 사무소에 비치(정관 제60조⑥)'
+        ];
+        const naDecList=[
+          '총회·이사회 의사록 작성·보관(5년 이상), 조합원 열람권 보장',
+          '주요 의결사항 마을회관 상시 게시'
+        ];
+        const naExtra='회계장부 및 증빙서류 상시 열람 가능(조합원·감사)';
+        const bul=a=>a.map(x=>'- '+x).join('\n');
+        putNarr('f561', bul(naPubList), '표준 정관사항 자동(수정 가능)');                    // 표 — 운영 정보 공개
+        putNarr('f562', bul(naDecList.concat([naExtra])), '표준 정관사항 자동(수정 가능)');   // 표 — 의사결정 과정의 공개
+        putNarr('f104',
+          '○ 운영 정보 공개 (정관 제60조⑥ 운영의 공개)\n'+bul(naPubList)
+         +'\n\n○ 의사결정 과정의 공개\n'+bul(naDecList)
+         +'\n\n'+naExtra,
+          '운영체계 표준문안 자동(수정 가능)');
       }
       // 다. 출자·수입 구조 — 표준 정관값 자동(초기 출자금은 조합원 수에서 산출)
       {
