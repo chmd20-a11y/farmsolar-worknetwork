@@ -9549,6 +9549,19 @@ function sunCompute(fid){
   const own=cells.find(c=>/자기자본|자부담/.test(c.lab) && !/계획서|증빙|서류|확보계획/.test(c.lab));
   const total=findVal(/총사업비|총\s*예상.*설치비|총\s*예상\s*태양광/);
   if(own && total){ put(own, fmt(total.n*0.15), '총사업비 '+total.n+' × 15%'); }
+  // ②-2 자부담 확보방안 — 지역금융 대출 = 자부담 총액 − (초기출자+추가출자+지역금융출자+마을기금+보조금) 잔액 자동(전 마을 공통)
+  {
+    const cf=k=>cells.find(c=>c.fk===k);
+    const jbTot=cf('f680'), jbLoan=cf('f697');
+    if(jbTot && jbLoan){
+      const tn=num(jbTot.v);
+      if(tn!=null){
+        const others=['f681','f685','f689','f693','f701'].reduce((s,k)=>{ const c=cf(k); const n=c?num(c.v):null; return s+(n||0); },0);
+        const v=Math.round((tn-others)*100)/100;
+        put(jbLoan, String(v), '자부담 총액 '+tn+' − 나머지 합산 '+others+' (지역금융 대출 잔액 자동)');
+      }
+    }
+  }
   // ③ 세부 부지 '설치용량(kW)' → 세부 합계(f135) + 총괄표 '총 용량'(f310).
   //    전 필지가 같은 값이면 '프로젝트 총 용량을 필지마다 반복 기재'로 보고 합산하지 않고 그 값을 총량으로(원본 양식). 서로 다르면 합산.
   const capCells=cells.filter(c=>c.lab==='설치용량(kW)');   // 세부 부지 행(추가행 포함). '설치계획용량'(참고자료)은 제외됨
