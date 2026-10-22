@@ -23,7 +23,7 @@ function gemini(key, model, system, user) {
       up.on('end', () => resolve({ status: up.statusCode || 200, body: Buffer.concat(chunks).toString('utf8') }));
     });
     r.on('error', reject);
-    r.setTimeout(60000, () => r.destroy(new Error('timeout')));
+    r.setTimeout(50000, () => r.destroy(new Error('timeout')));   // Vercel 함수 한도(60s) 안에서 끝내고 응답
     r.write(payload);
     r.end();
   });
@@ -75,6 +75,8 @@ module.exports = async (req, res) => {
     });
     res.status(200).json({ values, sources, count: Object.keys(values).length });
   } catch (e) {
-    res.status(500).json({ error: 'fail', message: String((e && e.message) || e) });
+    const msg = String((e && e.message) || e);
+    if (/timeout/i.test(msg)) { res.status(504).json({ error: 'timeout', message: 'AI 응답이 지연되었습니다. 잠시 후 다시 시도해 주세요.' }); return; }
+    res.status(500).json({ error: 'fail', message: msg });
   }
 };

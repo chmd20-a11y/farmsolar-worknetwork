@@ -1212,12 +1212,14 @@ button{font-family:inherit;cursor:pointer}
 .suv-vsel{border:1px solid var(--border-strong);background:var(--surface-2);border-radius:8px;padding:6px 9px;font-size:12.5px;font-weight:800;color:var(--ink);max-width:240px;cursor:pointer}
 .suv-bar .suv-spacer{flex:1}
 .suv-st{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.suv-prog{display:none;width:132px;height:8px;border-radius:5px;background:var(--surface-2);border:1px solid var(--border);overflow:hidden;vertical-align:middle;margin-left:4px}
+.suv-prog > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brand,#c8a24a),#e6c266);border-radius:5px;transition:width .5s ease}
 .suv-attbadge{display:inline-block;min-width:16px;padding:0 5px;margin-left:2px;border-radius:9px;background:rgba(255,255,255,.22);font-size:10.5px;font-weight:800;line-height:16px;text-align:center}
 .sun-docno{flex:none;display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;background:var(--brand,#c8a24a);color:#fff;font-size:11px;font-weight:800;font-variant-numeric:tabular-nums}
 .sejbu-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 18px}
 .sejbu-bar .sejbu-hint{font-size:11.5px;color:var(--muted)}
 .suv-wrap{display:grid;grid-template-columns:238px minmax(0,1fr);gap:16px;align-items:start}
-.suv-rail{position:sticky;top:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;box-shadow:var(--shadow-sm)}
+.suv-rail{position:-webkit-sticky;position:sticky;top:calc(var(--suv-top-h,0px) + 8px);background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;box-shadow:var(--shadow-sm);max-height:calc(100vh - var(--suv-top-h,0px) - 24px);overflow-y:auto}
 .suv-rail-h{font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.3px;margin:2px 2px 9px;text-transform:uppercase}
 .suv-navbtn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:1px solid transparent;background:transparent;border-radius:9px;padding:8px 9px;margin-bottom:3px;cursor:pointer;color:var(--ink-2);font-size:12px;font-weight:600;line-height:1.3}
 .suv-navbtn:hover{background:var(--surface-2)}
@@ -9012,6 +9014,7 @@ function renderSunlightVillage(){
     <button class="btn ghost sm" onclick="sunDeleteVillage()" title="이 마을 삭제">🗑</button>
     <span class="suv-spacer"></span>
     <span class="suv-st" id="suvStatus"></span>
+    <span class="suv-prog" id="suvProg"><i></i></span>
     <label class="btn dark sm" for="suvFolderInput" onclick="sunConnectFolder(event)">📁 자료 폴더 연결</label>
     <button class="btn primary sm" onclick="sunAIFill()">✨ AI 자동채움</button>
     <button class="btn ghost sm" onclick="sunPreview(false)">🔍 미리보기</button>
@@ -9045,7 +9048,12 @@ function initSunlightVillage(){
   const _ph=document.querySelector('.view.active .page-head'); if(_ph) _ph.style.display='none';
   const fi=document.getElementById('suvFolderInput');
   if(fi) fi.onchange=()=>{ const files=[...fi.files].map(f=>({name:f.name, ext:(f.name.split('.').pop()||'').toLowerCase(), file:f})); fi.value=''; if(files.length) sunHandleFiles(files); };
+  if(typeof syncStickyOffset==='function'){ requestAnimationFrame(()=>{ try{ syncStickyOffset(); }catch(e){} }); }   // 좌측 서식목록 고정 위치(툴바 높이) 측정
 }
+/* ===== AI 자동채움 진행바 ===== */
+let _sunProgTimer=null;
+function sunProgStart(){ const p=document.getElementById('suvProg'); if(!p)return; const bar=p.querySelector('i'); p.style.display='inline-block'; let w=3; bar.style.width='3%'; clearInterval(_sunProgTimer); _sunProgTimer=setInterval(()=>{ w+=Math.max(0.5,(93-w)*0.05); if(w>93)w=93; bar.style.width=w.toFixed(1)+'%'; },450); }
+function sunProgDone(){ const p=document.getElementById('suvProg'); if(!p)return; const bar=p.querySelector('i'); clearInterval(_sunProgTimer); bar.style.width='100%'; setTimeout(()=>{ p.style.display='none'; bar.style.width='0%'; },650); }
 
 function sunSelect(id){ SUNLIGHT_CUR=id; document.querySelectorAll('.suv-navbtn').forEach(b=>b.classList.toggle('on', b.dataset.fid===id)); sunPaint(); }
 
@@ -9534,12 +9542,16 @@ async function sunAIFill(corpus){
   if(f.id==='s5'){ toast('조합원 명부는 원본 스캔본을 첨부하는 서식입니다 — 자동채움 대상이 아닙니다'); return; }
   const {fields, ckGroupMap, optMap}=sunCollectFields(f);
   if(!fields.length){ toast('이 서식은 자동채움할 항목이 없습니다 — 직접 입력해 주세요'); return; }
-  if(st)st.textContent='AI 자동채움 중…';
+  if(st)st.textContent='AI가 자료를 읽고 채우는 중… (최대 1분)';
+  sunProgStart();
+  const _aictrl=new AbortController(); const _aito=setTimeout(()=>_aictrl.abort(),75000);
   try{
-    const r=await fetch('/api/sunlight-extract',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({title:f.title, fields, corpus})});
-    if(r.status===503){ toast('AI 자동채움을 쓰려면 관리자가 무료 Gemini 키를 한 번 등록해야 합니다(무료). 지금은 직접 입력해 주세요.'); if(st)st.textContent='AI 키 미등록(무료 Gemini)'; return; }
+    const r=await fetch('/api/sunlight-extract',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({title:f.title, fields, corpus}),signal:_aictrl.signal});
+    clearTimeout(_aito);
+    if(r.status===503){ sunProgDone(); toast('AI 자동채움을 쓰려면 관리자가 무료 Gemini 키를 한 번 등록해야 합니다(무료). 지금은 직접 입력해 주세요.'); if(st)st.textContent='AI 키 미등록(무료 Gemini)'; return; }
+    if(r.status===504 || r.status===502){ sunProgDone(); toast('AI 자동채움이 시간을 초과했어요 — 자료가 많으면 느릴 수 있습니다. 잠시 후 「✨ AI 자동채움」을 다시 눌러 주세요.'); if(st)st.textContent='시간 초과 — 다시 시도'; return; }
     const j=await r.json().catch(()=>({}));
-    if(!r.ok){ toast('AI 자동채움 실패: '+((j&&j.message)||r.status)); if(st)st.textContent=''; return; }
+    if(!r.ok){ sunProgDone(); toast('AI 자동채움 실패: '+((j&&j.message)||r.status)); if(st)st.textContent=''; return; }
     const vals=sunVals(f.id), ai=sunAiFlags(f.id), src=sunSrc(f.id), cks=sunCks(f.id), cksrc=sunCkSrc(f.id);
     const values=j.values||{}, sources=j.sources||{}; let n=0, nck=0;
     const norm=s=>String(s).replace(/\s/g,'');
@@ -9560,11 +9572,15 @@ async function sunAIFill(corpus){
     });
     sunStore(); sunPaint(); sunUpdatePcts();
     const nc=sunCompute(f.id);   // 자기자본(15%)·동의율 등은 공식으로 정확히 다시 계산(초록 칸)
+    sunProgDone();
     const parts=[]; if(n)parts.push(n+'칸'); if(nck)parts.push('선택 '+nck+'개'); if(nc)parts.push('계산 '+nc+'칸');
     const summary=parts.length?parts.join(' + '):'해당 없음';
     if(st)st.textContent='AI 자동채움: '+summary+' — 파란 표시는 검토(마우스 올리면 근거)';
     toast(parts.length ? ('AI 자동채움 완료 · '+summary+' (파란 표시는 검토 · 근거는 마우스 올려 확인)') : 'AI 자동채움 — 자료에서 근거를 찾지 못해 채운 항목이 없습니다(직접 입력해 주세요)');
-  }catch(e){ toast('AI 자동채움 오류: '+(e&&e.message||e)); if(st)st.textContent=''; }
+  }catch(e){ clearTimeout(_aito); sunProgDone();
+    if(e&&e.name==='AbortError'){ toast('AI 자동채움이 시간을 초과했어요 — 자료가 많으면 느릴 수 있습니다. 잠시 후 「✨ AI 자동채움」을 다시 눌러 주세요(연결은 유지됩니다).'); if(st)st.textContent='시간 초과 — 다시 시도'; }
+    else { toast('AI 자동채움 오류: '+(e&&e.message||e)); if(st)st.textContent=''; }
+  }
 }
 
 function renderDynamicSub(sub){
@@ -9973,6 +9989,10 @@ function syncStickyOffset(){
   const bar=sub && sub.querySelector(':scope > .pm-modebar');
   if(bar && bar.offsetParent!==null && getComputedStyle(bar).position==='sticky'){ bh=bar.offsetHeight; }
   document.documentElement.style.setProperty('--bar-h', bh+'px');
+  // 햇빛소득마을: 고정 툴바(.suv-top) 높이 → 좌측 서식목록(.suv-rail)이 그 아래에 고정되도록
+  const suvTop=v.querySelector('.suv-top'); let sh=0;
+  if(suvTop && suvTop.offsetParent!==null && getComputedStyle(suvTop).position==='sticky'){ sh=suvTop.offsetHeight; }
+  document.documentElement.style.setProperty('--suv-top-h', sh+'px');
 }
 window.addEventListener('resize', syncStickyOffset);
 // 선택한 메뉴명을 페이지 상단 메인 제목("{팀} · {메뉴}")으로 승격. 화면 안의 제목 블록(.wf-head)은 숨겨 중복 제거.
