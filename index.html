@@ -1256,6 +1256,9 @@ button{font-family:inherit;cursor:pointer}
 .suv-gaseg.on{background:#2e8b63;border-color:#2e8b63;color:#fff}
 .suv-gatoggle-hint{font-size:10px;color:#9aa2b4;margin-left:2px}
 .suv-pv-paper .suv-gatoggle{display:none}
+.suv-imwon-bar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:2px 0 10px}
+.suv-imwon-hint{font-size:10px;color:#9aa2b4}
+.suv-pv-paper .suv-imwon-bar{display:none}
 .fx-ck{cursor:pointer;user-select:none;display:inline-block;border:1px solid #c4c9d2;border-radius:6px;padding:1px 7px;margin:1px 2px;background:#fff;color:#2c3340;font-weight:600;white-space:nowrap;line-height:1.5}
 .fx-ck:hover{border-color:#0e7c66;background:#f3fbf7}
 .fx-ck.on{background:#0e7c66;color:#fff;border-color:#0e7c66}
@@ -8973,6 +8976,15 @@ function sunBujiRowHtml(k){
 // 가. 의사결정 구조 — 표 방식 / 서술형 전환 (마을별 저장). 기본=표
 function sunGaMode(){ return (sunData.gaMode==='narr')?'narr':'table'; }
 function sunSetGaMode(m){ if(m!=='table'&&m!=='narr')return; if(sunGaMode()===m)return; sunData.gaMode=m; sunStore(); sunPaint(); sunCompute('s4'); sunUpdatePcts(); }
+// 임원 표 '이사' 행 수(가변) — 이사장·감사는 고정, 이사만 추가/삭제
+function sunImwonN(){ return (sunData.imwonN==null)?3:Math.max(1,Math.min(15, sunData.imwonN|0)); }
+function sunImwonAdd(){ sunData.imwonN=sunImwonN()+1; sunStore(); sunPaint(); sunCompute('s4'); sunUpdatePcts(); }
+function sunImwonDel(){ const n=sunImwonN(); if(n<=1) return; const k=n-1;
+  const vals=sunVals('s4'),ai=sunAiFlags('s4'),src=sunSrc('s4'),comp=sunComp('s4');
+  const keys=['n','b','a','c'].map(s=>'im'+k+s);
+  if(keys.some(x=>vals[x]&&String(vals[x]).trim()) && !confirm('마지막 이사 행을 삭제할까요?')) return;
+  keys.forEach(x=>{ delete vals[x]; delete ai[x]; delete src[x]; delete comp[x]; });
+  sunData.imwonN=n-1; sunStore(); sunPaint(); sunCompute('s4'); sunUpdatePcts(); }
 function sunGaHtml(){
   const mode=sunGaMode();
   const seg=(m,t)=>'<button type="button" class="suv-gaseg'+(mode===m?' on':'')+'" onclick="sunSetGaMode(\''+m+'\')">'+t+'</button>';
@@ -8984,12 +8996,15 @@ function sunGaHtml(){
       +'<tr style="height:300px"><td class="fx-v" style="vertical-align:top;text-align:left" data-fk="f560" data-label="협동조합의 의사결정 구조 — ① 의사결정 기구(총회·이사회·감사) ② 임원 현황(직위·성명·생년월일·주소·연락처를 명부대로) ③ 의사결정의 민주성 확보 방안(가입조건·의결권·출자한도·임원선임·특별의결·마을총회 등 정관 규정)"></td></tr></table>';
   }
   const cL='text-align:center';
-  const imrow=(disp,key,fk0)=>'<tr style="height:33px"><td class="fx-hd">'+disp+'</td>'
-    +'<td class="fx-v" style="'+cL+'" data-fk="f'+fk0+'" data-label="'+key+' 성명"></td>'
-    +'<td class="fx-v" style="'+cL+'" data-fk="f'+(fk0+1)+'" data-label="'+key+' 생년월일(YYMMDD 6자리, 주민등록번호 뒷자리 제외)"></td>'
-    +'<td class="fx-v" data-fk="f'+(fk0+2)+'" data-label="'+key+' 주소"></td>'
-    +'<td class="fx-v" style="'+cL+';white-space:nowrap" data-fk="f'+(fk0+3)+'" data-label="'+key+' 연락처(휴대전화)"></td></tr>';
-  const imrows=imrow('이사장','이사장',530)+imrow('이사','이사 1',534)+imrow('이사','이사 2',538)+imrow('이사','이사 3',542)+imrow('이사','이사 4',546)+imrow('감사','감사',550);
+  const imrow=(disp,key,fkn,fkb,fka,fkc)=>'<tr style="height:33px"><td class="fx-hd">'+disp+'</td>'
+    +'<td class="fx-v" style="'+cL+'" data-fk="'+fkn+'" data-label="'+key+' 성명"></td>'
+    +'<td class="fx-v" style="'+cL+'" data-fk="'+fkb+'" data-label="'+key+' 생년월일(YYMMDD 6자리, 주민등록번호 뒷자리 제외)"></td>'
+    +'<td class="fx-v" data-fk="'+fka+'" data-label="'+key+' 주소"></td>'
+    +'<td class="fx-v" style="'+cL+';white-space:nowrap" data-fk="'+fkc+'" data-label="'+key+' 연락처(휴대전화)"></td></tr>';
+  const imN=sunImwonN();
+  let imrows=imrow('이사장','이사장','f530','f531','f532','f533');
+  for(let k=0;k<imN;k++) imrows+=imrow('이사','이사 '+(k+1),'im'+k+'n','im'+k+'b','im'+k+'a','im'+k+'c');
+  imrows+=imrow('감사','감사','f550','f551','f552','f553');
   const minju=[['조합원 가입조건','거주요건·조합 목적 동의 등 정관 규정',520],['조합원 의결권','출자좌수와 무관하게 1인 1의결권·선거권 등 정관 규정',521],['출자 한도','한 조합원 출자좌수 한도(총 출자좌수의 10% 등) 정관 규정',522],['임원 선임','이사·감사·이사장 선출 방식 등 정관 규정',523],['특별의결','정관변경·합병·해산·제명·출자금 환급 등 특별의결 요건 정관 규정',524],['마을 총회','회계결산·운영현황 보고 등 마을총회 관련 정관 규정',525],['마을총회 의견수렴','발전시설 추진·부지 사용·수익배분 변경 등 마을총회 의결사항 정관 규정',526]];
   const minjurows=minju.map(a=>'<tr style="height:40px"><td class="fx-hd">'+a[0]+'</td><td class="fx-v" style="text-align:left;vertical-align:top" data-fk="f'+a[2]+'" data-label="'+a[0]+' — '+a[1]+'"></td></tr>').join('');
   return toggle
@@ -8999,6 +9014,7 @@ function sunGaHtml(){
     +'<table class="fx-t"><colgroup><col style="width:11.000%"/><col style="width:14.000%"/><col style="width:15.000%"/><col style="width:40.000%"/><col style="width:20.000%"/></colgroup>'
     +'<tr style="height:30px"><td class="fx-hd">직위</td><td class="fx-hd">성명</td><td class="fx-hd">생년월일</td><td class="fx-hd">주소</td><td class="fx-hd">연락처</td></tr>'
     +imrows+'</table>'
+    +'<div class="suv-imwon-bar"><button type="button" class="btn ghost sm" onclick="sunImwonAdd()">＋ 이사 추가</button>'+(imN>1?'<button type="button" class="btn ghost sm" onclick="sunImwonDel()">－ 이사 삭제</button>':'')+'<span class="suv-imwon-hint">이사 인원에 맞게 행을 추가·삭제하세요(자료 연결 시 추가행도 AI가 채웁니다).</span></div>'
     +'<div class="fx-p">○ 의사결정의 민주성 확보 방안 (정관 규정)</div>'
     +'<table class="fx-t"><colgroup><col style="width:22.000%"/><col style="width:78.000%"/></colgroup>'
     +'<tr style="height:30px"><td class="fx-hd">구분</td><td class="fx-hd">내용</td></tr>'
