@@ -9501,9 +9501,10 @@ function sunFmtNarr(s){
   s=String(s==null?'':s).replace(/\r\n?/g,'\n');
   if(/\n/.test(s)) return s.replace(/[ \t]+\n/g,'\n').replace(/\n[ \t]+/g,'\n').trim();
   s=s.replace(/\s+/g,' ').trim(); if(!s) return s;
-  const enumCount=(s.match(/\d+\)/g)||[]).length, circled=/[①-⑮㉠-㉯]/.test(s);
+  const enumCount=(s.match(/(?:^|\s)\d{1,2}\)\s/g)||[]).length, circled=/[①-⑮㉠-㉯]/.test(s);
   if(enumCount>=2 || circled){
-    s=s.replace(/\s*(?=\d+\))/g,'\n').replace(/\s*(?=[①-⑮㉠-㉯])/g,'\n');
+    // 진짜 번호항목(공백+1~2자리+")"+공백)만 줄바꿈 — 전화번호 "…7820)"·"6205)" 등 여러자리 숫자는 건드리지 않음
+    s=s.replace(/\s+(?=\d{1,2}\)\s)/g,'\n').replace(/\s*(?=[①-⑮㉠-㉯])/g,'\n');
   } else {
     s=s.replace(/([가-힣])\.\s+/g,'$1.\n');   // 한국어 문장 경계(…다. )
   }
