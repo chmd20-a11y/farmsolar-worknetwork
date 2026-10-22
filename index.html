@@ -9150,7 +9150,7 @@ function sunWire(paper, id){
     if(vals[fk]!=null && vals[fk]!==''){ if(!narr){ const cl=sunStripDupUnit(td, String(vals[fk])); if(cl!==String(vals[fk])) vals[fk]=cl; } td.textContent=narr?sunFmtNarr(vals[fk]):vals[fk]; td.classList.add('filled'); }
     if(ai[fk]){ td.setAttribute('data-ai','1'); if(src[fk]) td.title='🔎 AI가 채운 근거: '+src[fk]; }
     if(comp[fk]){ td.classList.add('computed'); td.title='🧮 자동 계산: '+comp[fk]; }
-    td.addEventListener('input',()=>{ const t=td.textContent.trim(); if(narr && t) sunNarrMan(id)[fk]=1; if(t) vals[fk]=t; else delete vals[fk]; td.classList.toggle('filled', !!t); td.removeAttribute('data-ai'); td.classList.remove('computed'); td.removeAttribute('title'); delete ai[fk]; delete src[fk]; delete comp[fk]; });
+    td.addEventListener('input',()=>{ const t=td.textContent.trim(); if(t) vals[fk]=t; else delete vals[fk]; td.classList.toggle('filled', !!t); td.removeAttribute('data-ai'); td.classList.remove('computed'); td.removeAttribute('title'); delete ai[fk]; delete src[fk]; delete comp[fk]; });
     td.addEventListener('blur',()=>{ sunStore(); sunUpdatePcts(); sunCompute(id); });
   });
   const ckEls=[...paper.querySelectorAll('.fx-ck')];
@@ -9188,7 +9188,7 @@ function sunImgToURL(file,cb){ const r=new FileReader(); r.onload=()=>{ const im
 
 function sunUpdatePcts(){ SUNLIGHT_FORMS.forEach(f=>{ const el=document.getElementById('suv-pct-'+f.id); if(!el)return; if(f.id==='s5'){ const has=!!sunAttGet('s5'); el.textContent= has?'첨부됨':''; const b=el.closest('.suv-navbtn'); if(b) b.classList.toggle('done', has); return; } const fh=sunFormHtml(f); const total=(fh.match(/class="fx-v"/g)||[]).length + (fh.match(/class="fx-sel"/g)||[]).length; const v=sunVals(f.id); const done=Object.keys(v).filter(k=>v[k]&&String(v[k]).trim()).length; const pct= total?Math.round(done/total*100):0; el.textContent= total? pct+'%':''; const b=el.closest('.suv-navbtn'); if(b) b.classList.toggle('done', pct>=100 && total>0); }); }
 
-function sunResetForm(){ const f=SUNLIGHT_FORMS.find(x=>x.id===SUNLIGHT_CUR); if(!f)return; if(!confirm('‘'+f.title+'’의 입력·체크·사진을 모두 비울까요?'))return; if(sunData.vals)delete sunData.vals[f.id]; if(sunData.cks)delete sunData.cks[f.id]; if(sunData.photos)delete sunData.photos[f.id]; if(sunData.ai)delete sunData.ai[f.id]; if(sunData.cksrc)delete sunData.cksrc[f.id]; if(sunData.att)delete sunData.att[f.id]; if(sunData.narrman)delete sunData.narrman[f.id]; sunStore(); sunPaint(); sunUpdatePcts(); }
+function sunResetForm(){ const f=SUNLIGHT_FORMS.find(x=>x.id===SUNLIGHT_CUR); if(!f)return; if(!confirm('‘'+f.title+'’의 입력·체크·사진을 모두 비울까요?'))return; if(sunData.vals)delete sunData.vals[f.id]; if(sunData.cks)delete sunData.cks[f.id]; if(sunData.photos)delete sunData.photos[f.id]; if(sunData.ai)delete sunData.ai[f.id]; if(sunData.cksrc)delete sunData.cksrc[f.id]; if(sunData.att)delete sunData.att[f.id]; sunStore(); sunPaint(); sunUpdatePcts(); }
 /* 미리보기 — 입력값이 반영된 완성 양식(읽기전용, 행정·시공처럼) */
 let sunPvEsc=null;
 function sunPreview(autoPrint){
@@ -9359,7 +9359,6 @@ async function sunExtractHwp(file){
 /* ===== AI 자동채움 = 무료 Google Gemini(서버 경유) — 키는 서버 env만, 무료등급이라 전 담당자 공유 OK(비용 0) ===== */
 function sunSrc(id){ sunData.src=sunData.src||{}; return sunData.src[id]||(sunData.src[id]={}); }
 function sunComp(id){ sunData.comp=sunData.comp||{}; return sunData.comp[id]||(sunData.comp[id]={}); }
-function sunNarrMan(id){ sunData.narrman=sunData.narrman||{}; return sunData.narrman[id]||(sunData.narrman[id]={}); }  // 사용자가 직접 수정·삭제한 서술형 칸 — 자동 템플릿이 다시 덮지 않도록 표시
 /* 계산 필드 정확 계산 — 자기자본(15%)·동의율은 AI 추측이 아니라 공식으로 정확히(법적 서류 숫자 오차 방지).
    안전장치: 값 셀을 라벨로 확실히 찾을 때만, 사용자가 직접 입력한 값은 덮지 않음, 근거(공식) 툴팁 표시. */
 function sunCompute(fid){
@@ -9401,7 +9400,6 @@ function sunCompute(fid){
   if(cells.some(c=>c.fk==='f515'||c.fk==='f516'||c.fk==='f517')){
     const putNarr=(fk,value,note)=>{
       const cell=cells.find(c=>c.fk===fk); if(!cell) return;
-      if(sunNarrMan(fid)[fk]) return;   // 사용자가 손댄(수정·삭제) 칸은 자동이 다시 덮지 않음 — 빈칸으로 둬도 유지
       if(cell.v && (ai[fk] || !comp[fk])) return;   // 수동·AI 입력은 덮지 않음(빈칸/이전 템플릿만 갱신)
       const s=String(value);
       if(vals[fk]===s && comp[fk]===note) return;
@@ -9570,8 +9568,9 @@ async function sunAIFill(corpus){
   const {fields, ckGroupMap, optMap}=sunCollectFields(f);
   if(!fields.length){ toast('이 서식은 자동채움할 항목이 없습니다 — 직접 입력해 주세요'); return; }
   // 이미 채워진 칸은 빼고(재실행 시 빈 칸만), 남은 칸을 작은 묶음으로 나눠 여러 번 요청 → 큰 서식도 타임아웃 없이 채움
-  const vals=sunVals(f.id), ai=sunAiFlags(f.id), src=sunSrc(f.id), cks=sunCks(f.id), cksrc=sunCkSrc(f.id);
-  const isFilled=(fd)=> ckGroupMap[fd.fk] ? ckGroupMap[fd.fk].some(m=>cks.indexOf(m.idx)>=0) : (vals[fd.fk]!=null && String(vals[fd.fk]).trim()!=='');
+  const vals=sunVals(f.id), ai=sunAiFlags(f.id), src=sunSrc(f.id), cks=sunCks(f.id), cksrc=sunCkSrc(f.id), comp=sunComp(f.id);
+  const NARR_TPL=['f515','f516','f517','f103'];  // 자동 템플릿 서술칸 — 값이 있어도 AI가 자료 기반으로 덮어씀(A+B). 계산값(comp)이라도 이 목록 밖이면 보호
+  const isFilled=(fd)=> ckGroupMap[fd.fk] ? ckGroupMap[fd.fk].some(m=>cks.indexOf(m.idx)>=0) : (vals[fd.fk]!=null && String(vals[fd.fk]).trim()!=='' && !(NARR_TPL.indexOf(fd.fk)>=0 && comp[fd.fk] && !ai[fd.fk]));
   const pending=fields.filter(fd=>!isFilled(fd));
   const useFields = pending.length ? pending : fields;   // 다 찬 상태에서 다시 누르면 전체 재채움 허용
   const CHUNK=18;
