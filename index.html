@@ -8982,12 +8982,12 @@ function sunGaHtml(){
       +'<tr style="height:300px"><td class="fx-v" style="vertical-align:top;text-align:left" data-fk="f560" data-label="협동조합의 의사결정 구조 — ① 의사결정 기구(총회·이사회·감사) ② 임원 현황(직위·성명·생년월일·주소·연락처를 명부대로) ③ 의사결정의 민주성 확보 방안(가입조건·의결권·출자한도·임원선임·특별의결·마을총회 등 정관 규정)"></td></tr></table>';
   }
   const cL='text-align:center';
-  const imrow=(pos,fk0)=>'<tr style="height:33px"><td class="fx-hd">'+pos+'</td>'
-    +'<td class="fx-v" style="'+cL+'" data-fk="f'+fk0+'" data-label="'+pos+' 성명"></td>'
-    +'<td class="fx-v" style="'+cL+'" data-fk="f'+(fk0+1)+'" data-label="'+pos+' 생년월일"></td>'
-    +'<td class="fx-v" data-fk="f'+(fk0+2)+'" data-label="'+pos+' 주소"></td>'
-    +'<td class="fx-v" style="'+cL+'" data-fk="f'+(fk0+3)+'" data-label="'+pos+' 연락처"></td></tr>';
-  const imrows=imrow('이사장',530)+imrow('이사',534)+imrow('이사',538)+imrow('이사',542)+imrow('이사',546)+imrow('감사',550);
+  const imrow=(disp,key,fk0)=>'<tr style="height:33px"><td class="fx-hd">'+disp+'</td>'
+    +'<td class="fx-v" style="'+cL+'" data-fk="f'+fk0+'" data-label="'+key+' 성명"></td>'
+    +'<td class="fx-v" style="'+cL+'" data-fk="f'+(fk0+1)+'" data-label="'+key+' 생년월일(YYMMDD 6자리, 주민등록번호 뒷자리 제외)"></td>'
+    +'<td class="fx-v" data-fk="f'+(fk0+2)+'" data-label="'+key+' 주소"></td>'
+    +'<td class="fx-v" style="'+cL+'" data-fk="f'+(fk0+3)+'" data-label="'+key+' 연락처(휴대전화)"></td></tr>';
+  const imrows=imrow('이사장','이사장',530)+imrow('이사','이사 1',534)+imrow('이사','이사 2',538)+imrow('이사','이사 3',542)+imrow('이사','이사 4',546)+imrow('감사','감사',550);
   const minju=[['조합원 가입조건','거주요건·조합 목적 동의 등 정관 규정',520],['조합원 의결권','출자좌수와 무관하게 1인 1의결권·선거권 등 정관 규정',521],['출자 한도','한 조합원 출자좌수 한도(총 출자좌수의 10% 등) 정관 규정',522],['임원 선임','이사·감사·이사장 선출 방식 등 정관 규정',523],['특별의결','정관변경·합병·해산·제명·출자금 환급 등 특별의결 요건 정관 규정',524],['마을 총회','회계결산·운영현황 보고 등 마을총회 관련 정관 규정',525],['마을총회 의견수렴','발전시설 추진·부지 사용·수익배분 변경 등 마을총회 의결사항 정관 규정',526]];
   const minjurows=minju.map(a=>'<tr style="height:40px"><td class="fx-hd">'+a[0]+'</td><td class="fx-v" style="text-align:left;vertical-align:top" data-fk="f'+a[2]+'" data-label="'+a[0]+' — '+a[1]+'"></td></tr>').join('');
   return toggle
@@ -9654,6 +9654,7 @@ async function sunAIFill(corpus){
   // 받은 값 적용
   let n=0, nck=0;
   const norm=s=>String(s).replace(/\s/g,'');
+  const birthFks=new Set(fields.filter(fd=>/생년월일/.test(fd.label||'')).map(fd=>fd.fk));   // 생년월일 칸: 주민등록번호가 와도 앞 6자리(YYMMDD)만 저장
   Object.keys(allValues).forEach(k=>{
     const val=(allValues[k]!=null)?String(allValues[k]).trim():''; if(!val) return;
     if(ckGroupMap[k]){
@@ -9666,7 +9667,9 @@ async function sunAIFill(corpus){
       hits.forEach(h=>{ cks.push(h.idx); if(allSources[k]) cksrc[h.idx]=String(allSources[k]).slice(0,300); }); nck++;
     } else {
       if(optMap[k] && !optMap[k].some(o=>norm(o)===norm(val))) return;
-      vals[k]=val.slice(0,1500); ai[k]=1; if(allSources[k]) src[k]=String(allSources[k]).slice(0,300); n++;
+      let vv=val;
+      if(birthFks.has(k)){ const m=vv.match(/^(\d{6})[-\s]*\d/); if(m) vv=m[1]; }   // 580612-1247116 → 580612 (생년월일만)
+      vals[k]=vv.slice(0,1500); ai[k]=1; if(allSources[k]) src[k]=String(allSources[k]).slice(0,300); n++;
     }
   });
   sunStore(); sunPaint(); sunUpdatePcts();
