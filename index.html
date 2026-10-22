@@ -1095,6 +1095,10 @@ button{font-family:inherit;cursor:pointer}
 @media print{
   @page{size:A4;margin:12mm 10mm}
   @page proposalA3{size:A3 landscape;margin:10mm}
+  body.suv-previewing > *:not(#suvPvOv){display:none !important}
+  body.suv-previewing #suvPvOv{position:static !important;inset:auto !important;background:#fff !important;padding:0 !important;overflow:visible !important;display:block !important;z-index:auto !important}
+  body.suv-previewing #suvPvOv .suv-pv-head{display:none !important}
+  body.suv-previewing #suvPvOv .suv-pv-paper{box-shadow:none !important;max-width:100% !important;width:100% !important;margin:0 !important;padding:0 !important}
   body.printing-permit > *:not(#permitPrintArea){display:none !important}
   body.printing-permit #permitPrintArea{display:block !important}
   .pp-page{page-break-after:always}
@@ -1292,6 +1296,9 @@ button{font-family:inherit;cursor:pointer}
 .suv-pv-head .sp{flex:1}
 .suv-pv-paper{background:#fff;color:#111;max-width:200mm;width:100%;margin:0 auto;padding:24mm 17mm;box-shadow:0 8px 34px rgba(0,0,0,.42)}
 .suv-pv-paper h2{font-size:17px;font-weight:800;text-align:center;letter-spacing:1px;color:#111;margin:0 0 16px}
+.suv-pv-paper .sun-h{font-weight:700;color:#000}
+.suv-pv-paper .fx-p.sun-h{font-size:12px}
+.suv-pv-paper .fx-t td.sun-lbl{font-weight:700;color:#000}
 .suv-pv-paper .fx-v,.suv-pv-paper .fx-vp{box-shadow:none;background:transparent;border-radius:0;color:#111}
 .suv-pv-paper .fx-v:empty::before{content:''}
 .suv-pv-paper .fx-ck{border:0;padding:0;margin:0 3px 0 0;background:transparent;color:#111;font-weight:700}
@@ -9184,6 +9191,9 @@ function sunPreview(autoPrint){
   ckEls.forEach((el,i)=>{ if(cks.indexOf(i)>=0){ el.textContent='■'+el.textContent.slice(1); el.classList.add('on'); } });
   div.querySelectorAll('.fx-ph').forEach(td=>{ const url=photos[td.dataset.fk]; td.classList.add('has'); td.innerHTML = url ? '<img src="'+url+'" alt="부지 사진">' : '<span style="color:#c3c7cf;font-size:9px">(부지 사진)</span>'; });
   div.querySelectorAll('.fx-sel').forEach(sel=>{ const v=vals[sel.dataset.fk]||''; const sp=document.createElement('span'); sp.className='fx-vp'; sp.textContent=v; sel.replaceWith(sp); });
+  // 출력 타이포(원본 서식과 동일): 섹션/소제목·불릿은 볼드, 표의 라벨·머리글 셀은 볼드(값·주석은 평문 유지)
+  div.querySelectorAll('.fx-p').forEach(p=>{ const t=(p.textContent||'').trim(); if(/^(\d+\.|[가-힣]\.(\s|$)|○|●|■|▪|[①-⑳])/.test(t)) p.classList.add('sun-h'); });
+  div.querySelectorAll('.fx-t td').forEach(td=>{ if(td.classList.contains('fx-vp')||td.querySelector('.fx-vp,.fx-ph,.fx-ck')) return; if((td.textContent||'').trim()) td.classList.add('sun-lbl'); });
   }
   sunClosePreview();
   const ov=document.createElement('div'); ov.className='suv-pv-ov'; ov.id='suvPvOv';
@@ -9194,11 +9204,12 @@ function sunPreview(autoPrint){
     +'<div class="suv-pv-paper"><h2>'+esc(f.title)+'</h2>'+div.innerHTML+'</div>';
   document.body.appendChild(ov);
   document.body.style.overflow='hidden';
+  document.body.classList.add('suv-previewing');
   sunPvEsc=(e)=>{ if(e.key==='Escape') sunClosePreview(); };
   document.addEventListener('keydown',sunPvEsc);
   if(autoPrint) setTimeout(function(){ window.print(); }, 350);
 }
-function sunClosePreview(){ const ov=document.getElementById('suvPvOv'); if(ov)ov.remove(); document.body.style.overflow=''; if(sunPvEsc){ document.removeEventListener('keydown',sunPvEsc); sunPvEsc=null; } }
+function sunClosePreview(){ const ov=document.getElementById('suvPvOv'); if(ov)ov.remove(); document.body.style.overflow=''; document.body.classList.remove('suv-previewing'); if(sunPvEsc){ document.removeEventListener('keydown',sunPvEsc); sunPvEsc=null; } }
 
 /* ---- 폴더 연결 + 자료 처리 + AI 자동채움 ---- */
 function sunConnectFolder(ev){
