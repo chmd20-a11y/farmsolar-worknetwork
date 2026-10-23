@@ -9332,13 +9332,14 @@ function sunPickAttach(id){
     const done=(data)=>{ if(data.length>3800000){ toast('파일이 큽니다(약 '+Math.round(data.length/1024/1024)+'MB) — 더 작은 해상도로 스캔하거나 이미지로 올려주세요'); return; }
       sunAttSet(id,{name:file.name,type:file.type,data:data}); if(!sunStore()){ sunAttSet(id,null); toast('저장 공간 부족 — 더 작은 파일로 올려주세요'); return; } sunPaint(); sunUpdatePcts(); sunDocBoxRefresh();
       if(id==='s2') sunOcrMeetingDate('s2');   // 마을총회 의결서 첨부 즉시 — OCR로 의결일 자동 읽기
+      if(id==='x18' && typeof SUNLIGHT_CUR!=='undefined' && SUNLIGHT_CUR==='s4'){ sunCompute('s4'); sunPaint(); }   // 계통 검토의견 공문 첨부 → 계통연계 가능여부 즉시 갱신
     };
     if(isimg){ sunImgToURL(file,done); }
     else { const r=new FileReader(); r.onload=()=>done(r.result); r.readAsDataURL(file); }
   };
   inp.click();
 }
-function sunDelAttach(id){ if(!confirm('첨부한 「'+sunSubmitDocLabel(id)+'」 파일을 삭제할까요?'))return; sunAttSet(id,null); sunStore(); sunPaint(); sunUpdatePcts(); sunDocBoxRefresh(); }
+function sunDelAttach(id){ if(!confirm('첨부한 「'+sunSubmitDocLabel(id)+'」 파일을 삭제할까요?'))return; sunAttSet(id,null); sunStore(); sunPaint(); sunUpdatePcts(); sunDocBoxRefresh(); if(id==='x18' && typeof SUNLIGHT_CUR!=='undefined' && SUNLIGHT_CUR==='s4'){ sunCompute('s4'); sunPaint(); } }
 
 /* ===== 마을총회 의결서(첨부 7번) OCR → 의결일 자동 추출 ===== */
 // 의결서 OCR 텍스트에서 의결일 추출: '일시 : 2026.10.01'(총회 일시=의결일) 우선, 없으면 첫 유효 날짜. 빈 양식(2026.00.00)은 무시.
@@ -9426,6 +9427,7 @@ function sunWire(paper, id){
     if(vals[fk]!=null && vals[fk]!==''){ if(!narr){ const cl=sunStripDupUnit(td, String(vals[fk])); if(cl!==String(vals[fk])) vals[fk]=cl; } td.textContent=narr?sunFmtNarr(vals[fk]):vals[fk]; td.classList.add('filled'); }
     if(ai[fk]){ td.setAttribute('data-ai','1'); if(src[fk]) td.title='🔎 AI가 채운 근거: '+src[fk]; }
     if(comp[fk]){ td.classList.add('computed'); td.title='🧮 자동 계산: '+comp[fk]; }
+    if(fk==='f635'){ td.style.color=(typeof sunAttGet==='function'&&sunAttGet('x18'))?'':'#c0392b'; }   // 계통 검토의견 공문 미첨부 안내 = 빨강
     td.addEventListener('input',()=>{ const t=td.textContent.trim(); if(t) vals[fk]=t; else delete vals[fk]; td.classList.toggle('filled', !!t); td.removeAttribute('data-ai'); td.classList.remove('computed'); td.removeAttribute('title'); delete ai[fk]; delete src[fk]; delete comp[fk]; });
     td.addEventListener('blur',()=>{ sunStore(); sunUpdatePcts(); sunCompute(id); });
   });
@@ -9480,7 +9482,7 @@ function sunPreview(autoPrint){
   } else {
   div.innerHTML=sunFormHtml(f);
   if(f.id==='s4') sunRenumberSejbu(div);   // 번호 재매김은 fx-v→fx-vp 변환 전에(주소칸 라벨 기준)
-  div.querySelectorAll('.fx-v').forEach(td=>{ const v=vals[td.dataset.fk]; const narr=sunIsNarrCell(td); td.classList.remove('fx-v'); td.classList.add('fx-vp'); td.removeAttribute('data-label'); if(narr){ td.style.textAlign='left'; td.style.verticalAlign='top'; td.style.whiteSpace='pre-wrap'; } td.textContent=(v!=null?(narr?sunFmtNarr(v):v):''); });
+  div.querySelectorAll('.fx-v').forEach(td=>{ const v=vals[td.dataset.fk]; const narr=sunIsNarrCell(td); td.classList.remove('fx-v'); td.classList.add('fx-vp'); td.removeAttribute('data-label'); if(narr){ td.style.textAlign='left'; td.style.verticalAlign='top'; td.style.whiteSpace='pre-wrap'; } td.textContent=(v!=null?(narr?sunFmtNarr(v):v):''); if(td.dataset.fk==='f635' && !(typeof sunAttGet==='function'&&sunAttGet('x18'))) td.style.color='#c0392b'; });
   const ckEls=[...div.querySelectorAll('.fx-ck')];
   ckEls.forEach((el,i)=>{ if(cks.indexOf(i)>=0){ el.textContent='■'+el.textContent.slice(1); el.classList.add('on'); } });
   div.querySelectorAll('.fx-ph').forEach(td=>{ const url=photos[td.dataset.fk]; td.classList.add('has'); td.innerHTML = url ? '<img src="'+url+'" alt="부지 사진">' : '<span style="color:#c3c7cf;font-size:9px">(부지 사진)</span>'; });
@@ -9697,6 +9699,17 @@ function sunCompute(fid){
   }
   // 사업자등록번호(f91)·설립 인가일(f92) — 자동채움/AI 제외, 항상 비워 사용자 직접 입력(기존 자동/AI 값만 제거, 수동입력은 보존)
   ['f91','f92'].forEach(fk=>{ const cc=cells.find(c=>c.fk===fk); if(cc && vals[fk]!=null && (comp[fk]||ai[fk])){ delete vals[fk]; delete comp[fk]; delete ai[fk]; delete src[fk]; changed++; } });
+  // 계통연계 가능여부(f635) — 한전 '계통 연계 가능여부 검토의견 공문'(첨부 18번=x18) 첨부 여부로 자동.
+  //   첨부: '계통연계 가능(…검토의견 공문 첨부)' / 미첨부: 안내 문구(빨강으로 표시 — paint에서 처리)
+  {
+    const g635=cells.find(c=>c.fk==='f635');
+    if(g635){
+      const has18=(typeof sunAttGet==='function') && !!sunAttGet('x18');
+      const want=has18?'계통연계 가능(계통연계 가능여부 검토의견 공문 첨부)':'첨부파일(18번) 항목을 첨부해주세요';
+      const note=has18?'계통 검토의견 공문(첨부18) 첨부됨':'계통 검토의견 공문(첨부18) 미첨부 — 첨부 필요';
+      if(vals.f635!==want || comp.f635!==note){ vals.f635=want; comp.f635=note; delete ai.f635; delete src.f635; changed++; }
+    }
+  }
   // 예상 사업일정 — 사업발표일(f319, 편집전용 숨김행) 기준 +4/+7/+10개월로 자동(출력형식 'YYYY년 MM월'). 발표일 없으면 빈칸
   {
     const f319c=cells.find(c=>c.fk==='f319'); const av=String((f319c&&f319c.v)||vals.f319||'').trim();
@@ -10218,6 +10231,8 @@ function sunCollectFields(f){
     'f91','f92',
     // 예상 사업일정 — 사업발표일(f319) 기준 자동계산(f316/317/318), 발표일은 수동 → AI 제외
     'f316','f317','f318','f319',
+    // 계통연계 가능여부 — 첨부18(x18) 유무로 자동 → AI 제외
+    'f635',
     // 지원신청서 주민 동의율 — 사업계획서 동의/규약으로 계산(소수점 첫째자리), AI 추정 제외
     'f505',
     // 보완계획서 설립일·담당부서·담당자 — 자동채움/AI 제외, 항상 비워 사용자 직접 입력
