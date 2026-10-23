@@ -20832,7 +20832,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§GC_T§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -20886,7 +20886,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0%</CHAR>
+<CHAR>§GC_RATE§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -20994,7 +20994,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§GC_CAP§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -21237,7 +21237,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§GC_COST§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -21345,7 +21345,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§GC_SUM§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -21399,7 +21399,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§GC_T§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -21453,7 +21453,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="1">
 <TEXT CharShape="3">
-<CHAR>0%</CHAR>
+<CHAR>§GC_RATE§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -21615,7 +21615,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR/>
+<CHAR>§GC_COST§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -21863,7 +21863,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§GC_LABOR§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -22171,7 +22171,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§GC_DEPR§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -22291,7 +22291,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§GC_REPAIR§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -22996,7 +22996,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§GC_ETC§</CHAR>
 </TEXT>
 </P>
 </PARALIST>
@@ -23116,7 +23116,7 @@
 <PARALIST TextDirection="0" LineWrap="Keep" VertAlign="Center">
 <P ParaShape="3">
 <TEXT CharShape="3">
-<CHAR>0</CHAR>
+<CHAR>§GC_SUM§</CHAR>
 </TEXT>
 </P>
 </PARALIST>

@@ -6345,13 +6345,32 @@ function permitCalc(d){
   const costK=pNum(p.outline.totalCost);
   const ownK=pNum(p.fund.own), loanK=pNum(p.fund.loan)||(costK-ownK);
   const annual=pNum(p.outline.annual);
-  const genCost = annual? Math.round(costK*1000*0.08/annual*10)/10 : 0;   // 발전원가 원/kWh
+  const gc=permitGenCost(cap,costK);                            // 발전원가 명세서(샘플 역설계)
+  const genCost = Math.round(gc.genCost*100)/100;               // 발전원가 원/kWh(2자리)
   // 소요자금 내역(천원): 설비47% 부대21% 구조물30% 기타2%
   const eq=Math.round(costK*0.47), aux=Math.round(costK*0.21), str=Math.round(costK*0.30), etc=costK-eq-aux-str;
   // 5년 공급계획(완만 감소 0.5%/년)
   const yrs=[], rawY=[]; let g=annual/1000; for(let i=0;i<5;i++){ rawY.push(g); yrs.push(Math.round(g*1000)/1000); g=g*0.995; }
   const sum5=Math.round(rawY.reduce((a,b)=>a+b,0)*1000)/1000;   // 계 = 반올림 전 원값 합의 반올림(실제 접수샘플과 일치)
-  return {cap,costK,ownK,loanK,annual,genCost,eq,aux,str,etc,yrs,sum5};
+  return {cap,costK,ownK,loanK,annual,genCost,eq,aux,str,etc,yrs,sum5, fixRate:gc.fixRate, gc};
+}
+/* ---- 발전원가 명세서 자동계산 — 발전허가 사업계획서 양식 역설계(완성 샘플 4건 100% 일치) ----
+   입력: 시설용량 cap(kW), 총건설비 costK(천원).
+   고정비 항목이 모두 총투자비(T) 비례 → 인건비 0.84% · 감가상각비 T÷20(=5%) · 수선유지비 감가×10%(=0.5%) · 기타비용 1.2%
+   → 고정비 계 = T×7.54%(그래서 고정비율이 항상 7.54%, 샘플의 '8%'는 반올림 표기 → 2자리로 정정).
+   연간 순 발전량 = cap×8760×0.1634×0.99 [양식 인쇄의 8780은 오타, 계산은 8760].
+   발전원가(원/kWh) = 고정비 계 ÷ 연간 순 발전량 (변동비=연료비 없음 0). */
+function permitGenCost(cap, costK){
+  const T=(pNum(costK)||0)*1000, C=pNum(cap)||0;      // T=총건설비(원), C=시설용량(kW)
+  const labor=Math.round(T*0.0084);                    // 인건비
+  const depr =Math.round(T/20);                        // 감가상각비(내용연수 20년=5%)
+  const repair=Math.round(depr*0.1);                   // 수선유지비(감가상각비 10%)
+  const etc  =Math.round(T*0.012);                     // 기타비용
+  const fixSum=labor+depr+repair+etc;                  // 고정비 계(≈총투자비 7.54%)
+  const annualNet=C*8760*0.1634*0.99;                  // 연간 순 발전량(kWh)
+  const fixRate=T? fixSum/T*100 : 0;                   // 고정비율(%)
+  const genCost=annualNet? fixSum/annualNet : 0;       // 발전원가(원/kWh)
+  return {T,C,labor,depr,repair,etc,fixSum,annualNet,fixRate,genCost};
 }
 
 /* ---- 입력 위젯 ---- */
@@ -7070,8 +7089,8 @@ function renderPermitPrint(d){
   </div>
   <div class="pp-page">
     <div class="pp-sec">2. 발전원가 명세서</div>
-    <div class="pp-li"><b>발전원가</b> 약 ${c.genCost} 원/kWh (고정비 원가 = 연간고정비 ÷ 연간 순 발전량)</div>
-    <div class="pp-li"><b>고정비</b> 총투자비의 약 8% · <b>변동비</b> 태양광 연료비 없음</div>
+    <div class="pp-li"><b>발전원가</b> 약 ${c.genCost} 원/kWh (고정비 ÷ 연간 순 발전량, 연간 순 발전량 = 시설용량 × 8,760h × 16.34% × 0.99)</div>
+    <div class="pp-li"><b>고정비율</b> 총투자비의 약 ${(c.fixRate||0).toFixed(2)}% · <b>변동비</b> 태양광 연료비 없음</div>
     <div class="pp-sec">3. 발전설비 운용 기술인력 확보계획 (20kW 초과)</div>
     <div class="pp-li">전기안전관리자 1명 — 「전기안전관리법」에 따라 안전관리 대행(선임)</div>
     <div class="pp-sec">4. 발전소부지 확보사항 — ${isBld?'대상 건물 명세서':'대상 토지 명세서'}</div>
@@ -7201,6 +7220,20 @@ function saupCost(d){
     '§SP_C_JAB_IN§':c(jabIn), '§SP_C_JAB_EX§':c(jabEx), '§SP_C_JAB§':c(K),
     '§SP_C_SIGONG§':c(sigong), '§SP_C_DIRECT_EX§':c(directEx) };
 }
+// 발전원가 명세서 토큰(§GC_*) — permitGenCost(샘플 역설계) 결과를 양식 셀에 치환.
+function saupGenCost(d){
+  const p=resolvePermit(d);
+  const cap=pNum(p.biz.cap)||pNum(d.cap)||0;
+  const T=pNum(p.outline.totalCost)||0;                // 천원
+  const g=permitGenCost(cap,T);
+  const c=x=>pComma(Math.round(x));
+  return {
+    '§GC_T§':c(g.T), '§GC_CAP§':(cap?String(Math.round(cap*100)/100):''),
+    '§GC_RATE§':(g.fixRate?g.fixRate.toFixed(2):'0')+'%',
+    '§GC_SUM§':c(g.fixSum),
+    '§GC_COST§':(g.genCost?(Math.round(g.genCost*100)/100).toFixed(2):''),
+    '§GC_LABOR§':c(g.labor), '§GC_DEPR§':c(g.depr), '§GC_REPAIR§':c(g.repair), '§GC_ETC§':c(g.etc) };
+}
 function permitTokenMap(d){
   const p=resolvePermit(d), c=permitCalc(d), eq=p.equip||{};
   const L=(p.lands&&p.lands[0])||{};
@@ -7268,6 +7301,7 @@ function permitTokenMap(d){
     '§SP_DEV§':pComma(c.eq), '§SP_AUX§':pComma(c.aux), '§SP_STR§':pComma(c.str), '§SP_ETC§':pComma(c.etc),
     '§SP_OWN§':pComma(c.ownK), '§SP_LOAN§':pComma(c.loanK),
     ...saupCost(d),   // 비용 3표(초기개발비·공사비계산서·년도별) 자동계산 토큰
+    ...saupGenCost(d),   // 발전원가 명세서(§GC_*) 자동계산 토큰
   };
 }
 function fillPermitTemplate(xml, map){ for(const k in map){ xml=xml.split(k).join(hwpXmlEsc(map[k])); } return xml; }
