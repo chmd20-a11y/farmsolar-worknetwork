@@ -1095,6 +1095,8 @@ button{font-family:inherit;cursor:pointer}
 @media print{
   @page{size:A4;margin:12mm 10mm}
   @page proposalA3{size:A3 landscape;margin:10mm}
+  /* 미리보기 모달이 body에 inline overflow:hidden을 걸어, Safari(WebKit)가 인쇄를 1페이지로 자르는 문제 해제 — 전체 문서가 페이지 분할 출력되게 함 */
+  html, body{ overflow:visible !important; height:auto !important }
   body.suv-previewing > *:not(#suvPvOv){display:none !important}
   body.suv-previewing #suvPvOv{position:static !important;inset:auto !important;background:#fff !important;padding:0 !important;overflow:visible !important;display:block !important;z-index:auto !important}
   body.suv-previewing #suvPvOv .suv-pv-head{display:none !important}
