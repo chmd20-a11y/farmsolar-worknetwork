@@ -10067,7 +10067,13 @@ function sunPrecedingHeading(td){
   return '';
 }
 // 서술형 큰 칸(한 행에 칸 하나뿐인 전폭 셀) 여부 — 좌/상단 정렬+줄바꿈 대상.
-function sunIsNarrCell(td){ const tr=td&&td.closest&&td.closest('tr'); return !!(tr && tr.cells && tr.cells.length===1); }
+function sunIsNarrCell(td){
+  if(!td) return false;
+  const tr=td.closest&&td.closest('tr');
+  if(tr && tr.cells && tr.cells.length===1) return true;                              // 전폭 단일 셀 = 서술칸
+  if(td.tagName==='TD' && td.style && td.style.verticalAlign==='top') return true;    // 상단정렬 TD = 장문 서술칸(구분|주요내용 등 라벨+서술 행 포함)
+  return false;
+}
 // 서술형 내용 정렬: 번호 항목(1) 2) 3)·①②③)마다 줄바꿈, 없으면 한국어 문장끝(…다. )마다 줄바꿈. 이미 줄바꿈 있으면 그대로.
 function sunFmtNarr(s){
   s=String(s==null?'':s).replace(/\r\n?/g,'\n');
