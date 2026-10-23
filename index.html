@@ -2459,7 +2459,7 @@ const DEAL_SEED = [
       maint:[['안전관리대행비','120','10/월'],['보험료','12','공제조합(소멸성)'],['전기료','18','1.5/월'],['통신료(MRT)','12','1/월']],
       maintTotal:'162',
       note:'국산2등급 현대 645Wp × 54매 = 34.83kW 설치 · 한전 선로 연계비 약 390만원 및 제세공과금 별도 · 토목비·VAT 별도',
-      econ:{ sell:'8,000,000', net20:'5,000,000', payback:'7 년', loan:'26,400,000', own:'6,600,000', loanNote:'정책자금 5년거치 10년상환 · 이율 2.5% (총사업비의 80% 대출 · 20% 자부담)' },
+      econ:{ sell:'8,000,000', net20:'5,000,000', payback:'7 년', loan:'26,400,000', own:'6,600,000', loanNote:'정책자금 5년거치 10년상환 · 이율 2.75% (총사업비의 80% 대출 · 20% 자부담)' },
       layout:'노지형 · 모듈각 13° · 입사각 25° · 54EA 자동배치',
     }},
   // ② 설계 신규접수(영업→설계 이관) — 지붕
@@ -2785,7 +2785,7 @@ const COST_DEFAULT = {
   managementRate: 0.02,
 };
 // ---- 편집 가능한 단가·가정값 (localStorage 저장) ----
-const ASSUMP_DEFAULT = { hours:3.6, applyNoji:178, applyRoof:188, applySusang:188, rate:2.5, defer:5, repay:10, loanpct:80 };
+const ASSUMP_DEFAULT = { hours:3.6, applyNoji:178, applyRoof:188, applySusang:188, rate:2.75, defer:5, repay:10, loanpct:80 };
 let COST_PRESET = JSON.parse(JSON.stringify(COST_DEFAULT));  // 견적 함수가 읽는 라이브 단가
 let ASSUMP = Object.assign({}, ASSUMP_DEFAULT);              // 발전/금융 가정값
 let COST_PRESETS = [];                                       // 이름붙인 단가 프리셋 (최대 5)
@@ -2960,7 +2960,7 @@ function ensureQuoteParams(d){
   return d.quoteParams;
 }
 function calcCashflow(kw, invest, apply, hours, maint, params){
-  const rate = (parseFloat(params.rate)||2.5)/100;
+  const rate = (parseFloat(params.rate)||2.75)/100;
   const defer = parseInt(params.defer)||5;
   const repay = parseInt(params.repay)||10;
   const loanpct = params.loanpct!=null ? parseFloat(params.loanpct) : 80;
@@ -3270,7 +3270,7 @@ function handoverProposal(d, p, showCost){
           <tr><td>${e.repay||10}년 순수익 (상환기간)</td><td class="qd-n">${esc(e.avg10repay||'-')}</td><td class="qd-c">/ 년 평균</td></tr>
           <tr><td>${remainYrs}년 순수익 (잔여기간)</td><td class="qd-n">${esc(e.avg5remain||'-')}</td><td class="qd-c">/ 년 평균</td></tr>
         </tbody></table>
-        <div class="qd-sec g">정책자금 (${e.defer||5}년거치 ${e.repay||10}년상환 · 이율 ${e.rate||2.5}%)</div>
+        <div class="qd-sec g">정책자금 (${e.defer||5}년거치 ${e.repay||10}년상환 · 이율 ${e.rate||2.75}%)</div>
         <table class="qd-tbl"><tbody>
           <tr><td>정책자금 대출 (${e.loanpct||80}%)</td><td class="qd-n">${esc(e.loan||'-')}</td></tr>
           <tr><td>자부담금 (${100-(e.loanpct||80)}%)</td><td class="qd-n">${esc(e.own||'-')}</td></tr>
@@ -9731,7 +9731,7 @@ function sunCompute(fid){
         const memS=num(gfk('f90'));                        // 조합원 수
         const modS=num(gfk('f136'));                       // 모듈 수량(비용표)
         const genHr=(typeof ASSUMP!=='undefined'&&parseFloat(ASSUMP.hours))?parseFloat(ASSUMP.hours):3.6;      // 발전시간(원가표)
-        const policyRate=2.75;  // ★햇빛소득마을 정책자금 고정금리(정책 표준값·전 마을 공통). 원가표 ASSUMP.rate(견적용 금융가정 기본 2.5%)와 별개이므로 그걸 끌어오면 안 됨
+        const policyRate=(typeof ASSUMP!=='undefined'&&parseFloat(ASSUMP.rate))?parseFloat(ASSUMP.rate):2.75;  // 정책자금 고정금리 — 원가표(ASSUMP.rate) 단일 출처 동기화(기본 2.75%). 제안서·견적과 동일 값
         const capG=cells.filter(c=>c.lab==='설치용량(kW)').map(c=>num(c.v)).filter(v=>v!=null);
         let capGt=null;
         if(capG.length){ const u=[...new Set(capG.map(v=>Math.round(v*100)/100))]; capGt=(u.length===1)?u[0]:capG.reduce((s,v)=>s+v,0); }
