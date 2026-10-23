@@ -9587,6 +9587,52 @@ function sunCompute(fid){
       if(any){ const f=grp(tot); if((vals['f762']||'')!==f || comp['f762']!=='연간 운영비 합산(자동)'){ vals['f762']=f; comp['f762']='연간 운영비 합산(자동)'; delete ai['f762']; delete src['f762']; changed++; } }
     }
   }
+  // ②-5 6.가 수익구조(백만원) — 원본 모델 결정적 계산(운영20년=상환20년: 거치1/상환19 원금균등·금리 ASSUMP) + 적립금 + 콤마. AI 추정 제거
+  {
+    const cf=k=>cells.find(c=>c.fk===k);
+    const nv=k=>{ const c=cf(k); return c?num(c.v):null; };
+    const grp=n=>Math.round(n).toLocaleString('en-US');
+    const setN=(k,val,note)=>{ const c=cf(k); if(c) put(c, (typeof val==='number')?grp(val):String(val), note); };
+    const capCells2=cells.filter(c=>c.lab==='설치용량(kW)').map(c=>num(c.v)).filter(v=>v!=null);
+    let cap=null; if(capCells2.length){ const u=[...new Set(capCells2.map(v=>Math.round(v*100)/100))]; cap=(u.length===1)?u[0]:capCells2.reduce((s,v)=>s+v,0); }
+    const genHr=(typeof ASSUMP!=='undefined'&&parseFloat(ASSUMP.hours))?parseFloat(ASSUMP.hours):3.6;
+    const r=((typeof ASSUMP!=='undefined'&&parseFloat(ASSUMP.rate))?parseFloat(ASSUMP.rate):2.75)/100;
+    const price=nv('f820')||178000;
+    const opWon=nv('f762');
+    const T=nv('f511')||nv('f674')||nv('f163');
+    const own=nv('f670')||nv('f512');
+    let Lp=nv('f672'); if(Lp==null && T!=null) Lp=(own!=null)?Math.max(0,T-own):null;   // 정책자금 대출(백만원)
+    const Lr=nv('f697');                                                                 // 지역금융 대출(백만원)
+    const memN=nv('f90');
+    if(cap && price){
+      const degrade=0.004, N=20, repayN=19;
+      const rev1=cap*genHr*365*price/1000/1e6;                        // 1년차 매출(백만원)
+      let s2=0,sA=0; for(let y=1;y<=N;y++){ const v=rev1*(1-degrade*(y-1)); sA+=v; if(y>=2) s2+=v; }
+      const rRev1=Math.round(rev1), rRev2=Math.round(s2/repayN), rRevC=Math.round(sA);
+      const op=(opWon!=null)?opWon/1e6:0; const rOp=Math.round(op);
+      const amort=(L)=>{ if(!L||L<=0) return {y1:0,two:0,cum:0}; const prin=L/repayN; let bal=L, y1=L*r, s=0, cum=y1; for(let y=2;y<=N;y++){ const pay=prin+bal*r; s+=pay; cum+=pay; bal-=prin; } return {y1, two:s/repayN, cum}; };
+      const P=amort(Lp), R=amort(Lr);
+      const rP1=Math.round(P.y1), rP2=Math.round(P.two), rPC=Math.round(P.cum);
+      const rR1=Math.round(R.y1), rR2=Math.round(R.two), rRC=Math.round(R.cum);
+      const net1=rRev1-rOp-rP1-rR1, net2=rRev2-rOp-rP2-rR2, netC=rRevC-rOp*N-rPC-rRC;   // 정산수익금=매출−운영비−정책자금−지역금융
+      setN('f770',rRev1,'수익구조 자동'); setN('f771',rRev2,'수익구조 자동'); setN('f772',rRevC,'수익구조 자동');
+      setN('f773',rOp,'수익구조 자동');   setN('f774',rOp,'수익구조 자동');   setN('f775',rOp*N,'수익구조 자동');
+      setN('f776',rP1,'수익구조 자동');    setN('f777',rP2,'수익구조 자동');    setN('f778',rPC,'수익구조 자동');
+      setN('f779',rR1,'수익구조 자동');    setN('f780',rR2,'수익구조 자동');    setN('f781',rRC,'수익구조 자동');
+      setN('f782',net1,'수익구조 자동');   setN('f783',net2,'수익구조 자동');   setN('f784',netC,'수익구조 자동');
+      // 적립금 활용 — base=정산수익금, 필수20/시설20/공동40/복지10, 법정=출자금3배(1년차 전액·2~20 적립완료)
+      const jbT=(memN!=null)?Math.round(memN*300000/1e6):null;
+      const e=(x)=>Math.round(x*0.2), c4=(x)=>Math.round(x*0.4), w=(x)=>Math.round(x*0.1);
+      if(jbT!=null){ setN('f786',jbT,'적립금 자동'); setN('f787','적립완료','적립금 자동'); setN('f788',jbT,'적립금 자동'); }
+      setN('f789',e(net1),'적립금 자동'); setN('f790',e(net2),'적립금 자동'); setN('f791',e(netC),'적립금 자동');
+      setN('f792',e(net1),'적립금 자동'); setN('f793',e(net2),'적립금 자동'); setN('f794',e(netC),'적립금 자동');
+      setN('f795',c4(net1),'적립금 자동'); setN('f796',c4(net2),'적립금 자동'); setN('f797',c4(netC),'적립금 자동');
+      setN('f798',w(net1),'적립금 자동'); setN('f799',w(net2),'적립금 자동'); setN('f800',w(netC),'적립금 자동');
+      setN('f801',(jbT||0)+e(net1)+e(net1)+c4(net1)+w(net1),'적립금 합계 자동');
+      setN('f802',e(net2)+e(net2)+c4(net2)+w(net2),'적립금 합계 자동');
+      setN('f803',(jbT||0)+e(netC)+e(netC)+c4(netC)+w(netC),'적립금 합계 자동');
+    }
+  }
   // ③ 세부 부지 '설치용량(kW)' → 세부 합계(f135) + 총괄표 '총 용량'(f310).
   //    전 필지가 같은 값이면 '프로젝트 총 용량을 필지마다 반복 기재'로 보고 합산하지 않고 그 값을 총량으로(원본 양식). 서로 다르면 합산.
   const capCells=cells.filter(c=>c.lab==='설치용량(kW)');   // 세부 부지 행(추가행 포함). '설치계획용량'(참고자료)은 제외됨
@@ -9806,11 +9852,21 @@ function sunCompute(fid){
         const f785Calc = capGt
           ? '※ 산출근거: '+capStr+'kWp X 일평균 '+genHr+'시간 X 365일 X '+Math.round(price/1000)+'원/kWh ≒ '+Math.round(mwh*price/1000000).toLocaleString('en-US')+'백만원/년(성능저하율 약 년 0.4%)\n'
           : '';
+        // DSCR·최소정산수익 — ②-5에서 계산된 수익구조 2~20년차 값(vals)에서 실제 식·값 산출
+        const nvv=k=>num(vals[k]);
+        const rev2v=nvv('f771'), op2v=nvv('f774'), pol2v=nvv('f777'), reg2v=nvv('f780'), net2v=nvv('f783');
+        const dscrDen=(pol2v||0)+(reg2v||0);
+        const dscrLine=(rev2v!=null&&op2v!=null&&dscrDen>0)
+          ? '※ DSCR(부채상환비율): ('+rev2v+'-'+op2v+') / ('+(pol2v||0)+'+'+(reg2v||0)+') ≒ '+((rev2v-op2v)/dscrDen).toFixed(2)+' → 매우 안정적 상환능력'
+          : '※ DSCR(부채상환비율) 등을 고려할 때 안정적인 상환능력 확보';
+        const minLine=(net2v!=null)
+          ? '※ 거치·상환 전 기간 최소 '+net2v.toLocaleString('en-US')+'백만원(년) 정산수익 확보 → 자금회수 안정성 확보'
+          : '※ 거치·상환 전 기간 안정적인 정산수익을 확보하여 자금회수 안정성 확보';
         const suikBosu=f785Calc
          +'※ 발전소 운영기간(20년)과 차입금 상환기간(20년)이 일치하여 일관된 현금흐름 구조 확보\n'
-         +'※ DSCR(부채상환비율) 등을 고려할 때 안정적인 상환능력 확보\n'
-         +'※ 거치·상환 전 기간 안정적인 정산수익을 확보하여 자금회수 안정성 확보';
-        putNarr('f785',suikBosu,'수익구조 보충 자동(산출근거 반영, 수정 가능)');
+         +dscrLine+'\n'
+         +minLine;
+        putNarr('f785',suikBosu,'수익구조 보충 자동(DSCR·정산수익 실제값 반영, 수정 가능)');
         const suikJeok='① 법정적립금 10% 이상\n'
          +' · 협동조합기본법 제50조 및 정관 제27조 의무 적립\n'
          +' · 출자금 납입총액의 3배가 될 때까지 잉여금의 100분의 10 이상 적립\n'
@@ -9956,7 +10012,10 @@ function sunCollectFields(f){
   const freq={}; bases.forEach(b=>{ if(b) freq[b]=(freq[b]||0)+1; });
   const used={};
   // 비용 산출표에서 회사가 쓰지 않는 행(기계·토목·건축공사비·외자조작비·건설이자 수량/금액 + 합계)은 AI 자동채움 제외 → 원본처럼 빈칸 유지(합계 금액은 자동합산, 필요 시 직접 입력)
-  const SKIP_AI=['f144','f145','f148','f149','f150','f151','f156','f157','f160','f161','f162','f163'];
+  const SKIP_AI=['f144','f145','f148','f149','f150','f151','f156','f157','f160','f161','f162','f163',
+    // 6.가 수익구조·적립금 — 결정적 계산(②-5)이라 AI 추정 제외(f752~762 연간운영비 금액은 AI 유지)
+    'f770','f771','f772','f773','f774','f775','f776','f777','f778','f779','f780','f781','f782','f783','f784',
+    'f786','f787','f788','f789','f790','f791','f792','f793','f794','f795','f796','f797','f798','f799','f800','f801','f802','f803'];
   vEls.forEach((td,i)=>{
     const base=bases[i]; if(!base) return;   // 라벨도 맥락도 없으면 스킵(잘못 채움 방지)
     if(SKIP_AI.indexOf(td.dataset.fk)>=0) return;   // 미사용 비용행·합계 — AI 제외
