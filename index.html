@@ -9575,6 +9575,18 @@ function sunCompute(fid){
       if(any) put(sumCell, String(Math.round(tot*100)/100), '비용 금액 열 합산(자동)');
     }
   }
+  // ②-4 연간 운영비(나.유지관리) — 금액 칸 천단위 콤마(멱등·출처무관) + 합계 자동 합산
+  {
+    const cf=k=>cells.find(c=>c.fk===k);
+    const grp=n=>Math.round(n).toLocaleString('en-US');
+    const opFks=['f752','f754','f756','f758','f760'];
+    opFks.forEach(k=>{ const c=cf(k); if(!c) return; const n=num(c.v); if(n==null) return; const f=grp(n); if((vals[k]||'')!==f){ vals[k]=f; changed++; } });
+    const sumCell=cf('f762');
+    if(sumCell){
+      let any=false; const tot=opFks.reduce((s,k)=>{ const c=cf(k); const n=c?num(c.v):null; if(n!=null) any=true; return s+(n||0); },0);
+      if(any){ const f=grp(tot); if((vals['f762']||'')!==f || comp['f762']!=='연간 운영비 합산(자동)'){ vals['f762']=f; comp['f762']='연간 운영비 합산(자동)'; delete ai['f762']; delete src['f762']; changed++; } }
+    }
+  }
   // ③ 세부 부지 '설치용량(kW)' → 세부 합계(f135) + 총괄표 '총 용량'(f310).
   //    전 필지가 같은 값이면 '프로젝트 총 용량을 필지마다 반복 기재'로 보고 합산하지 않고 그 값을 총량으로(원본 양식). 서로 다르면 합산.
   const capCells=cells.filter(c=>c.lab==='설치용량(kW)');   // 세부 부지 행(추가행 포함). '설치계획용량'(참고자료)은 제외됨
