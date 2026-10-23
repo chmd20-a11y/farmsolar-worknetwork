@@ -1101,6 +1101,8 @@ button{font-family:inherit;cursor:pointer}
   body.suv-previewing #suvPvOv{position:static !important;inset:auto !important;background:#fff !important;padding:0 !important;overflow:visible !important;display:block !important;z-index:auto !important}
   body.suv-previewing #suvPvOv .suv-pv-head{display:none !important}
   body.suv-previewing #suvPvOv .suv-pv-paper{box-shadow:none !important;max-width:100% !important;width:100% !important;margin:0 !important;padding:0 !important}
+  /* 지원 신청서(s1) — 1페이지 분량이나 값 채우면 살짝 넘침 → 인쇄 시 축소해 한 장에 맞춤(fit-to-page). 다른 단일폼도 pv-<id>로 추가 가능 */
+  body.suv-previewing #suvPvOv .suv-pv-paper.pv-s1{ zoom:0.9 }
   body.printing-permit > *:not(#permitPrintArea){display:none !important}
   body.printing-permit #permitPrintArea{display:block !important}
   .pp-page{page-break-after:always}
@@ -9387,7 +9389,7 @@ function sunPreview(autoPrint){
   ov.innerHTML='<div class="suv-pv-head"><span class="t">🔍 미리보기 — '+esc(f.title)+'</span><span class="sp"></span>'
     +'<button class="btn ghost sm" onclick="window.print()">🖨 인쇄·PDF</button>'
     +'<button class="btn ghost sm" onclick="sunClosePreview()">✕ 닫기</button></div>'
-    +'<div class="suv-pv-paper"><h2>'+esc(f.title)+'</h2>'+div.innerHTML+'</div>';
+    +'<div class="suv-pv-paper pv-'+f.id+'"><h2>'+esc(f.title)+'</h2>'+div.innerHTML+'</div>';
   document.body.appendChild(ov);
   document.body.style.overflow='hidden';
   document.body.classList.add('suv-previewing');
