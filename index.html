@@ -9731,7 +9731,7 @@ function sunCompute(fid){
         const memS=num(gfk('f90'));                        // 조합원 수
         const modS=num(gfk('f136'));                       // 모듈 수량(비용표)
         const genHr=(typeof ASSUMP!=='undefined'&&parseFloat(ASSUMP.hours))?parseFloat(ASSUMP.hours):3.6;      // 발전시간(원가표)
-        const policyRate=(typeof ASSUMP!=='undefined'&&parseFloat(ASSUMP.rate))?parseFloat(ASSUMP.rate):2.75;  // 정책자금 금리(%)
+        const policyRate=2.75;  // ★햇빛소득마을 정책자금 고정금리(정책 표준값·전 마을 공통). 원가표 ASSUMP.rate(견적용 금융가정 기본 2.5%)와 별개이므로 그걸 끌어오면 안 됨
         const capG=cells.filter(c=>c.lab==='설치용량(kW)').map(c=>num(c.v)).filter(v=>v!=null);
         let capGt=null;
         if(capG.length){ const u=[...new Set(capG.map(v=>Math.round(v*100)/100))]; capGt=(u.length===1)?u[0]:capG.reduce((s,v)=>s+v,0); }
