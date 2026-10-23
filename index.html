@@ -9654,6 +9654,8 @@ function sunCompute(fid){
     if(changed){ sunStore(); sunPaint(); }
     return changed;
   }
+  // 사업자등록번호(f91)·설립 인가일(f92) — 자동채움/AI 제외, 항상 비워 사용자 직접 입력(기존 자동/AI 값만 제거, 수동입력은 보존)
+  ['f91','f92'].forEach(fk=>{ const cc=cells.find(c=>c.fk===fk); if(cc && vals[fk]!=null && (comp[fk]||ai[fk])){ delete vals[fk]; delete comp[fk]; delete ai[fk]; delete src[fk]; changed++; } });
   // ① 동의율(%) = 동의한 주민수 ÷ 마을규약 인구 × 100  (서식 주석: 마을규약 인구 기준) — 소수점 첫째자리까지 표기
   const tRate=find(/동의율/);
   const agree=findVal(/동의한\s*주민수/);
@@ -10152,6 +10154,8 @@ function sunCollectFields(f){
   const used={};
   // 비용 산출표에서 회사가 쓰지 않는 행(기계·토목·건축공사비·외자조작비·건설이자 수량/금액 + 합계)은 AI 자동채움 제외 → 원본처럼 빈칸 유지(합계 금액은 자동합산, 필요 시 직접 입력)
   const SKIP_AI=['f144','f145','f148','f149','f150','f151','f156','f157','f160','f161','f162','f163',
+    // 사업계획서 사업자등록번호·설립 인가일 — 자동채움/AI 제외, 항상 비워 사용자 직접 입력
+    'f91','f92',
     // 지원신청서 주민 동의율 — 사업계획서 동의/규약으로 계산(소수점 첫째자리), AI 추정 제외
     'f505',
     // 보완계획서 설립일·담당부서·담당자 — 자동채움/AI 제외, 항상 비워 사용자 직접 입력
