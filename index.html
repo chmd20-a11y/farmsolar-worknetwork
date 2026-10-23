@@ -9700,6 +9700,8 @@ function sunCompute(fid){
   }
   // 사업자등록번호(f91)·설립 인가일(f92) — 자동채움/AI 제외, 항상 비워 사용자 직접 입력(기존 자동/AI 값만 제거, 수동입력은 보존)
   ['f91','f92'].forEach(fk=>{ const cc=cells.find(c=>c.fk===fk); if(cc && vals[fk]!=null && (comp[fk]||ai[fk])){ delete vals[fk]; delete comp[fk]; delete ai[fk]; delete src[fk]; changed++; } });
+  // 부지 임대료 금액(f760)·비고(f761) — 무조건 사용자 직접 입력 → AI 제외, 기존 자동값 비움(합계는 입력 시 자동합산). 스냅샷 cc.v도 비워 ②-4 합산에 즉시 반영
+  ['f760','f761'].forEach(fk=>{ const cc=cells.find(c=>c.fk===fk); if(cc && vals[fk]!=null && (comp[fk]||ai[fk])){ delete vals[fk]; delete comp[fk]; delete ai[fk]; delete src[fk]; cc.v=''; changed++; } });
   // 계통연계 가능여부(f635) — 한전 '계통 연계 가능여부 검토의견 공문'(첨부 18번=x18) 첨부 여부로 자동.
   //   첨부: '계통연계 가능(…검토의견 공문 첨부)' / 미첨부: 안내 문구(빨강으로 표시 — paint에서 처리)
   {
@@ -10235,6 +10237,8 @@ function sunCollectFields(f){
   const SKIP_AI=['f144','f145','f148','f149','f150','f151','f156','f157','f160','f161','f162','f163',
     // 사업계획서 사업자등록번호·설립 인가일 — 자동채움/AI 제외, 항상 비워 사용자 직접 입력
     'f91','f92',
+    // 연간 운영비 부지 임대료 금액·비고 — 무조건 사용자 직접 입력 → AI 제외
+    'f760','f761',
     // 예상 사업일정 — 사업발표일(f319) 기준 자동계산(f316/317/318), 자부담표 조달시기(f683 초기+4·f699 대출+10), 발표일은 수동 → AI 제외
     'f316','f317','f318','f319','f683','f699',
     // 계통연계 가능여부 — 첨부18(x18) 유무로 자동 → AI 제외
