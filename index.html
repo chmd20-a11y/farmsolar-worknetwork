@@ -10077,16 +10077,21 @@ function sunIsNarrCell(td){
 // 서술형 내용 정렬: 번호 항목(1) 2) 3)·①②③)마다 줄바꿈, 없으면 한국어 문장끝(…다. )마다 줄바꿈. 이미 줄바꿈 있으면 그대로.
 function sunFmtNarr(s){
   s=String(s==null?'':s).replace(/\r\n?/g,'\n');
-  if(/\n/.test(s)) return s.replace(/[ \t]+\n/g,'\n').replace(/\n[ \t]+/g,'\n').trim();
-  s=s.replace(/\s+/g,' ').trim(); if(!s) return s;
-  const enumCount=(s.match(/(?:^|\s)\d{1,2}\)\s/g)||[]).length, circled=/[①-⑮㉠-㉯]/.test(s);
-  if(enumCount>=2 || circled){
-    // 진짜 번호항목(공백+1~2자리+")"+공백)만 줄바꿈 — 전화번호 "…7820)"·"6205)" 등 여러자리 숫자는 건드리지 않음
-    s=s.replace(/\s+(?=\d{1,2}\)\s)/g,'\n').replace(/\s*(?=[①-⑮㉠-㉯])/g,'\n');
-  } else {
-    s=s.replace(/([가-힣])\.\s+/g,'$1.\n');   // 한국어 문장 경계(…다. )
-  }
-  return s.replace(/^\n+/,'').replace(/\n{2,}/g,'\n').trim();
+  s=s.replace(/[ \t]+\n/g,'\n').replace(/\n[ \t]+/g,'\n');          // \n 주변 공백 정리(기존 줄바꿈 보존)
+  // 줄별 처리: 이미 들어있는 줄바꿈·불릿은 그대로 두고, 각 줄 안에서 번호항목/문장끝마다 추가 줄바꿈
+  const lines=s.split('\n').map(line=>{
+    let t=line.replace(/[ \t]+/g,' ').trim();
+    if(!t) return '';
+    const enumCount=(t.match(/(?:^|\s)\d{1,2}\)\s/g)||[]).length, circled=/[①-⑮㉠-㉯]/.test(t);
+    if(enumCount>=2 || circled){
+      // 진짜 번호항목(공백+1~2자리+")"+공백)만 줄바꿈 — 전화번호 "…7820)" 등 여러자리 숫자는 건드리지 않음
+      t=t.replace(/\s+(?=\d{1,2}\)\s)/g,'\n').replace(/\s*(?=[①-⑮㉠-㉯])/g,'\n');
+    } else if(!/^[-·○●◦※*▪▶]/.test(t)){
+      t=t.replace(/([가-힣])\.\s+/g,'$1.\n');   // 산문 줄 = 한국어 문장끝(…다. )마다 줄바꿈(불릿 줄은 보존)
+    }
+    return t;
+  });
+  return lines.join('\n').replace(/^\n+/,'').replace(/\n{2,}/g,'\n').trim();
 }
 // 서식에서 AI가 채울 항목 수집: 텍스트빈칸(fx-v) + 드롭다운(fx-sel) + 체크박스 그룹(fx-ck). 개인 동의(동의/동의안함)·동의서 서식은 제외.
 function sunCollectFields(f){
