@@ -9427,7 +9427,7 @@ function sunWire(paper, id){
     if(vals[fk]!=null && vals[fk]!==''){ if(!narr){ const cl=sunStripDupUnit(td, String(vals[fk])); if(cl!==String(vals[fk])) vals[fk]=cl; } td.textContent=narr?sunFmtNarr(vals[fk]):vals[fk]; td.classList.add('filled'); }
     if(ai[fk]){ td.setAttribute('data-ai','1'); if(src[fk]) td.title='🔎 AI가 채운 근거: '+src[fk]; }
     if(comp[fk]){ td.classList.add('computed'); td.title='🧮 자동 계산: '+comp[fk]; }
-    if(fk==='f635'){ td.style.color=(typeof sunAttGet==='function'&&sunAttGet('x18'))?'':'#c0392b'; }   // 계통 검토의견 공문 미첨부 안내 = 빨강
+    if(fk==='f635'){ td.style.color=(typeof sunAttGet==='function'&&sunAttGet('x18'))?'':'#c0392b'; td.setAttribute('contenteditable','false'); td.style.cursor='default'; }   // 계통연계 가능여부 = 첨부18로만 결정 → 편집 불가, 미첨부 안내는 빨강
     td.addEventListener('input',()=>{ const t=td.textContent.trim(); if(t) vals[fk]=t; else delete vals[fk]; td.classList.toggle('filled', !!t); td.removeAttribute('data-ai'); td.classList.remove('computed'); td.removeAttribute('title'); delete ai[fk]; delete src[fk]; delete comp[fk]; });
     td.addEventListener('blur',()=>{ sunStore(); sunUpdatePcts(); sunCompute(id); });
   });
