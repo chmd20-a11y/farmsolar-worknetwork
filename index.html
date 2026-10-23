@@ -9618,11 +9618,17 @@ function sunCompute(fid){
     if(changed){ sunStore(); sunPaint(); }
     return changed;
   }
-  // ① 동의율(%) = 동의한 주민수 ÷ 마을규약 인구 × 100  (서식 주석: 마을규약 인구 기준)
+  // ① 동의율(%) = 동의한 주민수 ÷ 마을규약 인구 × 100  (서식 주석: 마을규약 인구 기준) — 소수점 첫째자리까지 표기
   const tRate=find(/동의율/);
   const agree=findVal(/동의한\s*주민수/);
   const pop=findVal(/마을규약\s*인구/)||findVal(/주민등록\s*인구/);
-  if(tRate && agree && pop && pop.n>0){ put(tRate, fmt(agree.n/pop.n*100), '동의한 주민수 '+agree.n+' ÷ 인구 '+pop.n+' × 100'); }
+  if(tRate && agree && pop && pop.n>0){ put(tRate, (agree.n/pop.n*100).toFixed(1), '동의한 주민수 '+agree.n+' ÷ 인구 '+pop.n+' × 100'); }
+  // ①-2 지원신청서 등 동의 입력칸이 없는 서식 — 사업계획서(s4)의 동의/규약 값으로 동일 계산(소수점 첫째자리)
+  else if(tRate && fid!=='s4'){
+    const s4v=sunVals('s4');
+    const a4=num(s4v.f101), p4=num(s4v.f98)||num(s4v.f100);
+    if(a4!=null && p4>0){ put(tRate, (a4/p4*100).toFixed(1), '동의한 주민수 '+a4+' ÷ 마을규약 인구 '+p4+' × 100 (사업계획서 기준)'); }
+  }
   // ② 자기자본/자부담(15%) = 총사업비(총 예상 설치비) × 15%
   const own=cells.find(c=>/자기자본|자부담/.test(c.lab) && !/계획서|증빙|서류|확보계획/.test(c.lab));
   const total=findVal(/총사업비|총\s*예상.*설치비|총\s*예상\s*태양광/);
@@ -10099,6 +10105,8 @@ function sunCollectFields(f){
   const used={};
   // 비용 산출표에서 회사가 쓰지 않는 행(기계·토목·건축공사비·외자조작비·건설이자 수량/금액 + 합계)은 AI 자동채움 제외 → 원본처럼 빈칸 유지(합계 금액은 자동합산, 필요 시 직접 입력)
   const SKIP_AI=['f144','f145','f148','f149','f150','f151','f156','f157','f160','f161','f162','f163',
+    // 지원신청서 주민 동의율 — 사업계획서 동의/규약으로 계산(소수점 첫째자리), AI 추정 제외
+    'f505',
     // 6.가 수익구조·적립금 — 결정적 계산(②-5)이라 AI 추정 제외(f752~762 연간운영비 금액은 AI 유지)
     'f770','f771','f772','f773','f774','f775','f776','f777','f778','f779','f780','f781','f782','f783','f784',
     'f786','f787','f788','f789','f790','f791','f792','f793','f794','f795','f796','f797','f798','f799','f800','f801','f802','f803',
