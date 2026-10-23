@@ -9565,6 +9565,16 @@ function sunCompute(fid){
       }
     }
   }
+  // ②-3 비용 산출표 — 합계 금액 = 금액 열 전체 합산(자동, 빈칸 제외)
+  {
+    const cf=k=>cells.find(c=>c.fk===k);
+    const sumCell=cf('f163');
+    if(sumCell){
+      const amtFks=['f137','f139','f141','f143','f145','f147','f149','f151','f153','f155','f157','f159','f161'];
+      let any=false; const tot=amtFks.reduce((s,k)=>{ const c=cf(k); const n=c?num(c.v):null; if(n!=null) any=true; return s+(n||0); },0);
+      if(any) put(sumCell, String(Math.round(tot*100)/100), '비용 금액 열 합산(자동)');
+    }
+  }
   // ③ 세부 부지 '설치용량(kW)' → 세부 합계(f135) + 총괄표 '총 용량'(f310).
   //    전 필지가 같은 값이면 '프로젝트 총 용량을 필지마다 반복 기재'로 보고 합산하지 않고 그 값을 총량으로(원본 양식). 서로 다르면 합산.
   const capCells=cells.filter(c=>c.lab==='설치용량(kW)');   // 세부 부지 행(추가행 포함). '설치계획용량'(참고자료)은 제외됨
@@ -9804,8 +9814,11 @@ function sunCollectFields(f){
   const bases=vEls.map(baseOf);
   const freq={}; bases.forEach(b=>{ if(b) freq[b]=(freq[b]||0)+1; });
   const used={};
+  // 비용 산출표에서 회사가 쓰지 않는 행(기계·토목·건축공사비·외자조작비·건설이자 수량/금액 + 합계)은 AI 자동채움 제외 → 원본처럼 빈칸 유지(합계 금액은 자동합산, 필요 시 직접 입력)
+  const SKIP_AI=['f144','f145','f148','f149','f150','f151','f156','f157','f160','f161','f162','f163'];
   vEls.forEach((td,i)=>{
     const base=bases[i]; if(!base) return;   // 라벨도 맥락도 없으면 스킵(잘못 채움 방지)
+    if(SKIP_AI.indexOf(td.dataset.fk)>=0) return;   // 미사용 비용행·합계 — AI 제외
     let label=base;
     if(freq[base]>1){                         // 중복 라벨 → 앞쪽 '동그라미 번호(①②③)' 섹션마커가 있으면 맥락으로 붙임
       const pos=allTds.indexOf(td);
