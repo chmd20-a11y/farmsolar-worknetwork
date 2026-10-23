@@ -9079,10 +9079,10 @@ function sunVC(fk,label,align){ return '<td class="fx-v" style="text-align:'+(al
 function sunSaengHtml(){ const t=sunSecTog('saeng');
   if(sunSecMode('saeng')==='narr') return t+sunNB('f185','재생에너지 산업 생태계 기여 — KS인증 자재·지역EPC/O&M·산업경제 파급효과·온실가스 감축',260);
   const ks=['모듈','인버터','접속함','구조물'].map((nm,r)=>{const f0=730+4*r; return '<tr style="height:30px"><td class="fx-hd">'+nm+'</td>'+sunVC('f'+f0,nm+' 제조업체명','center')+sunVC('f'+(f0+1),nm+' 공장소재지','center')+sunVC('f'+(f0+2),nm+' KS 표준번호','center')+sunVC('f'+(f0+3),nm+' 비고','left')+'</tr>';}).join('');
-  return t+sunP('○ 국내 제조, KS 인증 자재 우선 채택')
+  return t+sunP('○ 국내 제조, KS 인증 자재 우선 채택 - 산업·경제 파급효과 극대화')
     +'<table class="fx-t"><colgroup><col style="width:13.510%"/><col style="width:28.470%"/><col style="width:14.230%"/><col style="width:14.230%"/><col style="width:29.550%"/></colgroup>'
     +'<tr style="height:28px"><td class="fx-hd">구분</td><td class="fx-hd">제조업체명</td><td class="fx-hd">공장소재지</td><td class="fx-hd">KS 표준번호</td><td class="fx-hd">비고</td></tr>'+ks+'</table>'
-    +sunP('○ 지역 EPC·O&M 기업 참여(지역경제 활성화)')+sunNB('f746','시공 EPC·운영 O&M 참여 기업(ReSCO 등)·등록번호',70)
+    +sunP('○ 지역EPC·O&M 기업 참여(지역경제 활성화)')+sunNB('f746','시공 EPC·운영 O&M 참여 기업(ReSCO 등)·등록번호',70)
     +sunP('○ 산업·경제 파급효과(정량 추정)')+sunNB('f747','직접(모듈 발주)·간접(지역 일자리)·장기(공동기금 순환) 효과',90)
     +sunP('○ 온실가스 감축 효과')+sunNB('f748','연간 발전량 기준 CO2 감축량 추정(배출계수 적용)',80);
 }
@@ -9603,6 +9603,7 @@ function sunCompute(fid){
     // 범위: 나.운영체계 + 다.출자구조부터 끝(4라~6)까지. 그 위쪽(마을현황·의사결정구조)은 기존 A+B(AI 우선) 유지.
     const FORCE_TPL=['f561','f562','f104',                                                          // 나.운영체계
       'f570','f572','f574','f576','f578','f580','f581','f582','f583','f584','f585','f300',          // 다.출자·수입 구조
+      'f746','f747','f185',                                                                          // 아.생태계 기여(지역EPC·파급효과·서술형) 표준서술
       'f748','f750','f751','f764','f765','f785','f804','f815','f816','f821','f822','f188','f190','f192'];  // 4(라~사)·5·6 표준서술 (부지선정사유 f628은 마을별 특정내용 → FORCE_TPL 제외=AI 우선)
     const putNarr=(fk,value,note)=>{
       const cell=cells.find(c=>c.fk===fk); if(!cell) return;
@@ -9713,7 +9714,47 @@ function sunCompute(fid){
       // 4~6 섹션 표준 서술(전 마을 공통 보일러플레이트) — 마을별 수치/고유명은 AI가 보완
       {
         putNarr('f628','대상 부지의 용도지역·권리관계·입지여건과 주변 기반시설(진입도로 등)을 종합할 때 재생에너지 발전사업 부지로 적합하며, 등기부상 소유권 이외의 권리관계가 없어 임대(점용) 계약 추진에 장애요인이 없다.','표준문안 자동(수정 가능)');
-        putNarr('f748','연간 발전량에 환경부 전력 배출계수(약 0.459 tCO₂/MWh)를 적용해 연간 온실가스 감축량을 산정하며, 20년 운영기간 동안 지속적으로 탄소중립 실현에 기여한다.','표준문안 자동(수정 가능)');
+        // 아. 재생에너지 산업 생태계 기여 — 지역EPC/O&M(회사 표준)·산업경제 파급효과(모듈수량·마을명·조합원수 변수)·온실가스 감축(설치용량 자동계산)
+        {
+          const gfk=k=>{ const c=cells.find(x=>x.fk===k); return c?c.v.trim():''; };
+          const nmS=(vMaeul||'본 마을');
+          const memS=num(gfk('f90'));                      // 조합원 수
+          const modS=num(gfk('f136'));                     // 모듈 수량(비용표)
+          // 지역EPC·O&M — 회사 표준(ReSCO 등록번호 전 마을 공통)
+          putNarr('f746','- 시공 EPC·운영 O&M: (주)해피솔라에너지 — 재생에너지 종합서비스기업(ReSCO)\n- ReSCO 등록: 제 2026-08-01-0031호(유효기간 2026.04.17.~ 2027.04.16.)','ReSCO 등록 표준문안 자동(수정 가능)');
+          // 산업·경제 파급효과 — 직접(모듈수량)·간접·장기·시민수용성(마을명·조합원수)
+          const efDirect='- 직접 효과: 국산 모듈 '+(modS!=null?modS.toLocaleString('en-US')+' 매':'전량 국내')+' 발주';
+          const efCivil='- 시민 수용성 확산: '+nmS+' 마을주민 '+(memS!=null?memS+'명 ':'')+'협동조합 참여 + 이후 참여 마을주민 확산';
+          const effBody=efDirect
+            +'\n- 간접 효과: 지역 시공·O&M 인력 약8~12명 일자리(시공기간 약4개월)'
+            +'\n- 장기 효과: 20년 운영기간 마을 공동기금·마을복지·장학사업 순환을 통한 지역내 총생산 기여'
+            +'\n'+efCivil;
+          putNarr('f747',effBody,'산업·경제 파급효과 자동(모듈 수량·마을명·조합원 수 반영, 수정 가능)');
+          // 온실가스 감축 — 설치용량 × 발전시간(원가표 기본 3.6h) × 365, 감축량=×0.459tCO₂/MWh
+          const capG=cells.filter(c=>c.lab==='설치용량(kW)').map(c=>num(c.v)).filter(v=>v!=null);
+          let capGt=null;
+          if(capG.length){ const u=[...new Set(capG.map(v=>Math.round(v*100)/100))]; capGt=(u.length===1)?u[0]:capG.reduce((s,v)=>s+v,0); }
+          const genHr=(typeof ASSUMP!=='undefined'&&parseFloat(ASSUMP.hours))?parseFloat(ASSUMP.hours):3.6;
+          let ghgBody;
+          if(capGt){
+            const mwh=Math.round(capGt*genHr*365/1000);
+            const ton=Math.round(mwh*0.459/50)*50;
+            ghgBody='연간 약 '+mwh.toLocaleString('en-US')+'MWh의 청정전력을 생산하여 동일 전력량을 화석연료로 발전하는 경우 대비 온실가스 배출을 저감하며, 환경부 전력 배출계수(약 0.459tCO₂/MWh) 적용 시 연간 약 '+ton.toLocaleString('en-US')+'톤 내외의 이산화탄소 감축 효과가 기대된다. 20년 운영기간 동안 지속적으로 탄소중립 실현에 기여한다.';
+          } else {
+            ghgBody='연간 생산하는 청정전력으로 동일 전력량을 화석연료로 발전하는 경우 대비 온실가스 배출을 저감하며, 환경부 전력 배출계수(약 0.459tCO₂/MWh)를 적용해 연간 온실가스 감축량을 산정한다. 20년 운영기간 동안 지속적으로 탄소중립 실현에 기여한다.';
+          }
+          putNarr('f748',ghgBody,'설치용량 기준 연간발전량·CO₂ 감축량 자동(수정 가능)');
+          // 서술형(단일 칸) — 위 네 소항목을 한 칸에 줄바꿈 미러
+          putNarr('f185',
+            '○ 국내 제조·KS 인증 자재 우선 채택 - 산업·경제 파급효과 극대화\n'
+           +' - 국산·KS 인증 모듈·인버터·접속함을 우선 채택하고, 구조물은 국내제작으로 조달한다.\n\n'
+           +'○ 지역EPC·O&M 기업 참여(지역경제 활성화)\n'
+           +'- 시공 EPC·운영 O&M: (주)해피솔라에너지 — 재생에너지 종합서비스기업(ReSCO)\n'
+           +'- ReSCO 등록: 제 2026-08-01-0031호(유효기간 2026.04.17.~ 2027.04.16.)\n\n'
+           +'○ 산업·경제 파급효과(정량 추정)\n'+effBody+'\n\n'
+           +'○ 온실가스 감축 효과\n'+ghgBody,
+            '생태계 기여 서술형 표준문안 자동(수정 가능)');
+        }
         putNarr('f750','운영주체는 ReSCO 등록업체와 장기 O&M 계약(20년)을 체결하고, 전기안전관리자가 월 1회 일상점검·연 1회 정밀점검을 수행하며 전기안전공사 법정정기검사(태양광 4년 주기)를 받는다. REMS·MRT 통신으로 발전량을 24시간 모니터링하고 이상 발생 시 즉시 출동·복구한다.','표준문안 자동(수정 가능)');
         putNarr('f751','발전량 분석으로 효율 저하 원인을 점검하고 모듈 오염 시 세척하며, 음영·온도·설비 이상 등 저하 요인을 상시 관리한다. 목표 발전량 대비 실적을 분석해 개선계획을 수립하여 20년간 안정적 성능을 유지한다.','표준문안 자동(수정 가능)');
         putNarr('f764','전기안전관리자를 선임(전기사업법 제73조)하고 피뢰설비·직류 누설전류 차단장치·화재경보 시스템으로 화재·낙뢰에 대응한다. 태양광공제조합(소멸성 보험)에 가입하고 화재·정전·설비 고장 등 비상상황 대응 매뉴얼을 마련한다.','표준문안 자동(수정 가능)');
