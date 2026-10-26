@@ -7613,6 +7613,128 @@ async function genPermitForms(id){
 // 모드바·모달의 기존 버튼이 호출하는 이름 유지 → HWP 자동생성으로 연결
 function printPermit(id){ genPermitForms(id); }
 
+/* ===== 위치도 사진 — 위성지도(지번 자동 캡쳐) + 현장사진(수동, 추후 실측 자동연결) =====
+   저장: getPermit(d).locPhotos = { sat:{dataUrl,mime,at}, site:{dataUrl,mime,name,at} }
+   미리보기·PDF: devPermitRawMap(§LOCMAP_*_SRC§=이미지) / HWP: devPermitTokenMap(§LOCMAP_*_FMT/SIZE/B64§) */
+const LOC_SAT_W=1360, LOC_SAT_H=800;   // 위치도 사진칸 ≈ 179.9:105.8 ≈ 1.70:1
+const LOC_BUSY={};                      // {dealId:'sat'} — 생성 중 표시
+// 미첨부 자리표시(라벨) 이미지 — 미리보기·HWP 공통
+function locPlaceholderDataUrl(label){
+  const W=680,H=400, cv=document.createElement('canvas'); cv.width=W; cv.height=H; const g=cv.getContext('2d');
+  g.fillStyle='#eef0f2'; g.fillRect(0,0,W,H);
+  g.strokeStyle='#b9c0c7'; g.lineWidth=3; g.setLineDash([10,8]); g.strokeRect(10,10,W-20,H-20); g.setLineDash([]);
+  g.fillStyle='#9aa3ac'; g.textAlign='center'; g.textBaseline='middle'; g.font='600 26px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  g.fillText(label, W/2, H/2);
+  try{ return cv.toDataURL('image/png'); }catch(e){ return ''; }
+}
+// dataURL → {fmt:'png'|'jpg', b64, size(디코드 바이트)}
+function dataUrlParts(dataUrl){
+  const m=/^data:image\/([a-z]+);base64,(.*)$/i.exec(String(dataUrl||'')); if(!m) return null;
+  let fmt=m[1].toLowerCase(); if(fmt==='jpeg') fmt='jpg';
+  const b64=m[2]; let size=0; try{ size=atob(b64).length; }catch(e){ size=Math.floor(b64.length*3/4); }
+  return { fmt, b64, size };
+}
+// 표준 Web Mercator (Leaflet 비의존)
+const _wX=(lng)=>(lng+180)/360;
+const _wY=(lat)=>{ const r=lat*Math.PI/180; return (1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2; };
+// GeoJSON geometry → 외곽 링 좌표들 [[ [lng,lat],... ], ...]
+function locGeomRings(geom){ const out=[]; if(!geom) return out; const t=geom.type, c=geom.coordinates;
+  if(t==='Polygon'){ if(c&&c[0]) out.push(c[0]); } else if(t==='MultiPolygon'){ (c||[]).forEach(poly=>{ if(poly&&poly[0]) out.push(poly[0]); }); } return out; }
+// 지번 → 점좌표 + 필지 폴리곤(경계·bbox용)
+async function locParcelGeom(jibun){
+  let pt=null; try{ pt=await apiGeocode(jibun); }catch(e){ pt=null; } if(!pt) return null;
+  let rings=null;
+  try{ const P=_apiBase(), dom=encodeURIComponent(location.hostname||'localhost');
+    const url=`${P}/req/data?service=data&request=GetFeature&data=LP_PA_CBND_BUBUN&domain=${dom}&format=json&crs=EPSG:4326&geometry=true&attribute=true&size=1&geomFilter=${encodeURIComponent('POINT('+pt.lng+' '+pt.lat+')')}`;
+    const j=await fetch(url).then(r=>r.json());
+    const fc=j&&j.response&&j.response.result&&j.response.result.featureCollection;
+    const f=(fc&&fc.features&&fc.features.length)?fc.features[0]:null;
+    if(f&&f.geometry){ const cs=locGeomRings(f.geometry); if(cs.length) rings=cs; }
+  }catch(e){}
+  return { lng:pt.lng, lat:pt.lat, rings };
+}
+// 지번 위성 이미지(ArcGIS World Imagery, 상업OK) + 필지 경계(빨강) → JPEG dataURL
+async function buildLocSatellite(jibun){
+  const geo=await locParcelGeom(jibun); if(!geo) return null;
+  const W=LOC_SAT_W, H=LOC_SAT_H, pad=0.16, TILE=256;
+  let lnMin,lnMax,laMin,laMax;
+  if(geo.rings&&geo.rings.length){ lnMin=laMin=Infinity; lnMax=laMax=-Infinity;
+    geo.rings.forEach(r=>r.forEach(p=>{ if(p[0]<lnMin)lnMin=p[0]; if(p[0]>lnMax)lnMax=p[0]; if(p[1]<laMin)laMin=p[1]; if(p[1]>laMax)laMax=p[1]; }));
+  } else { const dLat=120/111000, dLng=120/(111320*Math.cos(geo.lat*Math.PI/180)); lnMin=geo.lng-dLng; lnMax=geo.lng+dLng; laMin=geo.lat-dLat; laMax=geo.lat+dLat; }
+  const cLng=(lnMin+lnMax)/2, cLat=(laMin+laMax)/2;
+  const spanWX=Math.abs(_wX(lnMax)-_wX(lnMin))||1e-6, spanWY=Math.abs(_wY(laMax)-_wY(laMin))||1e-6;
+  const zx=Math.log2(W*(1-2*pad)/(spanWX*TILE)), zy=Math.log2(H*(1-2*pad)/(spanWY*TILE));
+  let z=Math.floor(Math.min(zx,zy)); z=Math.max(14, Math.min(19, isFinite(z)?z:18));
+  const scale=TILE*Math.pow(2,z), cx=_wX(cLng)*scale, cy=_wY(cLat)*scale, x0=cx-W/2, y0=cy-H/2;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H; const g=cv.getContext('2d');
+  g.fillStyle='#9aa39b'; g.fillRect(0,0,W,H); g.imageSmoothingQuality='high';
+  const tx0=Math.floor(x0/TILE), tx1=Math.floor((x0+W)/TILE), ty0=Math.floor(y0/TILE), ty1=Math.floor((y0+H)/TILE), nmax=Math.pow(2,z);
+  await new Promise(resolve=>{ let pending=0, fin=false; const done=()=>{ if(fin)return; fin=true; resolve(); };
+    for(let tx=tx0;tx<=tx1;tx++)for(let ty=ty0;ty<=ty1;ty++){
+      if(tx<0||ty<0||tx>=nmax||ty>=nmax) continue; pending++;
+      const im=new Image(); im.crossOrigin='anonymous'; const dx=tx*TILE-x0, dy=ty*TILE-y0;
+      im.onload=()=>{ try{ g.drawImage(im,dx,dy,TILE,TILE); }catch(e){} if(--pending<=0)done(); };
+      im.onerror=()=>{ if(--pending<=0)done(); };
+      im.src='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+z+'/'+ty+'/'+tx;
+    }
+    if(pending===0) done(); setTimeout(done,12000);
+  });
+  if(geo.rings&&geo.rings.length){ g.strokeStyle='#ff2d2d'; g.lineWidth=3; g.lineJoin='round';
+    geo.rings.forEach(r=>{ g.beginPath(); r.forEach((p,i)=>{ const px=_wX(p[0])*scale-x0, py=_wY(p[1])*scale-y0; i?g.lineTo(px,py):g.moveTo(px,py); }); g.closePath(); g.stroke(); }); }
+  try{ return cv.toDataURL('image/jpeg',0.85); }catch(e){ return null; }   // CORS 타일이면 null
+}
+async function genLocSatellite(id, opt){ opt=opt||{};
+  const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d);
+  const L=(p.lands&&p.lands[0])||{}; const jibun=[L.addr,L.jibun].filter(Boolean).join(' ') || (p.biz&&p.biz.place) || '';
+  if(!jibun){ if(!opt.auto) toast('지번 정보가 없어 위성지도를 만들 수 없습니다'); return; }
+  if(LOC_BUSY[id]==='sat') return; LOC_BUSY[id]='sat'; devLocStatus(id);
+  toast('위성지도를 만드는 중… (지번으로 위성 캡쳐)');
+  try{
+    const url=await buildLocSatellite(jibun);
+    LOC_BUSY[id]='';
+    if(!url){ if(!opt.auto) toast('위성지도 캡쳐 실패 — 잠시 후 다시 시도해 주세요'); devLocStatus(id); return; }
+    p.locPhotos=p.locPhotos||{}; p.locPhotos.sat={ dataUrl:url, mime:'image/jpeg', at:new Date().toLocaleString('ko-KR') };
+    persistDeal(d); toast('위성지도를 위치도에 넣었습니다 — 미리보기에서 확인하세요'); refillDevPreview(id);
+  }catch(e){ LOC_BUSY[id]=''; if(!opt.auto) toast('위성지도 생성 중 오류'); devLocStatus(id); }
+}
+function locSitePick(id){ pickFile('image/*', f=>locSiteUpload(id,f)); }
+function locSiteUpload(id,file){
+  const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d);
+  if(!/^image\//.test(file.type||'')){ toast('이미지 파일만 업로드할 수 있습니다'); return; }
+  const rd=new FileReader();
+  rd.onload=e=>{ const img=new Image();
+    img.onload=()=>{ const MX=1600; let w=img.width,h=img.height; if(w>MX||h>MX){ const r=Math.min(MX/w,MX/h); w=Math.round(w*r); h=Math.round(h*r); }
+      const cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(img,0,0,w,h);
+      let url; try{ url=cv.toDataURL('image/jpeg',0.85); }catch(_){ url=e.target.result; }
+      p.locPhotos=p.locPhotos||{}; p.locPhotos.site={ dataUrl:url, mime:'image/jpeg', name:file.name, at:new Date().toLocaleString('ko-KR') };
+      persistDeal(d); toast('현장사진을 위치도에 넣었습니다'); refillDevPreview(id); };
+    img.onerror=()=>toast('이미지를 읽지 못했습니다'); img.src=e.target.result; };
+  rd.onerror=()=>toast('파일을 읽지 못했습니다'); rd.readAsDataURL(file);
+}
+function locSiteRemove(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d); if(p.locPhotos) delete p.locPhotos.site; persistDeal(d); toast('현장사진을 제거했습니다'); refillDevPreview(id); }
+// 미리보기/PDF용 이미지 주입(§LOCMAP_*_SRC§) — 미첨부면 자리표시
+function devPermitRawMap(d){ const p=resolvePermit(d); const lp=p.locPhotos||{};
+  return {
+    '§LOCMAP_SAT_SRC§': (lp.sat&&lp.sat.dataUrl)||locPlaceholderDataUrl('위성지도 — 지번으로 자동 생성'),
+    '§LOCMAP_SITE_SRC§': (lp.site&&lp.site.dataUrl)||locPlaceholderDataUrl('현장사진 — 수동 첨부'),
+  };
+}
+// 미리보기 iframe 다시 채움 + 상단 위치도 바 상태 갱신
+function refillDevPreview(id){ const d=DEALS.find(x=>x.id===id); if(!d) return;
+  if(document.getElementById('devPrintFrame')) fillPreviewIframe('devPrintFrame', DEVPERMIT_PRINT_FILES, devPermitTokenMap(d), false, devPermitRawMap(d));
+  devLocStatus(id);
+}
+function devLocStatus(id){ const el=document.getElementById('devLocBar'); if(!el) return; const d=DEALS.find(x=>x.id===id); if(!d){ el.innerHTML=''; return; }
+  const p=getPermit(d), lp=p.locPhotos||{}, busy=LOC_BUSY[id]==='sat';
+  const satOn=!!(lp.sat&&lp.sat.dataUrl), siteOn=!!(lp.site&&lp.site.dataUrl);
+  el.innerHTML = `<span style="font-weight:700;color:var(--ink)">🗺 위치도 사진</span>
+    <button class="btn ghost sm" ${busy?'disabled':''} onclick="genLocSatellite('${id}')">${busy?'⏳ 생성 중…':(satOn?'🛰 위성지도 다시 생성':'🛰 위성지도 자동 생성')}</button>
+    <span class="doc-badge" style="background:color-mix(in srgb,${satOn?'#2e8b63':'var(--ink-3)'} 15%,transparent);color:${satOn?'#2e8b63':'var(--ink-2)'}">위성 ${satOn?'생성됨':'미생성'}</span>
+    <button class="btn ghost sm" onclick="locSitePick('${id}')">📷 현장사진 ${siteOn?'다시 업로드':'업로드'}</button>
+    ${siteOn?`<button class="btn ghost sm" onclick="locSiteRemove('${id}')">현장사진 제거</button>`:''}
+    <span class="doc-badge" style="background:color-mix(in srgb,${siteOn?'#2e8b63':'var(--ink-3)'} 15%,transparent);color:${siteOn?'#2e8b63':'var(--ink-2)'}">현장 ${siteOn?'첨부됨':'미첨부'}</span>`;
+}
+
 /* ===== 개발행위 허가 — 신청서+사업계획서 토큰 템플릿 자동생성 (발전허가와 동일 방식) ===== */
 const DEVPERMIT_FORM_FILES=[
   {url:'forms/dev_sincheong.hml', out:'2. 개발행위(변경) 허가신청서.hml', label:'개발행위 허가신청서'},
@@ -7627,6 +7749,10 @@ function devPermitTokenMap(d){
   // 사업기간 착공·준공일 — 발전허가증 첨부 시 입력한 날짜(행정서류함) → 'YYYY. M. D.' 표기
   const per=p.devPeriod||{};
   const fmtPeriod=(iso)=>{ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(S(iso)); return m?`${m[1]}. ${+m[2]}. ${+m[3]}.`:''; };
+  // 위치도 사진(HWP BinData) — 위성/현장 이미지의 포맷·바이트크기·base64. 미첨부면 자리표시 이미지
+  const lp=p.locPhotos||{};
+  const satP=dataUrlParts((lp.sat&&lp.sat.dataUrl)||locPlaceholderDataUrl('위성지도'))||{fmt:'png',b64:'',size:0};
+  const siteP=dataUrlParts((lp.site&&lp.site.dataUrl)||locPlaceholderDataUrl('현장사진'))||{fmt:'png',b64:'',size:0};
   return {
     '§NAME§':applicantFullName(p), '§FULLNAME§':applicantFullName(p), '§SIGN§':S(p.applicant.name), '§IDNO§':S(p.applicant.idno),
     '§START§':fmtPeriod(per.start), '§END§':fmtPeriod(per.end),
@@ -7634,6 +7760,8 @@ function devPermitTokenMap(d){
     '§LOC§':loc, '§JIMOK§':S(L.jimok), '§ZONE§':firstVal(L.zone), '§ZONE2§':firstVal(L.zone2),
     '§AREA_FAC§':pArea(p.outline.useArea), '§AREA_LAND§':pComma(p.outline.totalArea),
     '§MOD_QTY§':pComma(eq.modQty),
+    '§LOCMAP_SAT_FMT§':satP.fmt, '§LOCMAP_SAT_SIZE§':String(satP.size), '§LOCMAP_SAT_B64§':satP.b64,
+    '§LOCMAP_SITE_FMT§':siteP.fmt, '§LOCMAP_SITE_SIZE§':String(siteP.size), '§LOCMAP_SITE_B64§':siteP.b64,
   };
 }
 async function genDevPermitForms(id){
@@ -7756,6 +7884,7 @@ function openDevPermitModal(id){
           <button class="pm-mbtn" onclick="closePermitModal()">✕ 닫기</button>
         </div>
       </div>
+      <div id="devLocBar" style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:9px 16px;background:var(--surface);border-bottom:1px solid var(--border)"></div>
       <div class="pm-modal-body" style="background:#eef0f4">
         <div id="devPrintFrame_ld" style="padding:48px;text-align:center;color:#888;font-size:14px">양식 미리보기를 불러오는 중…</div>
         <iframe id="devPrintFrame" title="개발행위 양식 미리보기" scrolling="no" style="width:210mm;max-width:100%;border:0;background:#fff;display:block;margin:0 auto;box-shadow:0 1px 8px rgba(0,0,0,.14);min-height:70vh;visibility:hidden"></iframe>
@@ -7765,7 +7894,11 @@ function openDevPermitModal(id){
   document.body.style.overflow='hidden';
   permitEscHandler=(e)=>{ if(e.key==='Escape') closePermitModal(); };
   document.addEventListener('keydown',permitEscHandler);
-  getPermit(d); fillPreviewIframe('devPrintFrame', DEVPERMIT_PRINT_FILES, devPermitTokenMap(d), false);
+  getPermit(d);
+  fillPreviewIframe('devPrintFrame', DEVPERMIT_PRINT_FILES, devPermitTokenMap(d), false, devPermitRawMap(d));
+  devLocStatus(id);
+  // 위성지도 미생성이면 지번으로 자동 생성(자동 첨부)
+  if(!(getPermit(d).locPhotos&&getPermit(d).locPhotos.sat)) setTimeout(()=>genLocSatellite(id,{auto:true}),350);
 }
 
 /* ============ 행정: PPA신청 (사업용 전력구입계약 신청서 + 전기사용신청서) — 발전허가·개발행위와 동일 토큰방식 ============ */
@@ -7984,7 +8117,7 @@ async function fillPreviewIframe(frameId, FILES, map, flow, rawMap){
   setTimeout(fit,600); setTimeout(fit,1400);   // 폰트·이미지 로딩 후 높이 재측정
 }
 function genPermitFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(permitBundle(d), permitTokenMap(d), '발전허가 접수서류', false, permitRawMap(d)); }
-function genDevFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(DEVPERMIT_PRINT_FILES, devPermitTokenMap(d), '개발행위 접수서류', false); }
+function genDevFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(DEVPERMIT_PRINT_FILES, devPermitTokenMap(d), '개발행위 접수서류', false, devPermitRawMap(d)); }
 function genPpaFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(PPA_PRINT_FILES, ppaTokenMap(d), 'PPA 신청서류', true); }
 let ppaSel=null;
 function selectPpaDeal(id){ ppaSel=id; refreshActive(); }
