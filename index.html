@@ -7002,6 +7002,10 @@ function permitDocOpen(id,key){ const d=DEALS.find(x=>x.id===id); if(!d) return;
     const bin=atob(parts[1]); const arr=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
     window.open(URL.createObjectURL(new Blob([arr],{type:mime})),'_blank'); }
   catch(e){ window.open(rec.dataUrl,'_blank'); } }
+// 발전허가증 착공·준공일 저장 — 개발행위(변경) 허가신청서 「사업기간」(§START§/§END§)에 자동 반영
+function devPeriodSet(id,which,val){ const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d);
+  p.devPeriod=p.devPeriod||{}; p.devPeriod[which]=val||''; persistDeal(d);
+  toast((which==='start'?'착공일':'준공일')+'을 저장했습니다 — 개발행위 신청서 「사업기간」에 반영됩니다'); permitDocsRefresh(); }
 function renderPermitDocs(d){
   const p=getPermit(d), isBld=p.installType==='건물';
   const need = PERMIT_DOCS.filter(x=> isBld?x.bld:x.land);
@@ -7044,9 +7048,32 @@ function renderPermitDocs(d){
         </div>
       </div></div>`;
   }).join('');
+  // ── 발전허가증 첨부 + 착공·준공일(개발행위 신청서 「사업기간」 자동채움) ──
+  const dpKey='발전허가증', dpRec=p.docs&&p.docs[dpKey], dpFile=dpRec&&docSrc(dpRec)?dpRec:null;
+  const dpIsPdf=dpFile&&/pdf/i.test(dpFile.mime||''), per=p.devPeriod||{};
+  const dpActions = dpFile
+    ? `${dpIsPdf?`<span class="doc-badge" style="background:color-mix(in srgb,#2e8b63 12%,transparent);color:#2e8b63">📄 ${esc(dpFile.name||'PDF')}</span>`:`<img src="${docSrc(dpFile)}" alt="첨부" style="height:44px;border-radius:5px;border:1px solid var(--border)">`}
+       <button class="btn ghost sm" onclick="permitDocOpen('${d.id}','${dpKey}')">열기 ↗</button>
+       <button class="btn ghost sm" onclick="permitDocPick('${d.id}','${dpKey}')">다시 업로드</button>
+       <button class="btn ghost sm" onclick="permitDocRemove('${d.id}','${dpKey}')">첨부 취소</button>`
+    : `<button class="btn dark sm" onclick="permitDocPick('${d.id}','${dpKey}')">📎 파일 업로드</button>`;
+  const dpBadge = dpFile?`<span class="doc-badge" style="background:color-mix(in srgb,#2e8b63 16%,transparent);color:#2e8b63">${dpIsPdf?'📄 PDF':'🖼 이미지'} 첨부 · ${esc(dpFile.at||'')}</span>`:'';
+  const dIn=(w,v)=>`<input type="date" value="${esc(v||'')}" onchange="devPeriodSet('${d.id}','${w}',this.value)" style="font:inherit;padding:4px 7px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--ink)">`;
+  const devPermitBlock = `<div class="doc-item" style="border-top:2px dashed var(--border);margin-top:10px;padding-top:12px">
+      <div class="doc-ck" style="cursor:default" title="${dpFile?'첨부됨':'미첨부'}">${dpFile?'✓':''}</div>
+      <div class="doc-b">
+        <div class="doc-t">발전허가증 <span class="doc-badge">허가관청 교부</span>${dpBadge}</div>
+        <div class="doc-g">발전사업 허가 후 교부받은 <b>발전허가증</b>을 첨부하고, 허가증에 적힌 <b>착공·준공 예정일</b>을 입력하세요 — <b>개발행위(변경) 허가신청서</b>의 「사업기간」에 자동으로 채워집니다.</div>
+        <div class="doc-act" style="align-items:center;gap:12px;flex-wrap:wrap">
+          <label class="lr-s" style="display:flex;align-items:center;gap:6px;font-weight:600">착공일 ${dIn('start',per.start)}</label>
+          <label class="lr-s" style="display:flex;align-items:center;gap:6px;font-weight:600">준공일 ${dIn('end',per.end)}</label>
+          ${dpActions}
+        </div>
+      </div></div>`;
   return `<div class="card pad" style="margin-top:16px">
     <h3 class="section-title" style="font-size:13px;margin:0 0 4px"><svg class="st-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>첨부서류 발급 · 준비 <span class="lr-s" style="font-weight:600">(${isBld?'건물':'토지'} 유형 필요 ${doneN}/${need.length})</span></h3>
     ${items}
+    ${devPermitBlock}
     <div class="lr-s" style="border-top:2px dashed var(--border);margin-top:10px;padding-top:10px">🪪 <b>대리인(위임받은 직원 본인) 신분증</b>은 우측 상단 <b>「내 계정」</b>에서 개인이 직접 등록합니다 — 등록 시 「사업주/대리인 신분증」 양식에 자동 삽입됩니다.</div>
     <div style="margin-top:8px">${doneN>=need.length?'<span class="pill done"><span class="pd"></span>필요 서류 모두 첨부 완료 — 접수 준비 OK</span>':`<span class="pill wait"><span class="pd"></span>필요 서류 ${need.length-doneN}건 남음</span>`}</div>
   </div>`;
@@ -7525,8 +7552,12 @@ function devPermitTokenMap(d){
   const S=(v)=>(v==null?'':String(v));
   const firstVal=(v)=>S(v).split(/[,/·]/)[0].replace(/\s*\(.*$/,'').trim();   // 여러 개면 가장 앞 한 개만
   const loc=[S(L.addr),S(L.jibun)].filter(Boolean).join(' ') || S(p.biz.place);
+  // 사업기간 착공·준공일 — 발전허가증 첨부 시 입력한 날짜(행정서류함) → 'YYYY. M. D.' 표기
+  const per=p.devPeriod||{};
+  const fmtPeriod=(iso)=>{ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(S(iso)); return m?`${m[1]}. ${+m[2]}. ${+m[3]}.`:''; };
   return {
     '§NAME§':applicantFullName(p), '§FULLNAME§':applicantFullName(p), '§SIGN§':S(p.applicant.name), '§IDNO§':S(p.applicant.idno),
+    '§START§':fmtPeriod(per.start), '§END§':fmtPeriod(per.end),
     '§ADDR§':S(p.applicant.addr), '§PHONE§':S(p.applicant.phone), '§DATE§':fmtKDate(permitApplyDate(d)),
     '§LOC§':loc, '§JIMOK§':S(L.jimok), '§ZONE§':firstVal(L.zone), '§ZONE2§':firstVal(L.zone2),
     '§AREA_FAC§':pArea(p.outline.useArea), '§AREA_LAND§':pComma(p.outline.totalArea),
