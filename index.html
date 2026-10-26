@@ -1229,7 +1229,6 @@ button{font-family:inherit;cursor:pointer}
 .sl-stat.green{background:linear-gradient(165deg,var(--ok-bg),var(--surface))}
 .sl-stat.green::after{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--ok)}
 .sl-stat.green .v{color:var(--ok-ink)}
-.sl-disc{font-size:11px;color:var(--muted);line-height:1.6;margin-top:12px}
 /* 수동 배치 카드·선택바 (body 직속 부유) */
 .sl-man-card{position:fixed;left:16px;bottom:16px;z-index:3200;width:250px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 10px 30px rgba(10,20,40,.26);display:none;overflow:hidden}
 .sl-man-card.on{display:block}
@@ -4817,7 +4816,6 @@ const SL = (function(){
     $('sl-btn-png').onclick=savePng;
     { const sh=$('sl-btn-sheet'); if(sh) sh.onclick=saveLayoutSheet; }
     { const d=$('sl-btn-dxf'); if(d) d.onclick=()=>saveDxf(false); }
-    { const d3=$('sl-btn-dxf3d'); if(d3) d3.onclick=()=>saveDxf(true); }
     { const q=$('sl-to-quote'); if(q) q.onclick=handoffQuote; }
     $('sl-v2d').onclick=show2D; $('sl-v3d').onclick=show3D;
     $('sl-sun').oninput=e=>{ sunT=parseFloat(e.target.value); const h=Math.floor(sunT), m=Math.round((sunT-h)*60); $('sl-v-sun').textContent=(h<10?'0':'')+h+':'+(m<10?'0':'')+m; updateSun3D(); };
@@ -4897,8 +4895,6 @@ const SL = (function(){
         <button class="btn dark sm" id="sl-btn-sheet" style="margin-top:8px;width:100%;justify-content:center">📄 배치도 다운로드 (샘플형)</button>
         <button class="btn ghost sm" id="sl-btn-png" style="margin-top:8px;width:100%;justify-content:center">🖼️ 2D 이미지 저장</button>
         <button class="btn ghost sm" id="sl-btn-dxf" style="margin-top:8px;width:100%;justify-content:center">📐 캐드(DXF) 2D 평면</button>
-        <button class="btn ghost sm" id="sl-btn-dxf3d" style="margin-top:8px;width:100%;justify-content:center">📦 캐드(DXF) 3D 입체</button>
-        <div class="sl-disc">✅ 부지 경계·모듈규격 기반 수량/용량·이격·열간격·방위 반영<br>⚠️ 지형 경사·음영·전기(스트링) 설계·지자체 이격규정 차이는 미반영 — <b>개략 배치</b>입니다.</div>
       </div>
     </div>`;
   }
