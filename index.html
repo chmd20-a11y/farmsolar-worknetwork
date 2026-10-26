@@ -149,6 +149,30 @@ button{font-family:inherit;cursor:pointer}
   display:grid;place-items:center;color:var(--ink-2);position:relative}
 .tb-icon:hover{background:var(--surface-3)}
 .tb-icon .dot{position:absolute;top:7px;right:8px;width:7px;height:7px;border-radius:50%;background:var(--risk);border:1.5px solid var(--surface)}
+/* ===== 수정 알림(벨 패널 + 인라인 🔓 수정 + 영업 현황판 카드) ===== */
+.notif-wrap{position:relative;display:inline-flex}
+.tb-icon .dot.has{width:auto;min-width:16px;height:16px;top:2px;right:2px;padding:0 3px;font-size:9px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;line-height:1;border-radius:9px}
+.notif-panel{position:absolute;top:46px;right:0;width:344px;max-width:88vw;max-height:62vh;overflow:auto;background:var(--surface);border:1px solid var(--border);border-radius:13px;box-shadow:0 14px 44px rgba(0,0,0,.30);z-index:6000;padding:8px}
+.notif-panel .np-h{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px 9px;font-weight:800;font-size:13px;border-bottom:1px solid var(--border);margin-bottom:4px}
+.notif-panel .np-allread{border:0;background:transparent;color:var(--accent);font-size:11px;font-weight:700;cursor:pointer}
+.notif-panel .np-item{display:block;width:100%;text-align:left;border:0;background:transparent;border-radius:9px;padding:9px 10px;cursor:pointer;border-bottom:1px solid var(--surface-2)}
+.notif-panel .np-item:last-child{border-bottom:0}
+.notif-panel .np-item:hover{background:var(--surface-2)}
+.notif-panel .np-item.unread{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.notif-panel .np-site{font-weight:700;font-size:12.5px;color:var(--ink)}
+.notif-panel .np-site .np-field{color:var(--accent)}
+.notif-panel .np-meta{font-size:11px;color:var(--muted);margin-top:3px}
+.notif-panel .np-empty{padding:28px 10px;text-align:center;color:var(--muted);font-size:12px}
+.pi-unlock{margin-left:7px;border:1px solid color-mix(in srgb,var(--accent) 42%,var(--border));background:var(--surface-2);border-radius:7px;padding:2px 8px;font-size:10.5px;font-weight:700;color:var(--accent);cursor:pointer;white-space:nowrap}
+.pi-unlock:hover{background:color-mix(in srgb,var(--accent) 13%,var(--surface))}
+.pi-in.pi-unlocked{background:#fffdf0 !important;border-color:#e6cd78 !important;color:var(--ink) !important;cursor:text !important}
+.pi-edited{margin-left:6px;font-size:10px;font-weight:800;color:#bd8a2e;background:color-mix(in srgb,#bd8a2e 15%,transparent);border-radius:6px;padding:1px 6px;vertical-align:middle}
+.nf-card-row{display:flex;justify-content:space-between;gap:12px;padding:9px 2px;border-bottom:1px solid var(--surface-2);font-size:12.5px;align-items:flex-start}
+.nf-card-row:last-child{border-bottom:0}
+.nf-card-row.unread .nf-site::before{content:'● ';color:var(--accent);font-size:9px;vertical-align:middle}
+.nf-site{font-weight:700}
+.nf-site .nf-field{color:var(--accent)}
+.nf-meta{color:var(--muted);font-size:11px;white-space:nowrap;text-align:right}
 
 /* ---------- 본문 그리드 + 좌측 세부업무 사이드바 ---------- */
 .body{display:grid;grid-template-columns:var(--sidebar-w) 1fr;flex:1;min-height:0;overflow:hidden}
@@ -1580,7 +1604,7 @@ button{font-family:inherit;cursor:pointer}
           <option value="admin">행정팀</option>
         </select>
       </div>
-      <button class="tb-icon" title="알림"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span class="dot"></span></button>
+      <div class="notif-wrap"><button class="tb-icon" id="notifBell" title="알림" onclick="toggleNotifPanel(event)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span class="dot" id="notifDot" style="display:none"></span></button><div class="notif-panel" id="notifPanel" style="display:none"></div></div>
       <button class="tb-icon" id="themeToggle" title="라이트/다크 전환"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"/></svg></button>
     </div>
   </header>
@@ -2556,6 +2580,21 @@ async function saveDevreqs(){
   try{ localStorage.setItem('fsnet_devreqs', JSON.stringify(devreqs)); }catch(e){}
   if(SB){ try{ await SB.from('fsnet_deals').upsert({id:DEVREQS_ID, data:{list:devreqs}}); }catch(e){ toast('요청 공유 저장 실패 — 로컬 보관'); } }
 }
+/* ===== 수정 알림 — 행정에서 원본값을 고치면 해당 영업 담당자에게 대시보드 알림(현장명·수정항목·일자·수정자). 예약행(__notifs__)으로 전 기기 공유 ===== */
+const NOTIFS_ID = '__notifs__';
+let NOTIFS = [];
+function applyNotifs(l){ if(Array.isArray(l)) NOTIFS = l; }
+function loadNotifsLocal(){ try{ const s=JSON.parse(localStorage.getItem('fsnet_notifs')||'null'); if(Array.isArray(s)) NOTIFS=s; }catch(e){} }
+async function saveNotifs(){
+  try{ localStorage.setItem('fsnet_notifs', JSON.stringify(NOTIFS)); }catch(e){}
+  if(SB){ try{ markSelfWrite(NOTIFS_ID); await SB.from('fsnet_deals').upsert({id:NOTIFS_ID, data:{list:NOTIFS}}); }catch(e){} }
+}
+function pushNotif(n){
+  const id='nf_'+Date.now().toString(36)+'_'+Math.floor(Math.random()*1e5).toString(36);
+  NOTIFS.unshift({ id, rep:n.rep||'', dealId:n.dealId||'', site:n.site||'', field:n.field||'', at:new Date().toISOString(), by:n.by||'', read:false });
+  if(NOTIFS.length>300) NOTIFS.length=300;
+  saveNotifs(); refreshNotifBell();
+}
 
 /* ============================================================
    저장·공유 계층 — 키 없으면 로컬(localStorage), 키 있으면 Supabase 실시간 공유
@@ -2598,6 +2637,8 @@ async function loadShared(){
       if(st && st.data && st.data.org) applyOrg(st.data.org);
       const drRow = (dq.data||[]).find(r=>r.id===DEVREQS_ID);
       if(drRow && drRow.data && Array.isArray(drRow.data.list)) applyDevreqs(drRow.data.list);
+      const nfRow = (dq.data||[]).find(r=>r.id===NOTIFS_ID);
+      if(nfRow && nfRow.data && Array.isArray(nfRow.data.list)) applyNotifs(nfRow.data.list);
       const pcRow = (dq.data||[]).find(r=>r.id===PERMIT_CREDS_ID);
       if(pcRow && pcRow.data && pcRow.data.creds) applyPermitCreds(pcRow.data.creds);
       // ★ 시드 버전이 올라갔으면 데모 데이터(비예약 행)를 새 시드로 교체 — 옛 이름·마스킹 데이터 자동 정리
@@ -2636,6 +2677,7 @@ function subscribeRT(){
       .on('postgres_changes', {event:'*', schema:'public', table:'fsnet_deals'}, p=>{
         const id=(p.new&&p.new.id)||(p.old&&p.old.id);
         if(isReservedId(id)){ const nd=p.new&&p.new.data;
+          if(id===NOTIFS_ID){ if(nd&&Array.isArray(nd.list)) applyNotifs(nd.list); refreshNotifBell(); refreshActive(); return; }   // 수정 알림 — 담당자 기기에 즉시 반영
           if(nd&&nd.org) applyOrg(nd.org);
           if(nd&&Array.isArray(nd.list)) applyDevreqs(nd.list);
           refreshActive(); refreshTabBadges(); return; }
@@ -5895,6 +5937,76 @@ function gotoSource(tab, key){
   toast('원천 화면으로 이동했습니다 — 이 값은 여기서 수정하세요');
 }
 
+/* ===== 행정 인라인 🔓 수정 — 이관 후에도 원본(단일 소스)을 바로 고치고, 영업 담당자에게 알림 ===== */
+// 잠금해제 권한: 전체 관리자·행정팀(또는 role=admin). 일반 열람자는 읽기전용 유지.
+function canUnlock(){
+  if(currentRole==='all'||currentRole==='admin') return true;
+  if(typeof currentUser!=='undefined' && currentUser && (currentUser.role==='admin'||currentUser.team==='행정')) return true;
+  return false;
+}
+// 수정자 이름(알림 '수정 담당자')
+function meName(){
+  if(typeof currentUser!=='undefined' && currentUser && currentUser.name) return currentUser.name;
+  const map={all:'전체 관리자','김영수':'김영수','박서준':'박서준',design:'설계팀',construction:'시공팀',admin:'행정팀'};
+  return map[currentRole]||'관리자';
+}
+function permitFieldEdited(did, path){ const d=DEALS.find(x=>x.id===did); if(!d) return false; const p=getPermit(d); return !!(p.edits&&p.edits.some(e=>e.path===path)); }
+// 🔓 버튼 → 확인 후 해당 칸만 편집 가능하게. 값 저장은 기존 oninput(setPermit), 커밋(change) 시 편집기록+알림.
+function permitUnlock(btn){
+  const row=btn.closest('.pi-row'); const inp=row&&row.querySelector('.pi-in'); if(!inp) return;
+  const did=btn.dataset.did, path=btn.dataset.path, label=btn.dataset.label, site=btn.dataset.site;
+  if(!confirm('이 값은 원래 영업에서 입력된 원본입니다.\n여기서 수정하면 원본도 함께 바뀌고, 현장 영업 담당자에게 수정 알림이 전송됩니다.\n\n계속할까요?')) return;
+  inp.readOnly=false; inp.classList.remove('ro'); inp.classList.add('pi-unlocked'); btn.remove();
+  inp.focus(); try{ inp.setSelectionRange(inp.value.length, inp.value.length); }catch(e){}
+  inp.addEventListener('change', function _onc(){ inp.removeEventListener('change',_onc); permitMarkEdited(did, path, label); }, false);
+}
+// 편집 기록(감사용) + 영업 담당자 알림 발송
+function permitMarkEdited(did, path, label){
+  const d=DEALS.find(x=>x.id===did); if(!d) return;
+  const p=getPermit(d); p.edits=p.edits||[];
+  const at=new Date().toISOString(), by=meName();
+  const ex=p.edits.find(e=>e.path===path);
+  if(ex){ ex.at=at; ex.by=by; } else p.edits.push({path, field:label, at, by});
+  persistDeal(d);
+  pushNotif({ rep:d.rep, dealId:d.id, site:d.site, field:label, by });
+  toast('수정 저장 — 영업 담당자('+(d.rep||'미지정')+')에게 알림을 보냈습니다');
+  if(typeof refreshActive==='function') refreshActive();   // '수정됨' 배지 즉시 반영
+}
+
+/* ===== 수정 알림 — 받기(상단 🔔 패널 + 영업 현황판 카드) ===== */
+function notifForMe(n){
+  if(currentRole==='all') return true;                                   // 전체 관리자: 전부
+  if(n.rep && currentRole===n.rep) return true;                          // 해당 영업 담당자(역할전환)
+  if(typeof currentUser!=='undefined' && currentUser && currentUser.name===n.rep) return true;   // 실제 로그인 담당자
+  return false;
+}
+function myNotifs(){ return NOTIFS.filter(notifForMe); }
+function myUnread(){ return myNotifs().filter(n=>!n.read).length; }
+function notifTimeStr(iso){ try{ const d=new Date(iso); const z=x=>String(x).padStart(2,'0'); return d.getFullYear()+'.'+z(d.getMonth()+1)+'.'+z(d.getDate())+' '+z(d.getHours())+':'+z(d.getMinutes()); }catch(e){ return ''; } }
+function refreshNotifBell(){
+  const dot=document.getElementById('notifDot'); if(dot){ const n=myUnread(); if(n>0){ dot.classList.add('has'); dot.style.display=''; dot.textContent=(n>9?'9+':String(n)); } else { dot.classList.remove('has'); dot.style.display='none'; dot.textContent=''; } }
+  const p=document.getElementById('notifPanel'); if(p && p.style.display!=='none') p.innerHTML=notifPanelHTML();
+}
+function notifPanelHTML(){
+  const list=myNotifs();
+  const head='<div class="np-h"><span>🔔 수정 알림'+(myUnread()?' <span style="color:var(--accent)">('+myUnread()+')</span>':'')+'</span>'+(list.length?'<button class="np-allread" onclick="markAllNotifRead(event)">모두 읽음</button>':'')+'</div>';
+  if(!list.length) return head+'<div class="np-empty">받은 수정 알림이 없습니다.</div>';
+  const items=list.slice(0,60).map(n=>`<button class="np-item ${n.read?'':'unread'}" onclick="openNotif('${n.id}')"><div class="np-site">${esc(n.site||'현장')} · <span class="np-field">${esc(n.field||'항목')}</span> 수정</div><div class="np-meta">${esc(n.by||'')} · ${esc(notifTimeStr(n.at))}</div></button>`).join('');
+  return head+items;
+}
+function toggleNotifPanel(ev){ if(ev) ev.stopPropagation(); const p=document.getElementById('notifPanel'); if(!p) return; const open=p.style.display!=='none'; if(open){ p.style.display='none'; } else { p.innerHTML=notifPanelHTML(); p.style.display='block'; } }
+function markNotifRead(id){ const n=NOTIFS.find(x=>x.id===id); if(n&&!n.read){ n.read=true; saveNotifs(); refreshNotifBell(); } }
+function markAllNotifRead(ev){ if(ev) ev.stopPropagation(); let ch=false; myNotifs().forEach(n=>{ if(!n.read){ n.read=true; ch=true; } }); if(ch){ saveNotifs(); refreshNotifBell(); } }
+function openNotif(id){ markNotifRead(id); const p=document.getElementById('notifPanel'); if(p) p.style.display='none'; }
+// 영업 현황판 상단 카드
+function notifCardHTML(){
+  const list=myNotifs(); if(!list.length) return '';
+  const rows=list.slice(0,8).map(n=>`<div class="nf-card-row ${n.read?'':'unread'}"><div class="nf-site">${esc(n.site||'현장')} · <span class="nf-field">${esc(n.field||'항목')}</span> 수정</div><div class="nf-meta">${esc(n.by||'')}<br>${esc(notifTimeStr(n.at))}</div></div>`).join('');
+  return `<div class="card pad" style="margin-bottom:14px"><div class="card-head"><h2>🔔 내 현장 수정 알림</h2><span class="ch-sub">${myUnread()}건 안읽음</span></div>${rows}<div style="margin-top:8px;text-align:right"><button class="btn ghost sm" onclick="markAllNotifRead(event)">모두 읽음</button></div></div>`;
+}
+// 패널 바깥 클릭 시 닫기
+document.addEventListener('click', function(e){ const p=document.getElementById('notifPanel'); if(p && p.style.display!=='none' && !(e.target.closest && e.target.closest('.notif-wrap'))) p.style.display='none'; });
+
 // ── 사업주(신청인) 기본정보 — 영업 "견적서"에서 입력(성명·상호·전화만, 민감정보 제외) ──
 function defaultOwner(d){ return { name:'사업주', bizname:((d&&d.site)||'')+' 태양광발전소', phone:'010-1000-0000' }; }
 function getOwner(d){ if(!d.owner) d.owner=defaultOwner(d); return d.owner; }
@@ -6384,7 +6496,10 @@ function piRow(id,label,path,val,opt){ opt=opt||{};
   const v=(val==null)?'':val;
   const unit=opt.unit?`<span class="pi-unit">${esc(opt.unit)}</span>`:'';
   const src=opt.src?`<span class="pi-src" style="--sc:${opt.src.color||'var(--accent)'}" title="${esc(opt.src.title)}" onclick="${esc(opt.src.go||'')}">${esc(opt.src.tag)}</span>`:'';
-  return `<div class="pi-row"><label>${esc(label)}${src}</label><div class="pi-inwrap"><input class="pi-in ${opt.ro?'ro':''}" type="${opt.type||'text'}" value="${esc(String(v))}" placeholder="${esc(opt.ph||'')}" ${opt.ro?'readonly':''} oninput="setPermit('${id}','${path}',this.value)">${unit}</div></div>`;
+  const did=opt.dealId||id;
+  const editedBadge=(opt.unlockable && typeof permitFieldEdited==='function' && permitFieldEdited(did,path))?`<span class="pi-edited" title="행정에서 수정됨">수정됨</span>`:'';
+  const lock=(opt.unlockable && opt.ro && typeof canUnlock==='function' && canUnlock())?`<button type="button" class="pi-unlock" data-did="${esc(did)}" data-path="${esc(path)}" data-label="${esc(label)}" data-site="${esc(opt.site||'')}" title="이 값을 수정합니다 — 원본도 함께 바뀌고 영업 담당자에게 알림이 갑니다" onclick="permitUnlock(this)">🔓 수정</button>`:'';
+  return `<div class="pi-row"><label>${esc(label)}${src}${editedBadge}</label><div class="pi-inwrap"><input class="pi-in ${opt.ro?'ro':''}" type="${opt.type||'text'}" value="${esc(String(v))}" placeholder="${esc(opt.ph||'')}" ${opt.ro?'readonly':''} oninput="setPermit('${id}','${path}',this.value)">${unit}${lock}</div></div>`;
 }
 function piSec(kc,ic,title,badge,inner){
   return `<div class="sv-sec" style="--kc:${kc}"><div class="sv-sec-h"><span class="sv-sec-ic">${ic}</span>${esc(title)}${badge?`<span class="pm-src" style="margin-left:auto">${esc(badge)}</span>`:''}</div><div style="padding:7px 0 9px">${inner}</div></div>`;
@@ -6554,6 +6669,7 @@ function renderPermitForm(d, origin, fields){
     }
     opt.ro=true;                                         // 행정=전부 읽기전용
     opt.src = (org==='contract') ? ASRC : QSRC;          // 출처: contract=실계약 / 사업주기본·설비·금액=견적서
+    opt.unlockable=true; opt.dealId=id; opt.site=d.site;  // 🔓 인라인 수정 허용(이관 후에도 원본 수정 + 영업 담당자 알림)
     if(val==null||val==='') opt.ph=opt.ph||'(미입력)';
     return piRow(id,label,path,val,opt);
   };
@@ -10458,7 +10574,7 @@ async function sunAIFill(corpus){
 }
 
 function renderDynamicSub(sub){
-  if(sub==='s-status'){ const el=document.getElementById('sub-s-status'); if(el) el.innerHTML=renderSitesProgressBoard('영업'); }
+  if(sub==='s-status'){ const el=document.getElementById('sub-s-status'); if(el) el.innerHTML=notifCardHTML()+renderSitesProgressBoard('영업'); }
   else if(sub==='s-feas'){ const el=document.getElementById('sub-s-feas'); if(el) el.innerHTML=renderSalesFeasView(); }
   else if(sub==='s-layout'){ const el=document.getElementById('sub-s-layout'); if(el){ el.innerHTML=renderSalesLayoutView(); initSalesLayout(); } }
   else if(sub==='s-quote'){ const el=document.getElementById('sub-s-quote'); if(el){ el.innerHTML=renderSalesQuote(); initQuoteEditor(); } }
@@ -11542,6 +11658,7 @@ document.getElementById('roleSelect').addEventListener('change',e=>{
   if(document.getElementById('view-overview').classList.contains('active')){ ovFilter='all'; buildSubMenu('overview'); }
   else { refreshActive(); }   // 결재함·실측 등에서 역할 전환 시 승인 권한 즉시 반영
   renderPipeline();
+  refreshNotifBell();   // 역할별 알림 대상 갱신
 });
 
 /* ============================================================
@@ -11707,11 +11824,13 @@ function firstRender(){
   refreshTabBadges();
   renderKPI(); renderPipeline(); renderAlerts(); renderTeamLoad();
   renderDesignKanban(); renderSalesList(); fillPanels();
+  refreshNotifBell();
 }
 async function bootstrap(){
   loadCostSettings();
   loadOrgLocal();
   loadDevreqsLocal();
+  loadNotifsLocal();
   loadPermitCredsLocal();
   initSB();
   const modeEl = document.getElementById('loginMode');
