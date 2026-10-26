@@ -4574,6 +4574,11 @@ const SL = (function(){
 
   // ---------- 캐드(DXF) 내보내기 (2D 평면 / 3D 입체) ----------
   // 가배치 데이터(LAYOUT)를 실척(m) R12 DXF로. is3D=true면 패널을 경사·지상고 반영 3DFACE로.
+  // 현재 부지의 지번(복수면 모두) — 배치도/DXF 표기용
+  function siteJibunLabel(){
+    const list=(REGIONS||[]).map(r=>r&&r.parcel&&(r.parcel.jibun||r.parcel.addr)).filter(Boolean);
+    return list.length ? list.join(', ') : (lastJibun||'-');
+  }
   function saveDxf(is3D){
     const LO=LAYOUT;
     if(!LO || !LO.placed || !LO.placed.length){ setStatus('⚠️ 먼저 <b>배치 실행</b>으로 모듈을 배치한 뒤 내보내세요.'); return; }
@@ -4606,9 +4611,15 @@ const SL = (function(){
       const typeTxt=LO.type==='roof'?'지붕':(LO.type==='carport'?'주차장(카포트)':'노지');
       const watt=(+$('sl-m-p').value)||0, modules=LO.placed.length*stack, kw=Math.round(modules*watt/1000);
       const mw=$('sl-m-w').value, mh=$('sl-m-h').value;
-      const info=['모듈 가배치 도면 '+(is3D?'(3D 입체':'(2D 평면')+' · 단위: m · 실척 1:1)','지번: '+(lastJibun||'-'),'설치유형: '+typeTxt,
-        '모듈 수: '+modules.toLocaleString()+' 장','설치용량: '+kw.toLocaleString()+' kWp',
-        '모듈 규격: '+mw+' x '+mh+' mm','경사각: '+Math.round(tilt*180/Math.PI)+'°  ·  모듈 방위: '+azTxt+(is3D?('  ·  지상고: '+base+' m'):'')];
+      // 사양값(배치도 PNG와 동일) — 음영각도·모듈이격·경계이격 포함
+      const incDeg=Math.round(S.incidence||25), incR=Math.max(5,S.incidence||25)*Math.PI/180;
+      const pitchV=(S.pitchMode==='manual')?((LO.depth||0)+Math.max(0.1,S.pitch)):((LO.depth||0)+(LO.alongSlope||0)*Math.sin(tilt)/Math.tan(incR));
+      const rowGap=Math.max(0, pitchV-(LO.depth||0));
+      const info=['지번: '+siteJibunLabel(),
+        '모듈 가배치 도면 '+(is3D?'(3D 입체':'(2D 평면')+' · 단위: m · 실척 1:1)','설치유형: '+typeTxt,
+        '모듈각도 '+Math.round(tilt*180/Math.PI)+'도, 음영각도 '+incDeg+'도, 모듈이격 '+rowGap.toFixed(1)+'M, 경계이격 '+(S.setback||0).toFixed(1)+'M',
+        modules.toLocaleString()+'EA × '+watt+'W = '+kw.toLocaleString()+'kW',
+        '모듈 규격: '+mw+' x '+mh+' mm · 모듈 방위: '+azTxt+(is3D?('  ·  지상고: '+base+' m'):'')];
       const infoBaseX=minx, infoBaseY=miny, infoY=i=>infoBaseY - th*(3+i*1.7);
       info.forEach((_t,i)=>acc([infoBaseX, infoY(i)])); acc([ax+hw,ay+L]);
       // ----- DXF(R12/AC1009) 조립 -----
@@ -4624,7 +4635,13 @@ const SL = (function(){
       w(9,'$EXTMAX'); w(10,nf(maxx)); w(20,nf(maxy)); w(30,'0.0');
       w(0,'ENDSEC');
       const layers=[['SITE',2],['SETBACK',30],['PANEL',5],['NORTH',1],['INFO',7]];
-      w(0,'SECTION'); w(2,'TABLES'); w(0,'TABLE'); w(2,'LAYER'); w(70,layers.length);
+      w(0,'SECTION'); w(2,'TABLES');
+      // 한글 텍스트 스타일 — TrueType 한글 폰트 지정(맑은 고딕). \U+ 유니코드 이스케이프와 함께 써서 캐드에서 한글이 깨지지 않게.
+      w(0,'TABLE'); w(2,'STYLE'); w(70,2);
+      w(0,'STYLE'); w(2,'STANDARD'); w(70,0); w(40,'0.0'); w(41,'1.0'); w(50,'0.0'); w(71,0); w(42,nf(th)); w(3,'txt'); w(4,'');
+      w(0,'STYLE'); w(2,'HANGUL'); w(70,0); w(40,'0.0'); w(41,'1.0'); w(50,'0.0'); w(71,0); w(42,nf(th)); w(3,'malgun.ttf'); w(4,'');
+      w(0,'ENDTAB');
+      w(0,'TABLE'); w(2,'LAYER'); w(70,layers.length);
       layers.forEach(([nm,col])=>{ w(0,'LAYER'); w(2,nm); w(70,0); w(62,col); w(6,'CONTINUOUS'); });
       w(0,'ENDTAB'); w(0,'ENDSEC');
       w(0,'SECTION'); w(2,'ENTITIES');
@@ -4636,7 +4653,7 @@ const SL = (function(){
         w(12,nf(p[2][0])); w(22,nf(p[2][1])); w(32,nf(p[2][2]));
         w(13,nf(p[3][0])); w(23,nf(p[3][1])); w(33,nf(p[3][2])); };
       const line=(layer,x1,y1,x2,y2)=>{ w(0,'LINE'); w(8,layer); w(10,nf(x1)); w(20,nf(y1)); w(30,'0.0'); w(11,nf(x2)); w(21,nf(y2)); w(31,'0.0'); };
-      const text=(layer,x,y,h,str)=>{ w(0,'TEXT'); w(8,layer); w(10,nf(x)); w(20,nf(y)); w(30,'0.0'); w(40,nf(h)); w(1,esc(str)); };
+      const text=(layer,x,y,h,str)=>{ w(0,'TEXT'); w(8,layer); w(10,nf(x)); w(20,nf(y)); w(30,'0.0'); w(40,nf(h)); w(1,esc(str)); w(7,'HANGUL'); };
       outer.forEach(p=>poly('SITE',p,true));
       setb.forEach(p=>poly('SETBACK',p,true));
       if(is3D) panels.forEach(p=>face('PANEL',p)); else panels.forEach(p=>poly('PANEL',p.map(c=>[c[0],c[1]]),true));
@@ -4725,7 +4742,7 @@ const SL = (function(){
       const incR=Math.max(5,S.incidence||25)*Math.PI/180;
       const pitch=(S.pitchMode==='manual')?(LO.depth+Math.max(0.1,S.pitch)):(LO.depth+(LO.alongSlope||0)*Math.sin(tilt)/Math.tan(incR));
       const rowGap=Math.max(0, pitch-(LO.depth||0));
-      const spec={ jibun:(lastJibun||'-'), tilt:Math.round(tilt*180/Math.PI), inc:incDeg, mod:rowGap.toFixed(1), edge:(S.setback||0).toFixed(1),
+      const spec={ jibun:siteJibunLabel(), tilt:Math.round(tilt*180/Math.PI), inc:incDeg, mod:rowGap.toFixed(1), edge:(S.setback||0).toFixed(1),
         ea:modules.toLocaleString()+'EA × '+watt+'W = '+kwTxt+'kW' };
       const url=composeSheet(mapCv, spec);                          // ④ 샘플형 시트 합성
       const a=document.createElement('a'); a.href=url; a.download='배치도_'+(lastJibun||'부지').replace(/[\\/:*?"<>|]/g,'_')+'.png'; a.click();
@@ -4927,7 +4944,7 @@ const SL = (function(){
   }
 
   // ---------- 가배치 → 견적서 이관 ----------
-  function handoffQuote(){
+  async function handoffQuote(){
     const modules = LAYOUT ? (LAYOUT.placed.length*(LAYOUT.stack||1))
       : (parseInt(((($('sl-r-count')||{}).textContent)||'0').replace(/[^0-9]/g,''),10)||0);
     if(!modules){ setStatus('먼저 <b>배치</b>를 실행해주세요 — 그 배치 결과로 견적서를 만듭니다.'); return; }
@@ -4935,7 +4952,10 @@ const SL = (function(){
     const modeBtn = document.querySelector('#sl-seg-mod button.on'); const modeSel = modeBtn?modeBtn.dataset.m:'kr';
     const moduleKey = modeSel==='cn' ? 'china_aiko' : modeSel==='kr' ? 'korea_hyundai' : (watt>=650?'china_aiko':'korea_hyundai');
     const typeMap={ground:'노지',roof:'지붕',carport:'노지'}; const qtype=typeMap[S.type]||'노지';
-    salesLayout = { pending:true, moduleKey, qty:modules, modW:watt, type:qtype, jibun:(lastJibun||''), kw:Math.round(modules*watt/1000) };
+    // 제안서 '현장 배치도'에 담을 가배치 이미지(위성+모듈·경계) 생성
+    let layoutImg=null;
+    if(LAYOUT){ try{ setStatus('배치도 이미지를 만드는 중…'); const cv=await buildMapImage(LAYOUT); if(cv) layoutImg=cv.toDataURL('image/png'); }catch(e){} }
+    salesLayout = { pending:true, moduleKey, qty:modules, modW:watt, type:qtype, jibun:siteJibunLabel(), kw:Math.round(modules*watt/1000), layoutImg };
     if(typeof switchSub==='function') switchSub('sales','s-quote');
     else if(typeof showSub==='function') showSub('sales','s-quote');
   }
@@ -9209,6 +9229,7 @@ function recomputeQuotePreview(){
   const box=g('qx-result');
   const out=withCostPreset(qxPresetSnap(), ()=>{ const cfg=buildEditorCfg(); return cfg?{cfg, p:buildProposal(cfg)}:null; });
   if(!out){ box.innerHTML=`<div class="note" style="margin-top:12px">모듈과 수량을 입력하면 견적 미리보기가 표시됩니다.</div>`; return; }
+  if(out.cfg && typeof salesLayout!=='undefined' && salesLayout && salesLayout.layoutImg) out.cfg.layoutImg=salesLayout.layoutImg;  // 모듈 가배치에서 넘어온 현장 배치도 이미지
   box.innerHTML = `<div class="section-title" style="font-size:12px;margin:14px 0 4px">견적 미리보기 · 총 사업비 ₩${out.p.total} <span style="font-weight:500;color:var(--muted)">(백만절사·VAT별도)</span></div>` + handoverProposal(out.cfg, out.p);
 }
 function initQuoteEditor(){ if(document.getElementById('qx-qty')){
