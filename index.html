@@ -888,6 +888,17 @@ button{font-family:inherit;cursor:pointer}
 .feas-dot{width:9px;height:9px;border-radius:50%;margin-top:5px;flex:none}
 .feas-row .fr-t{font-size:13px;font-weight:700;color:var(--ink)}
 .feas-row .fr-d{font-size:11.5px;color:var(--ink-2);margin-top:2px;line-height:1.5}
+/* 여러 필지 = 1현장: 현장 공통/필지별 상세 */
+.feas-sub{font-size:11.5px;font-weight:800;color:var(--ink-2);letter-spacing:.2px;margin:4px 0 6px}
+.feas-pcard{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px;background:var(--surface)}
+.feas-pchead{display:flex;align-items:center;gap:7px;padding:9px 13px;font-size:13px;font-weight:800;color:var(--ink);background:var(--surface-2);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.feas-pchead>b{display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:19px;border-radius:50%;background:var(--brand);color:#fff;font-size:11px}
+.feas-pcard .feas-list{border:none;border-radius:0}
+.feas-badge{margin-left:auto;font-size:11px;font-weight:800;padding:2px 9px;border-radius:999px;border:1px solid var(--border)}
+.feas-badge.ok{background:var(--ok-bg);color:var(--ok-ink);border-color:var(--ok)}
+.feas-badge.warn{background:rgba(189,138,46,.13);color:var(--brand);border-color:var(--brand)}
+.feas-badge.bad{background:var(--risk-bg);color:var(--risk-ink);border-color:var(--risk)}
+.feas-badge.na{background:var(--surface-2);color:var(--ink-2)}
 .modal-head{padding:20px 22px 8px}
 .modal-head h3{margin:0;font-size:18px;font-weight:800;letter-spacing:-.3px}
 .modal-head p{margin:6px 0 0;color:var(--ink-2);font-size:13px}
@@ -1174,10 +1185,10 @@ button{font-family:inherit;cursor:pointer}
 .sl-searchbar{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-bottom:12px}
 .sl-searchbar .tinput{flex:1;min-width:0}
 .sl-searchbar .btn{flex:none;white-space:nowrap}
-/* 필지 추가 모드 시각 표시 — ➕ 누르면 검색창·버튼 초록 강조 + 안내문구 */
-#sl-add-parcel.on{background:#2e8b63;border-color:#2e8b63;color:#fff;box-shadow:0 0 0 3px rgba(46,139,99,.25)}
-#sl-add-parcel.on:hover{background:#287a57}
-.sl-searchbar .tinput.sl-add-on{border-color:#2e8b63;box-shadow:0 0 0 3px rgba(46,139,99,.18)}
+/* 필지 추가 모드 시각 표시 — ➕ 누르면 입력창·버튼 초록 강조 + 안내문구 (가배치·타당성 공용) */
+.sl-addbtn.on{background:#2e8b63;border-color:#2e8b63;color:#fff;box-shadow:0 0 0 3px rgba(46,139,99,.25)}
+.sl-addbtn.on:hover{background:#287a57}
+.tinput.sl-add-on{border-color:#2e8b63;box-shadow:0 0 0 3px rgba(46,139,99,.18)}
 .sl-addhint{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin:-4px 0 12px;padding:8px 12px;font-size:12.5px;line-height:1.5;color:#2e8b63;background:rgba(46,139,99,.10);border:1px solid rgba(46,139,99,.32);border-radius:8px}
 .sl-addhint b{font-weight:700}
 /* 여러 필지 칩(지번 추가) */
@@ -3910,53 +3921,102 @@ async function startFeasibility(id){
 }
 
 // 타당성검토 (영업) — 부지 즉석 진단 도구(지번 하나로 바로 판정 · 설계 엔진 재사용). 특정 딜에 묶이지 않는 신규부지 타진용.
-let salesFeas = { jibun:'', type:'노지', result:null };
+let salesFeas = { type:'노지', items:[], addMode:false, busy:false, pendingJibun:'' };  // items:[{jibun,res,area}] — 여러 필지를 1개 현장으로 묶어 진단
 let salesLayout = null;   // 가배치 → 견적서 핸드오프(배치 결과 전달)
-function renderSalesFeasView(){
-  const f = salesFeas.result || {};
-  let panel;
-  if(f.pending){ panel = `<div class="feas-verdict warn"><span class="fv-b">⏳</span>설치 가능성 진단 중…<span class="fv-s">${esc(salesFeas.jibun)}</span></div>`; }
-  else if(f.error){ panel = `<div class="feas-verdict bad"><span class="fv-b">⚠️</span>진단 실패<span class="fv-s">${esc(f.error)}</span></div>`; }
-  else if(f.rows){
-    const modeTag = f.mode==='실시간' ? '🛰 국토부·한전 실시간' : '📊 추정치';
-    const fbNote = f.fallback ? `<div class="note" style="margin:6px 0 10px;color:var(--brand)">ⓘ ${esc(f.fallback)}</div>` : '';
-    panel = `<div class="feas-verdict ${f.worst}"><span class="fv-b">${f.badge}</span>${f.verdict}<span class="fv-s">${modeTag} · 최종은 설계 검토 확인</span></div>${fbNote}
-      <div class="feas-list">${f.rows.map(feasRowHTML).join('')}</div>
-      <div class="wf-actions" style="margin-top:12px"><button class="btn primary sm" onclick="switchSub('sales','s-layout')">이 부지로 모듈 가배치 →</button></div>`;
-  } else { panel = `<div class="note" style="margin:8px 0 10px">부지 지번을 입력하고 <b>🔍 진단 실행</b>을 누르면 설치 가능성이 판정됩니다.</div>`; }
-  const typeOpts = ['노지','지붕','수상'].map(t=>`<option value="${t}" ${t===salesFeas.type?'selected':''}>${t}형</option>`).join('');
-  return wfHead('타당성검토','신규 부지 지번을 넣으면 <b>설치 가능성</b>을 실시간(국토부·한전 API)으로 진단합니다. 지목·경사·용도지역·<b>태양광 규제 판정</b>·계통 여유·<b>일사량</b>·<b>개별공시지가</b> 종합 → 가능/조건부/제한.') +
-   `<div class="card pad" style="margin-bottom:14px">
-      <div class="section-title" style="font-size:12px;margin:0 0 8px">📋 부지 즉석 진단 — 지번 입력 → 실시간 판정</div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-        <select class="tinput" id="sf-type" style="max-width:120px" onchange="salesFeas.type=this.value">${typeOpts}</select>
-        <input class="tinput" id="sf-jibun" style="flex:1;min-width:220px" value="${esc(salesFeas.jibun)}" placeholder="지번/도로명 (예: 경기도 파주시 문발동 66)" onkeydown="if(event.key==='Enter')runSalesDiag()">
-        <button class="btn primary sm" onclick="runSalesDiag()">🔍 진단 실행</button>
-      </div>
-      ${panel}
-    </div>`;
-}
-function rerenderSalesFeas(){ const el=document.getElementById('sub-s-feas'); if(el) el.innerHTML=renderSalesFeasView(); }
-async function runSalesDiag(){
-  const inp=document.getElementById('sf-jibun'), ts=document.getElementById('sf-type');
-  if(inp) salesFeas.jibun=inp.value.trim(); if(ts) salesFeas.type=ts.value;
-  const jibun=salesFeas.jibun;
-  salesFeas.result={pending:true}; rerenderSalesFeas();
-  if(jibun) toast('설치 가능성 진단 중… '+jibun);
-  let res;
+const _feasRank={bad:3,warn:2,ok:1,na:0};
+function feasVerdictMeta(w){ return w==='bad'?{verdict:'설치 제한',badge:'🔴'}:w==='warn'?{verdict:'조건부 가능',badge:'🟡'}:w==='ok'?{verdict:'설치 가능',badge:'🟢'}:{verdict:'판정 불가 (데이터 부족)',badge:'⚪'}; }
+// 위치 기반(필지 공통) 항목 — 같은 현장이면 필지가 달라도 동일 → 종합에 1회만 표시
+function _isFeasCommon(t){ return /계통 여유|☎ 한전|일사량|이격거리/.test(t||''); }
+// 한 필지 진단: 실시간(국토부·한전) 우선 → 미연결 시 추정 폴백. 면적은 토지특성(getLandCharacteristics)으로 합산용 취득.
+async function analyzeFeasParcel(jibun){
+  let res, p=null;
   try{
     if(!jibun) throw new Error('nojibun');
     const r=await fetchRealDiagnosis(jibun);
-    if(r.error){ res={error:r.error}; }
-    else { res=buildRows(r.p, salesFeas.type, true); }
+    if(r.error) return {jibun, res:{error:r.error}};
+    res=buildRows(r.p, salesFeas.type, true); p=r.p;
   }catch(e){
-    res=buildRows(parcelOf({id:'sf-'+jibun, type:salesFeas.type}), salesFeas.type, false);
+    res=buildRows(parcelOf({id:'sf-'+jibun, type:salesFeas.type}), salesFeas.type, false); p=res.parcel;
     res.fallback = e.message==='key' ? 'VWorld 인증키 오류 — 키/도메인 등록 확인 (지금은 추정치)'
                  : e.message==='nojibun' ? '지번 미입력 — 예시 추정치 표시'
                  : '실시간 미연결 — Vercel 배포·키 설정 후 실시간 전환 (지금은 추정치)';
   }
-  salesFeas.result=res; rerenderSalesFeas();
+  let area=null;
+  try{ if(p&&p.pnu){ const lc=await apiLandChar(p.pnu); if(lc&&lc.area){ const a=parseFloat(String(lc.area).replace(/[^0-9.]/g,'')); if(a>0) area=a; } } }catch(e){}
+  return {jibun:(p&&p.jibun)||jibun, res, area};
 }
+function renderSalesFeasView(){
+  const items = salesFeas.items||[], addOn = !!salesFeas.addMode;
+  const typeOpts = ['노지','지붕','수상'].map(t=>`<option value="${t}" ${t===salesFeas.type?'selected':''}>${t}형</option>`).join('');
+  const chips = items.length ? `<div class="sl-parcels" style="display:flex">`+items.map((it,i)=>{
+      const lbl=(it.res&&it.res.error)?(it.jibun+' · 실패'):((it.res&&it.res.parcel&&it.res.parcel.jibun)||it.jibun||('필지 '+(i+1)));
+      return `<span class="sl-chip"><b>${i+1}</b> ${esc(lbl)}<button type="button" title="이 필지 제거" onclick="removeFeasItem(${i})">✕</button></span>`;
+    }).join('')+`</div>` : '';
+  let body='';
+  if(!items.length && !salesFeas.busy){
+    body = `<div class="note" style="margin:8px 0 2px">부지 지번을 넣고 <b>🔍 진단 실행</b>을 누르면 설치 가능성이 판정됩니다. 한 현장이 <b>여러 필지</b>면 <b>➕ 필지 추가</b>로 묶어 <b>합산 면적·종합 판정</b>으로 보세요.</div>`;
+  } else if(items.length){
+    const ok = items.filter(it=>it.res && !it.res.error);
+    let w='na'; ok.forEach(it=>{ if(_feasRank[it.res.worst]>_feasRank[w]) w=it.res.worst; });
+    const vm=feasVerdictMeta(w);
+    const totalArea = ok.reduce((s,it)=>s+(it.area||0),0);
+    const areaTxt = totalArea>0 ? `합산 면적 <b>${Math.round(totalArea).toLocaleString()}㎡</b> (${Math.round(totalArea/3.3058).toLocaleString()}평)` : '면적 조회 불가';
+    const fb = ok.find(it=>it.res.fallback);
+    const modeTag = ok.some(it=>it.res.mode==='실시간') ? '🛰 국토부·한전 실시간' : '📊 추정치';
+    const fbNote = fb ? `<div class="note" style="margin:6px 0 10px;color:var(--brand)">ⓘ ${esc(fb.res.fallback)}</div>` : '';
+    const commonRows = ok.length ? ok[0].res.rows.filter(r=>_isFeasCommon(r.t)) : [];
+    let out = `<div class="feas-verdict ${w}"><span class="fv-b">${vm.badge}</span>${vm.verdict}<span class="fv-s">현장 ${items.length}개 필지 묶음 · ${areaTxt} · ${modeTag} · 최종은 설계 검토 확인</span></div>${fbNote}`;
+    if(commonRows.length){ out += `<div class="feas-sub">📍 현장 공통 (계통·일사량 등)</div><div class="feas-list">${commonRows.map(feasRowHTML).join('')}</div>`; }
+    out += `<div class="feas-sub" style="margin-top:12px">📑 필지별 상세 (${items.length})</div>`;
+    out += items.map((it,i)=>{
+      if(it.res&&it.res.error){ return `<div class="feas-pcard"><div class="feas-pchead"><b>${i+1}</b> ${esc(it.jibun)} <span class="feas-badge bad">⚠️ 진단 실패</span></div><div class="fr-d" style="padding:6px 13px">${esc(it.res.error)}</div></div>`; }
+      const vm2=feasVerdictMeta(it.res.worst), lbl=(it.res.parcel&&it.res.parcel.jibun)||it.jibun, aTxt=it.area?` · ${Math.round(it.area).toLocaleString()}㎡`:'';
+      const pp=it.res.rows.filter(r=>!_isFeasCommon(r.t));
+      return `<div class="feas-pcard"><div class="feas-pchead"><b>${i+1}</b> ${esc(lbl)}${aTxt} <span class="feas-badge ${it.res.worst}">${vm2.badge} ${vm2.verdict}</span></div><div class="feas-list">${pp.map(feasRowHTML).join('')}</div></div>`;
+    }).join('');
+    out += `<div class="wf-actions" style="margin-top:12px"><button class="btn primary sm" onclick="switchSub('sales','s-layout')">이 부지로 모듈 가배치 →</button></div>`;
+    body = out;
+  }
+  if(salesFeas.busy){ body = `<div class="feas-verdict warn"><span class="fv-b">⏳</span>진단 중…<span class="fv-s">${esc(salesFeas.pendingJibun||'')}</span></div>` + body; }
+  const hint = addOn ? `<div class="sl-addhint" style="display:flex">➕ <b>필지 추가 모드</b> — 지번을 넣고 <b>Enter</b>(또는 ➕)로 <b>같은 현장</b>에 필지를 계속 추가하세요. <b>🔍 진단 실행</b>은 새 현장으로 시작합니다.</div>` : '';
+  return wfHead('타당성검토','신규 부지 지번을 넣으면 <b>설치 가능성</b>을 실시간(국토부·한전 API)으로 진단합니다. <b>한 현장이 여러 필지</b>면 ➕로 묶어 <b>합산 면적·종합 판정</b>으로 봅니다.') +
+   `<div class="card pad" style="margin-bottom:14px">
+      <div class="section-title" style="font-size:12px;margin:0 0 8px">📋 부지 즉석 진단 — 지번 입력 → 실시간 판정 (여러 필지 = 1개 현장)</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+        <select class="tinput" id="sf-type" style="max-width:120px" onchange="salesFeas.type=this.value">${typeOpts}</select>
+        <input class="tinput ${addOn?'sl-add-on':''}" id="sf-jibun" style="flex:1;min-width:220px" placeholder="${addOn?'추가할 지번 입력 후 Enter — 같은 현장에 필지 누적':'지번/도로명 (예: 경기도 파주시 문발동 66)'}" onkeydown="if(event.key==='Enter')addFeasParcel()">
+        <button class="btn primary sm" onclick="runSalesDiag()">🔍 진단 실행</button>
+        <button class="btn ghost sm sl-addbtn ${addOn?'on':''}" onclick="addFeasParcel()">➕ 필지 추가</button>
+      </div>
+      ${hint}
+      ${chips}
+      ${body}
+    </div>`;
+}
+function rerenderSalesFeas(){ const el=document.getElementById('sub-s-feas'); if(el) el.innerHTML=renderSalesFeasView(); }
+function _feasFocus(){ if(salesFeas.addMode){ const el=document.getElementById('sf-jibun'); if(el){ try{ el.focus(); }catch(_){} } } }
+// 🔍 진단 실행 = 새 현장(기존 필지 비우고 1필지부터)
+async function runSalesDiag(){
+  const inp=document.getElementById('sf-jibun'), ts=document.getElementById('sf-type');
+  const jibun=inp?inp.value.trim():''; if(ts) salesFeas.type=ts.value;
+  if(!jibun){ toast('지번/도로명을 입력하세요'); return; }
+  salesFeas.items=[]; salesFeas.busy=true; salesFeas.addMode=false; salesFeas.pendingJibun=jibun; rerenderSalesFeas();
+  toast('설치 가능성 진단 중… '+jibun);
+  const item=await analyzeFeasParcel(jibun);
+  salesFeas.items=[item]; salesFeas.busy=false; salesFeas.addMode=true; salesFeas.pendingJibun=''; rerenderSalesFeas(); _feasFocus();
+}
+// ➕ 필지 추가 = 같은 현장에 필지 누적
+async function addFeasParcel(){
+  const inp=document.getElementById('sf-jibun'), ts=document.getElementById('sf-type');
+  const jibun=inp?inp.value.trim():''; if(ts) salesFeas.type=ts.value;
+  salesFeas.addMode=true;
+  if(!jibun){ rerenderSalesFeas(); _feasFocus(); return; }   // 빈 입력: 추가 모드 시각 표시만
+  salesFeas.busy=true; salesFeas.pendingJibun=jibun; rerenderSalesFeas();
+  toast('필지 추가 진단 중… '+jibun);
+  const item=await analyzeFeasParcel(jibun);
+  salesFeas.items.push(item); salesFeas.busy=false; salesFeas.pendingJibun=''; rerenderSalesFeas(); _feasFocus();
+}
+function removeFeasItem(i){ salesFeas.items.splice(i,1); if(!salesFeas.items.length) salesFeas.addMode=false; rerenderSalesFeas(); }
 /* ============================================================
    모듈 가배치 — 위성 지도 위 태양광 패널 자동/수동 배치 + 2D/3D (자립 모듈)
    · 지도 엔진(Leaflet/geoman/turf)·3D(Three.js)는 이 화면을 처음 열 때만 지연 로드.
@@ -4764,7 +4824,7 @@ const SL = (function(){
 
   // ---------- HTML ----------
   function render(){
-    const pre=(typeof salesFeas!=='undefined' && salesFeas && salesFeas.jibun)?salesFeas.jibun:'';
+    const pre=(typeof salesFeas!=='undefined' && salesFeas && salesFeas.items && salesFeas.items[0] && salesFeas.items[0].jibun)?salesFeas.items[0].jibun:'';
     const h=(typeof wfHead==='function')?wfHead('모듈 가배치','위성 지도에 부지 경계를 잡고 태양광 패널을 <b>자동/수동</b>으로 배치해 <b>설치 용량·면적 활용률·연간 발전량</b>을 산출합니다. 2D·3D로 확인하세요.'):'';
     return h+`<div class="sl-wrap">
       <div class="sl-left card">
@@ -4793,7 +4853,7 @@ const SL = (function(){
         <div class="sl-searchbar">
           <input class="tinput" id="sl-addr" placeholder="지번/도로명 검색 (예: 경기도 파주시 문발동 66)" value="${esc(pre)}">
           <button class="btn dark" id="sl-search" title="새 지번으로 검색 (기존 필지는 지워집니다 · 여러 필지를 넣으려면 ➕ 필지 추가 또는 Enter)">🔎 검색</button>
-          <button class="btn ghost" id="sl-add-parcel" title="검색창의 지번을 현재 부지에 '필지'로 추가 (여러 필지 합산 · Enter 키와 동일)">➕ 필지 추가</button>
+          <button class="btn ghost sl-addbtn" id="sl-add-parcel" title="검색창의 지번을 현재 부지에 '필지'로 추가 (여러 필지 합산 · Enter 키와 동일)">➕ 필지 추가</button>
           <button class="btn primary" id="sl-btn-run" title="부지에 패널 자동 배치">▦ 패널 배치</button>
         </div>
         <div id="sl-addhint" class="sl-addhint" style="display:none">➕ <b>필지 추가 모드</b> — 지번을 입력하고 <b>Enter</b>(또는 ➕)로 계속 추가하세요. <b>🔎 검색</b>은 새로 시작합니다.</div>
