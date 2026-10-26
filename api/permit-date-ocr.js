@@ -27,15 +27,16 @@ function geminiMM(key, model, system, parts, timeoutMs) {
     r.end();
   });
 }
-// 일시적 과부하(503)·혼잡(429)·5xx·타임아웃은 짧게 재시도(Vercel 60s 한도 안에서). 400/415 등은 즉시 반환.
-async function geminiWithRetry(key, model, system, parts) {
+// 과부하(503)·혼잡(429)·5xx·타임아웃·모델없음(404)이면 다음 모델로 폴백(Vercel 60s 한도 안, 모델당 1회 17s).
+// 400/415(요청·포맷 문제)는 모델을 바꿔도 소용없어 즉시 반환.
+async function geminiTryModels(key, models, system, parts) {
   let last = null;
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try { last = await geminiMM(key, model, system, parts, 24000); }
+  for (const mdl of models) {
+    try { last = await geminiMM(key, mdl, system, parts, 16000); }
     catch (e) { last = { status: 599, body: String((e && e.message) || e) }; }
     if (last.status < 400) return last;
-    if (last.status !== 503 && last.status !== 429 && last.status < 500) return last;   // 재시도 무의미
-    if (attempt === 0) await new Promise((z) => setTimeout(z, 1500));
+    if (last.status === 400 || last.status === 415) return last;   // 다른 모델로도 해결 안 됨
+    // 404/429/503/5xx/599 → 다음 모델 시도
   }
   return last;
 }
@@ -53,7 +54,9 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') { res.status(405).json({ error: 'method', message: 'POST only' }); return; }
   const key = process.env.GEMINI_API_KEY;
   if (!key) { res.status(503).json({ error: 'no_key', message: 'GEMINI_API_KEY 미설정 — 서버 환경변수 등록 필요.' }); return; }
-  const model = process.env.SUNLIGHT_GEMINI_MODEL || 'gemini-flash-latest';
+  // 기본 모델 + 과부하 시 폴백 후보(중복 제거). 한 모델이 503이어도 다른 모델로 시도.
+  const primary = process.env.SUNLIGHT_GEMINI_MODEL || 'gemini-flash-latest';
+  const models = [...new Set([primary, 'gemini-2.0-flash', 'gemini-1.5-flash'])];
   try {
     let b = req.body;
     if (typeof b === 'string') { try { b = JSON.parse(b); } catch (e) { b = {}; } }
@@ -76,7 +79,7 @@ module.exports = async (req, res) => {
       { inlineData: { mimeType, data: dataBase64 } },
     ];
 
-    const r = await geminiWithRetry(key, model, system, parts);
+    const r = await geminiTryModels(key, models, system, parts);
     if (r.status >= 400) { res.status(502).json({ error: 'upstream', status: r.status, message: String(r.body || '').slice(0, 500) }); return; }
     let raw = '';
     try {
