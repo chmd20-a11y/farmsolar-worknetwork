@@ -5,7 +5,7 @@
 // 출력: { start:'YYYY-MM-DD'|'', end:'YYYY-MM-DD'|'', raw }   — 개발행위 신청서 「사업기간」 자동채움용
 const https = require('https');
 
-function geminiMM(key, model, system, parts) {
+function geminiMM(key, model, system, parts, timeoutMs) {
   const payload = JSON.stringify({
     systemInstruction: { parts: [{ text: system }] },
     contents: [{ role: 'user', parts }],
@@ -22,10 +22,22 @@ function geminiMM(key, model, system, parts) {
       up.on('end', () => resolve({ status: up.statusCode || 200, body: Buffer.concat(chunks).toString('utf8') }));
     });
     r.on('error', reject);
-    r.setTimeout(90000, () => r.destroy(new Error('timeout')));
+    r.setTimeout(timeoutMs || 24000, () => r.destroy(new Error('timeout')));
     r.write(payload);
     r.end();
   });
+}
+// 일시적 과부하(503)·혼잡(429)·5xx·타임아웃은 짧게 재시도(Vercel 60s 한도 안에서). 400/415 등은 즉시 반환.
+async function geminiWithRetry(key, model, system, parts) {
+  let last = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try { last = await geminiMM(key, model, system, parts, 24000); }
+    catch (e) { last = { status: 599, body: String((e && e.message) || e) }; }
+    if (last.status < 400) return last;
+    if (last.status !== 503 && last.status !== 429 && last.status < 500) return last;   // 재시도 무의미
+    if (attempt === 0) await new Promise((z) => setTimeout(z, 1500));
+  }
+  return last;
 }
 
 // 'YYYY-M-D'(또는 유사) → 'YYYY-MM-DD' 정규화·유효성 검사. 아니면 ''
@@ -64,8 +76,8 @@ module.exports = async (req, res) => {
       { inlineData: { mimeType, data: dataBase64 } },
     ];
 
-    const r = await geminiMM(key, model, system, parts);
-    if (r.status >= 400) { res.status(502).json({ error: 'upstream', status: r.status, message: r.body.slice(0, 500) }); return; }
+    const r = await geminiWithRetry(key, model, system, parts);
+    if (r.status >= 400) { res.status(502).json({ error: 'upstream', status: r.status, message: String(r.body || '').slice(0, 500) }); return; }
     let raw = '';
     try {
       const j = JSON.parse(r.body);
