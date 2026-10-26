@@ -4166,7 +4166,9 @@ const SL = (function(){
     if(!REGIONS.length){ box.innerHTML=''; box.style.display='none'; return; }
     box.style.display='flex';
     box.innerHTML = REGIONS.map((r,i)=>{
-      const lbl=(r.parcel&&(r.parcel.jibun||r.parcel.addr))||'직접 그린 경계';
+      // 전체 주소에서 동+번지만 뽑아 지번처럼 보이게('66대'=지목 붙은 짧은지번 → '문발동 66')
+      const a=(r.parcel&&(r.parcel.addr||r.parcel.jibun))||'';
+      const lbl=a ? a.trim().split(/\s+/).slice(-2).join(' ') : '직접 그린 경계';
       return `<span class="sl-chip"><b>${i+1}</b> ${esc(lbl)}<button type="button" data-ri="${i}" title="이 필지 제거">✕</button></span>`;
     }).join('');
   }
