@@ -1182,8 +1182,7 @@ button{font-family:inherit;cursor:pointer}
 .sl-chip button:hover{background:#e05b5b;color:#fff}
 /* 지도 */
 .sl-maparea{position:relative;border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow-sm)}
-/* 위성 타일 이음새(간헐적 레티나 줄) 대비 — 각 타일을 GPU scale로 미세하게 겹쳐 틈을 메우고(사파리에서 흰선 안 생기는 방식), 바탕을 어둡게 해 혹시 남는 틈도 밝은 줄로 보이지 않게 */
-#sl-map .leaflet-tile{transform:scale(1.02)}
+/* 위성 타일 이음새(사파리 레티나 간헐적 줄) 대비 — 지도 바탕을 어둡게 해 혹시 남는 1px 틈이 '밝은 줄'로 보이지 않게(타일 자체는 detectRetina로 선명+픽셀정렬) */
 #sl-map .leaflet-container{background:#2b2b2b}
 #sl-map,#sl-three{width:100%;height:calc(100vh - 248px);min-height:520px}
 #sl-three{display:none;background:#9fc0e0}
@@ -4015,7 +4014,7 @@ const SL = (function(){
   // ---------- 지도 ----------
   function tileLayers(){
     const P=base();
-    const mk=(u,at)=>L.tileLayer(u,{maxZoom:21,maxNativeZoom:19,crossOrigin:'anonymous',attribution:at||''});
+    const mk=(u,at)=>L.tileLayer(u,{maxZoom:21,maxNativeZoom:19,detectRetina:true,crossOrigin:'anonymous',attribution:at||''});
     const ESRI='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
     const SAT=P+'/req/wmts/1.0.0/__KEY__/Satellite/{z}/{y}/{x}.jpeg', HYB=P+'/req/wmts/1.0.0/__KEY__/Hybrid/{z}/{y}/{x}.png', BASE=P+'/req/wmts/1.0.0/__KEY__/Base/{z}/{y}/{x}.png';
     // 각 지도는 별도 타일 인스턴스(한 타일레이어는 동시에 한 그룹만 가능). ESRI 바닥 + 국내 VWorld 위에(실패 시 ESRI 노출).
