@@ -4574,10 +4574,16 @@ const SL = (function(){
 
   // ---------- 캐드(DXF) 내보내기 (2D 평면 / 3D 입체) ----------
   // 가배치 데이터(LAYOUT)를 실척(m) R12 DXF로. is3D=true면 패널을 경사·지상고 반영 3DFACE로.
-  // 현재 부지의 지번(복수면 모두) — 배치도/DXF 표기용
+  // 현재 부지의 지번(복수면 모두) — 배치도/DXF 표기용. 지목 붙은 짧은지번('66대') 말고 전체 주소 사용 → 수량처럼 안 보이게.
   function siteJibunLabel(){
-    const list=(REGIONS||[]).map(r=>r&&r.parcel&&(r.parcel.jibun||r.parcel.addr)).filter(Boolean);
-    return list.length ? list.join(', ') : (lastJibun||'-');
+    const list=(REGIONS||[]).map(r=>r&&r.parcel&&(r.parcel.addr||r.parcel.jibun)).filter(Boolean).map(s=>String(s).trim());
+    if(!list.length) return lastJibun||'-';
+    if(list.length===1) return list[0];
+    // 여러 필지: 공통 접두(시·군·동)는 한 번만 → "경기도 파주시 문발동 66, 67, 65"
+    const toks=list.map(s=>s.split(/\s+/)), min=Math.min(...toks.map(t=>t.length));
+    let k=0; while(k<min-1 && toks.every(t=>t[k]===toks[0][k])) k++;
+    const pre=toks[0].slice(0,k).join(' '), nums=toks.map(t=>t.slice(k).join(' '));
+    return (pre?pre+' ':'')+nums.join(', ');
   }
   function saveDxf(is3D){
     const LO=LAYOUT;
