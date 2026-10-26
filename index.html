@@ -3974,7 +3974,7 @@ function renderSalesFeasView(){
       const pp=it.res.rows.filter(r=>!_isFeasCommon(r.t));
       return `<div class="feas-pcard"><div class="feas-pchead"><b>${i+1}</b> ${esc(lbl)}${aTxt} <span class="feas-badge ${it.res.worst}">${vm2.badge} ${vm2.verdict}</span></div><div class="feas-list">${pp.map(feasRowHTML).join('')}</div></div>`;
     }).join('');
-    out += `<div class="wf-actions" style="margin-top:12px"><button class="btn primary sm" onclick="switchSub('sales','s-layout')">이 부지로 모듈 가배치 →</button></div>`;
+    out += `<div class="wf-actions" style="margin-top:12px"><button class="btn primary sm" onclick="goLayoutFromFeas()">이 부지로 모듈 가배치 →</button></div>`;
     body = out;
   }
   if(salesFeas.busy){ body = `<div class="feas-verdict warn"><span class="fv-b">⏳</span>진단 중…<span class="fv-s">${esc(salesFeas.pendingJibun||'')}</span></div>` + body; }
@@ -4017,6 +4017,12 @@ async function addFeasParcel(){
   salesFeas.items.push(item); salesFeas.busy=false; salesFeas.pendingJibun=''; rerenderSalesFeas(); _feasFocus();
 }
 function removeFeasItem(i){ salesFeas.items.splice(i,1); if(!salesFeas.items.length) salesFeas.addMode=false; rerenderSalesFeas(); }
+// 타당성 → 가배치: 조회한 필지(지번)들을 전부 넘겨 자동 불러오기+배치 (SL.init이 window.__slHandoff를 소비)
+function goLayoutFromFeas(){
+  const jibuns=(salesFeas.items||[]).filter(it=>it&&it.res&&!it.res.error&&it.jibun).map(it=>it.jibun);
+  if(jibuns.length) window.__slHandoff={jibuns, type:salesFeas.type};
+  switchSub('sales','s-layout');
+}
 /* ============================================================
    모듈 가배치 — 위성 지도 위 태양광 패널 자동/수동 배치 + 2D/3D (자립 모듈)
    · 지도 엔진(Leaflet/geoman/turf)·3D(Three.js)는 이 화면을 처음 열 때만 지연 로드.
@@ -4128,8 +4134,8 @@ const SL = (function(){
       if(slAddMode){ try{ ai.focus(); }catch(_){} } }
     if(ht) ht.style.display = slAddMode ? 'flex' : 'none';
   }
-  async function _searchParcel(append){
-    const inp=$('sl-addr'); const addr=(inp&&inp.value||'').trim();
+  async function _searchParcel(append, jibunArg){
+    const inp=$('sl-addr'); const addr=(jibunArg!=null ? String(jibunArg).trim() : (inp&&inp.value||'').trim());
     if(!addr){ setStatus(append?'추가할 지번/도로명을 입력하세요.':'지번/도로명을 입력하세요.'); return; }
     lastJibun=addr; setStatus(append?'➕ 필지 추가 — 주소 검색 중…':'🔎 주소 검색 중…');
     let pt=null; try{ pt=await apiGeocode(addr); }catch(e){ setStatus(e&&e.message==='key'?'⚠️ VWorld 인증키 오류 — 키/도메인 등록을 확인하세요.':'⚠️ 지도 서버에 연결하지 못했습니다(배포·키 설정 후 가능).'); return; }
@@ -4902,6 +4908,19 @@ const SL = (function(){
     buildMap(); panelLayerM=L.layerGroup().addTo(map); wire();
     setTimeout(()=>{ try{ map.invalidateSize(); }catch(e){} },120);
     if(lastJibun){ const ai=$('sl-addr'); if(ai&&!ai.value) ai.value=lastJibun; }
+    // 타당성검토 → '이 부지로 모듈 가배치' 핸드오프: 조회한 지번들을 자동으로 불러와 묶어서 배치
+    const ho = (typeof window!=='undefined') ? window.__slHandoff : null;
+    if(ho && ho.jibuns && ho.jibuns.length){
+      window.__slHandoff = null;                         // 1회성(재진입 시 재실행 방지)
+      const tv = ho.type==='지붕' ? 'roof' : 'ground';   // 수상도 부지 배치는 노지식으로
+      S.type = tv;
+      try{ const seg=$('sl-seg-type'); if(seg) seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.t===tv)); }catch(_){}
+      try{ onTypeChange(tv); }catch(_){}
+      setTimeout(async ()=>{   // 지도 크기 확정 후 순차 로드(첫 지번=새로, 이후=누적) → 마지막에 자동 배치
+        try{ map.invalidateSize(); }catch(e){}
+        for(let k=0;k<ho.jibuns.length;k++){ try{ await _searchParcel(k>0, ho.jibuns[k]); }catch(e){} }
+      }, 220);
+    }
   }
 
   // ---------- 가배치 → 견적서 이관 ----------
