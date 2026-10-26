@@ -4709,7 +4709,8 @@ const SL = (function(){
     $('sl-search').onclick=doSearch;
     { const ap=$('sl-add-parcel'); if(ap) ap.onclick=addParcel; }
     { const pc=$('sl-parcels'); if(pc) pc.onclick=e=>{ const b=e.target.closest('button[data-ri]'); if(b) removeParcel(+b.dataset.ri); }; }
-    const ai=$('sl-addr'); if(ai) ai.onkeydown=e=>{ if(e.key==='Enter') doSearch(); };
+    // Enter = 필지 추가(누적) — 입력칸에서 습관적으로 Enter를 눌러도 기존 필지가 지워지지 않도록. 빈 상태면 첫 필지 로드와 동일.
+    const ai=$('sl-addr'); if(ai) ai.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); addParcel(); } };
     $('sl-btn-draw').onclick=()=>{ try{ map.pm.enableDraw('Polygon',{snappable:true,finishOn:'dblclick'}); setStatus('✏️ 지도에서 꼭짓점을 클릭해 부지를 그리고, 마지막 점을 더블클릭하세요.'); }catch(e){ setStatus('그리기를 시작할 수 없습니다.'); } };
     $('sl-btn-clear').onclick=()=>{ try{ map.pm.disableDraw(); }catch(_){} clearBoundary(); clearRoofRef(); panelLayer.clearLayers(); bufferLayer.clearLayers(); resetStats(); LAYOUT=null; setStatus('지웠습니다 — 새 부지를 지정하세요.'); };
     $('sl-btn-run').onclick=runLayout;
@@ -4762,8 +4763,8 @@ const SL = (function(){
       <div class="sl-center">
         <div class="sl-searchbar">
           <input class="tinput" id="sl-addr" placeholder="지번/도로명 검색 (예: 경기도 파주시 문발동 66)" value="${esc(pre)}">
-          <button class="btn dark" id="sl-search">🔎 검색</button>
-          <button class="btn ghost" id="sl-add-parcel" title="검색창의 지번을 현재 부지에 '필지'로 추가 (여러 필지 합산)">➕ 필지 추가</button>
+          <button class="btn dark" id="sl-search" title="새 지번으로 검색 (기존 필지는 지워집니다 · 여러 필지를 넣으려면 ➕ 필지 추가 또는 Enter)">🔎 검색</button>
+          <button class="btn ghost" id="sl-add-parcel" title="검색창의 지번을 현재 부지에 '필지'로 추가 (여러 필지 합산 · Enter 키와 동일)">➕ 필지 추가</button>
           <button class="btn primary" id="sl-btn-run" title="부지에 패널 자동 배치">▦ 패널 배치</button>
         </div>
         <div id="sl-parcels" class="sl-parcels" style="display:none"></div>
