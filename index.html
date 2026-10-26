@@ -7663,19 +7663,21 @@ async function buildLocSatellite(jibun){
   } else { const dLat=120/111000, dLng=120/(111320*Math.cos(geo.lat*Math.PI/180)); lnMin=geo.lng-dLng; lnMax=geo.lng+dLng; laMin=geo.lat-dLat; laMax=geo.lat+dLat; }
   const cLng=(lnMin+lnMax)/2, cLat=(laMin+laMax)/2;
   const spanWX=Math.abs(_wX(lnMax)-_wX(lnMin))||1e-6, spanWY=Math.abs(_wY(laMax)-_wY(laMin))||1e-6;
-  const zx=Math.log2(W*(1-2*pad)/(spanWX*TILE)), zy=Math.log2(H*(1-2*pad)/(spanWY*TILE));
-  let z=Math.floor(Math.min(zx,zy)); z=Math.max(14, Math.min(19, isFinite(z)?z:18));
-  const scale=TILE*Math.pow(2,z), cx=_wX(cLng)*scale, cy=_wY(cLat)*scale, x0=cx-W/2, y0=cy-H/2;
+  const BOOST=1.5;                                   // 필지를 기존보다 1.5배 크게(50% 더 확대)
+  const zx=Math.log2(W*(1-2*pad)*BOOST/(spanWX*TILE)), zy=Math.log2(H*(1-2*pad)*BOOST/(spanWY*TILE));
+  let zF=Math.min(zx,zy); if(!isFinite(zF)) zF=18; zF=Math.max(14, Math.min(21, zF));   // 분수 줌(작은 필지도 확대)
+  const tileZ=Math.max(3, Math.min(19, Math.floor(zF))), upK=Math.pow(2, zF-tileZ), tileSz=TILE*upK;  // 타일은 ≤z19(네이티브), 초과분은 업스케일
+  const scale=TILE*Math.pow(2,zF), cx=_wX(cLng)*scale, cy=_wY(cLat)*scale, x0=cx-W/2, y0=cy-H/2;
   const cv=document.createElement('canvas'); cv.width=W; cv.height=H; const g=cv.getContext('2d');
   g.fillStyle='#9aa39b'; g.fillRect(0,0,W,H); g.imageSmoothingQuality='high';
-  const tx0=Math.floor(x0/TILE), tx1=Math.floor((x0+W)/TILE), ty0=Math.floor(y0/TILE), ty1=Math.floor((y0+H)/TILE), nmax=Math.pow(2,z);
+  const tx0=Math.floor(x0/tileSz), tx1=Math.floor((x0+W)/tileSz), ty0=Math.floor(y0/tileSz), ty1=Math.floor((y0+H)/tileSz), nmax=Math.pow(2,tileZ);
   await new Promise(resolve=>{ let pending=0, fin=false; const done=()=>{ if(fin)return; fin=true; resolve(); };
     for(let tx=tx0;tx<=tx1;tx++)for(let ty=ty0;ty<=ty1;ty++){
       if(tx<0||ty<0||tx>=nmax||ty>=nmax) continue; pending++;
-      const im=new Image(); im.crossOrigin='anonymous'; const dx=tx*TILE-x0, dy=ty*TILE-y0;
-      im.onload=()=>{ try{ g.drawImage(im,dx,dy,TILE,TILE); }catch(e){} if(--pending<=0)done(); };
+      const im=new Image(); im.crossOrigin='anonymous'; const dx=tx*tileSz-x0, dy=ty*tileSz-y0;
+      im.onload=()=>{ try{ g.drawImage(im,dx,dy,tileSz,tileSz); }catch(e){} if(--pending<=0)done(); };
       im.onerror=()=>{ if(--pending<=0)done(); };
-      im.src='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+z+'/'+ty+'/'+tx;
+      im.src='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+tileZ+'/'+ty+'/'+tx;
     }
     if(pending===0) done(); setTimeout(done,12000);
   });
