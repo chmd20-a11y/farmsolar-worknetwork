@@ -6432,6 +6432,23 @@ function renderPermitSiteHelp(d){
   </div>`;
 }
 let _permitAutofillBusy=false;
+// 용도지구 추출용 — 국토계획법 '용도지역' 명칭 집합(이들은 용도지구가 아니므로 제외)
+const PERMIT_USE_AREA=new Set(['도시지역','주거지역','상업지역','공업지역','녹지지역','제1종전용주거지역','제2종전용주거지역','제1종일반주거지역','제2종일반주거지역','제3종일반주거지역','준주거지역','중심상업지역','일반상업지역','근린상업지역','유통상업지역','전용공업지역','일반공업지역','준공업지역','보전녹지지역','생산녹지지역','자연녹지지역','관리지역','보전관리지역','생산관리지역','계획관리지역','농림지역','자연환경보전지역']);
+// 용도지구(다른 법령 등에 따른 지역·지구 '첫' 값) — 토지이음(getLandUseAttr) 목록에서
+//   ① 국토계획법 용도지역 제외 ② 필지에 '접함'(인접만)인 구역 제외(=실제 적용되는 포함/저촉만)
+//   ③ 지정일(registDt) 최신순 첫 값(토지이음 상단 표기 근사). 괄호(날짜·제한) 제거.
+async function apiJigu(pnu, useArea){
+  if(!pnu) return '';
+  const P=_apiBase();
+  try{
+    const j=await fetch(`${P}/ned/data/getLandUseAttr?pnu=${encodeURIComponent(pnu)}&format=json&numOfRows=200&pageNo=1`).then(r=>r.json());
+    let fs=(j&&j.landUses&&j.landUses.field)||[]; if(fs&&!Array.isArray(fs)) fs=[fs];
+    const clean=s=>String(s||'').replace(/\s*\(.*$/,'').trim();
+    const cand=fs.filter(f=>{ const n=clean(f.prposAreaDstrcCodeNm); return n && n!==useArea && !PERMIT_USE_AREA.has(n) && String(f.cnflcAtNm||'')!=='접함'; });
+    cand.sort((a,b)=>String(b.registDt||'').localeCompare(String(a.registDt||'')));
+    return cand.length? clean(cand[0].prposAreaDstrcCodeNm) : '';
+  }catch(e){ return ''; }
+}
 // 공공데이터(브이월드·NSDI) 지번조회로 토지명세서 첫 필지의 '빈 칸만' 자동채움. 소유자는 건드리지 않음(등기부 기준).
 // ★공유 프록시(/req·/ned)·기존 api함수를 읽기전용 재사용 — 타 대시보드 무영향.
 async function permitAutofill(id){
@@ -6455,10 +6472,12 @@ async function permitAutofill(id){
     const vArea=(ch&&ch.area)||'';
     let vZone=(ch&&ch.zone)||'';
     if(!vZone){ try{ vZone=(await apiZone(geo.lat,geo.lng))||''; }catch(_){ } }
-    const t=p.lands[0]||(p.lands[0]={addr:'',jibun:'',jimok:'',area:'',owner:'',ownerAddr:'',zone:''});
+    // 용도지구(다른 법령 등에 따른 지역·지구 첫 값) — 접함(인접)·용도지역 제외 + 지정일 최신순 첫 값
+    let vZone2=''; try{ vZone2=pnu?await apiJigu(pnu,vZone):''; }catch(_){ }
+    const t=p.lands[0]||(p.lands[0]={addr:'',jibun:'',jimok:'',area:'',owner:'',ownerAddr:'',zone:'',zone2:''});
     const set=[];
     const fill=(o,k,v,label)=>{ if(v && !String(o[k]||'').trim()){ o[k]=v; set.push(label); } };
-    fill(t,'addr',vAddr,'소재지'); fill(t,'jibun',vJibun,'지번'); fill(t,'jimok',vJimok,'지목'); fill(t,'area',vArea,'면적'); fill(t,'zone',vZone,'용도지역');
+    fill(t,'addr',vAddr,'소재지'); fill(t,'jibun',vJibun,'지번'); fill(t,'jimok',vJimok,'지목'); fill(t,'area',vArea,'면적'); fill(t,'zone',vZone,'용도지역'); fill(t,'zone2',vZone2,'용도지구');
     // 건물 현장: 건축물대장(건축HUB)으로 건물명세서 첫 동도 자동채움(소유자 제외)
     let bldNote='';
     if(p.installType==='건물' && pnu){
@@ -6491,7 +6510,7 @@ function permitFillTotalArea(id){
   toast('전체면적을 명세서 면적 합계('+Math.round(_tot).toLocaleString()+'㎡)로 채웠습니다 — 필요 시 직접 수정하세요');
 }
 function addPermitRow(id,kind){ const d=DEALS.find(x=>x.id===id); const p=getPermit(d);
-  if(kind==='lands') (p.lands=p.lands||[]).push({addr:'',jibun:'',jimok:'전',area:'',owner:'',ownerAddr:'',zone:''});
+  if(kind==='lands') (p.lands=p.lands||[]).push({addr:'',jibun:'',jimok:'전',area:'',owner:'',ownerAddr:'',zone:'',zone2:''});
   else (p.builds=p.builds||[]).push({addr:'',jibun:'',bldArea:'',div:'',struct:'',use:'',owner:''});
   persistDeal(d); refreshActive(); }
 function delPermitRow(id,kind,i){ const d=DEALS.find(x=>x.id===id); const p=getPermit(d); (p[kind]||[]).splice(i,1); persistDeal(d); refreshActive(); }
@@ -7388,11 +7407,12 @@ function devPermitTokenMap(d){
   const p=resolvePermit(d), eq=p.equip||{};
   const L=(p.lands&&p.lands[0])||{};
   const S=(v)=>(v==null?'':String(v));
+  const firstVal=(v)=>S(v).split(/[,/·]/)[0].replace(/\s*\(.*$/,'').trim();   // 여러 개면 가장 앞 한 개만
   const loc=[S(L.addr),S(L.jibun)].filter(Boolean).join(' ') || S(p.biz.place);
   return {
     '§NAME§':applicantFullName(p), '§FULLNAME§':applicantFullName(p), '§SIGN§':S(p.applicant.name), '§IDNO§':S(p.applicant.idno),
     '§ADDR§':S(p.applicant.addr), '§PHONE§':S(p.applicant.phone), '§DATE§':fmtKDate(permitApplyDate(d)),
-    '§LOC§':loc, '§JIMOK§':S(L.jimok), '§ZONE§':S(L.zone), '§ZONE2§':'',
+    '§LOC§':loc, '§JIMOK§':S(L.jimok), '§ZONE§':firstVal(L.zone), '§ZONE2§':firstVal(L.zone2),
     '§AREA_FAC§':pArea(p.outline.useArea), '§AREA_LAND§':pComma(p.outline.totalArea),
     '§MOD_QTY§':pComma(eq.modQty),
   };
@@ -7452,7 +7472,7 @@ function renderDevPermitBiz(){
       <button class="btn primary sm" onclick="genDevFormsPDF('${d.id}')">📄 개발행위 서류(PDF) 다운로드</button>
       <button class="btn primary sm" onclick="printDevPermit('${d.id}')">📥 개발행위 서류(HWP) 다운로드</button>
     </div>`;
-  const info = `<div class="cred-warn" style="color:var(--ink-2);background:color-mix(in srgb,var(--brand) 9%,transparent);border-color:color-mix(in srgb,var(--brand) 26%,transparent)">🔗 아래 신청정보는 <b>제안서·실계약</b>에서 <b>자동 연동된 읽기전용</b>입니다. 개발행위 <b>신청서·사업계획서</b>의 신청인(성명·주민/법인번호·주소·전화)·위치(지번)·지목·용도지역·신청면적·토지면적·모듈 수량에 자동 기입됩니다. <b>사업기간·용도지구 등 데이터가 없는 항목과 위치도(지도)는 한글에서 직접 기재·삽입</b>하세요.</div>`;
+  const info = `<div class="cred-warn" style="color:var(--ink-2);background:color-mix(in srgb,var(--brand) 9%,transparent);border-color:color-mix(in srgb,var(--brand) 26%,transparent)">🔗 아래 신청정보는 <b>제안서·실계약</b>에서 <b>자동 연동된 읽기전용</b>입니다. 개발행위 <b>신청서·사업계획서</b>의 신청인(성명·주민/법인번호·주소·전화)·위치(지번)·지목·용도지역·용도지구·신청면적·토지면적·모듈 수량에 자동 기입됩니다(지목·용도지역·용도지구는 <b>「🛰 공공데이터로 자동 채우기」</b> 실행 시 토지이음에서 가져옵니다). <b>사업기간 등 데이터가 없는 항목과 위치도(지도)는 한글에서 직접 기재·삽입</b>하세요.</div>`;
   return head + bar + info + renderPermitForm(d,'admin',ADMIN_FORM_FIELDS.dev) + devPermitHandoffFooter(d);
 }
 // 개발행위 사업계획서 — 미리보기 전체 재현(생성본, §토큰§ 치환)
@@ -7478,7 +7498,7 @@ function renderDevPermitPrint(d){
     <div class="pp-sub">(변경) 허가신청 사항</div>
     <table class="pp-t">
       <tr><td class="lbl" style="width:16%">위치(지번)</td><td>${loc}</td><td class="lbl" style="width:12%">지목</td><td class="ctr" style="width:14%">${S(L.jimok)}</td></tr>
-      <tr><td class="lbl">용도지역</td><td>${S(L.zone)}</td><td class="lbl">용도지구</td><td class="ctr"></td></tr>
+      <tr><td class="lbl">용도지역</td><td>${S(L.zone)}</td><td class="lbl">용도지구</td><td>${S(L.zone2)}</td></tr>
     </table>
     <div class="pp-sub">신청내용</div>
     <table class="pp-t">
