@@ -1182,8 +1182,6 @@ button{font-family:inherit;cursor:pointer}
 .sl-chip button:hover{background:#e05b5b;color:#fff}
 /* 지도 */
 .sl-maparea{position:relative;border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow-sm)}
-/* 위성 타일 사이 1px 이음새(가로/세로 줄) 제거 — 네이티브줌 초과 확대 시 타일을 0.5px 겹쳐 틈을 메움 */
-#sl-map .leaflet-tile{width:258px !important;height:258px !important}
 #sl-map,#sl-three{width:100%;height:calc(100vh - 248px);min-height:520px}
 #sl-three{display:none;background:#9fc0e0}
 /* 지도 위: 조작 툴바(경계/지우기/배치/수동배치) */
@@ -4063,7 +4061,7 @@ const SL = (function(){
     if(f && f.geometry){
       const pr=f.properties||{};
       const ly=L.polygon(geomToLatLngs(f.geometry),{color:'#ffd54a',weight:2,fillOpacity:.06}).addTo(map);
-      try{ ly.pm.enable({allowSelfIntersection:false}); }catch(_){}
+      // 지번 검색 필지는 지적도 기준이라 편집점(흰 꼭짓점 마커)을 띄우지 않는다 — 깨끗한 지도. (직접 그린 경계만 편집점 표시)
       if(!append) clearBoundary();
       REGIONS.push({layer:ly, parcel:{addr:pr.addr||'',jibun:pr.jibun||'',pnu:pr.pnu||''}, roadGeom:null});
       fitAllParcels(); renderParcelChips();
