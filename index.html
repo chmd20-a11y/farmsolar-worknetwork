@@ -4196,6 +4196,8 @@ const SL = (function(){
     setStatus('🏠 <b>건물이 보이도록 확대</b>했습니다. 지도에서 <b>건물 지붕 외곽</b>을 꼭짓점으로 클릭해 그리고 <b>마지막 점을 더블클릭</b>하면, 그린 지붕 모양대로 패널이 배치됩니다. <span style="color:var(--muted)">(노란 점선 = 이 주소의 필지 경계 — 어느 건물인지 확인용)</span>');
   }
   function onTypeChange(t){
+    // 완충 경계(안쪽 이격) 기본값 — 노지 2.0m / 지붕 0.5m (타입 바꾸면 해당 기본값으로 세팅, 이후 수동 조절 가능)
+    { const def=(t==='roof')?5:20; const sl=$('sl-o-set'); if(sl) sl.value=def; const lab=$('sl-v-set'); if(lab) lab.textContent=(def/10).toFixed(1)+' m'; S.setback=def/10; }
     if(MANUAL.length) return;                               // 수동 배치 중엔 건드리지 않음
     try{ map&&map.pm&&map.pm.disableDraw(); }catch(e){}
     clearBoundary(); try{ panelLayer.clearLayers(); bufferLayer.clearLayers(); }catch(e){} resetStats(); LAYOUT=null; clearRoofRef();
