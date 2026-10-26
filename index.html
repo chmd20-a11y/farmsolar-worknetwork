@@ -4039,7 +4039,7 @@ const SL = (function(){
   let three=null, view3D=false, sunT=13, _resizeHooked=false;
   let roofRef=null;   // 지붕 모드: 참고용 필지 외곽선(배치엔 미사용)
   const S={type:'ground',tilt:15,az:0,setback:2.0,pitchMode:'auto',pitch:2.5,stack:2,optimize:true,incidence:25};
-  const stackGap=10;              // 적재 모듈 사이 간격(mm)
+  let stackGap=10;                // 적재 모듈 사이 간격(mm) — 2단 간격 슬라이더로 조절
   let lastJibun='';
   const MANUAL=[]; let selId=null, seq=0, manualMode=false, uiLayer=null, svgR=null, erLayer=null, eraser=false, erStart=null, uiOn=false;
 
@@ -4213,6 +4213,8 @@ const SL = (function(){
     S.stack=Math.max(1,Math.min(6,+($('sl-m-stack').value||2)));
     if($('sl-o-pitch')) S.pitch=+($('sl-o-pitch').value||2.5);
     if($('sl-o-inc')) S.incidence=Math.max(10,+($('sl-o-inc').value||25));
+    if($('sl-o-tilt')) S.tilt=Math.max(0,Math.min(40,+($('sl-o-tilt').value||15)));     // 모듈 각도
+    if($('sl-o-gap')) stackGap=Math.max(0,+($('sl-o-gap').value||10));                   // 2단 간격(mm)
   }
   function runLayout(){
     readOpts();
@@ -4825,6 +4827,8 @@ const SL = (function(){
     wireSeg('sl-seg-pitch','p', p=>{ S.pitchMode=p; $('sl-pitch-manual').style.display=(p==='manual')?'block':'none'; if(MANUAL.length) syncM(); });
     $('sl-o-set').oninput=e=>{ $('sl-v-set').textContent=((+e.target.value)/10).toFixed(1)+' m'; };
     { const ic=$('sl-o-inc'); if(ic) ic.oninput=e=>{ S.incidence=Math.max(10,+e.target.value); const b=$('sl-v-inc'); if(b) b.textContent=e.target.value+'°'; if(MANUAL.length) syncM(); }; }
+    { const tl=$('sl-o-tilt'); if(tl) tl.oninput=e=>{ S.tilt=Math.max(0,Math.min(40,+e.target.value)); const b=$('sl-v-tilt'); if(b) b.textContent=e.target.value+'°'; if(MANUAL.length) syncM(); }; }
+    { const gp=$('sl-o-gap'); if(gp) gp.oninput=e=>{ stackGap=Math.max(0,+e.target.value); const b=$('sl-v-gap'); if(b) b.textContent=e.target.value+' mm'; if(MANUAL.length) syncM(); }; }
     $('sl-o-az').oninput=e=>{ const v=+e.target.value; $('sl-v-az').textContent=v===0?'정남':(v<0?'남동 '+(-v)+'°':'남서 '+v+'°'); S.az=v; if(MANUAL.length) syncM(); };
     $('sl-m-stack').oninput=e=>{ $('sl-v-stack').textContent=e.target.value+' 장'; S.stack=+e.target.value; if(MANUAL.length) syncM(); };
     ['sl-m-w','sl-m-h','sl-m-p','sl-m-o'].forEach(id=>{ const el=$(id); if(el) el.addEventListener('input',()=>{ if(MANUAL.length) syncM(); }); });
@@ -4847,7 +4851,8 @@ const SL = (function(){
         <label class="sl-fld">세로 적재 <b id="sl-v-stack">2 장</b><input type="range" id="sl-m-stack" min="1" max="6" value="2"></label>
         <div class="sl-sec mt">⚙️ 배치 옵션</div>
         <div class="sl-seg" id="sl-seg-type"><button data-t="ground" class="on">노지</button><button data-t="roof">지붕</button></div>
-        <div class="sl-note2">기본값 · 모듈각도 15° · 입사각 25° · 2단 간격 10mm</div>
+        <label class="sl-fld">모듈 각도(경사) <b id="sl-v-tilt">15°</b><input type="range" id="sl-o-tilt" min="0" max="35" value="15"></label>
+        <label class="sl-fld">2단 간격(모듈 사이) <b id="sl-v-gap">10 mm</b><input type="range" id="sl-o-gap" min="0" max="100" value="10"></label>
         <label class="sl-fld">완충 경계(안쪽 이격) <b id="sl-v-set">2.0 m</b><input type="range" id="sl-o-set" min="0" max="100" value="20"></label>
         <div class="sl-lbl">패널 방위</div>
         <div class="sl-seg" id="sl-seg-opt"><button data-o="1" class="on">자동<small>형상 최적</small></button><button data-o="0">수동 방위</button></div>
