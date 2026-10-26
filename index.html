@@ -1332,7 +1332,12 @@ button{font-family:inherit;cursor:pointer}
 .suv-pv-paper .fx-ph{height:auto;background:#fff}
 .suv-pv-paper .fx-ph-x{display:none}
 @media(max-width:1180px){ .suv-wrap{grid-template-columns:1fr} .suv-rail{position:static} }
-@media print{ body *{visibility:hidden} .suv-pv-ov,.suv-pv-ov *{visibility:visible} .suv-pv-ov{position:absolute;inset:auto;left:0;top:0;width:100%;background:#fff;padding:0;overflow:visible} .suv-pv-head{display:none} .suv-pv-paper{box-shadow:none;margin:0;max-width:100%;padding:0} }
+/* 첨부서류 일괄 출력(합본) — 서식/첨부를 여러 장(.suv-pv-paper)으로 이어 한 번에 인쇄 */
+.suv-pv-paper + .suv-pv-paper{margin-top:20px}
+.suv-batch-img{display:block;max-width:100%;max-height:250mm;margin:0 auto}
+.suv-batch-missing{padding:38px;text-align:center;color:#c0392b;border:2px dashed #e3b4ad;border-radius:10px;font-weight:600;line-height:1.5}
+.suv-pv-paper .suv-batch-cover td{padding:5px 8px;font-size:12px}
+@media print{ body *{visibility:hidden} .suv-pv-ov,.suv-pv-ov *{visibility:visible} .suv-pv-ov{position:absolute;inset:auto;left:0;top:0;width:100%;background:#fff;padding:0;overflow:visible} .suv-pv-head{display:none} .suv-pv-paper{box-shadow:none;margin:0;max-width:100%;padding:0} body.suv-previewing #suvPvOv .suv-pv-paper + .suv-pv-paper{page-break-before:always;break-before:page} }
 
 </style>
 
@@ -1508,7 +1513,7 @@ button{font-family:inherit;cursor:pointer}
   <div class="modal" style="max-width:860px;width:95vw">
     <div class="modal-head" style="padding-right:52px"><h3>🗂 햇빛소득마을첨부서류함</h3><p id="sunDocBoxHead"></p></div>
     <div class="modal-body scroll" id="sunDocBoxBody" style="max-height:74vh"></div>
-    <div class="modal-foot"><button class="btn ghost" onclick="sunCloseDocBox()">닫기</button></div>
+    <div class="modal-foot"><button class="btn primary" onclick="sunPrintAllDocs()" title="신청전 체크리스트 + 첨부파일 전체를 제출번호 순서로 한 번에 인쇄·PDF 저장합니다(PDF 첨부도 합본)">📦 전체 일괄 출력 (인쇄·PDF)</button><button class="btn ghost" onclick="sunCloseDocBox()">닫기</button></div>
   </div>
 </div>
 
@@ -9425,6 +9430,58 @@ function sunFillDocBox(){
   bd.innerHTML=`<div class="sv-photos" style="margin-top:4px"><div class="sv-report-h">📎 제출서류 첨부 <span class="sv-count">첨부 ${haveN} / ${docs.length}</span></div>
     <div class="sv-ph-note">공고 <b>제출서류목록</b> 전체입니다(앞 번호 = 제출 파일번호). <b>지원신청서·사업계획서·보완계획서</b>는 왼쪽 <b>자동작성 서식</b>에서 만들고, <b>신청전 체크리스트(1번)</b>는 내용이 고정이라 <b>자동 작성(모든 항목 ‘예’)</b>되어 아래에서 바로 미리보기·인쇄할 수 있습니다. 그 외 서류는 작성·서명·날인한 <b>원본을 스캔(PDF/이미지)해 여기에 각각 첨부</b>합니다. ※ 14번 주민등록표 초본은 <b>주민번호 뒷자리를 가려</b> 제출하세요. 마을별로 저장됩니다.</div>
     <div class="sv-dwg-slots">${items}</div></div>`;
+}
+
+/* ===== 첨부서류 일괄 출력 — 신청전 체크리스트(자동) + 첨부파일(4~20)을 제출번호 순서로 한 번에 인쇄·PDF ===== */
+// pdf.js 지연 로드(클릭할 때만) — 평상시 페이지 로딩엔 영향 없음. 실패 시 null 반환(개별 인쇄 폴백).
+const SUN_PDFJS='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+const SUN_PDFJS_WK='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+function sunLoadPdfJs(){ return new Promise((resolve)=>{ if(window.pdfjsLib) return resolve(window.pdfjsLib); const s=document.createElement('script'); s.src=SUN_PDFJS; s.onload=()=>{ try{ if(window.pdfjsLib) window.pdfjsLib.GlobalWorkerOptions.workerSrc=SUN_PDFJS_WK; }catch(e){} resolve(window.pdfjsLib||null); }; s.onerror=()=>resolve(null); document.head.appendChild(s); }); }
+// PDF(dataURL) → 각 페이지 이미지(jpeg dataURL) 배열. 실패 시 null.
+async function sunPdfToImages(dataUrl){
+  const lib=await sunLoadPdfJs(); if(!lib) return null;
+  try{
+    const c=dataUrl.indexOf(','); const bin=atob(dataUrl.slice(c+1)); const arr=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
+    const pdf=await lib.getDocument({data:arr}).promise; const imgs=[];
+    for(let p=1;p<=pdf.numPages;p++){ const page=await pdf.getPage(p); const base=page.getViewport({scale:1}); const scale=Math.min(2.2, 1500/base.width); const vp=page.getViewport({scale}); const cv=document.createElement('canvas'); cv.width=vp.width; cv.height=vp.height; await page.render({canvasContext:cv.getContext('2d'), viewport:vp}).promise; imgs.push(cv.toDataURL('image/jpeg',0.82)); }
+    return imgs;
+  }catch(e){ return null; }
+}
+async function sunPrintAllDocs(){
+  const atts=SUNLIGHT_SUBMIT_DOCS.filter(d=>!d.auto);   // 첨부파일(4~20) — 자동작성 체크리스트 제외
+  const havePdf=atts.some(d=>{ const a=sunAttGet(d.id); return a && ((a.type||'').indexOf('pdf')>=0||/\.pdf$/i.test(a.name||'')); });
+  if(typeof toast==='function') toast(havePdf?'일괄 출력 준비 중… (PDF 변환, 잠시만 기다려 주세요)':'일괄 출력 준비 중…');
+  const pages=[];   // {title, html}
+  // 1) 제출서류 점검표(표지)
+  { const rows=[{no:1,label:'신청전 체크리스트 (서식1)',st:'자동 작성'}].concat(atts.map(d=>({no:d.no,label:d.label,st:sunAttGet(d.id)?'첨부됨':'미첨부'})));
+    const cover='<p style="font-size:11px;color:#555;margin:0 0 10px">※ 지원신청서·사업계획서·보완계획서는 왼쪽 ‘자동작성 서식’에서 개별 인쇄하세요. 아래는 신청전 체크리스트(자동)와 첨부파일 일괄본입니다.</p>'
+      +'<table class="fx-t suv-batch-cover"><colgroup><col style="width:12%"/><col style="width:66%"/><col style="width:22%"/></colgroup>'
+      +'<tr><td class="fx-hd" style="text-align:center">번호</td><td class="fx-hd">제출서류</td><td class="fx-hd" style="text-align:center">상태</td></tr>'
+      +rows.map(r=>'<tr><td style="text-align:center">'+r.no+'</td><td>'+esc(r.label)+'</td><td style="text-align:center;font-weight:700;color:'+(r.st==='미첨부'?'#c0392b':'#0e7c66')+'">'+r.st+'</td></tr>').join('')+'</table>';
+    pages.push({title:'제출서류 일괄 출력 — 점검표 ('+esc(sunCurVillageName())+')', html:cover});
+  }
+  // 2) 신청전 체크리스트 — 모든 항목 '예' 자동
+  { const f=SUNLIGHT_FORMS.find(x=>x.id==='s0'); if(f){ const div=document.createElement('div'); div.innerHTML=sunFormHtml(f);
+      [...div.querySelectorAll('.fx-ck')].forEach((el,i)=>{ if(i%2===0){ el.textContent='■'+el.textContent.slice(1); el.classList.add('on'); } });
+      div.querySelectorAll('.fx-p').forEach(p=>{ const t=(p.textContent||'').trim(); if(/^\d+\./.test(t)) p.classList.add('sun-h1'); else if(/^([가-힣]\.(\s|$)|○|●|■|▪|[①-⑳])/.test(t)) p.classList.add('sun-h'); });
+      div.querySelectorAll('.fx-t td').forEach(td=>{ if(td.classList.contains('fx-hd')||td.querySelector('.fx-ck')) return; if((td.textContent||'').trim()) td.classList.add('sun-lbl'); });
+      pages.push({title:f.title, html:div.innerHTML}); } }
+  // 3) 첨부파일(4~20) — 이미지는 그대로, PDF는 페이지별 이미지로 합본
+  for(const d of atts){ const a=sunAttGet(d.id);
+    if(!a){ pages.push({title:d.no+'. '+d.label, html:'<div class="suv-batch-missing">미첨부 — 제출 전 업로드가 필요합니다.</div>'}); continue; }
+    const isPdf=(a.type||'').indexOf('pdf')>=0||/\.pdf$/i.test(a.name||'');
+    if(isPdf){ const imgs=await sunPdfToImages(a.data);
+      if(imgs && imgs.length) imgs.forEach((u,pi)=>pages.push({title: pi===0?(d.no+'. '+d.label):'', html:'<img class="suv-batch-img" src="'+u+'">'}));
+      else pages.push({title:d.no+'. '+d.label, html:'<div class="suv-batch-missing">PDF 변환에 실패했습니다 — 이 서류는 첨부서류함에서 ‘열기’로 개별 인쇄하세요.<br><embed src="'+a.data+'" type="application/pdf" style="width:100%;height:60vh;border:1px solid #ccc;margin-top:10px"></div>'});
+    } else { pages.push({title:d.no+'. '+d.label, html:'<img class="suv-batch-img" src="'+a.data+'">'}); }
+  }
+  // 오버레이 렌더(여러 장 = 여러 .suv-pv-paper, 장마다 새 페이지)
+  sunClosePreview(); sunCloseDocBox();
+  const ov=document.createElement('div'); ov.className='suv-pv-ov'; ov.id='suvPvOv'; ov.onclick=(e)=>{ if(e.target===ov) sunClosePreview(); };
+  let h='<div class="suv-pv-head"><span class="t">📦 첨부서류 일괄 출력 — '+esc(sunCurVillageName())+'</span><span class="sp"></span><button class="btn ghost sm" onclick="window.print()">🖨 인쇄·PDF</button><button class="btn ghost sm" onclick="sunClosePreview()">✕ 닫기</button></div>';
+  pages.forEach(pg=>{ h+='<div class="suv-pv-paper">'+(pg.title?'<h2>'+esc(pg.title)+'</h2>':'')+pg.html+'</div>'; });
+  ov.innerHTML=h; document.body.appendChild(ov); document.body.style.overflow='hidden'; document.body.classList.add('suv-previewing');
+  sunPvEsc=(e)=>{ if(e.key==='Escape') sunClosePreview(); }; document.addEventListener('keydown',sunPvEsc);
 }
 
 // 칸 바로 뒤에 단위 텍스트(%·명·kW·백만원 등)가 있는데 값에도 같은 단위가 붙어 있으면 중복이므로 제거(예: '95%' + '%' → '95')
