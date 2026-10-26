@@ -1,9 +1,37 @@
 // 팜솔라 업무네트웍 · 행정 — 발전허가증(이미지/PDF)에서 공사 착공·준공 예정일(사업기간)을 Gemini Vision으로 읽어 반환
 //   env:  GEMINI_API_KEY (sunlight-ocr.js와 동일 키)
 //   선택: SUNLIGHT_GEMINI_MODEL (기본 gemini-flash-latest)
+//   [과금 안전장치]
+//     PERMIT_OCR_DISABLED=1      → 기능 즉시 OFF(킬스위치)
+//     PERMIT_OCR_DAILY_CAP=200   → 하루 호출 상한(기본 200). 무료 한도보다 낮게 잡아 과금 선에 닿기 전에 차단
 // 입력: POST { name, mimeType, dataBase64 }  — 파일 1개(이미지/PDF, Vercel 요청 4.5MB 이하)
 // 출력: { start:'YYYY-MM-DD'|'', end:'YYYY-MM-DD'|'', raw }   — 개발행위 신청서 「사업기간」 자동채움용
 const https = require('https');
+
+// 사용량 카운터 저장소 = 프론트와 같은 Supabase(공개 publishable 키 — 이미 HTML에 공개된 값이라 서버에 둬도 안전)
+const SB_URL = 'https://cgthfwlswaohxolgixvv.supabase.co';
+const SB_KEY = 'sb_publishable_8wN2rwb0gQUKI89Z6jwHuQ_BSoJFDRI';
+const USAGE_ID = '__ai_ocr_usage__';
+function sbReq(method, path, body) {
+  return new Promise((resolve) => {
+    const data = body ? JSON.stringify(body) : null;
+    const headers = { apikey: SB_KEY, authorization: 'Bearer ' + SB_KEY };
+    if (data) { headers['content-type'] = 'application/json'; headers['content-length'] = Buffer.byteLength(data); headers['prefer'] = 'resolution=merge-duplicates,return=minimal'; }
+    const rq = https.request(SB_URL + path, { method, headers }, (up) => {
+      const c = []; up.on('data', (x) => c.push(x)); up.on('end', () => resolve({ status: up.statusCode || 0, body: Buffer.concat(c).toString('utf8') }));
+    });
+    rq.on('error', () => resolve({ status: 0, body: '' })); rq.setTimeout(6000, () => rq.destroy());
+    if (data) rq.write(data); rq.end();
+  });
+}
+function kstDay() { return new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10); }
+async function getUsage() {
+  const r = await sbReq('GET', '/rest/v1/fsnet_deals?id=eq.' + USAGE_ID + '&select=data');
+  try { const a = JSON.parse(r.body); return (a && a[0] && a[0].data) || null; } catch (e) { return null; }
+}
+async function setUsage(day, count) {
+  await sbReq('POST', '/rest/v1/fsnet_deals', [{ id: USAGE_ID, data: { day, count } }]);
+}
 
 function geminiMM(key, model, system, parts, timeoutMs) {
   const payload = JSON.stringify({
@@ -52,6 +80,8 @@ function normDate(v) {
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') { res.status(405).json({ error: 'method', message: 'POST only' }); return; }
+  // [안전장치 ③] 킬스위치
+  if (process.env.PERMIT_OCR_DISABLED === '1') { res.status(503).json({ error: 'disabled', message: 'AI 자동읽기가 일시 중지되었습니다 — 착공·준공일을 직접 입력하세요.' }); return; }
   const key = process.env.GEMINI_API_KEY;
   if (!key) { res.status(503).json({ error: 'no_key', message: 'GEMINI_API_KEY 미설정 — 서버 환경변수 등록 필요.' }); return; }
   // 기본 모델 + 과부하 시 폴백 후보(중복 제거). 한 모델이 503이어도 다른 모델로 시도.
@@ -78,6 +108,14 @@ module.exports = async (req, res) => {
       { text: '다음 파일(' + name + ')에서 공사 착공 예정일과 준공 예정일을 찾아 JSON으로 답하세요:' },
       { inlineData: { mimeType, data: dataBase64 } },
     ];
+
+    // [안전장치 ②] 일일 호출 상한 — 무료 한도보다 낮게 잡아 과금 선에 닿기 전에 차단. 호출 "시도" 기준으로 집계.
+    const CAP = parseInt(process.env.PERMIT_OCR_DAILY_CAP || '200', 10) || 200;
+    const today = kstDay();
+    let used = 0;
+    try { const u = await getUsage(); if (u && u.day === today) used = u.count || 0; } catch (e) {}
+    if (used >= CAP) { res.status(429).json({ error: 'daily_cap', cap: CAP, message: '오늘 AI 자동읽기 한도(' + CAP + '회)에 도달했습니다 — 착공·준공일을 직접 입력하세요.' }); return; }
+    try { await setUsage(today, used + 1); } catch (e) {}   // 베스트에포트(실패해도 호출은 진행)
 
     const r = await geminiTryModels(key, models, system, parts);
     if (r.status >= 400) { res.status(502).json({ error: 'upstream', status: r.status, message: String(r.body || '').slice(0, 500) }); return; }

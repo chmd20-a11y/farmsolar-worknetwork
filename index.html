@@ -7051,7 +7051,11 @@ async function devPermitOcr(id,opt){ opt=opt||{};
       if(imgs&&imgs[0]){ mimeType=(imgs[0].match(/^data:([^;]+)/)||[])[1]||'image/jpeg'; b64=imgs[0].split(',')[1]||''; }
     }
     const resp=await fetch('/api/permit-date-ocr',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:rec.name||'발전허가증',mimeType,dataBase64:b64})});
-    if(!resp.ok) throw new Error('server '+resp.status);
+    if(!resp.ok){
+      let em=''; try{ const ej=await resp.json(); em=(ej&&ej.message)||''; }catch(_){}
+      if(resp.status===429||resp.status===503){ OCR_STATE[id]='capped'; permitDocsRefresh(); toast(em||'오늘 AI 자동읽기 한도에 도달했습니다 — 착공·준공일을 직접 입력하세요'); return; }
+      throw new Error('server '+resp.status);
+    }
     const jj=await resp.json();
     let start=_isoDate(jj.start), end=_isoDate(jj.end);
     if(!start&&!end&&jj.raw){ const fb=extractDates(jj.raw); start=fb.start; end=fb.end; }   // 서버가 못 집으면 평문에서 보조 추출
@@ -7121,6 +7125,7 @@ function renderPermitDocs(d){
       ? '<span class="doc-badge" style="background:color-mix(in srgb,#b8860b 16%,transparent);color:#9a6f16">⏳ 발전허가증에서 날짜 읽는 중…</span>'
       : isDraft ? '<span class="doc-badge" style="background:color-mix(in srgb,#b8860b 18%,transparent);color:#9a6f16">🤖 AI가 읽은 초안 · 확인·수정하세요</span>'
       : ocrSt==='empty' ? '<span class="doc-badge" style="background:color-mix(in srgb,var(--ink-3) 14%,transparent)">날짜를 못 찾음 · 직접 입력</span>'
+      : ocrSt==='capped' ? '<span class="doc-badge" style="background:color-mix(in srgb,#9a6f16 14%,transparent);color:#9a6f16">오늘 자동읽기 한도 도달 · 직접 입력</span>'
       : ocrSt==='error' ? '<span class="doc-badge" style="background:color-mix(in srgb,#c0392b 14%,transparent);color:#c0392b">읽기 실패 · 직접 입력</span>' : '';
   const hi = isDraft?'border:1.5px solid #b8860b;':'border:1px solid var(--border);';
   const dIn=(w,v)=>`<input type="date" value="${esc(v||'')}" onchange="devPeriodSet('${d.id}','${w}',this.value)" style="font:inherit;padding:4px 7px;${hi}border-radius:6px;background:var(--surface);color:var(--ink)">`;
