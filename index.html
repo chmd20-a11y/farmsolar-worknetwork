@@ -1171,11 +1171,19 @@ button{font-family:inherit;cursor:pointer}
 .sl-lbl{font-size:12px;font-weight:700;color:var(--ink-2);margin:2px 0 7px}
 .sl-note2{font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 11px;margin-bottom:13px;line-height:1.5}
 /* 상단 검색바 */
-.sl-searchbar{display:flex;gap:9px;align-items:center;margin-bottom:12px}
+.sl-searchbar{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-bottom:12px}
 .sl-searchbar .tinput{flex:1;min-width:0}
 .sl-searchbar .btn{flex:none;white-space:nowrap}
+/* 여러 필지 칩(지번 추가) */
+.sl-parcels{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 12px}
+.sl-chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:3px 6px 3px 11px;font-size:12px;color:var(--text)}
+.sl-chip b{color:var(--brand);font-weight:700}
+.sl-chip button{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:12px;line-height:1;padding:3px 5px;border-radius:50%}
+.sl-chip button:hover{background:#e05b5b;color:#fff}
 /* 지도 */
 .sl-maparea{position:relative;border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow-sm)}
+/* 위성 타일 사이 1px 이음새(가로/세로 줄) 제거 — 네이티브줌 초과 확대 시 타일을 0.5px 겹쳐 틈을 메움 */
+#sl-map .leaflet-tile{width:256.5px !important;height:256.5px !important}
 #sl-map,#sl-three{width:100%;height:calc(100vh - 248px);min-height:520px}
 #sl-three{display:none;background:#9fc0e0}
 /* 지도 위: 조작 툴바(경계/지우기/배치/수동배치) */
@@ -4022,7 +4030,7 @@ const SL = (function(){
     map=L.map('sl-map',{preferCanvas:true, zoomControl:false}).setView([37.75,126.78],9);
     L.control.zoom({position:'bottomright'}).addTo(map);
     const bases=tileLayers(), bk=Object.keys(bases);
-    satGroup=bases[bk[0]].addTo(map);                                   // 기본 = 위성 + 지명
+    satGroup=(bases['위성 (글로벌)']||bases[bk[0]]).addTo(map);         // 기본 = 위성 (글로벌)
     L.control.layers(bases, null, {position:'topright', collapsed:true}).addTo(map);   // 🗺️ 지도 선택
     if(!_resizeHooked){ _resizeHooked=true; addEventListener('resize',()=>{ if(map && !view3D){ try{ map.invalidateSize(); }catch(e){} } }); }
     cr=L.canvas({padding:0.5});
@@ -4031,10 +4039,10 @@ const SL = (function(){
     uiLayer=L.layerGroup(); svgR=L.svg({padding:0.5}); erLayer=L.layerGroup();
     // geoman 경계 그리기
     map.on('pm:create', e=>{ clearBoundary(); const ly=e.layer; try{ ly.pm.enable({allowSelfIntersection:false}); }catch(_){}
-      REGIONS=[{layer:ly, parcel:null, roadGeom:null}]; try{ map.pm.disableDraw(); }catch(_){} setStatus('✏️ 경계를 그렸습니다 — <b>배치</b>를 눌러 패널을 채웁니다.'); runLayout(); });
+      REGIONS=[{layer:ly, parcel:null, roadGeom:null}]; try{ map.pm.disableDraw(); }catch(_){} try{ renderParcelChips(); }catch(_){} setStatus('✏️ 경계를 그렸습니다 — <b>배치</b>를 눌러 패널을 채웁니다.'); runLayout(); });
     map.on('click', ()=>{ if(manualMode && selId!=null){ selId=null; syncM(); } });
   }
-  function clearBoundary(){ REGIONS.forEach(r=>{ try{ map.removeLayer(r.layer); }catch(_){} }); REGIONS=[]; }
+  function clearBoundary(){ REGIONS.forEach(r=>{ try{ map.removeLayer(r.layer); }catch(_){} }); REGIONS=[]; try{ renderParcelChips(); }catch(_){} }
 
   // ---------- 지번 검색 + 필지 ----------
   async function fetchParcelPolygon(lng,lat){
@@ -4042,26 +4050,52 @@ const SL = (function(){
     const url=`${base()}/req/data?service=data&request=GetFeature&data=LP_PA_CBND_BUBUN&domain=${dom}&format=json&crs=EPSG:4326&geometry=true&attribute=true&size=1&geomFilter=${encodeURIComponent('POINT('+lng+' '+lat+')')}`;
     try{ const j=await fetch(url).then(r=>r.json()); const fc=j&&j.response&&j.response.result&&j.response.result.featureCollection; return (fc&&fc.features&&fc.features.length)?fc.features[0]:null; }catch(e){ return null; }
   }
-  async function doSearch(){
-    const inp=$('sl-addr'); const addr=(inp&&inp.value||'').trim(); if(!addr){ setStatus('지번/도로명을 입력하세요.'); return; }
-    lastJibun=addr; setStatus('🔎 주소 검색 중…');
+  // 🔎 검색 = 기존 필지를 지우고 새로 / ➕ 필지 추가 = 현재 부지에 누적(여러 필지). 배치 엔진이 면적·용량을 합산한다.
+  async function doSearch(){ return _searchParcel(false); }
+  async function addParcel(){ return _searchParcel(true); }
+  async function _searchParcel(append){
+    const inp=$('sl-addr'); const addr=(inp&&inp.value||'').trim();
+    if(!addr){ setStatus(append?'추가할 지번/도로명을 입력하세요.':'지번/도로명을 입력하세요.'); return; }
+    lastJibun=addr; setStatus(append?'➕ 필지 추가 — 주소 검색 중…':'🔎 주소 검색 중…');
     let pt=null; try{ pt=await apiGeocode(addr); }catch(e){ setStatus(e&&e.message==='key'?'⚠️ VWorld 인증키 오류 — 키/도메인 등록을 확인하세요.':'⚠️ 지도 서버에 연결하지 못했습니다(배포·키 설정 후 가능).'); return; }
     if(!pt){ setStatus('⚠️ 주소를 찾지 못했습니다 — 지번/도로명을 확인하세요.'); return; }
-    if(S.type==='roof'){ await roofSearch(pt); return; }
+    if(S.type==='roof'){ await roofSearch(pt); return; }   // 지붕 모드는 지붕을 직접 그려 배치(다필지 대상 아님)
     const f=await fetchParcelPolygon(pt.lng,pt.lat);
     if(f && f.geometry){
-      let gj; try{ gj=turf.feature(f.geometry); }catch(e){ gj=null; }
       const pr=f.properties||{};
       const ly=L.polygon(geomToLatLngs(f.geometry),{color:'#ffd54a',weight:2,fillOpacity:.06}).addTo(map);
       try{ ly.pm.enable({allowSelfIntersection:false}); }catch(_){}
-      clearBoundary(); REGIONS=[{layer:ly, parcel:{addr:pr.addr||'',jibun:pr.jibun||'',pnu:pr.pnu||''}, roadGeom:null}];
-      try{ map.fitBounds(ly.getBounds().pad(0.3)); }catch(e){ map.setView([pt.lat,pt.lng],18); }
-      setStatus(`✅ <b>${esc(pr.addr||pr.jibun||addr)}</b> 필지 로드 — <b>배치</b>를 눌러 패널을 채웁니다.`);
+      if(!append) clearBoundary();
+      REGIONS.push({layer:ly, parcel:{addr:pr.addr||'',jibun:pr.jibun||'',pnu:pr.pnu||''}, roadGeom:null});
+      fitAllParcels(); renderParcelChips();
+      if(inp && append) inp.value='';                      // 추가 후 다음 지번 입력 편하도록 비움
+      const n=REGIONS.length;
+      setStatus(n>1 ? `✅ <b>${n}개 필지</b> 로드 (면적·용량 합산) — <b>패널 배치</b>로 채웁니다.` : `✅ <b>${esc(pr.addr||pr.jibun||addr)}</b> 필지 로드 — <b>패널 배치</b>로 채웁니다.`);
       runLayout();
     } else {
-      map.setView([pt.lat,pt.lng],18);
+      if(!append){ clearBoundary(); map.setView([pt.lat,pt.lng],18); }
       setStatus('필지 경계를 찾지 못했습니다 — <b>경계</b> 버튼으로 직접 그려 주세요.');
     }
+  }
+  // 로드된 모든 필지가 한 화면에 들어오도록 지도 이동
+  function fitAllParcels(){ try{ if(!REGIONS.length) return; const g=L.featureGroup(REGIONS.map(r=>r.layer)); map.fitBounds(g.getBounds().pad(0.3)); }catch(e){} }
+  // 현재 필지 목록을 칩으로 표시(①②③ + 개별 ✕ 제거)
+  function renderParcelChips(){
+    const box=$('sl-parcels'); if(!box) return;
+    if(!REGIONS.length){ box.innerHTML=''; box.style.display='none'; return; }
+    box.style.display='flex';
+    box.innerHTML = REGIONS.map((r,i)=>{
+      const lbl=(r.parcel&&(r.parcel.jibun||r.parcel.addr))||'직접 그린 경계';
+      return `<span class="sl-chip"><b>${i+1}</b> ${esc(lbl)}<button type="button" data-ri="${i}" title="이 필지 제거">✕</button></span>`;
+    }).join('');
+  }
+  // 칩 ✕ — 해당 필지만 제거하고 다시 배치
+  function removeParcel(i){
+    const r=REGIONS[i]; if(!r) return;
+    try{ map.removeLayer(r.layer); }catch(_){}
+    REGIONS.splice(i,1); renderParcelChips();
+    if(REGIONS.length){ fitAllParcels(); runLayout(); }
+    else { try{ panelLayer.clearLayers(); bufferLayer.clearLayers(); }catch(_){} resetStats(); LAYOUT=null; setStatus('모든 필지를 제거했습니다 — 지번을 검색하세요.'); }
   }
 
   // ---------- 지붕 모드: 위성에서 건물 지붕을 직접 그려 배치 ----------
@@ -4673,6 +4707,8 @@ const SL = (function(){
   function wireSeg(wrapId, attr, cb){ const w=$(wrapId); if(!w)return; w.querySelectorAll('button').forEach(btn=>btn.onclick=()=>{ w.querySelectorAll('button').forEach(x=>x.classList.remove('on')); btn.classList.add('on'); cb(btn.dataset[attr]); }); }
   function wire(){
     $('sl-search').onclick=doSearch;
+    { const ap=$('sl-add-parcel'); if(ap) ap.onclick=addParcel; }
+    { const pc=$('sl-parcels'); if(pc) pc.onclick=e=>{ const b=e.target.closest('button[data-ri]'); if(b) removeParcel(+b.dataset.ri); }; }
     const ai=$('sl-addr'); if(ai) ai.onkeydown=e=>{ if(e.key==='Enter') doSearch(); };
     $('sl-btn-draw').onclick=()=>{ try{ map.pm.enableDraw('Polygon',{snappable:true,finishOn:'dblclick'}); setStatus('✏️ 지도에서 꼭짓점을 클릭해 부지를 그리고, 마지막 점을 더블클릭하세요.'); }catch(e){ setStatus('그리기를 시작할 수 없습니다.'); } };
     $('sl-btn-clear').onclick=()=>{ try{ map.pm.disableDraw(); }catch(_){} clearBoundary(); clearRoofRef(); panelLayer.clearLayers(); bufferLayer.clearLayers(); resetStats(); LAYOUT=null; setStatus('지웠습니다 — 새 부지를 지정하세요.'); };
@@ -4727,8 +4763,10 @@ const SL = (function(){
         <div class="sl-searchbar">
           <input class="tinput" id="sl-addr" placeholder="지번/도로명 검색 (예: 경기도 파주시 문발동 66)" value="${esc(pre)}">
           <button class="btn dark" id="sl-search">🔎 검색</button>
+          <button class="btn ghost" id="sl-add-parcel" title="검색창의 지번을 현재 부지에 '필지'로 추가 (여러 필지 합산)">➕ 필지 추가</button>
           <button class="btn primary" id="sl-btn-run" title="부지에 패널 자동 배치">▦ 패널 배치</button>
         </div>
+        <div id="sl-parcels" class="sl-parcels" style="display:none"></div>
         <div class="sl-maparea">
           <div id="sl-map"></div><div id="sl-three"></div>
           <div id="sl-viewtoggle"><button id="sl-v2d" class="on">🗺️ 2D</button><button id="sl-v3d">🧊 3D</button></div>
