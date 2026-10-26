@@ -6980,7 +6980,8 @@ function permitDocUpload(id,key,file){
   const isImg=/^image\//.test(file.type||'')||/\.(jpe?g|png|gif|webp|bmp|heic|heif)$/.test(nm);
   if(!isPdf&&!isImg){ toast('이미지 또는 PDF 파일만 업로드할 수 있습니다'); return; }
   if(file.size>10*1024*1024){ toast('파일이 너무 큽니다 (10MB 이하로 올려주세요)'); return; }
-  const done=()=>{ persistDeal(d); toast(isPdf?'첨부했습니다 — 출력 시 “열기”로 PDF를 함께 제출하세요':'첨부했습니다 — 출력물 자리에 자동 삽입됩니다'); permitDocsRefresh(); };
+  const done=()=>{ persistDeal(d); toast(isPdf?'첨부했습니다 — 출력 시 “열기”로 PDF를 함께 제출하세요':'첨부했습니다 — 출력물 자리에 자동 삽입됩니다'); permitDocsRefresh();
+    if(key==='발전허가증'){ setTimeout(()=>{ try{ devPermitOcr(id,{auto:true}); }catch(_){} }, 200); } };   // 발전허가증 첨부 즉시 착공·준공일 자동 읽기
   // 최종 blob(mime) 확정 → R2 가동 시 R2 업로드(url 저장), 미가동/실패 시 base64 저장(폴백)
   const finalize=(blob,mime)=>{ r2UploadFile(new File([blob],file.name,{type:mime}),{owner:id,part:'행정',docKey:key}).then(r2=>{
     if(r2){ p.docs[key]={attached:true, at:new Date().toLocaleString('ko-KR'), r2_key:r2.r2_key, url:r2.url, name:file.name, mime:mime, size:r2.size}; done(); return; }
@@ -7004,8 +7005,65 @@ function permitDocOpen(id,key){ const d=DEALS.find(x=>x.id===id); if(!d) return;
   catch(e){ window.open(rec.dataUrl,'_blank'); } }
 // 발전허가증 착공·준공일 저장 — 개발행위(변경) 허가신청서 「사업기간」(§START§/§END§)에 자동 반영
 function devPeriodSet(id,which,val){ const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d);
-  p.devPeriod=p.devPeriod||{}; p.devPeriod[which]=val||''; persistDeal(d);
+  p.devPeriod=p.devPeriod||{}; p.devPeriod[which]=val||''; p.devPeriod.ocr=false;   // 사람이 직접 확인·수정 → AI 초안 표시 해제
+  persistDeal(d);
   toast((which==='start'?'착공일':'준공일')+'을 저장했습니다 — 개발행위 신청서 「사업기간」에 반영됩니다'); permitDocsRefresh(); }
+
+/* ===== 발전허가증 OCR — 첨부파일을 Gemini Vision(서버 /api/permit-date-ocr)로 읽어 착공·준공일 초안 채움 ===== */
+const OCR_STATE={};   // {dealId: 'reading'|'done'|'empty'|'error'} — 화면 표시용(저장 안 함)
+// 백업용: OCR 평문에서 날짜 추출(서버가 날짜를 못 집어낸 경우만 보조) — 'YYYY년 M월 D일' / 'YYYY.M.D' + 착공/준공 근접
+function extractDates(text){
+  const t=String(text||'').replace(/[·・]/g,'.').replace(/[ \t]+/g,' ');
+  const found=[];
+  const push=(y,m,dd,idx)=>{ y=+y;m=+m;dd=+dd; if(y>=2000&&y<=2100&&m>=1&&m<=12&&dd>=1&&dd<=31) found.push({iso:y+'-'+String(m).padStart(2,'0')+'-'+String(dd).padStart(2,'0'), idx}); };
+  let re,m;
+  re=/(\d{4})\s*년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*일/g; while((m=re.exec(t))) push(m[1],m[2],m[3],m.index);
+  re=/(\d{4})\s*[.\-\/]\s*(\d{1,2})\s*[.\-\/]\s*(\d{1,2})/g; while((m=re.exec(t))) push(m[1],m[2],m[3],m.index);
+  found.sort((a,b)=>a.idx-b.idx);
+  const seen={}, uniq=[]; for(const f of found){ if(!(f.iso in seen)){ seen[f.iso]=1; uniq.push(f); } }
+  const near=(kw)=>{ const ki=t.indexOf(kw); if(ki<0) return null; let best=null,bd=1e9;
+    for(const f of uniq){ const dist=f.idx-ki; if(dist>=-6&&dist<90&&dist<bd){ bd=dist; best=f; } } return best?best.iso:null; };
+  let start=near('착공'), end=near('준공');
+  if(!start&&!end&&uniq.length>=2){ start=uniq[0].iso; end=uniq[1].iso; }
+  else { if(!start&&uniq.length>=1) start=uniq[0].iso; if(!end&&uniq.length>=2) end=uniq[uniq.length-1].iso; }
+  if(start&&end&&start>end){ const x=start; start=end; end=x; }
+  return {start,end};
+}
+const _isoDate=(v)=>{ const m=/^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(String(v||'').trim()); if(!m) return ''; const y=+m[1],mo=+m[2],dd=+m[3]; return (y>=2000&&y<=2100&&mo>=1&&mo<=12&&dd>=1&&dd<=31)?(y+'-'+String(mo).padStart(2,'0')+'-'+String(dd).padStart(2,'0')):''; };
+// 발전허가증(이미지/PDF) → Gemini Vision → 착공·준공일 초안 채움. auto=첨부 직후 자동 호출
+async function devPermitOcr(id,opt){ opt=opt||{};
+  const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d);
+  const rec=p.docs&&p.docs['발전허가증']; const src=rec&&docSrc(rec);
+  if(!src){ if(!opt.auto) toast('먼저 발전허가증 파일을 첨부하세요'); return; }
+  if(OCR_STATE[id]==='reading') return;   // 중복 실행 방지
+  OCR_STATE[id]='reading'; permitDocsRefresh();
+  toast('발전허가증에서 착공·준공일을 읽는 중…');
+  try{
+    let dataUrl=rec.dataUrl||'';
+    if(!dataUrl&&rec.url){ try{ const r=await fetch(rec.url); const b=await r.blob(); dataUrl=await new Promise(rs=>{ const fr=new FileReader(); fr.onload=()=>rs(fr.result); fr.onerror=()=>rs(''); fr.readAsDataURL(b); }); }catch(_){} }
+    if(!dataUrl) throw new Error('파일을 읽지 못했습니다');
+    let mimeType=(dataUrl.match(/^data:([^;]+)/)||[])[1]||rec.mime||'';
+    let b64=dataUrl.split(',')[1]||'';
+    const isPdf=/pdf/i.test(mimeType)||/\.pdf$/i.test(rec.name||'');
+    // PDF가 크면(요청 4.5MB 제한) 1페이지만 이미지로 변환해 전송
+    if(isPdf && b64.length>3.4*1024*1024){
+      const imgs=await sunPdfToImages(dataUrl);
+      if(imgs&&imgs[0]){ mimeType=(imgs[0].match(/^data:([^;]+)/)||[])[1]||'image/jpeg'; b64=imgs[0].split(',')[1]||''; }
+    }
+    const resp=await fetch('/api/permit-date-ocr',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:rec.name||'발전허가증',mimeType,dataBase64:b64})});
+    if(!resp.ok) throw new Error('server '+resp.status);
+    const jj=await resp.json();
+    let start=_isoDate(jj.start), end=_isoDate(jj.end);
+    if(!start&&!end&&jj.raw){ const fb=extractDates(jj.raw); start=fb.start; end=fb.end; }   // 서버가 못 집으면 평문에서 보조 추출
+    if(!start&&!end){ OCR_STATE[id]='empty'; permitDocsRefresh(); toast('날짜를 찾지 못했습니다 — 착공·준공일을 직접 입력해 주세요'); return; }
+    p.devPeriod=p.devPeriod||{};
+    if(start) p.devPeriod.start=start;
+    if(end) p.devPeriod.end=end;
+    p.devPeriod.ocr=true;   // AI 초안(확인 필요) 표시
+    OCR_STATE[id]='done'; persistDeal(d); permitDocsRefresh();
+    toast('읽은 날짜를 채웠습니다 — 값이 맞는지 확인하고, 틀리면 수정하세요');
+  }catch(e){ OCR_STATE[id]='error'; permitDocsRefresh(); toast('날짜 읽기에 실패했습니다 — 착공·준공일을 직접 입력해 주세요'); }
+}
 function renderPermitDocs(d){
   const p=getPermit(d), isBld=p.installType==='건물';
   const need = PERMIT_DOCS.filter(x=> isBld?x.bld:x.land);
@@ -7058,15 +7116,24 @@ function renderPermitDocs(d){
        <button class="btn ghost sm" onclick="permitDocRemove('${d.id}','${dpKey}')">첨부 취소</button>`
     : `<button class="btn dark sm" onclick="permitDocPick('${d.id}','${dpKey}')">📎 파일 업로드</button>`;
   const dpBadge = dpFile?`<span class="doc-badge" style="background:color-mix(in srgb,#2e8b63 16%,transparent);color:#2e8b63">${dpIsPdf?'📄 PDF':'🖼 이미지'} 첨부 · ${esc(dpFile.at||'')}</span>`:'';
-  const dIn=(w,v)=>`<input type="date" value="${esc(v||'')}" onchange="devPeriodSet('${d.id}','${w}',this.value)" style="font:inherit;padding:4px 7px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--ink)">`;
+  const ocrSt=OCR_STATE[d.id]||'', isDraft=!!per.ocr;
+  const ocrBadge = ocrSt==='reading'
+      ? '<span class="doc-badge" style="background:color-mix(in srgb,#b8860b 16%,transparent);color:#9a6f16">⏳ 발전허가증에서 날짜 읽는 중…</span>'
+      : isDraft ? '<span class="doc-badge" style="background:color-mix(in srgb,#b8860b 18%,transparent);color:#9a6f16">🤖 AI가 읽은 초안 · 확인·수정하세요</span>'
+      : ocrSt==='empty' ? '<span class="doc-badge" style="background:color-mix(in srgb,var(--ink-3) 14%,transparent)">날짜를 못 찾음 · 직접 입력</span>'
+      : ocrSt==='error' ? '<span class="doc-badge" style="background:color-mix(in srgb,#c0392b 14%,transparent);color:#c0392b">읽기 실패 · 직접 입력</span>' : '';
+  const hi = isDraft?'border:1.5px solid #b8860b;':'border:1px solid var(--border);';
+  const dIn=(w,v)=>`<input type="date" value="${esc(v||'')}" onchange="devPeriodSet('${d.id}','${w}',this.value)" style="font:inherit;padding:4px 7px;${hi}border-radius:6px;background:var(--surface);color:var(--ink)">`;
+  const reReadBtn = dpFile?`<button class="btn ghost sm" ${ocrSt==='reading'?'disabled':''} onclick="devPermitOcr('${d.id}')">${ocrSt==='reading'?'⏳ 읽는 중…':'📷 날짜 다시 읽기'}</button>`:'';
   const devPermitBlock = `<div class="doc-item" style="border-top:2px dashed var(--border);margin-top:10px;padding-top:12px">
       <div class="doc-ck" style="cursor:default" title="${dpFile?'첨부됨':'미첨부'}">${dpFile?'✓':''}</div>
       <div class="doc-b">
-        <div class="doc-t">발전허가증 <span class="doc-badge">허가관청 교부</span>${dpBadge}</div>
-        <div class="doc-g">발전사업 허가 후 교부받은 <b>발전허가증</b>을 첨부하고, 허가증에 적힌 <b>착공·준공 예정일</b>을 입력하세요 — <b>개발행위(변경) 허가신청서</b>의 「사업기간」에 자동으로 채워집니다.</div>
+        <div class="doc-t">발전허가증 <span class="doc-badge">허가관청 교부</span>${dpBadge}${ocrBadge}</div>
+        <div class="doc-g">발전사업 허가 후 교부받은 <b>발전허가증</b>을 첨부하면, <b>AI가 허가증 속 착공·준공 예정일을 자동으로 읽어 아래에 채웁니다</b>. <b>값이 맞는지 확인하고 틀리면 직접 수정</b>하세요 — 확정값이 <b>개발행위(변경) 허가신청서</b>의 「사업기간」에 반영됩니다.</div>
         <div class="doc-act" style="align-items:center;gap:12px;flex-wrap:wrap">
           <label class="lr-s" style="display:flex;align-items:center;gap:6px;font-weight:600">착공일 ${dIn('start',per.start)}</label>
           <label class="lr-s" style="display:flex;align-items:center;gap:6px;font-weight:600">준공일 ${dIn('end',per.end)}</label>
+          ${reReadBtn}
           ${dpActions}
         </div>
       </div></div>`;
