@@ -1174,6 +1174,12 @@ button{font-family:inherit;cursor:pointer}
 .sl-searchbar{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-bottom:12px}
 .sl-searchbar .tinput{flex:1;min-width:0}
 .sl-searchbar .btn{flex:none;white-space:nowrap}
+/* 필지 추가 모드 시각 표시 — ➕ 누르면 검색창·버튼 초록 강조 + 안내문구 */
+#sl-add-parcel.on{background:#2e8b63;border-color:#2e8b63;color:#fff;box-shadow:0 0 0 3px rgba(46,139,99,.25)}
+#sl-add-parcel.on:hover{background:#287a57}
+.sl-searchbar .tinput.sl-add-on{border-color:#2e8b63;box-shadow:0 0 0 3px rgba(46,139,99,.18)}
+.sl-addhint{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin:-4px 0 12px;padding:8px 12px;font-size:12.5px;line-height:1.5;color:#2e8b63;background:rgba(46,139,99,.10);border:1px solid rgba(46,139,99,.32);border-radius:8px}
+.sl-addhint b{font-weight:700}
 /* 여러 필지 칩(지번 추가) */
 .sl-parcels{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 12px}
 .sl-chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:3px 6px 3px 11px;font-size:12px;color:var(--text)}
@@ -3962,6 +3968,7 @@ const SL = (function(){
   // ---------- 상태 ----------
   let map=null, cr=null, panelLayer=null, bufferLayer=null, satGroup=null, pmOn=false;
   let REGIONS=[];                 // [{layer, parcel, roadGeom}]
+  let slAddMode=false;            // '필지 추가 모드'(시각 표시) — ➕ 또는 필지 보유 시 ON
   let LAYOUT=null;                // 배치 결과(중심 객체)
   let three=null, view3D=false, sunT=13, _resizeHooked=false;
   let roofRef=null;   // 지붕 모드: 참고용 필지 외곽선(배치엔 미사용)
@@ -4051,7 +4058,16 @@ const SL = (function(){
   }
   // 🔎 검색 = 기존 필지를 지우고 새로 / ➕ 필지 추가 = 현재 부지에 누적(여러 필지). 배치 엔진이 면적·용량을 합산한다.
   async function doSearch(){ return _searchParcel(false); }
-  async function addParcel(){ return _searchParcel(true); }
+  async function addParcel(){ setAddMode(true); return _searchParcel(true); }   // ➕ 클릭 즉시 '추가 모드' 시각 표시
+  // '필지 추가 모드' 시각 표시 토글 — 검색창 초록 강조+포커스, ➕버튼 활성, 안내문구 표시
+  function setAddMode(on){ slAddMode=!!on;
+    const ap=$('sl-add-parcel'), ai=$('sl-addr'), ht=$('sl-addhint');
+    if(ap) ap.classList.toggle('on', slAddMode);
+    if(ai){ ai.classList.toggle('sl-add-on', slAddMode);
+      ai.placeholder = slAddMode ? '추가할 지번 입력 후 Enter — 여러 필지 연속 추가' : '지번/도로명 검색 (예: 경기도 파주시 문발동 66)';
+      if(slAddMode){ try{ ai.focus(); }catch(_){} } }
+    if(ht) ht.style.display = slAddMode ? 'flex' : 'none';
+  }
   async function _searchParcel(append){
     const inp=$('sl-addr'); const addr=(inp&&inp.value||'').trim();
     if(!addr){ setStatus(append?'추가할 지번/도로명을 입력하세요.':'지번/도로명을 입력하세요.'); return; }
@@ -4070,6 +4086,7 @@ const SL = (function(){
       if(inp && append) inp.value='';                      // 추가 후 다음 지번 입력 편하도록 비움
       const n=REGIONS.length;
       setStatus(n>1 ? `✅ <b>${n}개 필지</b> 로드 (면적·용량 합산) — <b>패널 배치</b>로 채웁니다.` : `✅ <b>${esc(pr.addr||pr.jibun||addr)}</b> 필지 로드 — <b>패널 배치</b>로 채웁니다.`);
+      setAddMode(REGIONS.length>0);   // 필지가 생겼으면 '추가 모드' 유지(지번 더 넣으면 계속 추가됨을 시각 표시)
       runLayout();
     } else {
       if(!append){ clearBoundary(); map.setView([pt.lat,pt.lng],18); }
@@ -4094,7 +4111,7 @@ const SL = (function(){
     try{ map.removeLayer(r.layer); }catch(_){}
     REGIONS.splice(i,1); renderParcelChips();
     if(REGIONS.length){ fitAllParcels(); runLayout(); }
-    else { try{ panelLayer.clearLayers(); bufferLayer.clearLayers(); }catch(_){} resetStats(); LAYOUT=null; setStatus('모든 필지를 제거했습니다 — 지번을 검색하세요.'); }
+    else { try{ panelLayer.clearLayers(); bufferLayer.clearLayers(); }catch(_){} resetStats(); LAYOUT=null; setAddMode(false); setStatus('모든 필지를 제거했습니다 — 지번을 검색하세요.'); }
   }
 
   // ---------- 지붕 모드: 위성에서 건물 지붕을 직접 그려 배치 ----------
@@ -4724,7 +4741,7 @@ const SL = (function(){
     // Enter = 필지 추가(누적) — 입력칸에서 습관적으로 Enter를 눌러도 기존 필지가 지워지지 않도록. 빈 상태면 첫 필지 로드와 동일.
     const ai=$('sl-addr'); if(ai) ai.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); addParcel(); } };
     $('sl-btn-draw').onclick=()=>{ try{ map.pm.enableDraw('Polygon',{snappable:true,finishOn:'dblclick'}); setStatus('✏️ 지도에서 꼭짓점을 클릭해 부지를 그리고, 마지막 점을 더블클릭하세요.'); }catch(e){ setStatus('그리기를 시작할 수 없습니다.'); } };
-    $('sl-btn-clear').onclick=()=>{ try{ map.pm.disableDraw(); }catch(_){} clearBoundary(); clearRoofRef(); panelLayer.clearLayers(); bufferLayer.clearLayers(); resetStats(); LAYOUT=null; setStatus('지웠습니다 — 새 부지를 지정하세요.'); };
+    $('sl-btn-clear').onclick=()=>{ try{ map.pm.disableDraw(); }catch(_){} clearBoundary(); clearRoofRef(); panelLayer.clearLayers(); bufferLayer.clearLayers(); resetStats(); LAYOUT=null; setAddMode(false); setStatus('지웠습니다 — 새 부지를 지정하세요.'); };
     $('sl-btn-run').onclick=runLayout;
     $('sl-btn-manual').onclick=()=>{ manualMode?closeManual():openManual(); };
     $('sl-btn-png').onclick=savePng;
@@ -4779,6 +4796,7 @@ const SL = (function(){
           <button class="btn ghost" id="sl-add-parcel" title="검색창의 지번을 현재 부지에 '필지'로 추가 (여러 필지 합산 · Enter 키와 동일)">➕ 필지 추가</button>
           <button class="btn primary" id="sl-btn-run" title="부지에 패널 자동 배치">▦ 패널 배치</button>
         </div>
+        <div id="sl-addhint" class="sl-addhint" style="display:none">➕ <b>필지 추가 모드</b> — 지번을 입력하고 <b>Enter</b>(또는 ➕)로 계속 추가하세요. <b>🔎 검색</b>은 새로 시작합니다.</div>
         <div id="sl-parcels" class="sl-parcels" style="display:none"></div>
         <div class="sl-maparea">
           <div id="sl-map"></div><div id="sl-three"></div>
@@ -4817,7 +4835,7 @@ const SL = (function(){
     const host=$('sl-map'); if(!host) return;
     // 재진입: 이전 지도/3D/수동UI 정리 후 새로 구축(innerHTML이 매번 교체되므로)
     if(map){ try{ map.remove(); }catch(e){} map=null; }
-    three=null; view3D=false; LAYOUT=null; REGIONS=[]; MANUAL.length=0; selId=null; manualMode=false; uiOn=false; eraser=false; roofRef=null;
+    three=null; view3D=false; LAYOUT=null; REGIONS=[]; slAddMode=false; MANUAL.length=0; selId=null; manualMode=false; uiOn=false; eraser=false; roofRef=null;
     removeManUi();
     let ok=false; try{ ok=await ensureMapLibs(); }catch(e){ ok=false; }
     if(!ok){ setStatus('⚠️ 지도 라이브러리를 불러오지 못했습니다 — 네트워크(인터넷 연결)를 확인하세요.'); return; }
