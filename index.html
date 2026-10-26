@@ -1183,7 +1183,7 @@ button{font-family:inherit;cursor:pointer}
 /* 지도 */
 .sl-maparea{position:relative;border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow-sm)}
 /* 위성 타일 사이 1px 이음새(가로/세로 줄) 제거 — 네이티브줌 초과 확대 시 타일을 0.5px 겹쳐 틈을 메움 */
-#sl-map .leaflet-tile{width:256.5px !important;height:256.5px !important}
+#sl-map .leaflet-tile{width:258px !important;height:258px !important}
 #sl-map,#sl-three{width:100%;height:calc(100vh - 248px);min-height:520px}
 #sl-three{display:none;background:#9fc0e0}
 /* 지도 위: 조작 툴바(경계/지우기/배치/수동배치) */
@@ -4016,13 +4016,12 @@ const SL = (function(){
     const P=base();
     const mk=(u,at)=>L.tileLayer(u,{maxZoom:21,maxNativeZoom:19,crossOrigin:'anonymous',attribution:at||''});
     const ESRI='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-    const ESRIREF='https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}';
     const SAT=P+'/req/wmts/1.0.0/__KEY__/Satellite/{z}/{y}/{x}.jpeg', HYB=P+'/req/wmts/1.0.0/__KEY__/Hybrid/{z}/{y}/{x}.png', BASE=P+'/req/wmts/1.0.0/__KEY__/Base/{z}/{y}/{x}.png';
     // 각 지도는 별도 타일 인스턴스(한 타일레이어는 동시에 한 그룹만 가능). ESRI 바닥 + 국내 VWorld 위에(실패 시 ESRI 노출).
     return {
       '위성 + 지명':   L.layerGroup([mk(ESRI,'© Esri · Maxar'), mk(SAT,'국토부 VWorld 항공영상'), mk(HYB)]),
       '위성 (고해상)': L.layerGroup([mk(ESRI,'© Esri · Maxar'), mk(SAT,'국토부 VWorld 항공영상')]),
-      '위성 (글로벌)': L.layerGroup([mk(ESRI,'© Esri · Maxar'), mk(ESRIREF)]),
+      '위성 (글로벌)': mk(ESRI,'© Esri · Maxar'),   // 순수 위성(라벨 오버레이 제거 — 흰 격자줄 방지, 깨끗한 지도)
       '일반 지도':     mk(BASE,'국토부 VWorld 일반지도')
     };
   }
@@ -4152,17 +4151,30 @@ const SL = (function(){
     // 완충(이격) 적용 작업영역을 방위와 무관하게 1회 선계산 — 로컬 미터좌표(회전 전)로 보관
     let grossArea=0,landArea=0,skipped=0;
     const regionWork=[];
-    ringsLL.forEach(({rg,ll})=>{
-      const gjPoly=turf.polygon([[...ll.map(p=>[p.lng,p.lat]),[ll[0].lng,ll[0].lat]]]);
-      const ga=turf.area(gjPoly); grossArea+=ga; landArea+=ga;
-      let work=gjPoly, ok=true;
-      if(S.setback>0){ const buf=turf.buffer(gjPoly,-S.setback,{units:'meters'}); if(!buf||!buf.geometry||turf.area(buf)<1){ ok=false; } else work=buf; }
-      if(!ok){ regionWork.push({ll, ga, ok:false}); return; }
-      let wcoords=work.geometry.coordinates;
-      if(work.geometry.type==='MultiPolygon'){ wcoords=work.geometry.coordinates.slice().sort((a,b)=>turf.area(turf.polygon(b))-turf.area(turf.polygon(a)))[0]; }
-      const wringLL=wcoords[0].map(c=>({lng:c[0],lat:c[1]}));
-      regionWork.push({ll, ga, ok:true, wringLL, wLoc:wringLL.map(p=>toL(p.lat,p.lng)), oLoc:ll.map(p=>toL(p.lat,p.lng))});
+    // ★여러 필지는 하나의 경계로 합친다(union) — 인접 필지 사이 '내부 경계'와 그 이격을 없애 모듈이 이어서 깔리도록.
+    //   완충(안쪽 이격)은 '합쳐진 바깥 둘레'에만 1회 적용. (떨어진 필지는 union 결과가 MultiPolygon이라 각각 처리)
+    let uni=null;
+    ringsLL.forEach(({ll})=>{ try{ const poly=turf.polygon([[...ll.map(p=>[p.lng,p.lat]),[ll[0].lng,ll[0].lat]]]); uni = uni ? (turf.union(uni,poly)||uni) : poly; }catch(e){} });
+    if(!uni){ setStatus('⚠️ 부지 경계를 찾을 수 없습니다.'); return; }
+    const uniPolys = (uni.geometry.type==='MultiPolygon') ? uni.geometry.coordinates.map(c=>turf.polygon(c)) : [uni];
+    landArea = grossArea = turf.area(uni);
+    uniPolys.forEach(poly=>{
+      const outerLL = poly.geometry.coordinates[0].map(c=>({lng:c[0],lat:c[1]}));
+      const oLoc = outerLL.map(p=>toL(p.lat,p.lng));
+      const gaP = turf.area(poly);
+      if(S.setback>0){
+        const buf=turf.buffer(poly,-S.setback,{units:'meters'});
+        if(!buf||!buf.geometry||turf.area(buf)<1){ regionWork.push({ll:outerLL, ga:gaP, ok:false}); return; }
+        const rings = (buf.geometry.type==='MultiPolygon') ? buf.geometry.coordinates.map(c=>c[0]) : [buf.geometry.coordinates[0]];
+        rings.forEach(ring=>{ if(!ring||ring.length<4) return; const wringLL=ring.map(c=>({lng:c[0],lat:c[1]})); regionWork.push({ll:outerLL, ga:gaP, ok:true, wringLL, wLoc:wringLL.map(p=>toL(p.lat,p.lng)), oLoc}); });
+      } else {
+        regionWork.push({ll:outerLL, ga:gaP, ok:true, wringLL:outerLL, wLoc:oLoc, oLoc});
+      }
     });
+    // 합쳐진 바깥 경계를 뚜렷한 노란선으로 1개만 그리고, 개별 필지선(노란색)은 옅게(여러 필지일 때)
+    const _multi = REGIONS.length>1;
+    REGIONS.forEach(rg=>{ try{ rg.layer.setStyle({color:'#ffd54a', weight:_multi?1:2, opacity:_multi?0.28:1, dashArray:_multi?'2,5':null, fillOpacity:_multi?0:0.06}); }catch(e){} });
+    if(_multi){ uniPolys.forEach(poly=>{ try{ const ring=poly.geometry.coordinates[0].map(c=>[c[1],c[0]]); bufferLayer.addLayer(L.polygon(ring,{color:'#ffd54a',weight:2.5,opacity:.95,fill:false,interactive:false})); }catch(e){} }); }
     // 특정 방위에서 들어가는 테이블(행) 수 — 지번 형상 기준 '최다 배치' 방위 탐색용(그리기 없음)
     const countAt=(az)=>{ let cnt=0;
       for(const R of regionWork){ if(!R.ok) continue;
