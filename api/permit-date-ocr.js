@@ -8,10 +8,11 @@
 // 출력: { start:'YYYY-MM-DD'|'', end:'YYYY-MM-DD'|'', raw }   — 개발행위 신청서 「사업기간」 자동채움용
 const https = require('https');
 
-// 사용량 카운터 저장소 = 프론트와 같은 Supabase(공개 publishable 키 — 이미 HTML에 공개된 값이라 서버에 둬도 안전)
+// 사용량 카운터 저장소 = 전용 테이블 public.ai_usage (민감정보 없음 → 공개 publishable 키로 읽기/증가 허용).
+//   fsnet_deals는 RLS로 anon 쓰기가 막혀 있어(보안 유지) 별도 카운터 테이블을 둔다. → supabase_ai_usage.sql 1회 Run 필요.
 const SB_URL = 'https://cgthfwlswaohxolgixvv.supabase.co';
 const SB_KEY = 'sb_publishable_8wN2rwb0gQUKI89Z6jwHuQ_BSoJFDRI';
-const USAGE_ID = '__ai_ocr_usage__';
+const USAGE_ID = 'permit_ocr';
 function sbReq(method, path, body) {
   return new Promise((resolve) => {
     const data = body ? JSON.stringify(body) : null;
@@ -26,11 +27,11 @@ function sbReq(method, path, body) {
 }
 function kstDay() { return new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10); }
 async function getUsage() {
-  const r = await sbReq('GET', '/rest/v1/fsnet_deals?id=eq.' + USAGE_ID + '&select=data');
-  try { const a = JSON.parse(r.body); return (a && a[0] && a[0].data) || null; } catch (e) { return null; }
+  const r = await sbReq('GET', '/rest/v1/ai_usage?id=eq.' + USAGE_ID + '&select=day,count');
+  try { const a = JSON.parse(r.body); return (a && a[0]) || null; } catch (e) { return null; }
 }
 async function setUsage(day, count) {
-  await sbReq('POST', '/rest/v1/fsnet_deals', [{ id: USAGE_ID, data: { day, count } }]);
+  await sbReq('POST', '/rest/v1/ai_usage', [{ id: USAGE_ID, day: day, count: count }]);
 }
 
 function geminiMM(key, model, system, parts, timeoutMs) {
