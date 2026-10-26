@@ -51,9 +51,26 @@ function normDate(v) {
 }
 
 module.exports = async (req, res) => {
-  if (req.method !== 'POST') { res.status(405).json({ error: 'method', message: 'POST only' }); return; }
   const key = process.env.GEMINI_API_KEY;
   if (!key) { res.status(503).json({ error: 'no_key', message: 'GEMINI_API_KEY 미설정 — 서버 환경변수 등록 필요.' }); return; }
+  // [임시 진단] GET ?diag=models → 이 키가 generateContent로 쓸 수 있는 모델 목록
+  if (req.method === 'GET') {
+    const u = String(req.url || '');
+    if (/diag=models/.test(u)) {
+      const r = await new Promise((resolve) => {
+        const rq = https.request('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=' + encodeURIComponent(key), { method: 'GET' }, (up) => {
+          const c = []; up.on('data', (x) => c.push(x)); up.on('end', () => resolve({ status: up.statusCode, body: Buffer.concat(c).toString('utf8') }));
+        });
+        rq.on('error', (e) => resolve({ status: 599, body: String(e) })); rq.setTimeout(20000, () => rq.destroy(new Error('timeout'))); rq.end();
+      });
+      let names = [];
+      try { const j = JSON.parse(r.body); names = (j.models || []).filter((m) => (m.supportedGenerationMethods || []).indexOf('generateContent') >= 0).map((m) => m.name.replace('models/', '')); } catch (e) {}
+      res.status(200).json({ status: r.status, flashModels: names.filter((n) => /flash|pro/.test(n)) });
+      return;
+    }
+    res.status(405).json({ error: 'method', message: 'POST only' }); return;
+  }
+  if (req.method !== 'POST') { res.status(405).json({ error: 'method', message: 'POST only' }); return; }
   // 기본 모델 + 과부하 시 폴백 후보(중복 제거). 한 모델이 503이어도 다른 모델로 시도.
   const primary = process.env.SUNLIGHT_GEMINI_MODEL || 'gemini-flash-latest';
   const models = [...new Set([primary, 'gemini-2.0-flash', 'gemini-1.5-flash'])];
