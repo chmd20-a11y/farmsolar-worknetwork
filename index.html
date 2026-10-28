@@ -9721,11 +9721,11 @@ function sunNaHtml(){
   if(mode==='narr'){
     return toggle+'<table class="fx-t"><colgroup><col style="width:100.000%"/></colgroup><tr style="height:240px"><td class="fx-v" style="vertical-align:top;text-align:left" data-fk="f104" data-label="협동조합의 운영체계 — ① 운영 정보 공개(게재 주기·내용·사무소 비치서류 등 정관 규정) ② 의사결정 과정의 공개(의사록 작성·보관·열람권, 주요 의결사항 게시 등)"></td></tr></table>';
   }
-  return toggle
+  return toggle+sunBox(''
     +'<table class="fx-t"><colgroup><col style="width:24.000%"/><col style="width:76.000%"/></colgroup>'
     +'<tr style="height:30px"><td class="fx-hd">항목</td><td class="fx-hd">내용</td></tr>'
     +'<tr style="height:132px"><td class="fx-hd">운영 정보 공개</td><td class="fx-v" style="text-align:left;vertical-align:top;white-space:pre-wrap" data-fk="f561" data-label="운영 정보 공개 — 게재 주기·게재 내용·사무소 비치서류 등 정관 규정"></td></tr>'
-    +'<tr style="height:96px"><td class="fx-hd">의사결정 과정의 공개</td><td class="fx-v" style="text-align:left;vertical-align:top;white-space:pre-wrap" data-fk="f562" data-label="의사결정 과정의 공개 — 의사록 작성·보관·조합원 열람권, 주요 의결사항 게시 등"></td></tr></table>';
+    +'<tr style="height:96px"><td class="fx-hd">의사결정 과정의 공개</td><td class="fx-v" style="text-align:left;vertical-align:top;white-space:pre-wrap" data-fk="f562" data-label="의사결정 과정의 공개 — 의사록 작성·보관·조합원 열람권, 주요 의결사항 게시 등"></td></tr></table>');
 }
 // 다. 출자, 수입의 적립, 배분 등 구조 — 표/서술형
 function sunDaMode(){ return (sunData.daMode==='narr')?'narr':'table'; }
@@ -9741,7 +9741,7 @@ function sunDaHtml(){
   const chuljaRows=chulja.map(a=>'<tr style="height:33px"><td class="fx-hd">'+a[0]+'</td><td class="fx-v" style="text-align:left;vertical-align:top" data-fk="'+a[1]+'" data-label="'+a[0]+' 내용"></td><td style="text-align:center;vertical-align:middle;font-size:11px;color:#555">'+a[2]+'</td></tr>').join('');
   const baebun=[['필수 운영비 및 제세공과금','20%','f582'],['발전사업 시설 유지보수 및 교체 적립금','20%','f583'],['마을 공동기금','40%','f584'],['마을복지 및 장학사업','10%','f585']];
   const baebunRows=baebun.map(a=>'<tr style="height:44px"><td class="fx-hd">'+a[0]+'</td><td class="fx-hd" style="text-align:center">'+a[1]+'</td><td class="fx-v" style="text-align:left;vertical-align:top" data-fk="'+a[2]+'" data-label="'+a[0]+' 용도"></td></tr>').join('');
-  return toggle
+  return toggle+sunBox(''
     +'<div class="fx-p">○ 출자 구조 (정관 제22조)</div>'
     +'<table class="fx-t"><colgroup><col style="width:18.940%"/><col style="width:55.590%"/><col style="width:25.480%"/></colgroup>'
     +'<tr style="height:30px"><td class="fx-hd">구분</td><td class="fx-hd">내용</td><td class="fx-hd">근거</td></tr>'+chuljaRows+'</table>'
@@ -9749,7 +9749,7 @@ function sunDaHtml(){
     +'<div class="fx-p">○ 수익금 배분 구조 (정관 제27조의3·제27조의4)</div>'
     +'<table class="fx-t"><colgroup><col style="width:100.000%"/></colgroup><tr style="height:80px"><td class="fx-v" style="text-align:left;vertical-align:top" data-fk="f581" data-label="수익금 배분 구조 설명 — 전용계좌 처리·법정적립금(잉여금 10% 이상) 공제 후 잔여금 배분 원칙(정관 제27조의2·3)"></td></tr></table>'
     +'<table class="fx-t"><colgroup><col style="width:25.720%"/><col style="width:9.490%"/><col style="width:64.800%"/></colgroup>'
-    +'<tr style="height:30px"><td class="fx-hd">적립 항목(잔여금액 기준)</td><td class="fx-hd">비율</td><td class="fx-hd">용도</td></tr>'+baebunRows+'</table>';
+    +'<tr style="height:30px"><td class="fx-hd">적립 항목(잔여금액 기준)</td><td class="fx-hd">비율</td><td class="fx-hd">용도</td></tr>'+baebunRows+'</table>');
 }
 // ── 섹션 공통 표/서술형 토글(생태계·유지관리·수익활용·관리자채용) ──
 function sunSecMode(sec){ return (sunData.secMode && sunData.secMode[sec]==='narr')?'narr':'table'; }
@@ -9757,30 +9757,32 @@ function sunSetSecMode(sec,m){ if(m!=='table'&&m!=='narr')return; sunData.secMod
 function sunSecTog(sec){ const mode=sunSecMode(sec); const seg=(m,t)=>'<button type="button" class="suv-gaseg'+(mode===m?' on':'')+'" onclick="sunSetSecMode(\''+sec+'\',\''+m+'\')">'+t+'</button>'; return '<div class="suv-gatoggle"><span class="suv-gatoggle-lb">작성 방식</span>'+seg('table','표 형식')+seg('narr','서술형')+'<span class="suv-gatoggle-hint">표대로 입력하거나 자유 서술형으로 바꿀 수 있습니다(입력값은 각각 보존).</span></div>'; }
 function sunNB(fk,label,hpx){ return '<table class="fx-t"><colgroup><col style="width:100.000%"/></colgroup><tr style="height:'+(hpx||100)+'px"><td class="fx-v" style="text-align:left;vertical-align:top" data-fk="'+fk+'" data-label="'+label+'"></td></tr></table>'; }
 function sunP(t){ return '<div class="fx-p">'+t+'</div>'; }
+// 표형식 내용을 원본 양식의 '서술형 박스 1개' 틀 안에 담는 공통 래퍼(양식 레이아웃 변경 없이 보이게). 서술형 단일칸은 이미 박스라 감싸지 않음
+function sunBox(inner){ return '<table class="fx-t suv-gawrap"><colgroup><col style="width:100.000%"/></colgroup><tr><td class="suv-gabox">'+inner+'</td></tr></table>'; }
 function sunVC(fk,label,align){ return '<td class="fx-v" style="text-align:'+(align||'left')+';vertical-align:top" data-fk="'+fk+'" data-label="'+label+'"></td>'; }
 // 아. 재생에너지 산업 생태계 기여 계획
 function sunSaengHtml(){ const t=sunSecTog('saeng');
   if(sunSecMode('saeng')==='narr') return t+sunNB('f185','재생에너지 산업 생태계 기여 — KS인증 자재·지역EPC/O&M·산업경제 파급효과·온실가스 감축',260);
   const ks=['모듈','인버터','접속함','구조물'].map((nm,r)=>{const f0=730+4*r; return '<tr style="height:30px"><td class="fx-hd">'+nm+'</td>'+sunVC('f'+f0,nm+' 제조업체명','center')+sunVC('f'+(f0+1),nm+' 공장소재지','center')+sunVC('f'+(f0+2),nm+' KS 표준번호','center')+sunVC('f'+(f0+3),nm+' 비고','left')+'</tr>';}).join('');
-  return t+sunP('○ 국내 제조, KS 인증 자재 우선 채택 - 산업·경제 파급효과 극대화')
+  return t+sunBox(''+sunP('○ 국내 제조, KS 인증 자재 우선 채택 - 산업·경제 파급효과 극대화')
     +'<table class="fx-t"><colgroup><col style="width:13.510%"/><col style="width:28.470%"/><col style="width:14.230%"/><col style="width:14.230%"/><col style="width:29.550%"/></colgroup>'
     +'<tr style="height:28px"><td class="fx-hd">구분</td><td class="fx-hd">제조업체명</td><td class="fx-hd">공장소재지</td><td class="fx-hd">KS 표준번호</td><td class="fx-hd">비고</td></tr>'+ks+'</table>'
     +sunP('○ 지역EPC·O&M 기업 참여(지역경제 활성화)')+sunNB('f746','시공 EPC·운영 O&M 참여 기업(ReSCO 등)·등록번호',70)
     +sunP('○ 산업·경제 파급효과(정량 추정)')+sunNB('f747','직접(모듈 발주)·간접(지역 일자리)·장기(공동기금 순환) 효과',90)
-    +sunP('○ 온실가스 감축 효과')+sunNB('f748','연간 발전량 기준 CO2 감축량 추정(배출계수 적용)',80);
+    +sunP('○ 온실가스 감축 효과')+sunNB('f748','연간 발전량 기준 CO2 감축량 추정(배출계수 적용)',80));
 }
 // 나. 설비 유지관리 등 운영 계획
 function sunYujiHtml(){ const t=sunSecTog('yuji');
   if(sunSecMode('yuji')==='narr') return t+sunNB('f187','설비 유지관리·운영 계획 — O&M 체계·성능효율·연간 운영비·안전관리·사후 보증',260);
   const op=[['안전관리대행비','f752','f753'],['보험료','f754','f755'],['전기료(소내용 전력)','f756','f757'],['통신료(REMS / MRT)','f758','f759'],['부지 임대료','f760','f761']].map(a=>'<tr style="height:30px"><td class="fx-hd">'+a[0]+'</td>'+sunVC(a[1],a[0]+' 연간비용(원)','right')+sunVC(a[2],a[0]+' 비고','left')+'</tr>').join('');
   const sum='<tr style="height:30px"><td class="fx-hd fx-sum">합계</td><td class="fx-v fx-sum" style="text-align:right;vertical-align:top" data-fk="f762" data-label="연간 운영비 합계(원)"></td><td class="fx-sum"></td></tr>';
-  return t+sunP('○ 유지관리(O&M) 체계')+sunNB('f750','운영주체(ReSCO 장기 O&M)·정기점검·법정검사·발전량 모니터링 등',90)
+  return t+sunBox(''+sunP('○ 유지관리(O&M) 체계')+sunNB('f750','운영주체(ReSCO 장기 O&M)·정기점검·법정검사·발전량 모니터링 등',90)
     +sunP('○ 성능·효율 관리')+sunNB('f751','발전량 분석·세척·음영/온도 관리 등 성능 유지 방안',70)
     +sunP('○ 연간 운영비')
     +'<table class="fx-t"><colgroup><col style="width:37.910%"/><col style="width:28.750%"/><col style="width:33.340%"/></colgroup>'
     +'<tr style="height:28px"><td class="fx-hd">항목</td><td class="fx-hd">연간비용(원)</td><td class="fx-hd">비고</td></tr>'+op+sum+'</table>'
     +sunP('○ 안전관리 체계')+sunNB('f764','전기안전관리자 선임·화재/낙뢰 대응·보험·비상대응 매뉴얼',80)
-    +sunP('○ 사후 보증 체계')+sunNB('f765','모듈·인버터·시공 하자보수 보증 기간',70);
+    +sunP('○ 사후 보증 체계')+sunNB('f765','모듈·인버터·시공 하자보수 보증 기간',70));
 }
 // 가. 수익 활용 계획(섹션6)
 function sunSuikHtml(){ const t=sunSecTog('suik');
@@ -9789,22 +9791,22 @@ function sunSuikHtml(){ const t=sunSecTog('suik');
   const h4='<tr style="height:28px"><td class="fx-hd">구분</td><td class="fx-hd">1년차(거치)</td><td class="fx-hd">2~20년차(19년상환)</td><td class="fx-hd">20년 누적</td></tr>';
   const su=[['매출(연간 전력판매 수입)','f770'],['(-) 운영비','f773'],['(-) 정책자금','f776'],['(-) 지역금융 차입','f779'],['연간 정산수익금','f782']].map(a=>'<tr style="height:30px"><td class="fx-hd">'+a[0]+'</td>'+sunVC('f'+(+a[1].slice(1)),a[0]+' 1년차(백만원)','right')+sunVC('f'+(+a[1].slice(1)+1),a[0]+' 2~20년차(백만원)','right')+sunVC('f'+(+a[1].slice(1)+2),a[0]+' 20년 누적(백만원)','right')+'</tr>').join('');
   const jk=[['법정적립금(10% 이상)','f786'],['필수 운영비 및 제세공과금(20%)','f789'],['시설 유지보수 및 교체 적립금(20%)','f792'],['마을 공동기금(40%)','f795'],['마을복지 및 장학사업(10%)','f798'],['합계','f801']].map((a,idx)=>{const base=+a[1].slice(1); const sc=(idx===5)?' fx-sum':''; return '<tr style="height:30px"><td class="fx-hd'+sc+'">'+a[0]+'</td>'+sunVC('f'+base,a[0]+' 1년차(백만원)','right')+sunVC('f'+(base+1),a[0]+' 2~20년차(백만원)','right')+sunVC('f'+(base+2),a[0]+' 20년 누적(백만원)','right')+'</tr>';}).join('');
-  return t+sunP('○ 20년 수익구조 정밀 계산(단위: 백만원)')
+  return t+sunBox(''+sunP('○ 20년 수익구조 정밀 계산(단위: 백만원)')
     +'<table class="fx-t">'+col4+h4+su+'</table>'
     +sunNB('f785','※ 산출근거·DSCR 등 수익구조 보충 설명',70)
     +sunP('○ 적립금 활용 계획(정관 제27조의4)')
     +'<table class="fx-t">'+col4+h4+jk+'</table>'
-    +sunNB('f804','적립 항목별 용도 설명(법정적립·운영비·유지보수·공동기금·복지장학)',120);
+    +sunNB('f804','적립 항목별 용도 설명(법정적립·운영비·유지보수·공동기금·복지장학)',120));
 }
 // 다. 햇빛소득마을 관리자 채용 및 활용 계획(섹션6)
 function sunChaeHtml(){ const t=sunSecTog('chae');
   if(sunSecMode('chae')==='narr') return t+sunNB('f191','관리자 채용 및 활용 계획 — 채용 시점·고용형태·보수·임기·자격·절차·주요 업무',240);
   const rows=[['채용 시점','f810'],['고용 형태','f811'],['월 보수','f812'],['인원 / 임기','f813'],['자격 요건','f814']].map(a=>'<tr style="height:36px"><td class="fx-hd">'+a[0]+'</td>'+sunVC(a[1],a[0]+' 내용','left')+'</tr>').join('');
-  return t+sunP('○ 관리자 채용 계획')
+  return t+sunBox(''+sunP('○ 관리자 채용 계획')
     +'<table class="fx-t"><colgroup><col style="width:25.720%"/><col style="width:74.280%"/></colgroup>'
     +'<tr style="height:28px"><td class="fx-hd">구분</td><td class="fx-hd">내용</td></tr>'+rows+'</table>'
     +sunP('○ 채용 절차의 공정성·투명성 확보')+sunNB('f815','채용 공고·선정 절차(이사회 면접→총회 의결) 등',70)
-    +sunP('○ 관리자 주요 업무')+sunNB('f816','총회/이사회 운영 지원·회계/세무·수익 정산·보조사업 신청·조합원 교육 등',90);
+    +sunP('○ 관리자 주요 업무')+sunNB('f816','총회/이사회 운영 지원·회계/세무·수익 정산·보조사업 신청·조합원 교육 등',90));
 }
 // 현재 마을의 추가행·가/나/다 모드본문을 끼운 폼 html(렌더/AI수집/미리보기/작성률 공통 사용)
 function sunFormHtml(f){
