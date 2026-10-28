@@ -1287,7 +1287,7 @@ button{font-family:inherit;cursor:pointer}
 .suv-navbtn.done .suv-nb-pct{color:var(--ok-ink)}
 .suv-ov{margin-top:11px;padding-top:11px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);line-height:1.6}
 .suv-main{min-width:0;display:flex}
-.suv-paper{flex:1;width:100%;display:flex;flex-direction:column;background:#fff;color:#111;border:1px solid var(--border);border-radius:10px;padding:clamp(20px,2.4vw,40px) clamp(20px,3vw,52px);box-shadow:var(--shadow-sm);overflow-x:auto;min-height:calc(100vh - var(--ph-h,88px) - 150px)}
+.suv-paper{flex:1;width:100%;display:block;background:#fff;color:#111;border:1px solid var(--border);border-radius:10px;padding:clamp(20px,2.4vw,40px) clamp(20px,3vw,52px);box-shadow:var(--shadow-sm);overflow-x:auto;min-height:calc(100vh - var(--ph-h,88px) - 150px)}  /* display:block — Safari에서 flex-column이 마지막 행(서명란)을 잘라먹던 문제 해결 */
 .suv-paper > h2{flex:0 0 auto;font-size:clamp(16px,1.4vw,20px);font-weight:800;text-align:center;letter-spacing:1px;color:#111;margin:0 0 18px}
 /* 양식은 원본 그대로 — 행 높이·간격을 원본값으로 재현(아래 여백은 원본처럼 자연스럽게 남김) */
 .suv-doc{display:block;min-width:0;font-size:11px}
