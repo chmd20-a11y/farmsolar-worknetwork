@@ -1316,6 +1316,11 @@ button{font-family:inherit;cursor:pointer}
 .suv-imwon-bar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:2px 0 10px}
 .suv-imwon-hint{font-size:10px;color:#9aa2b4}
 .suv-pv-paper .suv-imwon-bar{display:none}
+/* 가.의사결정구조 — 원본 '서술형 박스 1개' 틀을 유지한 채 그 안에 표를 넣는 래퍼(양식 변경 없이 보이게) */
+.fx-t td.suv-gabox{padding:5px 11px 9px;vertical-align:top}
+.suv-gabox > .fx-p:first-child{margin-top:6px}
+.suv-gabox > .fx-t{margin:7px 0 12px}
+.suv-gabox > .fx-t:last-child{margin-bottom:3px}
 .fx-ck{cursor:pointer;user-select:none;display:inline-block;border:1px solid #c4c9d2;border-radius:6px;padding:1px 7px;margin:1px 2px;background:#fff;color:#2c3340;font-weight:600;white-space:nowrap;line-height:1.5}
 .fx-ck:hover{border-color:#0e7c66;background:#f3fbf7}
 .fx-ck.on{background:#0e7c66;color:#fff;border-color:#0e7c66}
@@ -9686,7 +9691,8 @@ function sunGaHtml(){
   imrows+=imrow('감사','감사','f550','f551','f552','f553');
   const minju=[['조합원 가입자격','거주요건·조합 목적 동의 등 정관 규정',520],['조합원 의결권','출자좌수와 무관하게 1인 1의결권·선거권 등 정관 규정',521],['출자 한도','한 조합원 출자좌수 한도(총 출자좌수의 10% 등) 정관 규정',522],['임원 선임','이사·감사·이사장 선출 방식 등 정관 규정',523],['특별의결','정관변경·합병·해산·제명·출자금 환급 등 특별의결 요건 정관 규정',524],['마을총회 존중','회계결산·운영현황 보고 등 마을총회 관련 정관 규정',525],['마을총회 의견수렴','발전시설 추진·부지 사용·수익배분 변경 등 마을총회 의결사항 정관 규정',526]];
   const minjurows=minju.map(a=>'<tr style="height:40px"><td class="fx-hd">'+a[0]+'</td><td class="fx-v" style="text-align:left;vertical-align:top" data-fk="f'+a[2]+'" data-label="'+a[0]+' — '+a[1]+'"></td></tr>').join('');
-  return toggle
+  // 표 내용(의사결정기구·임원현황·민주성확보방안)을 원본 양식의 '서술형 박스 1개' 안에 담는다 — 바깥 테두리=원본 틀 유지, 입력은 표 칸에서. (편집용 이사 추가/삭제 바는 미리보기·출력에서 자동 숨김)
+  const gaInner=''
     +'<div class="fx-p">○ 의사결정 기구 (정관 명시)</div>'
     +'<table class="fx-t"><colgroup><col style="width:100.000%"/></colgroup><tr style="height:96px"><td class="fx-v" style="vertical-align:top;text-align:left" data-fk="f103" data-label="의사결정 기구 — 총회·이사회·감사의 구성·역할·정관 근거조문"></td></tr></table>'
     +'<div class="fx-p">○ 임원 현황 (창립총회 선출)</div>'
@@ -9698,6 +9704,8 @@ function sunGaHtml(){
     +'<table class="fx-t"><colgroup><col style="width:18.940%"/><col style="width:81.060%"/></colgroup>'
     +'<tr style="height:30px"><td class="fx-hd">구분</td><td class="fx-hd">내용</td></tr>'
     +minjurows+'</table>';
+  return toggle
+    +'<table class="fx-t suv-gawrap"><colgroup><col style="width:100.000%"/></colgroup><tr><td class="suv-gabox">'+gaInner+'</td></tr></table>';
 }
 // 섹션 공통 작성방식 토글(표/서술형)
 function sunSecToggle(mode, fn){
