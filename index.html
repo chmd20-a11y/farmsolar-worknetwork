@@ -1194,6 +1194,10 @@ button{font-family:inherit;cursor:pointer}
 /* 여러 필지 칩(지번 추가) */
 .sl-parcels{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 12px}
 .sl-chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:3px 6px 3px 11px;font-size:12px;color:var(--text)}
+/* 지도 우상단 '초기화' 버튼(지도 선택 아이콘 옆, 눈에 띄게) */
+.sl-map-reset{display:inline-flex;align-items:center;gap:5px;background:#fff;color:#b45309;border:2px solid #f59e0b;border-radius:9px;padding:7px 12px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.22);line-height:1;white-space:nowrap;font-family:inherit}
+.sl-map-reset:hover{background:#fff7ed;border-color:#d97706}
+.sl-map-reset:active{transform:translateY(1px)}
 .sl-chip b{color:var(--brand);font-weight:700}
 .sl-chip button{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:12px;line-height:1;padding:3px 5px;border-radius:50%}
 .sl-chip button:hover{background:#e05b5b;color:#fff}
@@ -4114,6 +4118,12 @@ const SL = (function(){
     const bases=tileLayers(), bk=Object.keys(bases);
     satGroup=(bases['위성 (글로벌)']||bases[bk[0]]).addTo(map);         // 기본 = 위성 (글로벌)
     _slBaseName='위성 (글로벌)';
+    // 🔄 초기화 — 지도 우상단(지도 선택 아이콘 옆)에 배치해 눈에 띄게. 이 버튼 전까지 배치 유지
+    const ResetCtl=L.Control.extend({ options:{position:'topright'}, onAdd:function(){
+      const b=L.DomUtil.create('button','sl-map-reset leaflet-control'); b.type='button';
+      b.title='배치 전체 초기화 (이 버튼을 누르기 전까지 배치가 계속 유지됩니다)'; b.innerHTML='🔄 초기화';
+      L.DomEvent.disableClickPropagation(b); L.DomEvent.on(b,'click',e=>{ L.DomEvent.stop(e); slResetAll(); }); return b; } });
+    map.addControl(new ResetCtl());
     L.control.layers(bases, null, {position:'topright', collapsed:true}).addTo(map);   // 🗺️ 지도 선택
     map.on('baselayerchange', e=>{ if(e&&e.name){ _slBaseName=e.name; } });            // 선택 지도 추적(배치도·제안서 배경 반영)
     if(!_resizeHooked){ _resizeHooked=true; addEventListener('resize',()=>{ if(map && !view3D){ try{ map.invalidateSize(); }catch(e){} } }); }
@@ -4910,7 +4920,7 @@ const SL = (function(){
     // Enter = 필지 추가(누적) — 입력칸에서 습관적으로 Enter를 눌러도 기존 필지가 지워지지 않도록. 빈 상태면 첫 필지 로드와 동일.
     const ai=$('sl-addr'); if(ai) ai.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); addParcel(); } };
     $('sl-btn-draw').onclick=()=>{ try{ map.pm.enableDraw('Polygon',{snappable:true,finishOn:'dblclick'}); setStatus('✏️ 지도에서 꼭짓점을 클릭해 부지를 그리고, 마지막 점을 더블클릭하세요.'); }catch(e){ setStatus('그리기를 시작할 수 없습니다.'); } };
-    $('sl-btn-clear').onclick=slResetAll;   // 🔄 초기화 = 배치 전체 초기화(보존 스냅샷까지 비움)
+    // 🔄 초기화 버튼은 지도 우상단 컨트롤(지도 선택 아이콘 옆)로 이동 — buildMap에서 바인딩
     $('sl-btn-run').onclick=runLayout;
     $('sl-btn-manual').onclick=()=>{ manualMode?closeManual():openManual(); };
     $('sl-btn-png').onclick=savePng;
@@ -4974,7 +4984,6 @@ const SL = (function(){
           <div id="sl-viewtoggle"><button id="sl-v2d" class="on">🗺️ 2D</button><button id="sl-v3d">🧊 3D</button></div>
           <div id="sl-maptools">
             <button class="btn ghost sm" id="sl-btn-draw" title="부지 경계 직접 그리기">✏️ 경계</button>
-            <button class="btn ghost sm" id="sl-btn-clear" title="배치 전체 초기화 (이 버튼 전까지는 배치가 계속 유지됩니다)">🔄 초기화</button>
             <button class="btn ghost sm" id="sl-btn-manual" title="수동 배치">✥ 수동배치</button>
           </div>
           <div id="sl-sunbar" style="display:none">☀️ <input type="range" id="sl-sun" min="6" max="18" step="0.25" value="13"><b id="sl-v-sun">13:00</b></div>
