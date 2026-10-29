@@ -1198,6 +1198,9 @@ button{font-family:inherit;cursor:pointer}
 .sl-map-reset{display:inline-flex;align-items:center;gap:5px;background:#fff;color:#b45309;border:2px solid #f59e0b;border-radius:9px;padding:7px 12px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.22);line-height:1;white-space:nowrap;font-family:inherit}
 .sl-map-reset:hover{background:#fff7ed;border-color:#d97706}
 .sl-map-reset:active{transform:translateY(1px)}
+/* 초기화(좌) · 지도 선택(우)을 한 줄로 — 지도 아이콘 왼쪽에 초기화가 오도록(오클릭 방지). #sl-map 한정 */
+#sl-map .leaflet-top.leaflet-right{display:flex;flex-direction:row;align-items:flex-start}
+#sl-map .leaflet-top.leaflet-right .leaflet-control{float:none;clear:none;margin:10px 8px 0 0}
 .sl-chip b{color:var(--brand);font-weight:700}
 .sl-chip button{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:12px;line-height:1;padding:3px 5px;border-radius:50%}
 .sl-chip button:hover{background:#e05b5b;color:#fff}
@@ -4439,6 +4442,8 @@ const SL = (function(){
     setStatus('↩️ 이전 배치를 불러왔습니다 — <b>🔄 초기화</b> 버튼으로 새로 시작할 수 있습니다.');
   }
   function slResetAll(){
+    const hasWork = (REGIONS&&REGIONS.length) || (MANUAL&&MANUAL.length) || LAYOUT;
+    if(hasWork && !confirm('배치를 모두 초기화할까요?\n\n현재 배치·필지·수동배치가 모두 지워지며 되돌릴 수 없습니다.')) return;
     try{ map&&map.pm&&map.pm.disableDraw(); }catch(e){}
     try{ clearBoundary(); }catch(e){} try{ clearRoofRef(); }catch(e){}
     try{ if(panelLayer) panelLayer.clearLayers(); if(bufferLayer) bufferLayer.clearLayers(); }catch(e){}
