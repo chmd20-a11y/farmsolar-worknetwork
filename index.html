@@ -7913,14 +7913,18 @@ function locSiteUpload(id,file){
 function locSiteRemove(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d); if(p.locPhotos) delete p.locPhotos.site; persistDeal(d); toast('현장사진을 제거했습니다'); refillDevPreview(id); }
 // 미리보기/PDF용 이미지 주입(§LOCMAP_*_SRC§) — 미첨부면 자리표시
 function devPermitRawMap(d){ const p=resolvePermit(d); const lp=p.locPhotos||{};
+  const dd=myDaeriinId();   // 대리인 = 로그인한 직원 본인(「내 계정」에서 등록)
   return {
     '§LOCMAP_SAT_SRC§': (lp.sat&&lp.sat.dataUrl)||locPlaceholderDataUrl('위성지도 — 지번으로 자동 생성'),
     '§LOCMAP_SITE_SRC§': (lp.site&&lp.site.dataUrl)||locPlaceholderDataUrl('현장사진 — 수동 첨부'),
+    // 신분증 양식(접수서류 묶음) — 미리보기/PDF에 이미지/자리표시로 삽입
+    '§SAUP_ID§': _idPlace('사업주 신분증','영업 「실계약」 첨부에서 자동 삽입 예정'),
+    '§DAERIIN_ID§': (dd&&dd.dataUrl) ? `<img src="${dd.dataUrl}" alt="대리인 신분증" style="max-width:100%;max-height:115mm;display:block;margin:0 auto;object-fit:contain">` : _idPlace('대리인 신분증','「내 계정」에서 내 신분증을 등록하면 자동 삽입'),
   };
 }
 // 미리보기 iframe 다시 채움 + 상단 위치도 바 상태 갱신
 function refillDevPreview(id){ const d=DEALS.find(x=>x.id===id); if(!d) return;
-  if(document.getElementById('devPrintFrame')) fillPreviewIframe('devPrintFrame', DEVPERMIT_PRINT_FILES, devPermitTokenMap(d), false, devPermitRawMap(d));
+  if(document.getElementById('devPrintFrame')) fillPreviewIframe('devPrintFrame', devPermitBundle(d), devPermitTokenMap(d), false, devPermitRawMap(d));
   devLocStatus(id);
 }
 function devLocStatus(id){ const el=document.getElementById('devLocBar'); if(!el) return; const d=DEALS.find(x=>x.id===id); if(!d){ el.innerHTML=''; return; }
@@ -7942,6 +7946,8 @@ function devLocStatus(id){ const el=document.getElementById('devLocBar'); if(!el
 const DEVPERMIT_FORM_FILES=[
   {url:'forms/dev_sincheong.hml', out:'2. 개발행위(변경) 허가신청서.hml', label:'개발행위 허가신청서'},
   {url:'forms/dev_saup.hml',      out:'2-1. 개발행위허가 사업계획서.hml', label:'개발행위 사업계획서'},
+  {url:'forms/wiimjang.hml',      out:'2-2. 대리인 위임장.hml', label:'대리인 위임장'},
+  {url:'forms/sinbunjeung.hml',   out:'2-3. 사업주 대리인 신분증.hml', label:'사업주/대리인 신분증'},
 ];
 function devPermitTokenMap(d){
   const p=resolvePermit(d), eq=p.equip||{};
@@ -7958,6 +7964,12 @@ function devPermitTokenMap(d){
   const siteP=dataUrlParts((lp.site&&lp.site.dataUrl)||locPlaceholderDataUrl('현장사진'))||{fmt:'png',b64:'',size:0};
   return {
     '§NAME§':applicantFullName(p), '§FULLNAME§':applicantFullName(p), '§SIGN§':S(p.applicant.name), '§IDNO§':S(p.applicant.idno),
+    // 대리인 위임장·신분증 양식용(접수서류 묶음에 포함) — 발전허가 토큰맵과 동일 값
+    '§BIRTH§':donguiBirth(p)||'년 월 일',
+    '§WJ_NAME§':(typeof currentUser!=='undefined'&&currentUser)?S(currentUser.name):'',
+    '§WJ_BIRTH§':(typeof currentUser!=='undefined'&&currentUser&&currentUser.birth)?fmtKDate(currentUser.birth):'',
+    '§SAUP_ID§':'사업주 신분증 (영업 「실계약」 첨부본)',
+    '§DAERIIN_ID§':(myDaeriinId()&&myDaeriinId().dataUrl)?'대리인 신분증 첨부됨 ✓':'대리인 신분증 미첨부',
     '§START§':fmtPeriod(per.start), '§END§':fmtPeriod(per.end),
     '§ADDR§':S(p.applicant.addr), '§PHONE§':S(p.applicant.phone), '§DATE§':fmtKDate(permitApplyDate(d)),
     '§LOC§':loc, '§JIMOK§':S(L.jimok), '§ZONE§':firstVal(L.zone), '§ZONE2§':firstVal(L.zone2),
@@ -8098,7 +8110,7 @@ function openDevPermitModal(id){
   permitEscHandler=(e)=>{ if(e.key==='Escape') closePermitModal(); };
   document.addEventListener('keydown',permitEscHandler);
   getPermit(d);
-  fillPreviewIframe('devPrintFrame', DEVPERMIT_PRINT_FILES, devPermitTokenMap(d), false, devPermitRawMap(d));
+  fillPreviewIframe('devPrintFrame', devPermitBundle(d), devPermitTokenMap(d), false, devPermitRawMap(d));
   devLocStatus(id);
   // 위성지도 미생성이면 지번으로 자동 생성(자동 첨부)
   if(!(getPermit(d).locPhotos&&getPermit(d).locPhotos.sat)) setTimeout(()=>genLocSatellite(id,{auto:true}),350);
@@ -8200,6 +8212,34 @@ function permitBundle(d){
   L.push(_PF.uihyang);
   return L;
 }
+// 개발행위 접수서류 순서 묶음 — 첨부 이미지(개발행위 제출목록) 순서대로. 발전사업허가 permitBundle과 동일 방식.
+//   양식(우리 자동생성)=url / 그 외=자리표시(_ph): 공부 6종은 업로드 파일 자동삽입(DOC_UP), 나머지는 업로드 안내 1페이지.
+//   건축물대장·건축물등기부등본은 건물형(지붕형)만 포함(노지형 제외) — 발전사업허가와 동일 기준.
+function devPermitBundle(d){
+  const p=getPermit(d);
+  const _ph=(name, src)=>{ const k=DOC_UP[name]; const r=k&&p.docs&&p.docs[k]; return {ph:name, src:src, up:(r&&docSrc(r))?r:null}; };
+  const bld=((p.builds&&p.builds.length>0)) || /지붕|건물/.test(String(d.site||''));   // 건물형(지붕형)
+  const L=[
+    {url:'forms/dev_sincheong.print.html', label:'개발행위 허가신청서'},   // 1 양식
+    {url:'forms/dev_saup.print.html',      label:'개발행위 사업계획서'},   // 2 양식
+    _ph('발전사업허가증', '발전사업 허가 취득 · 대시보드 업로드'),          // 3 업로드
+    _ph('사업자 신분증', _SRC.idcopy),                                    // 4 업로드
+    _ph('사용인감계 (공양식만 제공)', _SRC.orig),                          // 5 공양식
+    _ph('인감증명서', _SRC.orig),                                        // 6 업로드
+    _PF.wiimjang,                                                       // 7 양식(대리인 위임장)
+    _PF.sinbun,                                                         // 8 양식(사업주/대리인 신분증)
+    _ph('토지사용승낙서', _SRC.orig),                                     // 9
+    _ph('토지주 인감증명서', _SRC.orig),                                  // 10
+    _ph('지상권 승낙서', _SRC.orig),                                      // 11
+    _ph('지상권자 인감증명서', _SRC.orig),                                // 12
+    _ph('토지대장', _SRC.gong) ];                                        // 13 공부(자동삽입)
+  if(bld) L.push(_ph('건축물대장', _SRC.gong));                           // 14 건물형만
+  L.push(_ph('지적도', _SRC.gong), _ph('토지이음', _SRC.gong), _ph('토지등기부등본', _SRC.gong));   // 15·16(토지이용계획원)·17
+  if(bld) L.push(_ph('건축물등기부등본', _SRC.gong));                      // 18 건물형만
+  L.push(_ph('구조검토서', '측량사무소 작성 · 대시보드 업로드'),             // 19
+         _ph('물량산출서', '설계팀 작성 · 대시보드 업로드'));               // 20
+  return L;
+}
 // 자리표시 1페이지(A4) — 서류명 + 가져오는 위치 마킹. up(업로드 파일)이 있으면 이미지=전면삽입 / PDF=업로드완료 확인.
 function permitPlaceholderPage(name, src, up, linked){
   if(up && docSrc(up)){
@@ -8235,10 +8275,7 @@ function permitPlaceholderPage(name, src, up, linked){
     +"<div style=\"font-size:10.5pt;color:#94a3b8;margin-top:18px\">실제 파일이 업로드·입력되면 이 자리에 자동으로 삽입됩니다</div>"
     +"</div></div>";
 }
-const DEVPERMIT_PRINT_FILES=[
-  {url:'forms/dev_sincheong.print.html', label:'개발행위 허가신청서'},
-  {url:'forms/dev_saup.print.html',      label:'개발행위 사업계획서'},
-];
+// 개발행위 접수서류는 devPermitBundle(d)로 생성(발전사업허가와 동일 방식 — 양식+자리표시 순서 묶음)
 const PPA_PRINT_FILES=[
   {url:'forms/ppa_apply.print.html', label:'PPA 신청서'},
   {url:'forms/ppa_use.print.html',   label:'전기사용신청서'},
@@ -8320,7 +8357,7 @@ async function fillPreviewIframe(frameId, FILES, map, flow, rawMap){
   setTimeout(fit,600); setTimeout(fit,1400);   // 폰트·이미지 로딩 후 높이 재측정
 }
 function genPermitFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(permitBundle(d), permitTokenMap(d), '발전허가 접수서류', false, permitRawMap(d)); }
-function genDevFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(DEVPERMIT_PRINT_FILES, devPermitTokenMap(d), '개발행위 접수서류', false, devPermitRawMap(d)); }
+function genDevFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(devPermitBundle(d), devPermitTokenMap(d), '개발행위 접수서류', false, devPermitRawMap(d)); }
 function genPpaFormsPDF(id){ const d=DEALS.find(x=>x.id===id); if(!d) return; getPermit(d); buildAndPrintForms(PPA_PRINT_FILES, ppaTokenMap(d), 'PPA 신청서류', true); }
 let ppaSel=null;
 function selectPpaDeal(id){ ppaSel=id; refreshActive(); }
