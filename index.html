@@ -4250,7 +4250,7 @@ const SL = (function(){
     const mw=(+$('sl-m-w').value)/1000, mh=(+$('sl-m-h').value)/1000, watt=(+$('sl-m-p').value);
     const portrait=$('sl-m-o').value==='portrait';
     const wRow=portrait?mw:mh, lSlope1=portrait?mh:mw;
-    const intra=(stackGap/1000), gapU=0.02;
+    const intra=(stackGap/1000), gapU=0.01;   // 열(가로) 모듈 이격 10mm — 세로 적재 간격과 동일. (이전 20mm는 모듈이 덜 들어가던 원인)
     const tilt=S.tilt*Math.PI/180, alongSlope=S.stack*lSlope1+(S.stack-1)*intra, depth=alongSlope*Math.cos(tilt);
     let pitch; if(S.pitchMode==='manual'){ pitch=depth+Math.max(0.1,S.pitch); } else { const incR=Math.max(5,S.incidence)*Math.PI/180; pitch=depth+alongSlope*Math.sin(tilt)/Math.tan(incR); }
     const stepU=wRow+gapU;
@@ -4356,14 +4356,14 @@ const SL = (function(){
   function liveGeom(){
     const mw=(+$('sl-m-w').value)/1000, mh=(+$('sl-m-h').value)/1000, watt=(+$('sl-m-p').value)||0;
     const portrait=$('sl-m-o').value==='portrait', wRow=portrait?mw:mh, lSlope1=portrait?mh:mw;
-    const intra=(stackGap/1000), gapU=0.02, tilt=(S.tilt||15)*Math.PI/180, alongSlope=S.stack*lSlope1+(S.stack-1)*intra, depth=alongSlope*Math.cos(tilt);
+    const intra=(stackGap/1000), gapU=0.01, tilt=(S.tilt||15)*Math.PI/180, alongSlope=S.stack*lSlope1+(S.stack-1)*intra, depth=alongSlope*Math.cos(tilt);
     let pitch; if(S.pitchMode==='manual'){ pitch=depth+Math.max(0.1,S.pitch); } else { const incR=Math.max(5,S.incidence||25)*Math.PI/180; pitch=depth+alongSlope*Math.sin(tilt)/Math.tan(incR); }
     return {watt,wRow,lSlope1,intra,gapU,tilt,alongSlope,depth,pitch,stepU:wRow+gapU,stack:S.stack,base3d:(S.type==='carport'?2.6:(S.type==='roof'?7.0:0.6))};
   }
   function frameM(){
     const g=liveGeom(), LO=LAYOUT;
     if(LO&&LO.placed){ const tilt=LO.tiltR, along=LO.alongSlope; let pitch; if(S.pitchMode==='manual'){ pitch=LO.depth+Math.max(0.1,S.pitch); } else { const incR=Math.max(5,S.incidence||25)*Math.PI/180; pitch=LO.depth+along*Math.sin(tilt)/Math.tan(incR); }
-      return {lat0:LO.lat0,lng0:LO.lng0,mLat:LO.mLat,mLng:LO.mLng,azRad:LO.azRad,wRow:LO.wRow,depth:LO.depth,alongSlope:along,tilt,lSlope1:LO.mLen||g.lSlope1,intra:LO.intra||0,stack:LO.stack||1,base3d:LO.base,watt:g.watt,pitch,stepU:(LO.wRow+0.02),gapU:0.02}; }
+      return {lat0:LO.lat0,lng0:LO.lng0,mLat:LO.mLat,mLng:LO.mLng,azRad:LO.azRad,wRow:LO.wRow,depth:LO.depth,alongSlope:along,tilt,lSlope1:LO.mLen||g.lSlope1,intra:LO.intra||0,stack:LO.stack||1,base3d:LO.base,watt:g.watt,pitch,stepU:(LO.wRow+0.01),gapU:0.01}; }
     let sx=0,sy=0,n=0; try{ REGIONS.forEach(rg=>{ ringLatLng(rg.layer).forEach(p=>{sx+=p.lng;sy+=p.lat;n++;}); }); }catch(e){}
     let lat0,lng0; if(n){ lng0=sx/n; lat0=sy/n; } else { const c=map.getCenter(); lat0=c.lat; lng0=c.lng; }
     const mLat=110540, mLng=111320*Math.cos(lat0*Math.PI/180);
@@ -4676,9 +4676,10 @@ const SL = (function(){
       const rot=(x,y)=>[x*cosA - y*sinA, x*sinA + y*cosA]; // 작업프레임 → 실제 로컬미터(동=X, 북=Y)
       const wRow=LO.wRow, tilt=LO.tiltR||0, mLen=LO.mLen||0, intra=LO.intra||0, stack=LO.stack||1;
       const md=mLen*Math.cos(tilt), stepMod=(mLen+intra)*Math.cos(tilt), sinT=Math.sin(tilt), base=LO.base||0;
+      const stepMod2D=md+intra;  // 2D 평면: 적재 간격을 경사 투영 축소(intra·cosθ=9.7mm) 없이 실제 간격(intra=10mm)으로 렌더
       // 패널 4모서리 [x,y,z]. 2D=z0 평면 / 3D=경사(sinT)+지상고(base) 반영. 테이블당 stack장 경사면 연속.
       const panels=[];
-      LO.placed.forEach(([u,v])=>{ for(let k=0;k<stack;k++){ const v0=v+k*stepMod;
+      LO.placed.forEach(([u,v])=>{ for(let k=0;k<stack;k++){ const v0=v+k*(is3D?stepMod:stepMod2D);
         const sf=k*(mLen+intra), zf=is3D?(base+sf*sinT):0, zb=is3D?(base+(sf+mLen)*sinT):0;
         panels.push([[u,v0,zf],[u+wRow,v0,zf],[u+wRow,v0+md,zb],[u,v0+md,zb]].map(([x,y,z])=>{ const r=rot(x,y); return [r[0],r[1],z]; })); } });
       // 부지 외곽선 / 이격선 (지상 z=0)
@@ -4705,21 +4706,22 @@ const SL = (function(){
       const pitchV=(S.pitchMode==='manual')?((LO.depth||0)+Math.max(0.1,S.pitch)):((LO.depth||0)+(LO.alongSlope||0)*Math.sin(tilt)/Math.tan(incR));
       const rowGap=Math.max(0, pitchV-(LO.depth||0));
       const info=['지번: '+siteJibunLabel(),
-        '모듈 가배치 도면 '+(is3D?'(3D 입체':'(2D 평면')+' · 단위: m · 실척 1:1)','설치유형: '+typeTxt,
+        '모듈 가배치 도면 '+(is3D?'(3D 입체':'(2D 평면')+' · 단위: mm · 실척 1:1)','설치유형: '+typeTxt,
         '모듈각도 '+Math.round(tilt*180/Math.PI)+'도, 음영각도 '+incDeg+'도, 모듈이격 '+rowGap.toFixed(1)+'M, 경계이격 '+(S.setback||0).toFixed(1)+'M',
         modules.toLocaleString()+'EA × '+watt+'W = '+kw.toLocaleString()+'kW',
-        '모듈 규격: '+mw+' x '+mh+' mm · 모듈 방위: '+azTxt+(is3D?('  ·  지상고: '+base+' m'):'')];
+        '모듈 규격: '+mw+' x '+mh+' mm · 모듈 방위: '+azTxt+(is3D?('  ·  지상고: '+Math.round(base*1000)+' mm'):'')];
       const infoBaseX=minx, infoBaseY=miny, infoY=i=>infoBaseY - th*(3+i*1.7);
       info.forEach((_t,i)=>acc([infoBaseX, infoY(i)])); acc([ax+hw,ay+L]);
       // ----- DXF(R12/AC1009) 조립 -----
-      const nf=v=>(+v).toFixed(4);
+      const SC=1000;                         // 내부 좌표는 실척 m → 캐드 출력은 mm(건축/캐드 표준 단위). 모든 좌표·치수에 일괄 적용.
+      const nf=v=>(+v*SC).toFixed(4);
       // 한글 등 비ASCII는 오토캐드 유니코드 이스케이프로 → 파일 전체를 순수 ASCII로 유지(인코딩 깨짐 방지)
       const esc=str=>(''+str).replace(/[^\x00-\x7F]/g,c=>'\\U+'+c.charCodeAt(0).toString(16).toUpperCase().padStart(4,'0'));
       let s=''; const w=(c,v)=>{ s+=c+'\r\n'+v+'\r\n'; };
       w(0,'SECTION'); w(2,'HEADER');
       w(9,'$ACADVER'); w(1,'AC1009');
       w(9,'$DWGCODEPAGE'); w(3,'ANSI_949');
-      w(9,'$INSUNITS'); w(70,6);
+      w(9,'$INSUNITS'); w(70,4);          // 4 = 밀리미터(mm)
       w(9,'$EXTMIN'); w(10,nf(minx)); w(20,nf(miny)); w(30,'0.0');
       w(9,'$EXTMAX'); w(10,nf(maxx)); w(20,nf(maxy)); w(30,'0.0');
       w(0,'ENDSEC');
@@ -4754,7 +4756,7 @@ const SL = (function(){
       a.href=URL.createObjectURL(new Blob([s],{type:'application/dxf;charset=utf-8'}));
       a.download='모듈가배치_'+(is3D?'3D_':'')+(lastJibun||'부지').replace(/[\\/:*?"<>|]/g,'_')+'.dxf'; a.click();
       setTimeout(()=>URL.revokeObjectURL(a.href),1500);
-      setStatus('📐 캐드(DXF) '+(is3D?'3D 입체':'2D 평면')+'를 저장했습니다 — 실척(m) · 패널 '+modules.toLocaleString()+'장'+(is3D?' (경사·지상고 반영)':'')+'.');
+      setStatus('📐 캐드(DXF) '+(is3D?'3D 입체':'2D 평면')+'를 저장했습니다 — 실척(mm) · 패널 '+modules.toLocaleString()+'장'+(is3D?' (경사·지상고 반영)':'')+'.');
     }catch(e){ setStatus('⚠️ DXF 생성 실패: '+(e&&e.message||e)); }
   }
 
