@@ -5050,7 +5050,7 @@ const SL = (function(){
           <label class="sl-fld">가로(mm)<input class="tinput" type="number" id="sl-m-w" value="1134"></label>
           <label class="sl-fld">세로(mm)<input class="tinput" type="number" id="sl-m-h" value="2465"></label>
           <label class="sl-fld">출력(W)<input class="tinput" type="number" id="sl-m-p" value="645"></label>
-          <label class="sl-fld">설치방향<select class="tinput" id="sl-m-o"><option value="portrait">세로(길이↕)</option><option value="landscape">가로(길이↔)</option></select></label>
+          <label class="sl-fld">설치방향<select class="tinput" id="sl-m-o"><option value="portrait">세로(길이⇕)</option><option value="landscape">가로(길이⇔)</option></select></label>
         </div>
         <label class="sl-fld">세로 적재 <b id="sl-v-stack">2 장</b><input type="range" id="sl-m-stack" min="1" max="6" value="2"></label>
         <div class="sl-sec mt">⚙️ 배치 옵션</div>
@@ -5104,6 +5104,33 @@ const SL = (function(){
     </div>`;
   }
 
+  // ---------- 레이아웃 핏 ----------
+  // 페이지 전체 스크롤을 없애고(헤더 아래 영역을 꽉 채움) 좌/우 패널만 내부 스크롤, 지도는 영역 고정.
+  // → 좌측 패널이 뷰포트보다 길 때 스크롤하면 중앙 지도가 함께 올라가 헤더로 밀려올라가던 버그 해결.
+  function slFitLayout(){
+    const wrap=document.querySelector('.sl-wrap'); const content=wrap?wrap.closest('.content'):null;
+    if(!wrap||!content) return;
+    const left=document.querySelector('.sl-left'), right=document.querySelector('.sl-right'),
+          center=document.querySelector('.sl-center'), marea=document.querySelector('.sl-maparea'),
+          maps=document.querySelectorAll('#sl-map,#sl-three'), sides=[left,right].filter(Boolean);
+    if(window.innerWidth<=1180){                         // 스택(1열) 레이아웃: 기존 페이지 스크롤 유지(핏 해제)
+      wrap.style.height=''; wrap.style.alignItems='';
+      sides.forEach(p=>{p.style.height='';p.style.overflowY='';p.style.minHeight='';p.style.position='';});
+      if(center){center.style.display='';center.style.flexDirection='';center.style.height='';center.style.minHeight='';}
+      if(marea){marea.style.flex='';marea.style.minHeight='';}
+      maps.forEach(m=>{m.style.height='';m.style.minHeight='';});
+      return;
+    }
+    const cRect=content.getBoundingClientRect(), wRect=wrap.getBoundingClientRect();
+    const avail=Math.max(440, Math.round(content.clientHeight - (wRect.top - cRect.top) - 24));  // 헤더·페이지헤드 아래 가용 높이(실측)
+    wrap.style.height=avail+'px'; wrap.style.alignItems='stretch';
+    sides.forEach(p=>{ p.style.position='static'; p.style.height='100%'; p.style.overflowY='auto'; p.style.minHeight='0'; });
+    if(center){ center.style.display='flex'; center.style.flexDirection='column'; center.style.height='100%'; center.style.minHeight='0'; }
+    if(marea){ marea.style.flex='1'; marea.style.minHeight='0'; }
+    maps.forEach(m=>{ m.style.height='100%'; m.style.minHeight='0'; });
+  }
+  function slFitAndRedraw(){ try{ slFitLayout(); }catch(e){} try{ if(map) map.invalidateSize(); }catch(e){} }
+
   // ---------- init (idempotent) ----------
   async function init(){
     const host=$('sl-map'); if(!host) return;
@@ -5114,10 +5141,11 @@ const SL = (function(){
     let ok=false; try{ ok=await ensureMapLibs(); }catch(e){ ok=false; }
     if(!ok){ setStatus('⚠️ 지도 라이브러리를 불러오지 못했습니다 — 네트워크(인터넷 연결)를 확인하세요.'); return; }
     buildMap(); panelLayerM=L.layerGroup().addTo(map); wire();
-    setTimeout(()=>{ try{ map.invalidateSize(); }catch(e){} },120);
+    setTimeout(()=>{ slFitAndRedraw(); },120);
+    if(!window.__slResizeBound){ window.__slResizeBound=1; window.addEventListener('resize', ()=>{ clearTimeout(window.__slRT); window.__slRT=setTimeout(slFitAndRedraw, 150); }); }
     const ho = (typeof window!=='undefined') ? window.__slHandoff : null;
     // 재진입 복원: 새 핸드오프(타당성→가배치)가 없고 이전 배치 스냅샷이 있으면 그대로 불러옴('🔄 초기화' 전까지 유지)
-    if(!ho && _slKeep){ setTimeout(()=>{ try{ map.invalidateSize(); }catch(e){} try{ restoreKeep(_slKeep); }catch(e){} }, 180); return; }
+    if(!ho && _slKeep){ setTimeout(()=>{ try{ map.invalidateSize(); }catch(e){} try{ restoreKeep(_slKeep); }catch(e){} slFitAndRedraw(); }, 180); return; }
     if(lastJibun){ const ai=$('sl-addr'); if(ai&&!ai.value) ai.value=lastJibun; }
     // 타당성검토 → '이 부지로 모듈 가배치' 핸드오프: 조회한 지번들을 자동으로 불러와 묶어서 배치
     if(ho && ho.jibuns && ho.jibuns.length){
@@ -5127,7 +5155,7 @@ const SL = (function(){
       try{ const seg=$('sl-seg-type'); if(seg) seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.t===tv)); }catch(_){}
       try{ onTypeChange(tv); }catch(_){}
       setTimeout(async ()=>{   // 지도 크기 확정 후 순차 로드(첫 지번=새로, 이후=누적) → 마지막에 자동 배치
-        try{ map.invalidateSize(); }catch(e){}
+        slFitAndRedraw();
         for(let k=0;k<ho.jibuns.length;k++){ try{ await _searchParcel(k>0, ho.jibuns[k]); }catch(e){} }
       }, 220);
     }
