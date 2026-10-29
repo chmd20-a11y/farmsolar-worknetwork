@@ -4046,6 +4046,10 @@ const SL = (function(){
   let stackGap=10;                // 적재 모듈 사이 간격(mm) — 2단 간격 슬라이더로 조절
   let lastJibun='';
   const MANUAL=[]; let selId=null, seq=0, manualMode=false, uiLayer=null, svgR=null, erLayer=null, eraser=false, erStart=null, uiOn=false;
+  let _slKeep=null;                 // 배치 보존 스냅샷(메뉴 이동 시 유지, '초기화' 전까지). null=없음
+  let _slBaseName='위성 (글로벌)';   // 현재 선택된 지도 레이어명(배치도·제안서 배경에 반영)
+  let _slBaseUrls={};               // 레이어명 → 타일 URL 템플릿 배열({z}/{y}/{x})
+  function segSet(wrapId, attr, val){ const w=$(wrapId); if(!w) return; w.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset[attr]===String(val))); }
 
   // ---------- 지연 로더 ----------
   const _loaded={};
@@ -4084,7 +4088,7 @@ const SL = (function(){
   // ---------- 모듈 규격 프리셋 ----------
   function applyPreset(m){
     if(m==='kr'){ $('sl-m-w').value=1134; $('sl-m-h').value=2465; $('sl-m-p').value=645; }
-    else if(m==='cn'){ $('sl-m-w').value=1143; $('sl-m-h').value=2382; $('sl-m-p').value=655; }
+    else if(m==='cn'){ $('sl-m-w').value=1134; $('sl-m-h').value=2382; $('sl-m-p').value=655; }
     document.querySelectorAll('#sl-seg-mod button').forEach(b=>b.classList.toggle('on', b.dataset.m===m));
   }
 
@@ -4094,6 +4098,8 @@ const SL = (function(){
     const mk=(u,at)=>L.tileLayer(u,{maxZoom:21,maxNativeZoom:19,crossOrigin:'anonymous',attribution:at||''});
     const ESRI='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
     const SAT=P+'/req/wmts/1.0.0/__KEY__/Satellite/{z}/{y}/{x}.jpeg', HYB=P+'/req/wmts/1.0.0/__KEY__/Hybrid/{z}/{y}/{x}.png', BASE=P+'/req/wmts/1.0.0/__KEY__/Base/{z}/{y}/{x}.png';
+    // 배치도·제안서 배경이 '현재 선택 지도'를 따르도록 레이어별 타일 URL 템플릿 보관(아래 그룹과 순서 동일, 바닥→오버레이)
+    _slBaseUrls = { '위성 + 지명':[ESRI,SAT,HYB], '위성 (고해상)':[ESRI,SAT], '위성 (글로벌)':[ESRI], '일반 지도':[BASE] };
     // 각 지도는 별도 타일 인스턴스(한 타일레이어는 동시에 한 그룹만 가능). ESRI 바닥 + 국내 VWorld 위에(실패 시 ESRI 노출).
     return {
       '위성 + 지명':   L.layerGroup([mk(ESRI,'© Esri · Maxar'), mk(SAT,'국토부 VWorld 항공영상'), mk(HYB)]),
@@ -4107,7 +4113,9 @@ const SL = (function(){
     L.control.zoom({position:'bottomright'}).addTo(map);
     const bases=tileLayers(), bk=Object.keys(bases);
     satGroup=(bases['위성 (글로벌)']||bases[bk[0]]).addTo(map);         // 기본 = 위성 (글로벌)
+    _slBaseName='위성 (글로벌)';
     L.control.layers(bases, null, {position:'topright', collapsed:true}).addTo(map);   // 🗺️ 지도 선택
+    map.on('baselayerchange', e=>{ if(e&&e.name){ _slBaseName=e.name; } });            // 선택 지도 추적(배치도·제안서 배경 반영)
     if(!_resizeHooked){ _resizeHooked=true; addEventListener('resize',()=>{ if(map && !view3D){ try{ map.invalidateSize(); }catch(e){} } }); }
     cr=L.canvas({padding:0.5});
     panelLayer=L.layerGroup().addTo(map);
@@ -4183,7 +4191,7 @@ const SL = (function(){
     try{ map.removeLayer(r.layer); }catch(_){}
     REGIONS.splice(i,1); renderParcelChips();
     if(REGIONS.length){ fitAllParcels(); runLayout(); }
-    else { try{ panelLayer.clearLayers(); bufferLayer.clearLayers(); }catch(_){} resetStats(); LAYOUT=null; setAddMode(false); setStatus('모든 필지를 제거했습니다 — 지번을 검색하세요.'); }
+    else { try{ panelLayer.clearLayers(); bufferLayer.clearLayers(); }catch(_){} resetStats(); LAYOUT=null; setAddMode(false); if(!MANUAL.length) _slKeep=null; setStatus('모든 필지를 제거했습니다 — 지번을 검색하세요.'); }
   }
 
   // ---------- 지붕 모드: 위성에서 건물 지붕을 직접 그려 배치 ----------
@@ -4327,6 +4335,7 @@ const SL = (function(){
     } else { optTxt = ` · 방위 ${azTxt}`; }
     setStatus(`✅ 배치 완료 — <b>${modules.toLocaleString()}장</b> · <b>${Math.round(kw).toLocaleString()} kWp</b> · 이용률 ${ratio.toFixed(0)}%${optTxt}${skipTxt}`);
     if(MANUAL.length) syncM();
+    snapshotKeep();
   }
 
   // ---------- 수동 배치 ----------
@@ -4378,7 +4387,58 @@ const SL = (function(){
     });
     updateSelbar();
   }
-  function syncM(){ const F=frameM(); drawPanelsM(F); mergeLayout(F); drawUiM(F); updateMetaM(); updateEditBtns(); try{ if(view3D&&LAYOUT) rebuild3D(); }catch(e){} }
+  function syncM(){ const F=frameM(); drawPanelsM(F); mergeLayout(F); drawUiM(F); updateMetaM(); updateEditBtns(); try{ if(view3D&&LAYOUT) rebuild3D(); }catch(e){} snapshotKeep(); }
+  // ---------- 배치 보존(메뉴 이동 유지) + 복원 ----------
+  function snapshotKeep(){
+    try{
+      if(!REGIONS.length && !MANUAL.length){ return; }
+      const v=id=>{ const e=$(id); return e?e.value:null; };
+      _slKeep={
+        regions: REGIONS.map(r=>{ let gj=null; try{ gj=r.layer.toGeoJSON(); }catch(e){} return {gj:gj, parcel:r.parcel, roadGeom:r.roadGeom}; }).filter(x=>x.gj),
+        opts:{ w:v('sl-m-w'), h:v('sl-m-h'), p:v('sl-m-p'), o:v('sl-m-o'), set:v('sl-o-set'), az:v('sl-o-az'), stack:v('sl-m-stack'), tilt:v('sl-o-tilt'), inc:v('sl-o-inc'), pitch:v('sl-o-pitch'), gap:v('sl-o-gap'), type:S.type, optimize:S.optimize, modSeg:(document.querySelector('#sl-seg-mod button.on')||{}).dataset?(document.querySelector('#sl-seg-mod button.on').dataset.m):null },
+        manual: MANUAL.map(b=>({id:b.id,lat:b.lat,lng:b.lng,rows:b.rows,cols:b.cols})), manualMode, seq,
+        view: (map?{c:[map.getCenter().lat,map.getCenter().lng],z:map.getZoom()}:null),
+        jibun:lastJibun
+      };
+    }catch(e){ /* 스냅샷 실패해도 동작엔 지장 없음 */ }
+  }
+  function restoreKeep(keep){
+    const o=keep.opts||{};
+    const setv=(id,val)=>{ const e=$(id); if(e&&val!=null&&val!=='') e.value=val; };
+    setv('sl-m-w',o.w); setv('sl-m-h',o.h); setv('sl-m-p',o.p); setv('sl-m-o',o.o);
+    setv('sl-o-set',o.set); setv('sl-o-az',o.az); setv('sl-m-stack',o.stack);
+    setv('sl-o-tilt',o.tilt); setv('sl-o-inc',o.inc); setv('sl-o-pitch',o.pitch); setv('sl-o-gap',o.gap);
+    if(o.type){ S.type=o.type; segSet('sl-seg-type','t',o.type); }
+    if(o.optimize!=null){ S.optimize=o.optimize; segSet('sl-seg-opt','o', o.optimize?'1':'0'); }
+    if(o.modSeg) segSet('sl-seg-mod','m',o.modSeg);
+    lastJibun=keep.jibun||''; { const ai=$('sl-addr'); if(ai&&lastJibun) ai.value=lastJibun; }
+    (keep.regions||[]).forEach(rr=>{ try{
+      const ly=L.polygon(geomToLatLngs(rr.gj.geometry),{color:'#ffd54a',weight:2,fillOpacity:.06}).addTo(map);
+      REGIONS.push({layer:ly, parcel:rr.parcel, roadGeom:rr.roadGeom});
+    }catch(e){} });
+    try{ renderParcelChips(); }catch(e){}
+    if(keep.view&&keep.view.c){ try{ map.setView(keep.view.c, keep.view.z); }catch(e){ try{ fitAllParcels(); }catch(_){} } }
+    else { try{ fitAllParcels(); }catch(e){} }
+    if(REGIONS.length){ try{ setAddMode(true); }catch(e){} try{ runLayout(); }catch(e){} }
+    if(keep.manual && keep.manual.length){
+      keep.manual.forEach(b=>MANUAL.push({id:b.id,lat:b.lat,lng:b.lng,rows:b.rows,cols:b.cols}));
+      seq=Math.max(keep.seq||0, ...keep.manual.map(b=>b.id||0));
+      manualMode=!!keep.manualMode;
+      try{ if(manualMode) openManual(); else syncM(); }catch(e){ try{ syncM(); }catch(_){} }
+    }
+    setStatus('↩️ 이전 배치를 불러왔습니다 — <b>🔄 초기화</b> 버튼으로 새로 시작할 수 있습니다.');
+  }
+  function slResetAll(){
+    try{ map&&map.pm&&map.pm.disableDraw(); }catch(e){}
+    try{ clearBoundary(); }catch(e){} try{ clearRoofRef(); }catch(e){}
+    try{ if(panelLayer) panelLayer.clearLayers(); if(bufferLayer) bufferLayer.clearLayers(); }catch(e){}
+    try{ if(panelLayerM) panelLayerM.clearLayers(); if(uiLayer) uiLayer.clearLayers(); }catch(e){}
+    MANUAL.length=0; LAYOUT=null; selId=null; manualMode=false; eraser=false;
+    try{ removeManUi(); }catch(e){}
+    try{ resetStats(); }catch(e){} try{ renderParcelChips(); }catch(e){} try{ updateSelbar(); }catch(e){}
+    _slKeep=null; setAddMode(false);
+    setStatus('🔄 배치를 초기화했습니다 — <b>지번 검색</b>이나 <b>✏️ 경계</b>로 다시 시작하세요.');
+  }
   function addBlock(){ const rows=Math.max(1,Math.min(30,parseInt($('sl-mc-rows').value)||3)), cols=Math.max(1,Math.min(60,parseInt($('sl-mc-cols').value)||10)), c=map.getCenter(); MANUAL.push({id:++seq,lat:c.lat,lng:c.lng,rows,cols}); selId=seq; syncM(); }
   function delBlock(){ const i=MANUAL.findIndex(b=>b.id===selId); if(i<0)return; MANUAL.splice(i,1); selId=null; syncM(); }
   function nudge(dx,dy){ const b=MANUAL.find(x=>x.id===selId); if(!b)return; const F=frameM(), uc=toUV(b.lat,b.lng,F), nll=toLL(uc.u+dx,uc.v+dy,F); b.lat=nll[0]; b.lng=nll[1]; syncM(); }
@@ -4687,6 +4747,8 @@ const SL = (function(){
   // 고객 배부용이라 위성 배경은 상업사용 OK인 ArcGIS World Imagery를 현재 뷰에 맞춰 직접 받아 깐다(VWorld·라벨 없이 깨끗).
   // 부지를 자동 프레이밍해 ArcGIS 위성(상업OK)을 네이티브 해상도로 렌더(줌≤19 클램프 → 'Map data not available' 방지) + 모듈·경계를 좌표기반 벡터로 그려 캐드 효과.
   function buildMapImage(LO){
+    // ⚠️ 상업 라이선스 안내 — VWorld 항공영상(고해상·지명) 선택 시 고객 배부물엔 라이선스 확인 필요(글로벌·일반지도는 상업 OK)
+    if(/위성 \(고해상\)|위성 \+ 지명/.test(_slBaseName)){ try{ toast('🗺️ 배치도/제안서 배경에 국토부 VWorld 항공영상이 적용됩니다 — 고객 배부물 상업사용은 라이선스 확인이 필요합니다.'); }catch(e){} }
     return new Promise(resolve=>{
       const capW=1600, capH=1144, RES=2, padFrac=0.14;              // 지도창 비율(≈1.40)·2배 해상도
       const az=LO.azRad||0, cosA=Math.cos(az), sinA=Math.sin(az);
@@ -4709,17 +4771,24 @@ const SL = (function(){
       const cv=document.createElement('canvas'); cv.width=capW*RES; cv.height=capH*RES;
       const g=cv.getContext('2d'); g.fillStyle='#9aa39b'; g.fillRect(0,0,cv.width,cv.height); g.imageSmoothingQuality='high';
       const tx0=Math.floor(p0.x/tileW), tx1=Math.floor((p0.x+capW)/tileW), ty0=Math.floor(p0.y/tileW), ty1=Math.floor((p0.y+capH)/tileW);
-      let pending=0, finished=false;
+      // 배경 = '현재 선택된 지도' 레이어들을 바닥→오버레이 순서로 합성(글로벌이면 ESRI 1장, 고해상/지명이면 ESRI+VWorld 겹침)
+      const ESRI='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+      const urls=(_slBaseUrls[_slBaseName]&&_slBaseUrls[_slBaseName].length)?_slBaseUrls[_slBaseName]:[ESRI];
+      let finished=false;
       const done=()=>{ if(finished)return; finished=true; try{ drawLayoutVectors(g, LO, toPx, RES); }catch(e){} resolve(cv); };
-      for(let tx=tx0;tx<=tx1;tx++)for(let ty=ty0;ty<=ty1;ty++){ pending++;
-        const dx=(tx*tileW-p0.x)*RES, dy=(ty*tileW-p0.y)*RES, dw=tileW*RES;
-        const im=new Image(); im.crossOrigin='anonymous';
-        im.onload=()=>{ try{ g.drawImage(im,dx,dy,dw,dw); }catch(e){} if(--pending<=0)done(); };
-        im.onerror=()=>{ if(--pending<=0)done(); };
-        im.src='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+tileZ+'/'+ty+'/'+tx;
-      }
-      if(pending===0) done();
-      setTimeout(()=>{ if(!finished) done(); }, 12000);
+      const loadLayer=(tmpl)=>new Promise(res=>{ let pend=0, ended=false; const fin=()=>{ if(ended)return; ended=true; res(); };
+        for(let tx=tx0;tx<=tx1;tx++)for(let ty=ty0;ty<=ty1;ty++){ pend++;
+          const dx=(tx*tileW-p0.x)*RES, dy=(ty*tileW-p0.y)*RES, dw=tileW*RES;
+          const im=new Image(); im.crossOrigin='anonymous';
+          im.onload=()=>{ try{ g.drawImage(im,dx,dy,dw,dw); }catch(e){} if(--pend<=0)fin(); };
+          im.onerror=()=>{ if(--pend<=0)fin(); };
+          im.src=tmpl.replace('{z}',tileZ).replace('{y}',ty).replace('{x}',tx);
+        }
+        if(pend===0) fin();
+        setTimeout(fin, 12000);
+      });
+      (async()=>{ for(const u of urls){ if(finished)break; try{ await loadLayer(u); }catch(e){} } done(); })();
+      setTimeout(()=>{ if(!finished) done(); }, 16000);
     });
   }
   // LAYOUT(실좌표)에서 모듈 패널·부지경계·이격선을 '벡터 선'으로 직접 그린다(스크린샷 아님 = 캐드 도면 효과).
@@ -4841,7 +4910,7 @@ const SL = (function(){
     // Enter = 필지 추가(누적) — 입력칸에서 습관적으로 Enter를 눌러도 기존 필지가 지워지지 않도록. 빈 상태면 첫 필지 로드와 동일.
     const ai=$('sl-addr'); if(ai) ai.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); addParcel(); } };
     $('sl-btn-draw').onclick=()=>{ try{ map.pm.enableDraw('Polygon',{snappable:true,finishOn:'dblclick'}); setStatus('✏️ 지도에서 꼭짓점을 클릭해 부지를 그리고, 마지막 점을 더블클릭하세요.'); }catch(e){ setStatus('그리기를 시작할 수 없습니다.'); } };
-    $('sl-btn-clear').onclick=()=>{ try{ map.pm.disableDraw(); }catch(_){} clearBoundary(); clearRoofRef(); panelLayer.clearLayers(); bufferLayer.clearLayers(); resetStats(); LAYOUT=null; setAddMode(false); setStatus('지웠습니다 — 새 부지를 지정하세요.'); };
+    $('sl-btn-clear').onclick=slResetAll;   // 🔄 초기화 = 배치 전체 초기화(보존 스냅샷까지 비움)
     $('sl-btn-run').onclick=runLayout;
     $('sl-btn-manual').onclick=()=>{ manualMode?closeManual():openManual(); };
     $('sl-btn-png').onclick=savePng;
@@ -4905,7 +4974,7 @@ const SL = (function(){
           <div id="sl-viewtoggle"><button id="sl-v2d" class="on">🗺️ 2D</button><button id="sl-v3d">🧊 3D</button></div>
           <div id="sl-maptools">
             <button class="btn ghost sm" id="sl-btn-draw" title="부지 경계 직접 그리기">✏️ 경계</button>
-            <button class="btn ghost sm" id="sl-btn-clear" title="지우기">🗑️ 지우기</button>
+            <button class="btn ghost sm" id="sl-btn-clear" title="배치 전체 초기화 (이 버튼 전까지는 배치가 계속 유지됩니다)">🔄 초기화</button>
             <button class="btn ghost sm" id="sl-btn-manual" title="수동 배치">✥ 수동배치</button>
           </div>
           <div id="sl-sunbar" style="display:none">☀️ <input type="range" id="sl-sun" min="6" max="18" step="0.25" value="13"><b id="sl-v-sun">13:00</b></div>
@@ -4941,9 +5010,11 @@ const SL = (function(){
     if(!ok){ setStatus('⚠️ 지도 라이브러리를 불러오지 못했습니다 — 네트워크(인터넷 연결)를 확인하세요.'); return; }
     buildMap(); panelLayerM=L.layerGroup().addTo(map); wire();
     setTimeout(()=>{ try{ map.invalidateSize(); }catch(e){} },120);
+    const ho = (typeof window!=='undefined') ? window.__slHandoff : null;
+    // 재진입 복원: 새 핸드오프(타당성→가배치)가 없고 이전 배치 스냅샷이 있으면 그대로 불러옴('🔄 초기화' 전까지 유지)
+    if(!ho && _slKeep){ setTimeout(()=>{ try{ map.invalidateSize(); }catch(e){} try{ restoreKeep(_slKeep); }catch(e){} }, 180); return; }
     if(lastJibun){ const ai=$('sl-addr'); if(ai&&!ai.value) ai.value=lastJibun; }
     // 타당성검토 → '이 부지로 모듈 가배치' 핸드오프: 조회한 지번들을 자동으로 불러와 묶어서 배치
-    const ho = (typeof window!=='undefined') ? window.__slHandoff : null;
     if(ho && ho.jibuns && ho.jibuns.length){
       window.__slHandoff = null;                         // 1회성(재진입 시 재실행 방지)
       const tv = ho.type==='지붕' ? 'roof' : 'ground';   // 수상도 부지 배치는 노지식으로
