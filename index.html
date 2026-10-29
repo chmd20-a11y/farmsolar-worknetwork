@@ -1180,6 +1180,9 @@ button{font-family:inherit;cursor:pointer}
 .sl-fld .tinput{font-size:13px;padding:9px 11px}
 .sl-fld b{color:var(--accent-ink);background:var(--accent-soft);padding:1px 8px;border-radius:20px;font-size:11.5px;font-weight:800;margin-left:4px}
 .sl-lbl{font-size:12px;font-weight:700;color:var(--ink-2);margin:2px 0 7px}
+.sl-aznote{font-size:10.5px;font-weight:600;color:var(--muted);margin:-7px 0 13px;line-height:1.5}
+.sl-aznote a{color:var(--accent-ink);font-weight:800;cursor:pointer;white-space:nowrap;margin-left:6px;text-decoration:underline}
+.sl-aznote a:hover{opacity:.8}
 .sl-note2{font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 11px;margin-bottom:13px;line-height:1.5}
 /* 상단 검색바 */
 .sl-searchbar{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-bottom:12px}
@@ -4049,7 +4052,7 @@ const SL = (function(){
   let LAYOUT=null;                // 배치 결과(중심 객체)
   let three=null, view3D=false, sunT=13, _resizeHooked=false;
   let roofRef=null;   // 지붕 모드: 참고용 필지 외곽선(배치엔 미사용)
-  const S={type:'ground',tilt:15,az:0,setback:2.0,pitchMode:'auto',pitch:2.5,stack:2,optimize:true,incidence:25};
+  const S={type:'ground',tilt:15,az:0,setback:2.0,pitchMode:'manual',pitch:2.5,stack:2,optimize:true,incidence:25};  // 열간격=슬라이더 직접조절(manual 고정, 기본 2.5m) · 패널방위=자동 최적(optimize) 기본
   let stackGap=10;                // 적재 모듈 사이 간격(mm) — 2단 간격 슬라이더로 조절
   let lastJibun='';
   const MANUAL=[]; let selId=null, seq=0, manualMode=false, uiLayer=null, svgR=null, erLayer=null, eraser=false, erStart=null, uiOn=false;
@@ -4341,6 +4344,7 @@ const SL = (function(){
       type:S.type, grossArea, landArea, regionCount:regionsOut.length};
     if(view3D) rebuild3D();
     const azTxt=bestDeg===0?'정남':(bestDeg<0?`남동 ${-bestDeg}°`:`남서 ${bestDeg}°`);
+    { const az=$('sl-o-az'); if(az && S.optimize) az.value=bestDeg; const b=$('sl-v-az'); if(b) b.textContent=(S.optimize?'자동 · ':'수동 · ')+azTxt; }  // 방위 슬라이더/라벨을 현재 최적값으로 표시
     const skipTxt=skipped>0?` <span style="color:#d08a3a">(구역 ${skipped}개 완충거리 초과 제외)</span>`:'';
     let optTxt;
     if(S.optimize){ const gm=optGain*S.stack;
@@ -4422,7 +4426,9 @@ const SL = (function(){
     setv('sl-o-set',o.set); setv('sl-o-az',o.az); setv('sl-m-stack',o.stack);
     setv('sl-o-tilt',o.tilt); setv('sl-o-inc',o.inc); setv('sl-o-pitch',o.pitch); setv('sl-o-gap',o.gap);
     if(o.type){ S.type=o.type; segSet('sl-seg-type','t',o.type); }
-    if(o.optimize!=null){ S.optimize=o.optimize; segSet('sl-seg-opt','o', o.optimize?'1':'0'); }
+    if(o.optimize!=null) S.optimize=o.optimize;
+    { const v=+((o&&o.az)||0); const t=v===0?'정남':(v<0?'남동 '+(-v)+'°':'남서 '+v+'°'); const b=$('sl-v-az'); if(b) b.textContent=(S.optimize?'자동 · ':'수동 · ')+t; }
+    { const pv=$('sl-o-pitch'); const b=$('sl-v-pitch'); if(pv&&b) b.textContent=(+pv.value).toFixed(1)+' m'; }
     if(o.modSeg) segSet('sl-seg-mod','m',o.modSeg);
     lastJibun=keep.jibun||''; { const ai=$('sl-addr'); if(ai&&lastJibun) ai.value=lastJibun; }
     (keep.regions||[]).forEach(rr=>{ try{
@@ -4938,13 +4944,13 @@ const SL = (function(){
     $('sl-sun').oninput=e=>{ sunT=parseFloat(e.target.value); const h=Math.floor(sunT), m=Math.round((sunT-h)*60); $('sl-v-sun').textContent=(h<10?'0':'')+h+':'+(m<10?'0':'')+m; updateSun3D(); };
     wireSeg('sl-seg-mod','m', m=>{ if(m==='custom'){ return; } applyPreset(m); if(MANUAL.length) syncM(); });
     wireSeg('sl-seg-type','t', t=>{ S.type=t; if(MANUAL.length) syncM(); onTypeChange(t); });
-    wireSeg('sl-seg-opt','o', o=>{ S.optimize=(o==='1'); $('sl-az-manual').style.display=S.optimize?'none':'block'; if(MANUAL.length) syncM(); });
-    wireSeg('sl-seg-pitch','p', p=>{ S.pitchMode=p; $('sl-pitch-manual').style.display=(p==='manual')?'block':'none'; if(MANUAL.length) syncM(); });
+    { const pz=$('sl-o-pitch'); if(pz) pz.oninput=e=>{ S.pitch=Math.max(0.1,+e.target.value); const b=$('sl-v-pitch'); if(b) b.textContent=(+e.target.value).toFixed(1)+' m'; if(MANUAL.length) syncM(); }; }
+    { const za=$('sl-az-auto'); if(za) za.onclick=()=>{ S.optimize=true; S.az=0; const az=$('sl-o-az'); if(az) az.value=0; const b=$('sl-v-az'); if(b) b.textContent='자동 · 정남'; if(REGIONS.length) runLayout(); else if(MANUAL.length) syncM(); }; }
     $('sl-o-set').oninput=e=>{ $('sl-v-set').textContent=((+e.target.value)/10).toFixed(1)+' m'; };
     { const ic=$('sl-o-inc'); if(ic) ic.oninput=e=>{ S.incidence=Math.max(10,+e.target.value); const b=$('sl-v-inc'); if(b) b.textContent=e.target.value+'°'; if(MANUAL.length) syncM(); }; }
     { const tl=$('sl-o-tilt'); if(tl) tl.oninput=e=>{ S.tilt=Math.max(0,Math.min(40,+e.target.value)); const b=$('sl-v-tilt'); if(b) b.textContent=e.target.value+'°'; if(MANUAL.length) syncM(); }; }
     { const gp=$('sl-o-gap'); if(gp) gp.oninput=e=>{ stackGap=Math.max(0,+e.target.value); const b=$('sl-v-gap'); if(b) b.textContent=e.target.value+' mm'; if(MANUAL.length) syncM(); }; }
-    $('sl-o-az').oninput=e=>{ const v=+e.target.value; $('sl-v-az').textContent=v===0?'정남':(v<0?'남동 '+(-v)+'°':'남서 '+v+'°'); S.az=v; if(MANUAL.length) syncM(); };
+    $('sl-o-az').oninput=e=>{ const v=+e.target.value; S.optimize=false; S.az=v; const t=v===0?'정남':(v<0?'남동 '+(-v)+'°':'남서 '+v+'°'); $('sl-v-az').textContent='수동 · '+t; if(MANUAL.length) syncM(); };
     $('sl-m-stack').oninput=e=>{ $('sl-v-stack').textContent=e.target.value+' 장'; S.stack=+e.target.value; if(MANUAL.length) syncM(); };
     ['sl-m-w','sl-m-h','sl-m-p','sl-m-o'].forEach(id=>{ const el=$(id); if(el) el.addEventListener('input',()=>{ if(MANUAL.length) syncM(); }); });
   }
@@ -4969,12 +4975,9 @@ const SL = (function(){
         <label class="sl-fld">모듈 각도(경사) <b id="sl-v-tilt">15°</b><input type="range" id="sl-o-tilt" min="0" max="35" value="15"></label>
         <label class="sl-fld">2단 간격(모듈 사이) <b id="sl-v-gap">10 mm</b><input type="range" id="sl-o-gap" min="0" max="100" value="10"></label>
         <label class="sl-fld">완충 경계(안쪽 이격) <b id="sl-v-set">2.0 m</b><input type="range" id="sl-o-set" min="0" max="100" value="20"></label>
-        <div class="sl-lbl">패널 방위</div>
-        <div class="sl-seg" id="sl-seg-opt"><button data-o="1" class="on">자동<small>형상 최적</small></button><button data-o="0">수동 방위</button></div>
-        <label class="sl-fld" id="sl-az-manual" style="display:none">배열 방위(정남 기준) <b id="sl-v-az">정남</b><input type="range" id="sl-o-az" min="-90" max="90" value="0"></label>
-        <div class="sl-lbl">열 간격(그림자 방지)</div>
-        <div class="sl-seg" id="sl-seg-pitch"><button data-p="auto" class="on">자동</button><button data-p="manual">수동</button></div>
-        <label class="sl-fld" id="sl-pitch-manual" style="display:none">모듈 열 이격(m)<input class="tinput" type="number" id="sl-o-pitch" min="0" max="10" step="0.01" value="2.5"></label>
+        <label class="sl-fld">패널 방위(정남 기준) <b id="sl-v-az">자동 · 정남</b><input type="range" id="sl-o-az" min="-90" max="90" value="0"></label>
+        <div class="sl-aznote">부지 형상에 맞춘 최적 방위가 자동 적용됩니다 · 조절바를 움직이면 수동<a id="sl-az-auto" title="자동 최적 방위로 되돌리기">⟳ 자동</a></div>
+        <label class="sl-fld">열 간격(그림자 방지) <b id="sl-v-pitch">2.5 m</b><input type="range" id="sl-o-pitch" min="1" max="6" step="0.1" value="2.5"></label>
         <label class="sl-fld">음영각도(입사각) <b id="sl-v-inc">25°</b><input type="range" id="sl-o-inc" min="15" max="40" value="25"></label>
       </div>
       <div class="sl-center">
