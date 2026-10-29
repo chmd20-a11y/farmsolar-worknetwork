@@ -8180,17 +8180,21 @@ const _SRC={ design:'설계팀 작성 · 대시보드 업로드', idcopy:'사업
 // 번들 자리표시 서류명 → 「첨부서류 발급·준비」 체크리스트 key 매핑(업로드 파일을 그 자리에 삽입)
 const DOC_UP={ '건축물대장':'건축물대장', '토지대장':'토지(임야)대장', '지적도':'지적도',
   '토지이음':'토지이용계획확인서', '토지등기부등본':'등기부등본(토지·건물)', '건축물등기부등본':'등기부등본(토지·건물)' };
-// 수동 업로드 서류 — 대시보드 다른 메뉴에 업로드 위치는 있으나 접수서류 자리로 '자동 끌어오기'는 안 됨(그 메뉴에서 올린 뒤 수동 제출). 값=올리는 위치.
+// 접수서류 자리표시 '가져오는 위치' — 자동연동 안 되는 서류의 실제 업로드 위치(다른 메뉴). 값=위치 문구.
 const MANUAL_UP={ '발전사업허가증':'행정 › 행정서류함(발전허가증 첨부)', '구조검토서':'설계 › 구조검토(최종자료 첨부)',
   '사업주 신분증 사본':'영업 › 실계약(신분증 첨부)', '사업자 신분증':'영업 › 실계약(신분증 첨부)',
   '배치도':'설계 › 현장 실측(도면 첨부)', '측면도':'설계 › 현장 실측(도면 첨부)' };
+// 원본 제출 서류 — 원본(인감 날인·발급 원본)이 필요해 가져올 수 없는 서류 → 자리표시에 '원본제출'만 표기(붉은색 마킹 서류 + 동류)
+const ORIG_SUBMIT={ '사용인감계 (공양식만 제공)':1, '인감증명서':1, '사업주 인감증명서':1, '법인 인감증명서':1,
+  '토지주 인감증명서':1, '지상권자 인감증명서':1, '토지사용승낙서':1, '지상권 승낙서':1,
+  '가족관계증명서':1, '주민등록등본':1, '잔액증명서':1, '법인 등기사항 전부 증명서':1, '법인 재무제표':1, '법인 정관':1 };
 // 접수서류 순서 묶음 — 첨부 리스트(개인/법인) 순서대로. 건물형(지붕형)만 건축물대장·건축물등기부등본 포함. 공사 협력 의향서는 목록 뒤 유지.
 function permitBundle(d){
   const p=getPermit(d);
   // 업로드 전 서류 = 자리표시. 체크리스트에 업로드된 파일이 있으면 그 자리에 삽입(up).
   const _ph=(name, src)=>{ const k=DOC_UP[name]; const r=k&&p.docs&&p.docs[k];
-    const st = k ? 'auto' : (MANUAL_UP[name] ? 'manual' : 'none');   // auto=자동연동 / manual=수동업로드 / none=내역없음
-    return {ph:name, src:(st==='manual'?MANUAL_UP[name]:src), up:(r&&docSrc(r))?r:null, st:st}; };
+    const st = ORIG_SUBMIT[name] ? 'orig' : 'source';   // orig=원본제출 / source=가져오는 위치 표시
+    return {ph:name, src:(MANUAL_UP[name]||src), up:(r&&docSrc(r))?r:null, st:st}; };
   const corp=!!(p.applicant&&p.applicant.corp);                                           // true=법인 / false=개인
   const bld=((p.builds&&p.builds.length>0)) || /지붕|건물/.test(String(d.site||''));        // 건물형(지붕형)
   const L=[ _PF.sincheong, _PF.saup, _ph('배치도',_SRC.design), _ph('측면도',_SRC.design), _PF.ilramdo, _PF.dongui,
@@ -8224,8 +8228,8 @@ function permitBundle(d){
 function devPermitBundle(d){
   const p=getPermit(d);
   const _ph=(name, src)=>{ const k=DOC_UP[name]; const r=k&&p.docs&&p.docs[k];
-    const st = k ? 'auto' : (MANUAL_UP[name] ? 'manual' : 'none');   // auto=자동연동 / manual=수동업로드 / none=내역없음
-    return {ph:name, src:(st==='manual'?MANUAL_UP[name]:src), up:(r&&docSrc(r))?r:null, st:st}; };
+    const st = ORIG_SUBMIT[name] ? 'orig' : 'source';   // orig=원본제출 / source=가져오는 위치 표시
+    return {ph:name, src:(MANUAL_UP[name]||src), up:(r&&docSrc(r))?r:null, st:st}; };
   const bld=((p.builds&&p.builds.length>0)) || /지붕|건물/.test(String(d.site||''));   // 건물형(지붕형)
   const L=[
     {url:'forms/dev_sincheong.print.html', label:'개발행위 허가신청서'},   // 1 양식
@@ -8282,20 +8286,15 @@ function permitPlaceholderPage(name, src, up, linked, st){
     +"<div style=\"font-size:12pt;color:"+tagColor+";letter-spacing:3px;margin-bottom:16px\">"+tag+"</div>"
     +"<div style=\"font-size:27pt;font-weight:700;color:#1f2937;margin-bottom:22px;word-break:keep-all\">"+esc(name)+"</div>"
     +bodyHtml+"</div></div>";
-  if(st==='manual'){   // ② 업로드 위치는 있으나 자동연동 X → 수동 업로드
-    return wrap("2px solid #b8860b","✋ 수동 업로드","#b8860b",
-      "<div style=\"font-size:13.5pt;color:#334155\">업로드 위치 : <b style=\"color:#b8860b\">"+esc(src)+"</b></div>"
-     +"<div style=\"font-size:10.5pt;color:#94a3b8;margin-top:18px;line-height:1.6\">위 메뉴에서 올린 파일을 이 자리에 <b>수동으로 넣어</b> 제출하세요<br>(이 서식으로 자동 연동되지는 않습니다)</div>");
+  if(st==='orig'){   // 원본 제출 서류 — 원본이 필요해 가져올 수 없음
+    return wrap("2px solid #dc2626","📄 원본 제출 서류","#dc2626",
+      "<div style=\"font-size:18pt;font-weight:800;color:#dc2626;letter-spacing:1px\">원본제출</div>"
+     +"<div style=\"font-size:10.5pt;color:#94a3b8;margin-top:16px;line-height:1.6\">원본(인감 날인·발급 원본)이 필요한 서류입니다<br>발급·수령한 <b>원본을 이 자리에 넣어 제출</b>하세요</div>");
   }
-  if(st==='none'){     // ③ 업로드 위치 없음 → 내역 없음
-    return wrap("2px dashed #cbd5e1","＋ 첨부 서류 자리","#94a3b8",
-      "<div style=\"font-size:16pt;font-weight:700;color:#94a3b8\">내역 없음</div>"
-     +"<div style=\"font-size:10.5pt;color:#94a3b8;margin-top:16px\">가져오는 위치가 지정되지 않았습니다 — 업로드 경로 결정 필요</div>");
-  }
-  // ① auto(또는 미지정) — 가져오는 위치 표시(올리면 자동 삽입)
+  // source(또는 미지정) — 가져오는 위치 표시
   return wrap("2px dashed #94a3b8","첨부 서류 자리","#94a3b8",
     "<div style=\"font-size:13.5pt;color:#334155\">가져오는 위치 : <b style=\"color:#1d4ed8\">"+esc(src)+"</b></div>"
-   +"<div style=\"font-size:10.5pt;color:#94a3b8;margin-top:18px\">실제 파일이 업로드·입력되면 이 자리에 자동으로 삽입됩니다</div>");
+   +"<div style=\"font-size:10.5pt;color:#94a3b8;margin-top:18px\">해당 위치의 자료를 이 자리에 넣어 제출합니다</div>");
 }
 // 개발행위 접수서류는 devPermitBundle(d)로 생성(발전사업허가와 동일 방식 — 양식+자리표시 순서 묶음)
 const PPA_PRINT_FILES=[
