@@ -1183,6 +1183,20 @@ button{font-family:inherit;cursor:pointer}
 .sl-aznote{font-size:10.5px;font-weight:600;color:var(--muted);margin:-7px 0 13px;line-height:1.5}
 .sl-aznote a{color:var(--accent-ink);font-weight:800;cursor:pointer;white-space:nowrap;margin-left:6px;text-decoration:underline}
 .sl-aznote a:hover{opacity:.8}
+.sl-save-btn{margin-top:12px;border-style:dashed;font-weight:800}
+#sl-save-slot:disabled{opacity:.5;cursor:not-allowed}
+.sl-slots-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.sl-slot-empty{font-size:11.5px;color:var(--muted);text-align:center;padding:14px 8px;border:1px dashed var(--border);border-radius:10px;line-height:1.55}
+.sl-slot{border:1px solid var(--border);border-radius:11px;padding:9px 10px;background:var(--surface-2)}
+.sl-slot-top{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:5px}
+.sl-slot-name{font-size:12px;font-weight:800;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:5px;min-width:0}
+.sl-slot-badge{flex:none;font-size:9px;font-weight:800;color:#2e8b63;background:color-mix(in srgb,#2e8b63 15%,transparent);border-radius:20px;padding:1px 6px}
+.sl-slot-del{flex:none;width:20px;height:20px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:11px;line-height:1;display:grid;place-items:center}
+.sl-slot-del:hover{border-color:var(--risk);color:var(--risk)}
+.sl-slot-kpi{display:flex;flex-wrap:wrap;gap:3px 10px;font-size:11px;color:var(--ink-2);margin-bottom:3px}
+.sl-slot-kpi b{color:var(--accent-ink);font-weight:800;font-size:12px}
+.sl-slot-sub{font-size:10px;color:var(--muted);margin-bottom:7px;line-height:1.4}
+.sl-slot-load{width:100%;justify-content:center;font-size:11.5px;padding:6px}
 .sl-note2{font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 11px;margin-bottom:13px;line-height:1.5}
 /* 상단 검색바 */
 .sl-searchbar{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-bottom:12px}
@@ -4058,6 +4072,10 @@ const SL = (function(){
   const MANUAL=[]; let selId=null, seq=0, manualMode=false, uiLayer=null, svgR=null, erLayer=null, eraser=false, erStart=null, uiOn=false;
   let _slKeep=null;                 // 배치 보존 스냅샷(메뉴 이동 시 유지, '초기화' 전까지). null=없음
   let _slBaseName='위성 (글로벌)';   // 현재 선택된 지도 레이어명(배치도·제안서 배경에 반영)
+  let SL_SLOTS=[];                   // 저장된 배치안(최대 5개, 이 브라우저 localStorage) — 고객 미팅 비교용
+  const SL_SLOTS_KEY='fsnet_sl_slots', SL_SLOTS_MAX=5;
+  function slLoadSlotsLS(){ try{ const s=JSON.parse(localStorage.getItem(SL_SLOTS_KEY)||'null'); if(Array.isArray(s)) SL_SLOTS=s.slice(0,SL_SLOTS_MAX); }catch(e){} }
+  function slPersistSlots(){ try{ localStorage.setItem(SL_SLOTS_KEY, JSON.stringify(SL_SLOTS)); }catch(e){} }
   let _slBaseUrls={};               // 레이어명 → 타일 URL 템플릿 배열({z}/{y}/{x})
   function segSet(wrapId, attr, val){ const w=$(wrapId); if(!w) return; w.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset[attr]===String(val))); }
 
@@ -4406,17 +4424,20 @@ const SL = (function(){
   }
   function syncM(){ const F=frameM(); drawPanelsM(F); mergeLayout(F); drawUiM(F); updateMetaM(); updateEditBtns(); try{ if(view3D&&LAYOUT) rebuild3D(); }catch(e){} snapshotKeep(); }
   // ---------- 배치 보존(메뉴 이동 유지) + 복원 ----------
+  function slSnapObj(){   // 현재 배치 상태를 통째로 직렬화(복원·저장 공용)
+    const v=id=>{ const e=$(id); return e?e.value:null; };
+    return {
+      regions: REGIONS.map(r=>{ let gj=null; try{ gj=r.layer.toGeoJSON(); }catch(e){} return {gj:gj, parcel:r.parcel, roadGeom:r.roadGeom}; }).filter(x=>x.gj),
+      opts:{ w:v('sl-m-w'), h:v('sl-m-h'), p:v('sl-m-p'), o:v('sl-m-o'), set:v('sl-o-set'), az:v('sl-o-az'), stack:v('sl-m-stack'), tilt:v('sl-o-tilt'), inc:v('sl-o-inc'), pitch:v('sl-o-pitch'), gap:v('sl-o-gap'), type:S.type, optimize:S.optimize, modSeg:(document.querySelector('#sl-seg-mod button.on')||{}).dataset?(document.querySelector('#sl-seg-mod button.on').dataset.m):null },
+      manual: MANUAL.map(b=>({id:b.id,lat:b.lat,lng:b.lng,rows:b.rows,cols:b.cols})), manualMode, seq,
+      view: (map?{c:[map.getCenter().lat,map.getCenter().lng],z:map.getZoom()}:null),
+      jibun:lastJibun
+    };
+  }
   function snapshotKeep(){
     try{
       if(!REGIONS.length && !MANUAL.length){ return; }
-      const v=id=>{ const e=$(id); return e?e.value:null; };
-      _slKeep={
-        regions: REGIONS.map(r=>{ let gj=null; try{ gj=r.layer.toGeoJSON(); }catch(e){} return {gj:gj, parcel:r.parcel, roadGeom:r.roadGeom}; }).filter(x=>x.gj),
-        opts:{ w:v('sl-m-w'), h:v('sl-m-h'), p:v('sl-m-p'), o:v('sl-m-o'), set:v('sl-o-set'), az:v('sl-o-az'), stack:v('sl-m-stack'), tilt:v('sl-o-tilt'), inc:v('sl-o-inc'), pitch:v('sl-o-pitch'), gap:v('sl-o-gap'), type:S.type, optimize:S.optimize, modSeg:(document.querySelector('#sl-seg-mod button.on')||{}).dataset?(document.querySelector('#sl-seg-mod button.on').dataset.m):null },
-        manual: MANUAL.map(b=>({id:b.id,lat:b.lat,lng:b.lng,rows:b.rows,cols:b.cols})), manualMode, seq,
-        view: (map?{c:[map.getCenter().lat,map.getCenter().lng],z:map.getZoom()}:null),
-        jibun:lastJibun
-      };
+      _slKeep=slSnapObj();
     }catch(e){ /* 스냅샷 실패해도 동작엔 지장 없음 */ }
   }
   function restoreKeep(keep){
@@ -4429,6 +4450,12 @@ const SL = (function(){
     if(o.optimize!=null) S.optimize=o.optimize;
     { const v=+((o&&o.az)||0); const t=v===0?'정남':(v<0?'남동 '+(-v)+'°':'남서 '+v+'°'); const b=$('sl-v-az'); if(b) b.textContent=(S.optimize?'자동 · ':'수동 · ')+t; }
     { const pv=$('sl-o-pitch'); const b=$('sl-v-pitch'); if(pv&&b) b.textContent=(+pv.value).toFixed(1)+' m'; }
+    // 나머지 슬라이더 값 라벨도 불러온 값으로 동기화(배치안 비교 시 표시 정확)
+    { const e=$('sl-o-tilt'), b=$('sl-v-tilt'); if(e&&b) b.textContent=e.value+'°'; }
+    { const e=$('sl-o-gap'), b=$('sl-v-gap'); if(e&&b) b.textContent=e.value+' mm'; }
+    { const e=$('sl-o-set'), b=$('sl-v-set'); if(e&&b) b.textContent=((+e.value)/10).toFixed(1)+' m'; }
+    { const e=$('sl-o-inc'), b=$('sl-v-inc'); if(e&&b) b.textContent=e.value+'°'; }
+    { const e=$('sl-m-stack'), b=$('sl-v-stack'); if(e&&b) b.textContent=e.value+' 장'; }
     if(o.modSeg) segSet('sl-seg-mod','m',o.modSeg);
     lastJibun=keep.jibun||''; { const ai=$('sl-addr'); if(ai&&lastJibun) ai.value=lastJibun; }
     (keep.regions||[]).forEach(rr=>{ try{
@@ -4447,9 +4474,7 @@ const SL = (function(){
     }
     setStatus('↩️ 이전 배치를 불러왔습니다 — <b>🔄 초기화</b> 버튼으로 새로 시작할 수 있습니다.');
   }
-  function slResetAll(){
-    const hasWork = (REGIONS&&REGIONS.length) || (MANUAL&&MANUAL.length) || LAYOUT;
-    if(hasWork && !confirm('배치를 모두 초기화할까요?\n\n현재 배치·필지·수동배치가 모두 지워지며 되돌릴 수 없습니다.')) return;
+  function slWipeCurrent(){   // 현재 작업 배치만 지움(저장안 SL_SLOTS은 보존)
     try{ map&&map.pm&&map.pm.disableDraw(); }catch(e){}
     try{ clearBoundary(); }catch(e){} try{ clearRoofRef(); }catch(e){}
     try{ if(panelLayer) panelLayer.clearLayers(); if(bufferLayer) bufferLayer.clearLayers(); }catch(e){}
@@ -4457,8 +4482,64 @@ const SL = (function(){
     MANUAL.length=0; LAYOUT=null; selId=null; manualMode=false; eraser=false;
     try{ removeManUi(); }catch(e){}
     try{ resetStats(); }catch(e){} try{ renderParcelChips(); }catch(e){} try{ updateSelbar(); }catch(e){}
+  }
+  function slResetAll(){
+    const hasWork = (REGIONS&&REGIONS.length) || (MANUAL&&MANUAL.length) || LAYOUT;
+    if(hasWork && !confirm('배치를 모두 초기화할까요?\n\n현재 배치·필지·수동배치가 모두 지워지며 되돌릴 수 없습니다.\n(저장된 배치안은 지워지지 않습니다)')) return;
+    slWipeCurrent();
     _slKeep=null; setAddMode(false);
     setStatus('🔄 배치를 초기화했습니다 — <b>지번 검색</b>이나 <b>✏️ 경계</b>로 다시 시작하세요.');
+  }
+  // ---------- 배치안 저장/불러오기(최대 5개, 고객 미팅 비교용) ----------
+  function slSaveCurrent(){
+    if(!LAYOUT || !LAYOUT.placed || !LAYOUT.placed.length){ setStatus('⚠️ 먼저 <b>▦ 패널 배치</b>로 배치를 완료한 뒤 저장하세요.'); return; }
+    if(SL_SLOTS.length>=SL_SLOTS_MAX){ setStatus('⚠️ 배치안은 최대 <b>'+SL_SLOTS_MAX+'개</b>까지 저장됩니다 — 기존 배치안을 삭제한 뒤 저장하세요.'); return; }
+    const jb=lastJibun||siteJibunLabel()||'부지';
+    const defName=jb+' · 안'+(SL_SLOTS.length+1);
+    let name=prompt('이 배치안의 이름을 입력하세요 (고객 미팅 비교용)', defName);
+    if(name===null) return;                         // 취소
+    name=(String(name).trim()||defName).slice(0,40);
+    const deg=Math.round((LAYOUT.azRad||0)*180/Math.PI);
+    const azTxt=deg===0?'정남':(deg<0?'남동 '+(-deg)+'°':'남서 '+deg+'°');
+    const tx=id=>{ const e=$(id); return e?e.textContent:'0'; };
+    SL_SLOTS.push({
+      id:'sl'+Date.now()+Math.round(Math.random()*1000),
+      name, savedAt:new Date().toISOString().slice(0,10), jibun:jb,
+      kpi:{ kw:tx('sl-r-kw'), modules:tx('sl-r-count'), ratio:tx('sl-r-ratio'), gen:tx('sl-r-gen'), tables:tx('sl-r-tables'), land:tx('sl-r-land'), az:(S.optimize?'자동 ':'')+azTxt },
+      snap: slSnapObj()
+    });
+    slPersistSlots(); slRenderSlots();
+    setStatus('💾 배치안 <b>'+esc(name)+'</b>을(를) 저장했습니다 ('+SL_SLOTS.length+'/'+SL_SLOTS_MAX+').');
+  }
+  function slLoadSlot(id){
+    const slot=SL_SLOTS.find(s=>s.id===id); if(!slot||!slot.snap){ return; }
+    slWipeCurrent();
+    _slKeep=slot.snap;                              // 메뉴 이동 시에도 유지
+    try{ restoreKeep(slot.snap); }catch(e){ setStatus('⚠️ 불러오기 실패: '+(e&&e.message||e)); return; }
+    setTimeout(()=>setStatus('↩️ 배치안 <b>'+esc(slot.name)+'</b>을(를) 불러왔습니다 — 다른 안과 비교해 보세요.'),60);
+  }
+  function slDeleteSlot(id){
+    const slot=SL_SLOTS.find(s=>s.id===id); if(!slot) return;
+    if(!confirm('배치안 「'+slot.name+'」을(를) 삭제할까요?')) return;
+    SL_SLOTS=SL_SLOTS.filter(s=>s.id!==id); slPersistSlots(); slRenderSlots();
+  }
+  function slRenderSlots(){
+    const host=$('sl-slots'); if(!host) return;
+    const full=SL_SLOTS.length>=SL_SLOTS_MAX;
+    const btn=$('sl-save-slot'); if(btn){ btn.disabled=full; btn.textContent=full?('💾 저장 꽉 참 ('+SL_SLOTS_MAX+'/'+SL_SLOTS_MAX+')'):('💾 현재 배치 저장 ('+SL_SLOTS.length+'/'+SL_SLOTS_MAX+')'); }
+    if(!SL_SLOTS.length){ host.innerHTML='<div class="sl-slot-empty">저장된 배치안이 없습니다.<br>배치 완료 후 <b>저장</b>하면 여기서 비교할 수 있어요.</div>'; return; }
+    const kwN=s=>parseFloat((s.kpi&&s.kpi.kw||'0').replace(/,/g,''))||0;
+    const maxKw=Math.max(...SL_SLOTS.map(kwN));
+    host.innerHTML=SL_SLOTS.map(s=>{
+      const top=(kwN(s)>0 && kwN(s)===maxKw && SL_SLOTS.length>1)?'<span class="sl-slot-badge">최대용량</span>':'';
+      return '<div class="sl-slot">'
+        +'<div class="sl-slot-top"><div class="sl-slot-name" title="'+esc(s.name)+'">'+esc(s.name)+top+'</div><button class="sl-slot-del" data-id="'+s.id+'" title="삭제">✕</button></div>'
+        +'<div class="sl-slot-kpi"><span><b>'+esc(s.kpi.kw)+'</b> kWp</span><span><b>'+esc(s.kpi.modules)+'</b>장</span><span>이용 <b>'+esc(s.kpi.ratio)+'</b>%</span></div>'
+        +'<div class="sl-slot-sub">발전 '+esc(s.kpi.gen)+' MWh · 방위 '+esc(s.kpi.az)+' · '+esc(s.savedAt)+'</div>'
+        +'<button class="btn ghost sm sl-slot-load" data-id="'+s.id+'">↩︎ 불러오기</button></div>';
+    }).join('');
+    host.querySelectorAll('.sl-slot-load').forEach(b=>b.onclick=()=>slLoadSlot(b.dataset.id));
+    host.querySelectorAll('.sl-slot-del').forEach(b=>b.onclick=()=>slDeleteSlot(b.dataset.id));
   }
   function addBlock(){ const rows=Math.max(1,Math.min(30,parseInt($('sl-mc-rows').value)||3)), cols=Math.max(1,Math.min(60,parseInt($('sl-mc-cols').value)||10)), c=map.getCenter(); MANUAL.push({id:++seq,lat:c.lat,lng:c.lng,rows,cols}); selId=seq; syncM(); }
   function delBlock(){ const i=MANUAL.findIndex(b=>b.id===selId); if(i<0)return; MANUAL.splice(i,1); selId=null; syncM(); }
@@ -4940,6 +5021,8 @@ const SL = (function(){
     { const sh=$('sl-btn-sheet'); if(sh) sh.onclick=saveLayoutSheet; }
     { const d=$('sl-btn-dxf'); if(d) d.onclick=()=>saveDxf(false); }
     { const q=$('sl-to-quote'); if(q) q.onclick=handoffQuote; }
+    { const sv=$('sl-save-slot'); if(sv) sv.onclick=slSaveCurrent; }
+    try{ slLoadSlotsLS(); slRenderSlots(); }catch(e){}
     $('sl-v2d').onclick=show2D; $('sl-v3d').onclick=show3D;
     $('sl-sun').oninput=e=>{ sunT=parseFloat(e.target.value); const h=Math.floor(sunT), m=Math.round((sunT-h)*60); $('sl-v-sun').textContent=(h<10?'0':'')+h+':'+(m<10?'0':'')+m; updateSun3D(); };
     wireSeg('sl-seg-mod','m', m=>{ if(m==='custom'){ return; } applyPreset(m); if(MANUAL.length) syncM(); });
@@ -5014,6 +5097,9 @@ const SL = (function(){
         <button class="btn dark sm" id="sl-btn-sheet" style="margin-top:8px;width:100%;justify-content:center">📄 배치도 다운로드 (샘플형)</button>
         <button class="btn ghost sm" id="sl-btn-png" style="margin-top:8px;width:100%;justify-content:center">🖼️ 2D 이미지 저장</button>
         <button class="btn ghost sm" id="sl-btn-dxf" style="margin-top:8px;width:100%;justify-content:center">📐 캐드(DXF) 2D 평면</button>
+        <div class="sl-sec" style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border)">💾 저장된 배치안 <small style="font-weight:600;color:var(--muted);margin-left:4px">최대 5개 · 비교용</small></div>
+        <button class="btn sm sl-save-btn" id="sl-save-slot" style="width:100%;justify-content:center">💾 현재 배치 저장 (0/5)</button>
+        <div id="sl-slots" class="sl-slots-list"></div>
       </div>
     </div>`;
   }
