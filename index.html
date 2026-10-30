@@ -6677,9 +6677,15 @@ function resolvePermit(d){
     if(_isp.vac) e.invOut=_isp.vac;
     if(_isp.vdc!=null) e.invVdc=String(_isp.vdc);
     if(_isp.weight!=null) e.invWeight=String(_isp.weight);
+    if(_isp.eff) e.invEff=String(_isp.eff);
+    if(_isp.size) e.invSize=String(_isp.size);
   }
   // 인버터 무게 보충: 종류 미선택이어도 용량(kW) 일치 모델에서 무게 자동 보충(예: 125kW→84kg)
   if(!p.equip.invWeight){ const _iw=Object.values(COST_PRESET.inverters).find(v=>pNum(v.kw)===pNum(p.equip.invKW)); if(_iw&&_iw.weight!=null) p.equip.invWeight=String(_iw.weight); }
+  // 인버터 효율·크기 보충: 원가표 인버터 카드의 효율(%)·크기(mm) — 같은 제조사·용량 우선, 없으면 용량 일치 모델
+  if(!_isp){ const _kw=pNum(p.equip.invKW), _L=Object.values(COST_PRESET.inverters).filter(v=>pNum(v.kw)===_kw);
+    const _iv=_L.find(v=>p.equip.invMaker&&v.maker===p.equip.invMaker)||_L[0];
+    if(_iv){ if(_iv.eff) p.equip.invEff=String(_iv.eff); if(_iv.size) p.equip.invSize=String(_iv.size); } }
   // ★공급전압·주파수·준비기간 고정 — 영업 실계약에서 변경 불가(하드코딩). 모든 화면·양식에 반영.
   //   공급전압 = 설비용량 500kW 기준 자동(미만 380V / 이상 22.9kV) — 값·단위 함께 조건에 맞춰 저장
   { const _hv=(pNum(p.biz.cap)||0)>=500; p.biz.volt=_hv?'22.9':'380'; p.biz.voltUnit=_hv?'kV':'V'; }
@@ -9398,6 +9404,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-30', team:'영업', kind:'개발', title:'원가표 인버터 카드에 효율·크기 칸 추가 → 개발행위 사업계획서 자동 기입', body:'설정 <b>원가표</b>의 인버터 카드마다 <b>효율(%)</b>·<b>크기(mm)</b> 칸을 새로 만들었습니다. 데이터시트 값을 한 번 넣고 저장하면, 개발행위 사업계획서 <b>9. 발전설비의 개요 › 인버터1</b>의 <b>효율·크기</b>에 자동으로 들어갑니다(현장 인버터 용량·제조사가 같은 카드 기준). 처음엔 빈칸이니 인버터별로 입력해 주세요.'},
   {date:'2026-10-30', team:'행정', kind:'수정', title:'대리인 위임장 — 아래 서명란에 위임하는 사람 이름 자동 기입', body:'대리인 위임장 아래쪽 <b>위임하는 사람 ______ (서명 또는 인)</b> 칸에 <b>사업주 성명</b>이 자동으로 들어갑니다(위쪽 ‘위임하는 사람 이름’과 같은 값). 발전사업허가·개발행위 서류 모두 적용됩니다.'},
   {date:'2026-10-30', team:'행정', kind:'수정', title:'개발행위 사업계획서 — 경관 체크리스트 서명란 자동 기입', body:'사업계획서 <b>경관 체크리스트</b> 아래 서명란에 <b>신청인 주소</b>·<b>신청명(사업주 성명)</b>과 ‘귀하’ 앞 <b>관할 시·군·구청</b>(주소로 자동 판단)이 자동으로 들어갑니다. 주민등록번호는 개인정보라 비워 둡니다.'},
   {date:'2026-10-30', team:'행정', kind:'수정', title:'개발행위 사업계획서 — 작성 날짜를 신청일자로 자동 기입', body:'사업계획서의 <b>피해방지계획서</b>와 <b>경관 체크리스트</b> 아래 날짜가 ‘2026년 10월 06일’로 고정돼 있던 것을, 상단 <b>📅 신청일자</b>에 입력한 날짜가 자동으로 들어가도록 바꿨습니다. 미리보기·PDF·한글(HWP) 모두 적용됩니다.'},
@@ -10010,6 +10017,8 @@ function renderCostSheet(){
       ${specRow('정격전압 (V)', ci('inverters.'+k+'.vdc', v.vdc))}
       ${specRow('출력전압 (V)', cit('inverters.'+k+'.vac', v.vac))}
       ${specRow('무게 (kg)', ci('inverters.'+k+'.weight', v.weight))}
+      ${specRow('효율 (%)', cit('inverters.'+k+'.eff', v.eff))}
+      ${specRow('크기 (mm)', cit('inverters.'+k+'.size', v.size))}
     </div></div>`;
   const modCards = `<div class="cs-spec-grid">${Object.entries(P.modules).map(([k,m])=>modSpecCard(k,m)).join('')}</div>`;
   const invCards = `<div class="cs-spec-grid">${Object.entries(P.inverters).map(([k,v])=>invSpecCard(k,v)).join('')}</div>`;
