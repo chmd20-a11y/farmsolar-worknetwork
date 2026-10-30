@@ -7581,7 +7581,8 @@ function permitDocUpload(id,key,file){
   if(!isPdf&&!isImg){ toast('이미지 또는 PDF 파일만 업로드할 수 있습니다'); return; }
   if(file.size>10*1024*1024){ toast('파일이 너무 큽니다 (10MB 이하로 올려주세요)'); return; }
   const done=()=>{ persistDeal(d); toast(isPdf?'첨부했습니다 — 출력 시 “열기”로 PDF를 함께 제출하세요':'첨부했습니다 — 출력물 자리에 자동 삽입됩니다'); permitDocsRefresh();
-    if(key==='발전허가증'){ setTimeout(()=>{ try{ devPermitOcr(id,{auto:true}); }catch(_){} }, 200); } };   // 발전허가증 첨부 즉시 착공·준공일 자동 읽기
+    if(key==='발전허가증'){ setTimeout(()=>{ try{ devPermitOcr(id,{auto:true}); }catch(_){} }, 200); }
+    if(key==='건축물대장'){ setTimeout(()=>{ try{ bldRegOcr(id,{auto:true}); }catch(_){} }, 200); } };   // 건축물대장 첨부 즉시 건축면적 자동 읽기   // 발전허가증 첨부 즉시 착공·준공일 자동 읽기
   // 최종 blob(mime) 확정 → R2 가동 시 R2 업로드(url 저장), 미가동/실패 시 base64 저장(폴백)
   const finalize=(blob,mime)=>{ r2UploadFile(new File([blob],file.name,{type:mime}),{owner:id,part:'행정',docKey:key}).then(r2=>{
     if(r2){ p.docs[key]={attached:true, at:new Date().toLocaleString('ko-KR'), r2_key:r2.r2_key, url:r2.url, name:file.name, mime:mime, size:r2.size}; done(); return; }
@@ -7667,6 +7668,37 @@ async function devPermitOcr(id,opt){ opt=opt||{};
     OCR_STATE[id]='done'; persistDeal(d); permitDocsRefresh();
     toast('읽은 날짜를 채웠습니다 — 값이 맞는지 확인하고, 틀리면 수정하세요');
   }catch(e){ OCR_STATE[id]='error'; permitDocsRefresh(); toast('날짜 읽기에 실패했습니다 — 착공·준공일을 직접 입력해 주세요'); }
+}
+// 건축물대장(이미지/PDF) → Gemini Vision(서버 /api/bldreg-ocr) → 건축면적(㎡)을 사업계획 개요 「건축면적」에 채움. auto=첨부 직후 자동 호출
+async function bldRegOcr(id,opt){ opt=opt||{};
+  const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d);
+  const rec=p.docs&&p.docs['건축물대장']; const src=rec&&docSrc(rec);
+  if(!src){ if(!opt.auto) toast('먼저 건축물대장 파일을 첨부하세요'); return; }
+  const sk=id+':bld'; if(OCR_STATE[sk]==='reading') return;
+  OCR_STATE[sk]='reading';
+  toast('건축물대장에서 건축면적을 읽는 중…');
+  try{
+    let dataUrl=rec.dataUrl||'';
+    if(!dataUrl&&rec.url){ try{ const r=await fetch(rec.url); const b=await r.blob(); dataUrl=await new Promise(rs=>{ const fr=new FileReader(); fr.onload=()=>rs(fr.result); fr.onerror=()=>rs(''); fr.readAsDataURL(b); }); }catch(_){} }
+    if(!dataUrl) throw new Error('파일을 읽지 못했습니다');
+    let mimeType=(dataUrl.match(/^data:([^;]+)/)||[])[1]||rec.mime||'';
+    let b64=dataUrl.split(',')[1]||'';
+    const isPdf=/pdf/i.test(mimeType)||/\.pdf$/i.test(rec.name||'');
+    if(isPdf && b64.length>3.4*1024*1024){   // 요청 4.5MB 제한 — 큰 PDF는 1페이지만 이미지로
+      const imgs=await sunPdfToImages(dataUrl);
+      if(imgs&&imgs[0]){ mimeType=(imgs[0].match(/^data:([^;]+)/)||[])[1]||'image/jpeg'; b64=imgs[0].split(',')[1]||''; }
+    }
+    const resp=await fetch('/api/bldreg-ocr',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:rec.name||'건축물대장',mimeType,dataBase64:b64})});
+    if(!resp.ok){
+      let em=''; try{ const ej=await resp.json(); em=(ej&&ej.message)||''; }catch(_){}
+      OCR_STATE[sk]='capped'; toast(em||'건축면적 자동읽기를 할 수 없습니다 — 사업계획 개요에서 직접 입력하세요'); return;
+    }
+    const jj=await resp.json(); const area=pNum(jj.bldArea);
+    if(!(area>0)){ OCR_STATE[sk]='empty'; toast('건축면적을 찾지 못했습니다 — 사업계획 개요에서 직접 입력해 주세요'); return; }
+    p.outline.bldArea=area;
+    OCR_STATE[sk]='done'; persistDeal(d); permitDocsRefresh();
+    toast('건축물대장에서 건축면적 '+pArea(area)+'㎡를 읽어 채웠습니다 — 맞는지 확인하세요');
+  }catch(e){ OCR_STATE[sk]='error'; toast('건축면적 읽기에 실패했습니다 — 사업계획 개요에서 직접 입력해 주세요'); }
 }
 function renderPermitDocs(d){
   const p=getPermit(d), isBld=p.installType==='건물';
@@ -8399,6 +8431,7 @@ function devPermitTokenMap(d){
     '§ADDR§':S(p.applicant.addr), '§PHONE§':S(p.applicant.phone), '§DATE§':fmtKDate(permitApplyDate(d)),
     '§LOC§':loc, '§OFFICE§':officeFromAddr(loc)||officeFromAddr(p.biz.place)||S(p.office), '§JIMOK§':S(L.jimok), '§ZONE§':firstVal(L.zone), '§ZONE2§':firstVal(L.zone2),
     '§AREA_FAC§':pArea(p.outline.useArea), '§AREA_LAND§':pComma(p.outline.totalArea),
+    '§BLD_AREA§':pNum(p.outline.bldArea)>0?pArea(p.outline.bldArea):'',   // 건축면적 — 건축물대장 자동판독(bldRegOcr) 또는 직접 입력
     '§MOD_QTY§':pComma(eq.modQty),
     // 무게(ton) = 모듈 1장 무게(kg) × 장수 ÷ 1,000 — 공사계획서 설치무게와 같은 계산·소수 1자리
     '§MOD_TON§':(()=>{ const t=(pNum(eq.modWeight)||0)*(pNum(eq.modQty)||0)/1000; return t?String(Math.round(t*10)/10):''; })(),
@@ -9358,6 +9391,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-30', team:'행정', kind:'추가', title:'건축물대장 첨부하면 「건축면적」 자동 판독 → 개발행위 사업계획서에 자동 기입', body:'건물형(지붕) 현장에서 <b>행정서류함에 건축물대장(사진·PDF)을 올리면</b>, AI가 대장의 <b>건축면적(㎡)</b>만 골라 읽어 <b>사업계획 개요의 건축면적</b>에 채웁니다(대지면적·연면적과 헷갈리지 않도록 건축면적 칸만 읽음). 채워진 값은 <b>개발행위 사업계획서 ‘공작물 설치 계획’ 표의 건축면적</b> 칸에 자동으로 들어갑니다(미리보기·한글 양식 모두). 읽은 값이 틀리면 사업계획 개요에서 직접 고칠 수 있습니다. 노지형 현장은 빈칸으로 둡니다.', author:'개발'},
   {date:'2026-10-30', team:'행정', kind:'수정', title:'개발행위 허가신청서 — 사업기간 착공·준공 날짜가 겹쳐 보이던 문제 수정', body:'사업기간 줄에서 <b>착공 날짜가 ‘준공’ 글자와 겹쳐</b> 보이던 것을 고쳤습니다. 착공 날짜를 ‘착공’ 바로 뒤로 당기고(불필요한 쉼표 제거), 준공 날짜도 같은 간격으로 맞춰 <b>착공 2026. 10. 14. &nbsp; 준공 2026. 12. 24.</b>처럼 균형 있게 나옵니다.', author:'개발'},
   {date:'2026-10-30', team:'행정', kind:'수정', title:'개발행위 허가신청서 — 인쇄 시 오른쪽이 잘리던 문제 수정', body:'개발행위 허가신청서 1쪽의 <b>‘(변경) 허가신청 사항’ 표(위치·지목·용도지역·용도지구)</b>가 종이 폭보다 넓게 그려져 <b>오른쪽이 종이 밖으로 넘쳐 인쇄 때 잘리던 문제</b>를 고쳤습니다. 이제 위아래 다른 표와 같은 폭으로 맞춰져 A4 안에 모두 들어갑니다(개발행위 접수서류 30쪽 전체 점검 완료).', author:'개발'},
   {date:'2026-10-30', team:'행정', kind:'수정', title:'개발행위 허가신청서 — ‘무게(ton)’와 수신처(○○시청 귀하) 자동 기입', body:'개발행위 허가신청서의 빈칸 두 곳이 자동으로 채워집니다. ① <b>무게</b> = 모듈 1장 무게 × 장수 ÷ 1,000 (ton, 소수 1자리 · 공사계획서 설치무게와 같은 계산). ② 맨 아래 <b>‘귀하’ 앞 수신처</b>는 <b>현장 주소로 관할 관청을 자동 판단</b>합니다(예: 파주시 → 파주시청, 강화군 → 강화군청, 서울 강남구 → 강남구청). 미리보기와 한글(HWP) 양식 모두 같습니다.', author:'개발'},
