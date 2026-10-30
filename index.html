@@ -874,6 +874,83 @@ button{font-family:inherit;cursor:pointer}
 .dpb-fill{height:100%;border-radius:5px;transition:width .4s}
 .dpb-pct{display:inline-block;vertical-align:middle;margin-left:9px;font-size:12px;font-weight:800;font-variant-numeric:tabular-nums}
 @media(max-width:720px){.dpb-kpis{grid-template-columns:repeat(2,1fr)}}
+/* 영업 타당성검토(부지 즉석 진단) — 화면 전용 스타일(sf-) */
+.sf-wrap{display:flex;flex-direction:column;gap:16px}
+.sf-hero{background:linear-gradient(135deg,var(--brand) 0%,var(--brand-2) 100%);border-radius:var(--r-lg);padding:22px 24px 20px;box-shadow:var(--shadow-md);color:#fff;position:relative;overflow:hidden}
+.sf-hero::after{content:"";position:absolute;right:-60px;top:-80px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(215,162,75,.28),transparent 70%);pointer-events:none}
+.sf-hero-top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:16px;position:relative;z-index:1}
+.sf-eyebrow{font-size:11px;font-weight:800;letter-spacing:.12em;color:#e3bd76;text-transform:uppercase;margin-bottom:6px}
+.sf-hero-t{font-size:21px;font-weight:800;letter-spacing:-.02em;line-height:1.3}
+.sf-hero-s{font-size:12.5px;color:rgba(255,255,255,.72);margin-top:5px}
+.sf-hero-s b{color:#fff}
+.sf-segs{display:inline-flex;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:3px}
+.sf-seg{border:0;background:transparent;color:rgba(255,255,255,.78);font:inherit;font-size:12.5px;font-weight:700;padding:6px 14px;border-radius:999px;cursor:pointer;transition:background .15s,color .15s}
+.sf-seg:hover{color:#fff}
+.sf-seg.on{background:#fff;color:var(--brand);box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.sf-search{display:flex;align-items:center;gap:8px;background:var(--surface);border-radius:14px;padding:6px 6px 6px 16px;box-shadow:0 8px 24px rgba(0,0,0,.18);position:relative;z-index:1;border:2px solid transparent;transition:border-color .15s}
+.sf-search:focus-within{border-color:var(--accent)}
+.sf-search.add{border-color:#2e8b63}
+.sf-search-ic{font-size:20px;color:var(--muted);line-height:1}
+.sf-input{flex:1;min-width:0;border:0;outline:0;background:transparent;font:inherit;font-size:15px;color:var(--ink);padding:10px 4px}
+.sf-input::placeholder{color:var(--muted)}
+.sf-go{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:800;padding:10px 22px;border-radius:10px}
+.sf-go:hover{filter:brightness(1.06);background:var(--accent)}
+.sf-hero .sf-addhint{margin:12px 0 0;position:relative;z-index:1;background:rgba(46,139,99,.22);border-color:rgba(113,208,167,.45);color:#d6f3e6}
+.sf-hero .sf-parcels{margin:12px 0 0;position:relative;z-index:1}
+.sf-hero .sl-chip{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.24);color:#fff}
+.sf-hero .sl-chip button{color:rgba(255,255,255,.8)}
+.sf-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px;box-shadow:var(--shadow-sm)}
+.sf-block-h{font-size:14px;font-weight:800;color:var(--ink);margin-bottom:12px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.sf-block-h span{font-size:12px;font-weight:500;color:var(--muted)}
+.sf-sec{margin:18px 0 8px}
+.sf-checks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.sf-check{display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);transition:border-color .15s,transform .15s}
+.sf-check:hover{border-color:var(--accent);transform:translateY(-1px)}
+.sf-check-ic{width:36px;height:36px;flex:none;border-radius:10px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;font-size:17px}
+.sf-check-t{font-size:13.5px;font-weight:800;color:var(--ink)}
+.sf-check-d{font-size:12px;color:var(--ink-2);margin-top:3px;line-height:1.5}
+.sf-steps{display:flex;align-items:stretch;gap:10px}
+.sf-step{flex:1;display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:12px;border:1px dashed var(--border-strong)}
+.sf-step-n{width:24px;height:24px;flex:none;border-radius:50%;background:var(--brand);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.sf-step-t{font-size:13px;font-weight:800;color:var(--ink)}
+.sf-step-d{font-size:12px;color:var(--ink-2);margin-top:2px;line-height:1.5}
+.sf-step-arrow{align-self:center;color:var(--muted);font-weight:800}
+.sf-busy{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px;box-shadow:var(--shadow-sm)}
+.sf-spin{width:26px;height:26px;border-radius:50%;border:3px solid var(--accent-soft);border-top-color:var(--accent);animation:sfspin .8s linear infinite;flex:none}
+@keyframes sfspin{to{transform:rotate(360deg)}}
+.sf-busy-t{font-size:14px;font-weight:800;color:var(--ink)}
+.sf-busy-d{font-size:12px;color:var(--ink-2);margin-top:2px}
+.sf-result{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;box-shadow:var(--shadow-sm)}
+.sf-verdict{display:grid;grid-template-columns:minmax(260px,1.1fr) 2fr;gap:16px;align-items:stretch;padding:18px;border-radius:14px;border:1px solid var(--border);border-left-width:5px;background:var(--surface-2)}
+.sf-verdict.ok{border-left-color:var(--ok);background:var(--ok-bg)}
+.sf-verdict.warn{border-left-color:var(--accent);background:var(--accent-soft)}
+.sf-verdict.bad{border-left-color:var(--risk);background:var(--risk-bg)}
+.sf-v-main{display:flex;gap:14px;align-items:center}
+.sf-v-badge{font-size:38px;line-height:1}
+.sf-v-label{font-size:11px;font-weight:800;color:var(--ink-2);letter-spacing:.08em}
+.sf-v-t{font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--ink);margin-top:2px}
+.sf-verdict.ok .sf-v-t{color:var(--ok-ink)}
+.sf-verdict.bad .sf-v-t{color:var(--risk-ink)}
+.sf-v-d{font-size:12px;color:var(--ink-2);margin-top:4px;line-height:1.5}
+.sf-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.sf-kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;justify-content:center}
+.sf-kpi-l{font-size:11px;font-weight:700;color:var(--muted)}
+.sf-kpi-v{font-size:19px;font-weight:800;color:var(--ink);margin-top:3px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.sf-kpi-v small{font-size:11px;font-weight:700;color:var(--ink-2);margin-left:2px}
+.sf-kpi-s{font-size:11px;color:var(--ink-2);margin-top:1px}
+.sf-cnt{display:flex;gap:8px;font-size:15px}
+.sf-cnt .ok{color:var(--ok)} .sf-cnt .warn{color:var(--accent)} .sf-cnt .bad{color:var(--risk)}
+.sf-src{font-size:15px;color:var(--ink-2)}
+.sf-src.live{color:var(--ok)}
+.sf-note{margin:10px 0 0;padding:9px 12px;border-radius:9px;font-size:12px;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--border)}
+.sf-result .feas-list,.sf-result .feas-pcard{border-radius:12px}
+.sf-result .feas-row{padding:11px 16px}
+.sf-result .feas-pchead>b{background:var(--accent);color:var(--accent-ink)}
+.sf-result .feas-badge.warn{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.sf-parea{font-size:11.5px;font-weight:700;color:var(--ink-2);background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:1px 8px}
+.sf-cta{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:16px;padding:14px 16px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);font-size:12.5px;color:var(--ink-2)}
+@media (max-width:1100px){.sf-checks{grid-template-columns:repeat(2,minmax(0,1fr))}.sf-verdict{grid-template-columns:1fr}}
+@media (max-width:700px){.sf-checks{grid-template-columns:1fr}.sf-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.sf-steps{flex-direction:column}.sf-step-arrow{display:none}.sf-search{flex-wrap:wrap;padding:8px}.sf-input{flex-basis:100%}.sf-search-ic{display:none}.sf-hero{padding:18px 16px}}
 /* 설치 가능성 진단(타당성검토) */
 .feas-verdict{display:flex;align-items:center;gap:11px;padding:12px 15px;border-radius:12px;font-weight:800;font-size:15px;margin:2px 0 12px;border:1px solid var(--border)}
 .feas-verdict .fv-b{font-size:20px;line-height:1}
@@ -3975,53 +4052,78 @@ async function analyzeFeasParcel(jibun){
 }
 function renderSalesFeasView(){
   const items = salesFeas.items||[], addOn = !!salesFeas.addMode;
-  const typeOpts = ['노지','지붕','수상'].map(t=>`<option value="${t}" ${t===salesFeas.type?'selected':''}>${t}형</option>`).join('');
-  const chips = items.length ? `<div class="sl-parcels" style="display:flex">`+items.map((it,i)=>{
+  const typeSeg = [['노지','🌾'],['지붕','🏠'],['수상','💧']].map(([t,ic])=>`<button type="button" class="sf-seg ${t===salesFeas.type?'on':''}" onclick="sfSetType('${t}',this)">${ic} ${t}형</button>`).join('');
+  const chips = items.length ? `<div class="sl-parcels sf-parcels" style="display:flex">`+items.map((it,i)=>{
       const lbl=(it.res&&it.res.error)?(it.jibun+' · 실패'):((it.res&&it.res.parcel&&it.res.parcel.jibun)||it.jibun||('필지 '+(i+1)));
       return `<span class="sl-chip"><b>${i+1}</b> ${esc(lbl)}<button type="button" title="이 필지 제거" onclick="removeFeasItem(${i})">✕</button></span>`;
     }).join('')+`</div>` : '';
   let body='';
   if(!items.length && !salesFeas.busy){
-    body = `<div class="note" style="margin:8px 0 2px">부지 지번을 넣고 <b>🔍 진단 실행</b>을 누르면 설치 가능성이 판정됩니다. 한 현장이 <b>여러 필지</b>면 <b>➕ 필지 추가</b>로 묶어 <b>합산 면적·종합 판정</b>으로 보세요.</div>`;
+    const checks=[
+      ['🗺️','지목·경사도','농지·임야 여부와 평균 경사로 설치 난이도 확인'],
+      ['🏷️','용도지역','국토계획법 용도지역·지구 자동 조회'],
+      ['⛔','태양광 규제 23종','개발제한·군사·비행안전·접도·공원 등 행위제한 판정'],
+      ['⚡','계통 여유','가까운 변전소·선로 여유용량과 한전 담당 연락처'],
+      ['☀️','일사량','지역 일사량으로 예상 발전량 참고'],
+      ['💰','개별공시지가','㎡당 공시지가와 최근 추이']
+    ].map(([ic,t,d])=>`<div class="sf-check"><div class="sf-check-ic">${ic}</div><div><div class="sf-check-t">${t}</div><div class="sf-check-d">${d}</div></div></div>`).join('');
+    const steps=[['지번 입력','부지 유형을 고르고 지번·도로명을 넣습니다'],['자동 판정','🟢 가능 · 🟡 조건부 · 🔴 제한으로 종합 판정'],['가배치로 연결','결과 하단 버튼으로 모듈 가배치에 그대로 이어집니다']]
+      .map(([t,d],i)=>`<div class="sf-step"><span class="sf-step-n">${i+1}</span><div><div class="sf-step-t">${t}</div><div class="sf-step-d">${d}</div></div></div>`).join('<div class="sf-step-arrow">→</div>');
+    body = `<div class="sf-block"><div class="sf-block-h">진단 항목 <span>지번 하나로 아래 6가지를 한 번에 확인합니다</span></div><div class="sf-checks">${checks}</div></div>
+      <div class="sf-block"><div class="sf-block-h">사용 순서</div><div class="sf-steps">${steps}</div></div>`;
   } else if(items.length){
     const ok = items.filter(it=>it.res && !it.res.error);
     let w='na'; ok.forEach(it=>{ if(_feasRank[it.res.worst]>_feasRank[w]) w=it.res.worst; });
     const vm=feasVerdictMeta(w);
     const totalArea = ok.reduce((s,it)=>s+(it.area||0),0);
-    const areaTxt = totalArea>0 ? `합산 면적 <b>${Math.round(totalArea).toLocaleString()}㎡</b> (${Math.round(totalArea/3.3058).toLocaleString()}평)` : '면적 조회 불가';
     const fb = ok.find(it=>it.res.fallback);
-    const modeTag = ok.some(it=>it.res.mode==='실시간') ? '🛰 국토부·한전 실시간' : '📊 추정치';
-    const fbNote = fb ? `<div class="note" style="margin:6px 0 10px;color:var(--brand)">ⓘ ${esc(fb.res.fallback)}</div>` : '';
+    const live = ok.some(it=>it.res.mode==='실시간');
+    const fbNote = fb ? `<div class="sf-note">ⓘ ${esc(fb.res.fallback)}</div>` : '';
     const commonRows = ok.length ? ok[0].res.rows.filter(r=>_isFeasCommon(r.t)) : [];
-    let out = `<div class="feas-verdict ${w}"><span class="fv-b">${vm.badge}</span>${vm.verdict}<span class="fv-s">현장 ${items.length}개 필지 묶음 · ${areaTxt} · ${modeTag} · 최종은 설계 검토 확인</span></div>${fbNote}`;
-    if(commonRows.length){ out += `<div class="feas-sub">📍 현장 공통 (계통·일사량 등)</div><div class="feas-list">${commonRows.map(feasRowHTML).join('')}</div>`; }
-    out += `<div class="feas-sub" style="margin-top:12px">📑 필지별 상세 (${items.length})</div>`;
+    const cnt={ok:0,warn:0,bad:0}; ok.forEach(it=>it.res.rows.forEach(r=>{ if(cnt[r.lvl]!=null) cnt[r.lvl]++; }));
+    const vdesc = w==='bad'?'저촉 항목을 해소하기 전에는 설치가 어렵습니다.':w==='warn'?'확인 필요 항목을 점검하면 설치가 가능합니다.':w==='ok'?'주요 기준을 충족합니다.':'데이터가 부족해 판정할 수 없습니다.';
+    let out = `<div class="sf-verdict ${w}">
+        <div class="sf-v-main"><div class="sf-v-badge">${vm.badge}</div><div><div class="sf-v-label">종합 판정</div><div class="sf-v-t">${vm.verdict}</div><div class="sf-v-d">${vdesc} 최종은 설계 검토에서 확인합니다.</div></div></div>
+        <div class="sf-kpis">
+          <div class="sf-kpi"><div class="sf-kpi-l">필지</div><div class="sf-kpi-v">${items.length}<small>개</small></div></div>
+          <div class="sf-kpi"><div class="sf-kpi-l">합산 면적</div><div class="sf-kpi-v">${totalArea>0?Math.round(totalArea).toLocaleString()+'<small>㎡</small>':'—'}</div><div class="sf-kpi-s">${totalArea>0?Math.round(totalArea/3.3058).toLocaleString()+'평':'조회 불가'}</div></div>
+          <div class="sf-kpi"><div class="sf-kpi-l">항목 판정</div><div class="sf-kpi-v sf-cnt"><span class="ok">●${cnt.ok}</span><span class="warn">●${cnt.warn}</span><span class="bad">●${cnt.bad}</span></div><div class="sf-kpi-s">충족 · 확인 · 저촉</div></div>
+          <div class="sf-kpi"><div class="sf-kpi-l">데이터</div><div class="sf-kpi-v sf-src ${live?'live':''}">${live?'실시간':'추정치'}</div><div class="sf-kpi-s">${live?'국토부·한전':'연결 전 추정'}</div></div>
+        </div></div>${fbNote}`;
+    if(commonRows.length){ out += `<div class="sf-block-h sf-sec">📍 현장 공통 <span>계통·일사량 등 위치 기반 항목</span></div><div class="feas-list">${commonRows.map(feasRowHTML).join('')}</div>`; }
+    out += `<div class="sf-block-h sf-sec">📑 필지별 상세 <span>${items.length}개 필지</span></div>`;
     out += items.map((it,i)=>{
       if(it.res&&it.res.error){ return `<div class="feas-pcard"><div class="feas-pchead"><b>${i+1}</b> ${esc(it.jibun)} <span class="feas-badge bad">⚠️ 진단 실패</span></div><div class="fr-d" style="padding:6px 13px">${esc(it.res.error)}</div></div>`; }
-      const vm2=feasVerdictMeta(it.res.worst), lbl=(it.res.parcel&&it.res.parcel.jibun)||it.jibun, aTxt=it.area?` · ${Math.round(it.area).toLocaleString()}㎡`:'';
+      const vm2=feasVerdictMeta(it.res.worst), lbl=(it.res.parcel&&it.res.parcel.jibun)||it.jibun, aTxt=it.area?` <span class="sf-parea">${Math.round(it.area).toLocaleString()}㎡</span>`:'';
       const pp=it.res.rows.filter(r=>!_isFeasCommon(r.t));
       return `<div class="feas-pcard"><div class="feas-pchead"><b>${i+1}</b> ${esc(lbl)}${aTxt} <span class="feas-badge ${it.res.worst}">${vm2.badge} ${vm2.verdict}</span></div><div class="feas-list">${pp.map(feasRowHTML).join('')}</div></div>`;
     }).join('');
-    out += `<div class="wf-actions" style="margin-top:12px"><button class="btn primary sm" onclick="goLayoutFromFeas()">이 부지로 모듈 가배치 →</button></div>`;
-    body = out;
+    out += `<div class="sf-cta"><div>다음 단계 — 이 부지에 패널을 몇 장, 몇 kW까지 놓을 수 있는지 바로 확인해 보세요.</div><button class="btn primary" onclick="goLayoutFromFeas()">이 부지로 모듈 가배치 →</button></div>`;
+    body = `<div class="sf-result">${out}</div>`;
   }
-  if(salesFeas.busy){ body = `<div class="feas-verdict warn"><span class="fv-b">⏳</span>진단 중…<span class="fv-s">${esc(salesFeas.pendingJibun||'')}</span></div>` + body; }
-  const hint = addOn ? `<div class="sl-addhint" style="display:flex">➕ <b>필지 추가 모드</b> — 지번을 넣고 <b>Enter</b>(또는 ➕)로 <b>같은 현장</b>에 필지를 계속 추가하세요. <b>🔍 진단 실행</b>은 새 현장으로 시작합니다.</div>` : '';
-  return wfHead('타당성검토','신규 부지 지번을 넣으면 <b>설치 가능성</b>을 실시간(국토부·한전 API)으로 진단합니다. <b>한 현장이 여러 필지</b>면 ➕로 묶어 <b>합산 면적·종합 판정</b>으로 봅니다.') +
-   `<div class="card pad" style="margin-bottom:14px">
-      <div class="section-title" style="font-size:12px;margin:0 0 8px">📋 부지 즉석 진단 — 지번 입력 → 실시간 판정 (여러 필지 = 1개 현장)</div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-        <select class="tinput" id="sf-type" style="max-width:120px" onchange="salesFeas.type=this.value">${typeOpts}</select>
-        <input class="tinput ${addOn?'sl-add-on':''}" id="sf-jibun" style="flex:1;min-width:220px" placeholder="${addOn?'추가할 지번 입력 후 Enter — 같은 현장에 필지 누적':'지번/도로명 (예: 경기도 파주시 문발동 66)'}" onkeydown="if(event.key==='Enter')addFeasParcel()">
-        <button class="btn primary sm" onclick="runSalesDiag()">🔍 진단 실행</button>
+  if(salesFeas.busy){ body = `<div class="sf-busy"><span class="sf-spin"></span><div><div class="sf-busy-t">설치 가능성 진단 중…</div><div class="sf-busy-d">${esc(salesFeas.pendingJibun||'')} · 국토부·한전 데이터를 조회하고 있습니다</div></div></div>` + body; }
+  const hint = addOn ? `<div class="sl-addhint sf-addhint" style="display:flex">➕ <b>필지 추가 모드</b> — 지번을 넣고 <b>Enter</b>(또는 ➕)로 <b>같은 현장</b>에 필지를 계속 추가하세요. <b>진단 실행</b>은 새 현장으로 시작합니다.</div>` : '';
+  return wfHead('타당성검토','신규 부지 지번을 넣으면 <b>설치 가능성</b>을 실시간(국토부·한전 API)으로 진단합니다.') +
+   `<div class="sf-wrap"><div class="sf-hero">
+      <div class="sf-hero-top">
+        <div><div class="sf-eyebrow">부지 즉석 진단</div><div class="sf-hero-t">지번 하나로 설치 가능성을 바로 판정합니다</div>
+        <div class="sf-hero-s">국토부·한전 실시간 데이터 · 한 현장이 여러 필지면 <b>➕ 필지 추가</b>로 묶어 합산 면적·종합 판정</div></div>
+        <div class="sf-segs" role="group" aria-label="부지 유형">${typeSeg}</div>
+      </div>
+      <input type="hidden" id="sf-type" value="${esc(salesFeas.type)}">
+      <div class="sf-search ${addOn?'add':''}">
+        <span class="sf-search-ic">⌕</span>
+        <input class="sf-input" id="sf-jibun" placeholder="${addOn?'추가할 지번 입력 후 Enter — 같은 현장에 필지 누적':'지번 또는 도로명 (예: 경기도 파주시 문발동 66)'}" onkeydown="if(event.key==='Enter')addFeasParcel()">
         <button class="btn ghost sm sl-addbtn ${addOn?'on':''}" onclick="addFeasParcel()">➕ 필지 추가</button>
+        <button class="btn primary sf-go" onclick="runSalesDiag()">진단 실행</button>
       </div>
       ${hint}
       ${chips}
-      ${body}
-    </div>`;
+    </div>
+    ${body}</div>`;
 }
-function rerenderSalesFeas(){ const el=document.getElementById('sub-s-feas'); if(el) el.innerHTML=renderSalesFeasView(); }
+function sfSetType(t,btn){ salesFeas.type=t; const h=document.getElementById('sf-type'); if(h) h.value=t; if(btn&&btn.parentNode) btn.parentNode.querySelectorAll('.sf-seg').forEach(b=>b.classList.toggle('on',b===btn)); }
+function rerenderSalesFeas(){ const el=document.getElementById('sub-s-feas'); if(el){ el.innerHTML=renderSalesFeasView(); const wh=el.querySelector('.wf-head'); if(wh) wh.style.display='none'; } }  // 제목은 상단으로 승격돼 있으므로 다시 그릴 때도 숨김
 function _feasFocus(){ if(salesFeas.addMode){ const el=document.getElementById('sf-jibun'); if(el){ try{ el.focus(); }catch(_){} } } }
 // 🔍 진단 실행 = 새 현장(기존 필지 비우고 1필지부터)
 async function runSalesDiag(){
@@ -9236,6 +9338,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-30', team:'영업', kind:'개선', title:'「타당성검토」 화면 디자인 개편 — 큰 검색창·진단 항목 안내·결과 요약 카드', body:'영업 <b>「타당성검토」</b> 화면을 더 보기 쉽게 다듬었습니다(기능은 그대로). ① 위쪽에 <b>큰 검색창</b>과 <b>부지 유형 선택(노지·지붕·수상)</b> 버튼을 두었습니다. ② 진단 전에는 <b>무엇을 확인하는지(지목·경사, 용도지역, 태양광 규제 23종, 계통 여유, 일사량, 공시지가)</b>와 <b>사용 순서 3단계</b>가 보입니다. ③ 결과는 <b>종합 판정을 크게</b> 보여주고, <b>필지 수·합산 면적·항목별 판정 개수·데이터 출처</b>를 요약 카드로 정리했습니다. ④ 진단 중 표시와 「이 부지로 모듈 가배치 →」 안내를 정리했고, 다크모드에서 ‘조건부 가능’ 글자가 안 보이던 문제도 고쳤습니다. 휴대폰·태블릿 화면에서도 맞춰 보입니다.', author:'개발'},
   {date:'2026-10-30', team:'영업', kind:'수정', title:'「모듈 가배치」 — 지도 위 판정 말풍선에서 참고 정보가 ‘해당 없음’으로 잘못 보이던 문제 수정', body:'지도 위쪽 판정 말풍선에 <b>일사량·이격거리 안내·한전 담당 연락처</b> 같은 <b>참고 정보</b>가 회색 <b>“해당 없음”</b>으로 잘못 표시되던 것을 고쳤습니다. ① 지도 말풍선과 판정 배지에는 이제 <b>실제 판정(충족·확인 필요·저촉 가능)만</b> 표시됩니다(참고 정보는 오른쪽 결과 패널에서 확인). ② 회색의 뜻을 <b>“참고 정보”</b>로 바로잡아 범례도 함께 수정했습니다. ③ 긴 항목명이 <b>“일사량 약 1472 k”처럼 단위 중간에서 잘리던</b> 것을, 단어 단위로 자르고 “…”로 표시하도록 정리했습니다.', author:'개발'},
   {date:'2026-10-30', team:'영업', kind:'수정', title:'「모듈 가배치」 — 오른쪽에 스크롤바가 두 개 생기던 문제 + 같은 판정이 필지 수만큼 반복되던 문제 수정', body:'① 화면에 따라 <b>오른쪽 결과 패널 스크롤바 옆에 페이지 전체 스크롤바가 하나 더</b> 생기던 문제를 고쳤습니다. 지도 영역 높이를 제목줄이 다 그려진 뒤 기준으로 <b>자동으로 다시 맞추도록</b> 해, 이제 결과가 길어져도 <b>오른쪽 패널 안에서만</b> 스크롤됩니다. ② 여러 필지를 묶어 조회하면 <b>같은 판정(예: 태양광 규제 판정)이 필지 수만큼 반복</b>되어 보이던 것을 <b>한 번만</b> 보이도록 정리하고, 문제 목록에는 <b>“필지 3곳 공통”</b>처럼 몇 필지에 해당하는지 표시합니다.', author:'개발'},
   {date:'2026-10-30', team:'영업', kind:'개선', title:'「모듈 가배치」 — 결과를 한눈에: 요약 카드·판정 배지·지도 말풍선·월별 발전량 그래프 추가', body:'배치 결과를 고객에게 <b>더 알아보기 쉽게</b> 보여주도록 화면을 보강했습니다. ① 결과 패널 맨 위에 <b>설치용량·연간 발전량·예상 수익·회수기간</b>을 큼직한 <b>요약 카드</b>로 표시(수익·회수기간은 <b>간이 추정치</b>). ② 설치 가능 여부를 <b>🟢충족·🟡확인필요·🔴제한</b> 색깔 <b>판정 배지</b>로 한 번에 표시. ③ 타당성검토를 거쳐 들어온 경우, 지도 위에 <b>항목별 판정 말풍선</b>(도로 이격·계통 여유 등)과 색 범례를 띄움. ④ 왼쪽 패널에 <b>부지 면적만 넣으면 대략 몇 kW 들어가는지</b> 바로 보여주는 계산 카드 추가. ⑤ <b>월별 예상 발전량 그래프</b>와 <b>확인이 필요한 문제 목록</b>, ⑥ 계산에 쓴 <b>데이터 출처</b> 안내를 추가했습니다. 기존 배치·저장·DXF 기능은 그대로입니다.', author:'개발'},
