@@ -39,7 +39,7 @@ function geminiMM(key, model, system, parts, timeoutMs) {
   const payload = JSON.stringify({
     systemInstruction: { parts: [{ text: system }] },
     contents: [{ role: 'user', parts }],
-    generationConfig: { temperature: 0, maxOutputTokens: 512, responseMimeType: 'application/json' },
+    generationConfig: { temperature: 0, maxOutputTokens: 2048, responseMimeType: 'application/json' },
   });
   const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(key);
   return new Promise((resolve, reject) => {
