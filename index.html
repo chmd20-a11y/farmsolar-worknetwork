@@ -8186,9 +8186,16 @@ function fillPermitTemplate(xml, map){ for(const k in map){ xml=xml.split(k).joi
 // 신분증 양식 자리표시(미리보기·PDF) — 박스 가운데 안내
 function _idPlace(title,note){ return `<div style="color:#64748b;text-align:center;line-height:1.7"><div style="font-size:15pt">📎</div><div style="font-size:12.5pt;font-weight:700;color:#334155">${esc(title)}</div><div style="font-size:10.5pt">${esc(note)}</div></div>`; }
 // 미리보기·PDF 전용 '원본 HTML 치환'(이미지 등 — 이스케이프/파란span 없이 그대로 삽입). 사업주=자리표시, 대리인=업로드 이미지(있으면)
+// 설계 › 현장실측 '현장 전경' 사진 주소(url) — 서버 연결 전에는 url=null → ''(자리표시 유지)
+function designPhotoUrl(d,pos){ const r=((d&&d.photos)||{})['현장 전경||'+pos]; return r&&r.url?String(r.url):''; }
+// 사업계획서 8. 현장사진 ①·② ← 설계 현장사진1·2 (HWP 내장 그림 번호 18·19)
+const SAUP_SITE_PHOTOS=[{n:1,pos:'현장사진1',bin:'18'},{n:2,pos:'현장사진2',bin:'19'}];
+// 사진 없을 때 자리표시 — 가져오는 곳 표기(사진 칸 3:2 비율)
+const saupPhotoPh=o=>locPlaceholderDataUrl('현장사진 '+'①②'[o.n-1],'← 설계 › 현장실측 › 현장 전경 › '+o.pos,720,480);
 function permitRawMap(d){
   const dd=myDaeriinId();   // 대리인 = 로그인한 직원 본인(「내 계정」에서 등록)
-  return {
+  const _sp={}; SAUP_SITE_PHOTOS.forEach(o=>{ _sp['§SAUP_PHOTO'+o.n+'_SRC§']=designPhotoUrl(d,o.pos)||saupPhotoPh(o); });
+  return { ..._sp,
     '§SAUP_ID§': _idPlace('사업주 신분증','영업 「실계약」 첨부에서 자동 삽입 예정'),
     '§DAERIIN_ID§': (dd&&dd.dataUrl) ? `<img src="${dd.dataUrl}" alt="대리인 신분증" style="max-width:100%;max-height:115mm;display:block;margin:0 auto;object-fit:contain">` : _idPlace('대리인 신분증','「내 계정」에서 내 신분증을 등록하면 자동 삽입'),
   };
@@ -8234,10 +8241,19 @@ async function genPermitForms(id){
   const folder=(String((p.outline&&p.outline.plantName)||'접수서류').trim()||'접수서류').replace(/[\/\\:*?"<>|]/g,'_');
   const map=permitTokenMap(d); toast('접수서류(HWP) 생성 중…');
   const enc=new TextEncoder(); const files=[]; const fail=[];
+  // 8. 현장사진 ①·② — 사업계획서 내장 그림(18·19번)을 설계 사진(url 있을 때) 또는 '가져오는 곳' 자리표시로 교체
+  const photoBin={};
+  for(const o of SAUP_SITE_PHOTOS){ const u=designPhotoUrl(d,o.pos);
+    let pp=u?dataUrlParts(/^data:/.test(u)?u:await photoUrlToJpegDataUrl(u)):null;
+    if(u&&!pp) fail.push('현장사진('+o.pos+') 불러오기');
+    photoBin[o.bin]=pp||dataUrlParts(saupPhotoPh(o)); }   // 사진 없으면 '가져오는 곳' 표기 자리표시
   for(const f of PERMIT_FORM_FILES){
     try{
       const res=await fetch(f.url,{cache:'no-store'}); if(!res.ok) throw new Error('HTTP '+res.status);
-      const xml=fillPermitTemplate(await res.text(), map);
+      let xml=fillPermitTemplate(await res.text(), map);
+      if(f.url==='forms/saup.hml') for(const b in photoBin){ const pp=photoBin[b];
+        xml=xml.replace(new RegExp('<BINITEM Type="Embedding" Format="\\w+" BinData="'+b+'"/>'),()=>`<BINITEM Type="Embedding" Format="${pp.fmt}" BinData="${b}"/>`)
+               .replace(new RegExp('<BINDATA Encoding="Base64" Id="'+b+'" Size="\\d+">[^<]*</BINDATA>'),()=>`<BINDATA Encoding="Base64" Id="${b}" Size="${pp.size}">${pp.b64}</BINDATA>`); }
       files.push({name: folder+'/'+f.out, data: enc.encode(xml)});
     }catch(e){ fail.push(f.label); }
   }
@@ -8258,12 +8274,14 @@ const LOC_SAT_W=1360, LOC_SAT_H=800;   // 위치도 사진칸 ≈ 179.9:105.8 �
 const LOC_SAT_ZOOM0=0.96;              // 위성 기본 배율(=화면 100%). 현장별 satZoom으로 버튼 조절
 const LOC_BUSY={};                      // {dealId:'sat'} — 생성 중 표시
 // 미첨부 자리표시(라벨) 이미지 — 미리보기·HWP 공통
-function locPlaceholderDataUrl(label){
-  const W=680,H=400, cv=document.createElement('canvas'); cv.width=W; cv.height=H; const g=cv.getContext('2d');
+// sub = 둘째 줄(사진을 가져오는 곳 표기), w·h = 그림 비율(양식 사진 칸에 맞춤)
+function locPlaceholderDataUrl(label, sub, w, h){
+  const W=w||680,H=h||400, cv=document.createElement('canvas'); cv.width=W; cv.height=H; const g=cv.getContext('2d');
   g.fillStyle='#eef0f2'; g.fillRect(0,0,W,H);
   g.strokeStyle='#b9c0c7'; g.lineWidth=3; g.setLineDash([10,8]); g.strokeRect(10,10,W-20,H-20); g.setLineDash([]);
   g.fillStyle='#9aa3ac'; g.textAlign='center'; g.textBaseline='middle'; g.font='600 26px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
-  g.fillText(label, W/2, H/2);
+  g.fillText(label, W/2, sub?H/2-20:H/2);
+  if(sub){ g.font='500 20px "Apple SD Gothic Neo","Malgun Gothic",sans-serif'; g.fillText(sub, W/2, H/2+22); }
   try{ return cv.toDataURL('image/png'); }catch(e){ return ''; }
 }
 // dataURL → {fmt:'png'|'jpg', b64, size(디코드 바이트)}
@@ -8382,8 +8400,8 @@ async function photoUrlToJpegDataUrl(url){
 function devPermitRawMap(d){ const p=resolvePermit(d); const lp=p.locPhotos||{};
   const dd=myDaeriinId();   // 대리인 = 로그인한 직원 본인(「내 계정」에서 등록)
   return {
-    '§LOCMAP_SAT_SRC§': (lp.sat&&lp.sat.dataUrl)||locPlaceholderDataUrl('위성지도 — 지번으로 자동 생성'),
-    '§LOCMAP_SITE_SRC§': (lp.site&&lp.site.dataUrl)||(designSitePhoto(d)||{}).url||locPlaceholderDataUrl('현장사진 — 수동 첨부'),
+    '§LOCMAP_SAT_SRC§': (lp.sat&&lp.sat.dataUrl)||locPlaceholderDataUrl('위성지도','← 지번으로 자동 생성'),
+    '§LOCMAP_SITE_SRC§': (lp.site&&lp.site.dataUrl)||(designSitePhoto(d)||{}).url||locPlaceholderDataUrl('현장사진','← 설계 › 현장실측 › 현장 전경 › 전체 전경'),
     // 신분증 양식(접수서류 묶음) — 미리보기/PDF에 이미지/자리표시로 삽입
     '§SAUP_ID§': _idPlace('사업주 신분증','영업 「실계약」 첨부에서 자동 삽입 예정'),
     '§DAERIIN_ID§': (dd&&dd.dataUrl) ? `<img src="${dd.dataUrl}" alt="대리인 신분증" style="max-width:100%;max-height:115mm;display:block;margin:0 auto;object-fit:contain">` : _idPlace('대리인 신분증','「내 계정」에서 내 신분증을 등록하면 자동 삽입'),
@@ -8437,9 +8455,9 @@ function devPermitTokenMap(d){
   const fmtPeriod=(iso)=>{ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(S(iso)); return m?`${m[1]}. ${+m[2]}. ${+m[3]}.`:''; };
   // 위치도 사진(HWP BinData) — 위성/현장 이미지의 포맷·바이트크기·base64. 미첨부면 자리표시 이미지
   const lp=p.locPhotos||{};
-  const satP=dataUrlParts((lp.sat&&lp.sat.dataUrl)||locPlaceholderDataUrl('위성지도'))||{fmt:'png',b64:'',size:0};
+  const satP=dataUrlParts((lp.sat&&lp.sat.dataUrl)||locPlaceholderDataUrl('위성지도','← 지번으로 자동 생성'))||{fmt:'png',b64:'',size:0};
   const _ds=designSitePhoto(d);   // 설계 현장사진 — data URL이면 여기서 바로, 서버 url이면 genDevPermitForms에서 받아 교체
-  const siteP=dataUrlParts((lp.site&&lp.site.dataUrl)||(_ds&&/^data:/.test(_ds.url)?_ds.url:'')||locPlaceholderDataUrl('현장사진'))||{fmt:'png',b64:'',size:0};
+  const siteP=dataUrlParts((lp.site&&lp.site.dataUrl)||(_ds&&/^data:/.test(_ds.url)?_ds.url:'')||locPlaceholderDataUrl('현장사진','← 설계 › 현장실측 › 현장 전경 › 전체 전경'))||{fmt:'png',b64:'',size:0};
   return {
     '§NAME§':applicantFullName(p), '§FULLNAME§':applicantFullName(p), '§SIGN§':S(p.applicant.name), '§IDNO§':S(p.applicant.idno),
     // 대리인 위임장·신분증 양식용(접수서류 묶음에 포함) — 발전허가 토큰맵과 동일 값
@@ -9425,6 +9443,8 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-30', team:'행정', kind:'수정', title:'개발행위 사업계획서 — 토지소재지·지목 글자 크기 통일', body:'피해방지계획서·경관 체크리스트의 <b>토지소재지</b>와 <b>지목</b> 값이 다른 값보다 작게(9pt) 나오던 것을 <b>신청면적 등과 같은 11pt</b>로 맞췄습니다. 미리보기·PDF·한글(HWP) 모두 적용됩니다.'},
+  {date:'2026-10-30', team:'행정', kind:'개발', title:'발전사업 사업계획서 ‘8. 현장사진’ ①·② — 설계 실측 사진 자동 연결 + 사진 자리에 가져오는 곳 표기', body:'발전사업 허가 사업계획서 <b>8. 현장사진 ①·②</b>에 <b>설계 › 현장실측 › 현장 전경 › 현장사진1·2</b> 사진이 자동으로 들어가도록 연결했습니다(미리보기·PDF·한글). 사진이 아직 없을 때는 사진 자리에 <b>‘← 설계 › 현장실측 › 현장 전경 › 현장사진1’</b>처럼 <b>가져오는 곳</b>을 표기합니다. 개발행위 위치도의 현장사진 자리도 같은 방식으로 표기합니다. ※ 설계 사진은 사진 저장 서버 연결 후 실제 업로드되면 자동으로 채워집니다.'},
   {date:'2026-10-30', team:'행정', kind:'개발', title:'개발행위 위치도 — 현장사진을 설계 실측 사진에서 자동으로 가져오도록 연결(형식 준비)', body:'개발행위 <b>위치도의 현장사진</b> 자리에, 직접 올린 사진이 없으면 <b>설계 › 현장실측 ‘현장 전경’ 사진</b>(전체 전경 → 발전소 예정 부지 → 현장사진1 → 현장사진2 순)을 자동으로 넣도록 연결했습니다. 미리보기·PDF·한글(HWP) 모두 적용되며, 위치도 상단에 ‘현장 설계 사진 사용’으로 표시됩니다. ※ 설계 사진은 아직 <b>첨부 표시만 저장</b>되는 단계라, <b>사진 저장 서버 연결 후</b> 실제 사진이 올라오면 그때부터 자동으로 채워집니다.'},
   {date:'2026-10-30', team:'영업', kind:'개발', title:'원가표 인버터 카드에 효율·크기 칸 추가 → 개발행위 사업계획서 자동 기입', body:'설정 <b>원가표</b>의 인버터 카드마다 <b>효율(%)</b>·<b>크기(mm)</b> 칸을 새로 만들었습니다. 데이터시트 값을 한 번 넣고 저장하면, 개발행위 사업계획서 <b>9. 발전설비의 개요 › 인버터1</b>의 <b>효율·크기</b>에 자동으로 들어갑니다(현장 인버터 용량·제조사가 같은 카드 기준). 처음엔 빈칸이니 인버터별로 입력해 주세요.'},
   {date:'2026-10-30', team:'행정', kind:'수정', title:'대리인 위임장 — 아래 서명란에 위임하는 사람 이름 자동 기입', body:'대리인 위임장 아래쪽 <b>위임하는 사람 ______ (서명 또는 인)</b> 칸에 <b>사업주 성명</b>이 자동으로 들어갑니다(위쪽 ‘위임하는 사람 이름’과 같은 값). 발전사업허가·개발행위 서류 모두 적용됩니다.'},
