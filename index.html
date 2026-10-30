@@ -8437,6 +8437,7 @@ async function photoUrlToJpegDataUrl(url){
 function devPermitRawMap(d){ const p=resolvePermit(d); const lp=p.locPhotos||{};
   const dd=myDaeriinId();   // 대리인 = 로그인한 직원 본인(「내 계정」에서 등록)
   return {
+    ...(()=>{ const b=devT7Build(p); return { '§T7_CELLS§':b.html, '§T7_HMM§':b.hMM, '§T8_HTOP§':b.h8MM, '§T8_TOP§':b.t8MM }; })(),   // 7번 표(소유자 수만큼 행) + 8번 위치
     '§LOCMAP_SAT_SRC§': (lp.sat&&lp.sat.dataUrl)||locPlaceholderDataUrl('위성지도','← 지번으로 자동 생성'),
     '§LOCMAP_SITE_SRC§': (lp.site&&lp.site.dataUrl)||(designSitePhoto(d)||{}).url||locPlaceholderDataUrl('현장사진','← 설계 › 현장실측 › 현장 전경 › 전체 전경'),
     // 신분증 양식(접수서류 묶음) — 미리보기/PDF에 이미지/자리표시로 삽입
@@ -8481,6 +8482,37 @@ function officeFromAddr(a){
   if(/^세종/.test(t[0]||'')) return '세종특별자치시청';
   return '';
 }
+// 개발행위 사업계획서 7번 「건축물 면적 조서」 — 소유자 수(N, 최소 1·최대 10)만큼 주소·성명·비고 행을 만들고
+//   구분~면적은 N행 합침. 표가 길어진 만큼 8번 제목·표를 아래로 이동. 단위=HWP(1mm=283.465). 미리보기 html·한글 xml 동시 생성.
+const DEV_T7={ W:[5173,5173,5215,5299,5257,6098,11943,5677,2816], top:28886, head:1800, own:2900, sum:1800, gap:1559, gap8:2100 };
+function devT7Build(p){
+  const br=p.bldReg||{}, B=(p.builds&&p.builds[0])||{};
+  let ow=(br.owners&&br.owners.length)?br.owners:(B.owner?[{name:B.owner,addr:''}]:[]);
+  ow=ow.slice(0,10); const N=Math.max(1,ow.length);
+  const ba=pNum(p.outline.bldArea)||pNum(B.bldArea)||0, area=ba>0?pArea(ba):'';
+  const W=DEV_T7.W, RH=[DEV_T7.head,DEV_T7.head].concat(Array(N).fill(DEV_T7.own),[DEV_T7.sum]);
+  const C=[];   // [행, 열, 행합침, 열합침, 글자, 값여부, 줄바꿈허용]
+  ['구분','층별','구조','용도','주용도','면적(㎡)'].forEach((x,c)=>C.push([0,c,2,1,x,0,0]));
+  C.push([0,6,1,2,'소유자',0,0],[0,8,2,1,'비고',0,0],[1,6,1,1,'주소',0,0],[1,7,1,1,'성명',0,0]);
+  [br.gubun,'',br.struct||B.struct,br.use||B.use,br.mainUse,area].forEach((v,c)=>C.push([2,c,N,1,String(v||''),1,c===4?1:0]));
+  for(let i=0;i<N;i++){ const w=ow[i]||{}; C.push([2+i,6,1,1,String(w.addr||''),1,1],[2+i,7,1,1,String(w.name||''),1,1],[2+i,8,1,1,'',1,0]); }
+  C.push([2+N,0,1,3,'계',0,0]); for(let c=3;c<9;c++) C.push([2+N,c,1,1,c===5?area:'',1,0]);
+  const sumW=(a,b)=>W.slice(a,b).reduce((x,y)=>x+y,0), sumH=(a,b)=>RH.slice(a,b).reduce((x,y)=>x+y,0), mm=v=>(v/283.465).toFixed(3);
+  const FF="font-family:'Apple SD Gothic Neo','Malgun Gothic','AppleGothic',sans-serif;", BD='0.25mm solid #aaaaaa';
+  let html='', rows='';
+  C.forEach(([r,c,rs,cs,tx,isVal,wrap])=>{
+    const inner=!tx?"<div style='text-align:center;white-space:nowrap;'>&nbsp;</div>"
+      :`<div style='text-align:center;${wrap?'white-space:normal;word-break:keep-all;':'white-space:nowrap;'}'><span style='font-size:9pt;color:${isVal?'#0000ff':'#000000'};${FF}line-height:${wrap?'1.15':'1.0'};'>${isVal?'<span class="pm-auto">'+esc(tx)+'</span>':esc(tx)}</span></div>`;
+    html+=`<div style='position:absolute;left:${mm(sumW(0,c))}mm;top:${mm(sumH(0,r))}mm;width:${mm(sumW(c,c+cs))}mm;height:${mm(sumH(r,r+rs))}mm;border-left:${BD};border-right:${BD};border-top:${BD};border-bottom:${BD};box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;overflow:visible;padding:0 0.6mm;'>${inner}</div>`;
+  });
+  for(let r=0;r<RH.length;r++){ rows+='<ROW>';
+    C.filter(x=>x[0]===r).sort((a,b)=>a[1]-b[1]).forEach(([rr,c,rs,cs,tx,isVal])=>{
+      const body=tx?`<P ParaShape="1" Style="0"><TEXT CharShape="${isVal?9:4}"><CHAR>${hwpXmlEsc(tx)}</CHAR></TEXT></P>`:'<P ParaShape="1" Style="0"><TEXT CharShape="4"/></P>';
+      rows+=`<CELL BorderFill="5" ColAddr="${c}" ColSpan="${cs}" Dirty="false" Editable="false" HasMargin="true" Header="false" Height="${sumH(rr,rr+rs)}" Protect="false" RowAddr="${rr}" RowSpan="${rs}" Width="${sumW(c,c+cs)}"><CELLMARGIN Bottom="0" Left="141" Right="141" Top="0"/><PARALIST LineWrap="Break" LinkListID="0" LinkListIDNext="0" TextDirection="0" VertAlign="Center">${body}</PARALIST></CELL>`;
+    }); rows+='</ROW>'; }
+  const h=sumH(0,RH.length), h8=DEV_T7.top+h+DEV_T7.gap, t8=h8+DEV_T7.gap8;
+  return { n:N, rows:RH.length, h, h8, t8, html, rowsXml:rows, hMM:mm(h), h8MM:mm(h8), t8MM:mm(t8) };
+}
 function devPermitTokenMap(d){
   const p=resolvePermit(d), eq=p.equip||{};
   const L=(p.lands&&p.lands[0])||{};
@@ -8507,14 +8539,13 @@ function devPermitTokenMap(d){
     '§LANDREG_ADDR§':landRegShort(p.landRegAddr||String((p.lands&&p.lands[0]&&p.lands[0].addr)||'').replace(/\s*(산\s*)?\d+(-\d+)?\s*(번지)?\s*$/,'')),   // 6번 표 토지소재지 — 토지대장 판독값(landRegOcr) 우선, 없으면 토지명세서 주소(지번 제외)
     ...(()=>{ // 6·7·8번 표 — 6번=토지명세서(lands), 7번=건축물대장 판독(bldReg)·없으면 건물명세서(builds), 8번=건축면적·모듈면적·총사업비
       const Ls=p.lands||[], L=Ls[0]||{}, n=Ls.length, sumL=Ls.reduce((a,x)=>a+(pNum(x.area)||0),0);
-      const br=p.bldReg||{}, B=(p.builds&&p.builds[0])||{}, ow=(br.owners&&br.owners.length)?br.owners:(B.owner?[{name:B.owner,addr:''}]:[]);
+      const B=(p.builds&&p.builds[0])||{};
       const ba=pNum(p.outline.bldArea)||pNum(B.bldArea)||0, cost=pNum(p.outline.totalCost)||0, ua=pNum(p.outline.useArea)||0;
       return {
         '§T6_JIBUN§':S(L.jibun)+(n>1?' 외 '+(n-1)+'필지':''), '§T6_JIMOK§':S(L.jimok), '§T6_AREA§':pNum(L.area)>0?pArea(L.area):'',
         '§T6_OADDR§':S(L.ownerAddr), '§T6_ONAME§':S(L.owner), '§T6_SUM§':sumL>0?pArea(sumL):'',
-        '§T7_GUBUN§':S(br.gubun), '§T7_STRUCT§':S(br.struct||B.struct), '§T7_USE§':S(br.use||B.use), '§T7_MAINUSE§':S(br.mainUse),
-        '§T7_AREA§':ba>0?pArea(ba):'', '§T7_SUM§':ba>0?pArea(ba):'',
-        '§T7_OADDR1§':S(ow[0]&&ow[0].addr), '§T7_OADDR2§':S(ow[1]&&ow[1].addr), '§T7_ONAME§':ow.map(w=>w.name).filter(Boolean).join(', '),
+        // 7번 표는 소유자 수만큼 행이 늘어 실행 시 생성(devT7Build) — 여기는 행 수·높이·8번 위치(HWP 단위)만
+        ...(()=>{ const b=devT7Build(p); return { '§T7_ROWCNT§':String(b.rows), '§T7_H§':String(b.h), '§T8_HVO§':String(b.h8), '§T8_VO§':String(b.t8) }; })(),
         '§T8_BLDAREA§':ba>0?pArea(ba)+' ㎡':'', '§T8_MODAREA§':ua>0?pArea(ua)+' ㎡':'', '§T8_COST§':cost>0?pComma(cost):'' }; })(),
     '§ADDR§':S(p.applicant.addr), '§PHONE§':S(p.applicant.phone), '§DATE§':fmtKDate(permitApplyDate(d)),
     '§LOC§':loc, '§OFFICE§':officeFromAddr(loc)||officeFromAddr(p.biz.place)||S(p.office), '§JIMOK§':S(L.jimok), '§ZONE§':firstVal(L.zone), '§ZONE2§':firstVal(L.zone2),
@@ -8548,7 +8579,7 @@ async function genDevPermitForms(id){
       else fail.push('위치도 현장사진(설계 사진 불러오기)'); } }
   for(const f of DEVPERMIT_FORM_FILES){
     try{ const res=await fetch(f.url,{cache:'no-store'}); if(!res.ok) throw new Error('HTTP '+res.status);
-      const xml=fillPermitTemplate(await res.text(), map);
+      const xml=fillPermitTemplate((await res.text()).split('§T7_ROWS§').join(devT7Build(p).rowsXml), map);   // 7번 표 행(소유자 수만큼)은 원문 그대로 먼저 삽입
       files.push({name: folder+'/'+f.out, data: enc.encode(xml)});
     }catch(e){ fail.push(f.label); }
   }
@@ -9492,6 +9523,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-30', team:'행정', kind:'수정', title:'개발행위 사업계획서 7번 표 — 소유자 수만큼 행 자동 조정', body:'7번 <b>건축물 면적 조서</b>의 소유자 <b>주소·성명</b>을 사람마다 <b>한 줄씩</b> 나눠 적습니다. 소유자가 <b>1명이면 한 줄</b>, <b>여러 명이면 그만큼 줄이 늘어나고</b>(최대 10명), 아래 8번 표도 자동으로 내려갑니다. 건축물대장 판독도 소유자를 최대 10명까지 읽습니다. 미리보기·PDF·한글(HWP) 모두 적용됩니다.'},
   {date:'2026-10-30', team:'행정', kind:'추가', title:'개발행위 사업계획서 6·7·8번 표 자동 채움', body:'사업계획서 <b>6번 토지 조서</b>는 토지명세서(지번·지목·면적·토지주 주소·성명, 면적 합계)와 토지대장 판독값으로, <b>7번 건축물 면적 조서</b>는 <b>건축물대장 첨부 시 AI 판독</b>(구분·구조·용도(첫 번째)·주용도·건축면적·소유자 주소·성명, 주민번호는 읽지 않음)으로, <b>8번 자금소요액</b>은 건축면적·모듈면적·총사업비(천원)로 자동 채웁니다. 긴 주소는 칸 안에서 줄바꿈되도록 주소 칸을 넓혔습니다. 미리보기·PDF·한글(HWP) 모두 적용됩니다.'},
   {date:'2026-10-30', team:'행정', kind:'추가', title:'개발행위 사업계획서 6번 표 — 토지대장 첨부 시 토지소재지 자동 읽기', body:'행정서류함에 <b>토지(임야)대장</b>을 첨부하면 AI가 <b>토지 소재</b>를 바로 읽어, 사업계획서 <b>6번 표 ‘토지소재지’</b> 칸에 <b>시군구·읍면동(리)까지만</b>(예: 파주시 문발동, 지번 제외) 자동으로 넣습니다. 미리보기·PDF·한글(HWP) 모두 적용됩니다. 읽은 뒤 맞는지 한 번 확인해 주세요.'},
   {date:'2026-10-30', team:'행정', kind:'추가', title:'개발행위 사업계획서 — ‘6. 사업의 명칭’·‘7. 건축물 면적 조서’ 표 양식 추가', body:'사업계획서 <b>6번</b>에 <b>토지 조서 표</b>(토지소재지[시/군·구/면·동/리]·지번·지목·면적·소유자[주소·성명]·비고 + 계), <b>7번</b>에 <b>건축물 면적 조서 표</b>(구분·층별·구조·용도·주용도·면적·소유자[주소·성명]·비고 + 계)를 넣었습니다. 지금은 <b>빈 양식</b>이며, 들어갈 값은 이후 자동 채움으로 연결할 예정입니다. 8번 자금계획 표는 아래로 이동했습니다. 미리보기·PDF·한글(HWP) 모두 적용됩니다.'},

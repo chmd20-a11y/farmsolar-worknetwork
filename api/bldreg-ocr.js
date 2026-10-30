@@ -103,7 +103,7 @@ module.exports = async (req, res) => {
       + '(2) bldArea = "건축면적" 칸의 값(단위 ㎡, 쉼표 없이). "대지면적"·"연면적"·"용적률산정용연면적"·"건폐율" 등 다른 면적은 절대 넣지 않습니다. '
       + '(3) "건축물 현황" 표의 첫 번째 줄에서 gubun = 구분(예: "주1"), struct = 구조(예: "철골조"), use = 용도의 맨 첫 번째 항목 하나만(예: "축사,퇴비사"이면 "축사"). '
       + '(4) mainUse = 표제부 "주용도" 칸의 값(예: "동물 및 식물관련시설"). '
-      + '(5) owners = "소유자 현황"의 각 소유자 성명(명칭)과 주소(최대 3명, 위에서부터 순서대로). 주민(법인)등록번호·소유권 지분·변동일은 절대 넣지 않습니다. '
+      + '(5) owners = "소유자 현황"의 각 소유자 성명(명칭)과 주소(최대 10명, 위에서부터 순서대로). 주민(법인)등록번호·소유권 지분·변동일은 절대 넣지 않습니다. '
       + '(6) 보이지 않는 값은 빈 문자열로 둡니다. 추정·창작 금지 — 문서에 실제로 보이는 글자만 사용합니다. '
       + '(7) 설명·머리말·마크다운·코드펜스 없이 JSON 객체만 출력합니다.';
     const parts = [
@@ -134,7 +134,7 @@ module.exports = async (req, res) => {
       bldArea = normArea(o.bldArea); gubun = T(o.gubun); struct = T(o.struct); mainUse = T(o.mainUse);
       use = T(o.use).split(/[,，·]/)[0].trim();
       owners = (Array.isArray(o.owners) ? o.owners : []).map((w) => ({ name: T(w && w.name), addr: T(w && w.addr) }))
-        .filter((w) => w.name || w.addr).slice(0, 3);
+        .filter((w) => w.name || w.addr).slice(0, 10);
     } catch (e) { /* JSON이 아니면 빈 값 */ }
     res.status(200).json({ bldArea, gubun, struct, use, mainUse, owners, raw: String(raw || '').slice(0, 2000) });
   } catch (e) {
