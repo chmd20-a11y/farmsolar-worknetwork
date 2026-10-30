@@ -4136,6 +4136,59 @@ const SL = (function(){
       '일반 지도':     mk(BASE,'국토부 VWorld 일반지도')
     };
   }
+  // ===== 모듈가배치 개선 레이어 (①KPI·회수 ②지도판정 ③판정배지 ④면적추정 ⑤월별차트 ⑥근거) =====
+  // 전부 try/catch로 감싼 독립 추가 블록 — 실패해도 기존 배치/DXF/배치도 기능에 영향 없음.
+  const SLENH_MONTHLY=[0.070,0.078,0.095,0.100,0.099,0.082,0.068,0.076,0.085,0.090,0.077,0.080];
+  const SLENH_LVL={ ok:{c:'#2e8b63',t:'충족'}, warn:{c:'#bd8a2e',t:'확인 필요'}, bad:{c:'#c14f3c',t:'저촉 가능'}, na:{c:'#93a0a6',t:'해당 없음'} };
+  const SLENH_LEGEND='<div class="sl-enh-lgrow"><i style="background:#2e8b63"></i>충족</div><div class="sl-enh-lgrow"><i style="background:#bd8a2e"></i>확인 필요</div><div class="sl-enh-lgrow"><i style="background:#c14f3c"></i>저촉 가능</div><div class="sl-enh-lgrow"><i style="background:#93a0a6"></i>해당 없음</div><div class="sl-enh-lgrow" style="margin-top:4px"><i style="background:#123a6e"></i>모듈</div><div class="sl-enh-lgrow"><i style="border:2px dashed #ffd54a;background:transparent"></i>부지 경계</div><div class="sl-enh-lgrow"><i style="border:1px dashed #ff8a3d;background:transparent"></i>이격 버퍼</div>';
+  function slEnhN(id){ try{ return parseFloat((((document.getElementById(id)||{}).textContent)||'0').replace(/[^0-9.]/g,''))||0; }catch(e){ return 0; } }
+  function slEnhType(){ return (S&&S.type==='roof')?'지붕':'노지'; }
+  function slEnhUnit(kw,t){ try{ var C=(typeof COST_PRESET!=='undefined'&&COST_PRESET)?COST_PRESET:((typeof COST_DEFAULT!=='undefined')?COST_DEFAULT:null); var tier=(typeof pickCapTier==='function')?pickCapTier(kw):0; if(C&&C.kwSalesPrice&&C.kwSalesPrice[t]&&C.kwSalesPrice[t][tier]!=null) return C.kwSalesPrice[t][tier]; }catch(e){} return t==='지붕'?1000000:900000; }
+  function slEnhApply(t){ try{ if(typeof ASSUMP_DEFAULT!=='undefined'&&ASSUMP_DEFAULT) return t==='지붕'?(ASSUMP_DEFAULT.applyRoof||188):(ASSUMP_DEFAULT.applyNoji||178); }catch(e){} return t==='지붕'?188:178; }
+  function slEnhFin(kw){ var t=slEnhType(), unit=slEnhUnit(kw,t), invest=Math.round(kw*unit); var annK=slEnhN('sl-r-gen')*1000; if(!annK) annK=kw*1300; var apply=slEnhApply(t); var grossYr=annK*apply, netYr=grossYr*0.9; var pb=netYr>0?(invest/netYr):0; return {t:t,unit:unit,invest:invest,annK:annK,grossYr:grossYr,netYr:netYr,pb:pb}; }
+  function slEnhWon(v){ if(v>=100000000) return (v/100000000).toFixed(v>=1000000000?0:1)+'억'; if(v>=10000) return Math.round(v/10000).toLocaleString()+'만'; return Math.round(v).toLocaleString(); }
+  function slEnhRows(){ var out=[]; try{ if(typeof salesFeas!=='undefined'&&salesFeas&&salesFeas.items) salesFeas.items.forEach(function(it){ if(it&&it.res&&!it.res.error&&it.res.rows) it.res.rows.forEach(function(r){ if(r&&r.lvl) out.push(r); }); }); }catch(e){} return out; }
+  function slEnhWorst(rows){ var ord={bad:0,warn:1,na:2,ok:3}, w=null; rows.forEach(function(r){ var o=ord[r.lvl]; if(o==null)o=2; if(w===null||o<ord[w]) w=r.lvl; }); return w; }
+  function slEnhVMeta(w){ if(w==='bad') return {c:'#c14f3c',e:'🔴',t:'설치 제한',d:'저촉 항목을 해소하기 전에는 설치가 어렵습니다.'}; if(w==='warn') return {c:'#bd8a2e',e:'🟡',t:'조건부 가능',d:'확인 필요 항목을 점검하면 설치가 가능합니다.'}; if(w==='ok') return {c:'#2e8b63',e:'🟢',t:'설치 가능',d:'주요 기준을 충족합니다.'}; return {c:'#93a0a6',e:'⚪',t:'판정 불가',d:'타당성검토를 실행하면 판정이 표시됩니다.'}; }
+  function slEnhShort(t){ t=(t||'').replace(/\(.*?\)/g,'').trim(); return t.length>12?t.slice(0,12):t; }
+  function slEnhKpiHtml(kw,fin){ var genTxt=fin.annK>=10000?((fin.annK/10000).toFixed(1)+'<em>만kWh</em>'):(Math.round(fin.annK).toLocaleString()+'<em>kWh</em>');
+    return '<div class="sl-enh-kpi"><div class="kl">설비용량</div><div class="kv">'+Math.round(kw).toLocaleString()+'<em>kW</em></div><div class="ks">실측 배치 기준</div></div>'
+      +'<div class="sl-enh-kpi"><div class="kl">연 발전량</div><div class="kv">'+genTxt+'</div><div class="ks">kWp당 1,300 기준</div></div>'
+      +'<div class="sl-enh-kpi"><div class="kl">예상 시공비</div><div class="kv">'+slEnhWon(fin.invest)+'<em>원</em></div><div class="ks">약 '+Math.round(fin.unit/10000)+'만/kW</div></div>'
+      +'<div class="sl-enh-kpi"><div class="kl">단순 회수기간</div><div class="kv">'+(fin.pb>0?('약 '+fin.pb.toFixed(1)):'—')+'<em>년</em></div><div class="ks">간이 추정</div></div>'; }
+  function slEnhChartHtml(annK){ var mx=Math.max.apply(null,SLENH_MONTHLY), bars='', xs=''; for(var i=0;i<12;i++){ var h=Math.round(SLENH_MONTHLY[i]/mx*100); bars+='<div class="sl-enh-bar" style="height:'+h+'%" title="'+(i+1)+'월 약 '+Math.round(annK*SLENH_MONTHLY[i]).toLocaleString()+' kWh"></div>'; xs+='<span>'+(i+1)+'</span>'; } return '<div class="sl-enh-chtitle">📈 월별 예상 발전량 <small>연 '+Math.round(annK).toLocaleString()+' kWh</small></div><div class="sl-enh-chbars">'+bars+'</div><div class="sl-enh-chx">'+xs+'</div>'; }
+  function slEnhOverlays(){ try{ var ma=document.querySelector('.sl-maparea'); if(!ma) return null;
+    var j=document.getElementById('sl-enh-mapjudge'); if(!j){ j=document.createElement('div'); j.id='sl-enh-mapjudge'; j.className='sl-enh-mapjudge'; j.style.display='none'; ma.appendChild(j); }
+    var lg=document.getElementById('sl-enh-maplegend'); if(!lg){ lg=document.createElement('div'); lg.id='sl-enh-maplegend'; lg.className='sl-enh-maplegend'; lg.innerHTML='<b>🗺️ 범례 · 판정</b>'+SLENH_LEGEND; ma.appendChild(lg); }
+    return {j:j,lg:lg}; }catch(e){ return null; } }
+  function slEnhEst(){ try{ var a=document.getElementById('sl-enh-area'), u=document.getElementById('sl-enh-util'); if(!u) return;
+    var area=a?(parseFloat(a.value)||0):0, ut=+u.value, eff=Math.round(area*ut/100), kw=Math.round(area*(ut/100)/13);
+    var set=function(id,v){ var e=document.getElementById(id); if(e) e.textContent=v; };
+    set('sl-enh-util-v', ut+'% · 유효 '+eff.toLocaleString()+'㎡'); set('sl-enh-util-v2', ut+'%');
+    set('sl-enh-kw', kw>0?(kw.toLocaleString()+'kW'):'—'); set('sl-enh-area-v', area>0?(area.toLocaleString()+'㎡'):'부지 미지정'); }catch(e){} }
+  function slEnhRenderV(rows, hasLayout){ var vEl=document.getElementById('sl-enh-verdict'), iEl=document.getElementById('sl-enh-issues'), ov=slEnhOverlays();
+    if(!rows.length){ if(vEl){ if(hasLayout){ var m0=slEnhVMeta(null); vEl.style.display=''; vEl.style.borderLeftColor=m0.c; vEl.innerHTML='<div class="sl-enh-vt" style="color:'+m0.c+'">'+m0.e+' '+m0.t+'</div><div class="sl-enh-vd">타당성검토를 먼저 실행하면 이격·규제·계통 판정이 여기와 지도에 표시됩니다.</div>'; } else vEl.style.display='none'; }
+      if(iEl) iEl.style.display='none'; if(ov) ov.j.style.display='none'; return; }
+    var w=slEnhWorst(rows), m=slEnhVMeta(w), ord={bad:0,warn:1,na:2,ok:3};
+    var probs=rows.filter(function(r){return r.lvl==='bad'||r.lvl==='warn';});
+    var chips=rows.slice().sort(function(a,b){return (ord[a.lvl]==null?2:ord[a.lvl])-(ord[b.lvl]==null?2:ord[b.lvl]);}).slice(0,4);
+    if(vEl){ vEl.style.display=''; vEl.style.borderLeftColor=m.c;
+      var ch=chips.map(function(r){ var L=SLENH_LVL[r.lvl]||SLENH_LVL.na; return '<span class="sl-enh-chip" style="color:'+L.c+';border-color:'+L.c+'">'+slEnhShort(r.t)+'</span>'; }).join('');
+      vEl.innerHTML='<div class="sl-enh-vt" style="color:'+m.c+'">'+m.e+' '+m.t+'</div><div class="sl-enh-vd">'+m.d+'</div><div class="sl-enh-vchips">'+ch+'</div>'; }
+    if(iEl){ if(probs.length){ iEl.style.display=''; iEl.innerHTML='<div class="sl-enh-isttl">⛔ 우선 확인할 문제 ('+probs.length+')</div>'+probs.slice(0,5).map(function(r){ var L=SLENH_LVL[r.lvl]||SLENH_LVL.na; return '<div class="sl-enh-issue"><div class="ic" style="color:'+L.c+'">●</div><div><div class="it">'+esc(r.t||'')+' <b style="color:'+L.c+'">'+L.t+'</b></div><div class="id">'+(r.d||'')+'</div><div class="sl-enh-ev"><span class="b">📑 근거</span><span class="b">🗺️ 지도</span></div></div></div>'; }).join(''); } else iEl.style.display='none'; }
+    if(ov){ ov.j.style.display=''; var mc=chips.map(function(r){ var L=SLENH_LVL[r.lvl]||SLENH_LVL.na; return '<span class="sl-enh-mpill" style="background:'+L.c+'">'+slEnhShort(r.t)+' · '+L.t+'</span>'; }).join(''); ov.j.innerHTML='<div class="sl-enh-mjttl">'+m.e+' '+m.t+'</div>'+mc; } }
+  function slEnhance(){ try{
+    var kw=slEnhN('sl-r-kw'), hasLayout=kw>0, land=slEnhN('sl-r-land');
+    var ai=document.getElementById('sl-enh-area'); if(ai && land>0 && ai.dataset.touched!=='1') ai.value=Math.round(land);
+    slEnhEst();
+    var fin=slEnhFin(kw);
+    var kEl=document.getElementById('sl-enh-kpis'); if(kEl){ kEl.style.display=hasLayout?'':'none'; if(hasLayout) kEl.innerHTML=slEnhKpiHtml(kw,fin); }
+    var cEl=document.getElementById('sl-enh-chart'); if(cEl){ cEl.style.display=hasLayout?'':'none'; if(hasLayout) cEl.innerHTML=slEnhChartHtml(fin.annK); }
+    slEnhRenderV(slEnhRows(), hasLayout);
+    var sEl=document.getElementById('sl-enh-src'); if(sEl) sEl.innerHTML='ⓘ 데이터 출처: VWorld·한국전력·NASA POWER'+((typeof siteJibunLabel==='function')?(' · '+esc(siteJibunLabel()||'')):'')+' · 참고용 추정(법적 효력 없음)';
+  }catch(e){ try{ console.warn('slEnhance error', e); }catch(_){}} }
+  if(typeof window!=='undefined' && !window.slEnh){ window.slEnh={ area:function(){ try{ var a=document.getElementById('sl-enh-area'); if(a) a.dataset.touched='1'; }catch(e){} slEnhEst(); }, est:slEnhEst, refresh:slEnhance }; }
+
   function buildMap(){
     map=L.map('sl-map',{preferCanvas:true, zoomControl:false}).setView([37.75,126.78],9);
     L.control.zoom({position:'bottomright'}).addTo(map);
@@ -4355,6 +4408,7 @@ const SL = (function(){
     $('sl-r-ratio').textContent=ratio.toFixed(0);
     $('sl-r-gen').textContent=(kw*yieldK/1000).toFixed(0);
     $('sl-r-tables').textContent=tables.toLocaleString();
+    try{ slEnhance(); }catch(e){}
     const base3d=S.type==='carport'?2.6:(S.type==='roof'?7.0:0.6);
     LAYOUT={placed:placedAll, regions:regionsOut, wRow, alongSlope, depth, tiltR:tilt, azRad:bestAz, base:base3d,
       lat0,lng0,mLat,mLng, mLen:lSlope1, intra, stack:S.stack,
@@ -4406,6 +4460,7 @@ const SL = (function(){
     else if(manualTables.length){ LAYOUT={placed:manualTables.slice(),_auto:[],regions:[],wRow:F.wRow,alongSlope:F.alongSlope,depth:F.depth,tiltR:F.tilt,azRad:F.azRad,base:F.base3d,lat0:F.lat0,lng0:F.lng0,mLat:F.mLat,mLng:F.mLng,mLen:F.lSlope1,intra:F.intra,stack:F.stack,wl:[],outerWl:[],type:S.type,grossArea:0,landArea:0,regionCount:0,_manualOnly:true}; }
     const Lc=LAYOUT; if(Lc){ const tables=Lc.placed.length, modules=tables*(Lc.stack||1), kw=modules*F.watt/1000, occ=tables*(Lc.wRow||F.wRow)*(Lc.depth||F.depth), land=Lc.landArea||0;
       $('sl-r-count').textContent=modules.toLocaleString(); $('sl-r-kw').textContent=Math.round(kw).toLocaleString(); $('sl-r-tables').textContent=tables.toLocaleString(); $('sl-r-gen').textContent=(kw*1300/1000).toFixed(0); if(land>0) $('sl-r-ratio').textContent=(occ/land*100).toFixed(0); }
+    try{ slEnhance(); }catch(e){}
   }
   function drawUiM(F){
     uiLayer.clearLayers(); if(!manualMode||eraser){ updateSelbar(); return; }
@@ -5042,7 +5097,33 @@ const SL = (function(){
   function render(){
     const pre=(typeof salesFeas!=='undefined' && salesFeas && salesFeas.items && salesFeas.items[0] && salesFeas.items[0].jibun)?salesFeas.items[0].jibun:'';
     const h=(typeof wfHead==='function')?wfHead('모듈 가배치','위성 지도에 부지 경계를 잡고 태양광 패널을 <b>자동/수동</b>으로 배치해 <b>설치 용량·면적 활용률·연간 발전량</b>을 산출합니다. 2D·3D로 확인하세요.'):'';
-    return h+`<div class="sl-wrap">
+    return h+`<style>
+.sl-enh-estcard{border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:10px;padding:10px;margin:10px 0 2px;background:var(--surface-2)}
+.sl-enh-esttitle{font-weight:800;font-size:12px;margin-bottom:6px}.sl-enh-esttitle small{font-weight:600;color:var(--muted);margin-left:4px}
+.sl-enh-formula{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px;margin-bottom:6px}
+.sl-enh-formula .fx{text-align:center}.sl-enh-formula .fx b{display:block;font-size:14px;font-weight:850;color:var(--brand)}.sl-enh-formula .fx span{font-size:9px;color:var(--muted)}.sl-enh-formula .op{color:var(--muted);font-weight:800}
+.sl-enh-note{font-size:9.5px;color:var(--muted);margin-top:5px;line-height:1.4}
+.sl-enh-badge{border:1px solid var(--border);border-left-width:4px;border-radius:10px;padding:10px 12px;margin-bottom:10px;background:var(--surface-2)}
+.sl-enh-vt{font-weight:850;font-size:15px}.sl-enh-vd{font-size:11.5px;color:var(--ink-2);margin-top:3px}
+.sl-enh-vchips{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.sl-enh-chip{font-size:10.5px;font-weight:750;padding:2px 8px;border-radius:999px;border:1px solid;background:var(--surface)}
+.sl-enh-kpis{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px}
+.sl-enh-kpi{border:1px solid var(--border);border-radius:9px;padding:8px 10px;background:var(--surface)}
+.sl-enh-kpi .kl{font-size:10px;color:var(--muted);font-weight:700}.sl-enh-kpi .kv{font-size:17px;font-weight:850;color:var(--brand);margin-top:1px}.sl-enh-kpi .kv em{font-size:10px;font-style:normal;font-weight:800}.sl-enh-kpi .ks{font-size:9px;color:var(--muted)}
+.sl-enh-chart{margin-top:12px}.sl-enh-chtitle{font-size:11.5px;font-weight:800;margin-bottom:4px}.sl-enh-chtitle small{font-weight:600;color:var(--muted)}
+.sl-enh-chbars{display:flex;align-items:flex-end;gap:2px;height:60px}.sl-enh-bar{flex:1;background:linear-gradient(180deg,var(--accent),#9c6f1f);border-radius:2px 2px 0 0;min-height:3px}
+.sl-enh-chx{display:flex;gap:2px;margin-top:2px}.sl-enh-chx span{flex:1;text-align:center;font-size:7.5px;color:var(--muted)}
+.sl-enh-isttl{font-size:11.5px;font-weight:800;margin-bottom:3px}
+.sl-enh-issue{display:flex;gap:7px;padding:6px 0;border-top:1px dashed var(--border)}.sl-enh-issue .ic{font-size:11px;line-height:1.3}.sl-enh-issue .it{font-size:11.5px;font-weight:700}.sl-enh-issue .id{font-size:10.5px;color:var(--muted);margin-top:1px}
+.sl-enh-ev{margin-top:4px;display:flex;gap:4px}.sl-enh-ev .b{font-size:9.5px;font-weight:700;border:1px solid var(--border);border-radius:5px;padding:1px 6px;color:var(--muted);cursor:default}
+.sl-enh-src{font-size:9.5px;color:var(--muted);margin-top:10px;line-height:1.4}
+.sl-enh-mapjudge{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:550;max-width:66%;text-align:center;pointer-events:none}
+.sl-enh-mjttl{display:inline-block;background:rgba(23,58,63,.92);color:#fff;font-weight:800;font-size:11.5px;padding:3px 9px;border-radius:7px;margin-bottom:4px}
+.sl-enh-mpill{display:inline-block;color:#fff;font-weight:800;font-size:10.5px;padding:3px 8px;border-radius:7px;margin:0 4px 4px 0;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.sl-enh-maplegend{position:absolute;left:12px;bottom:12px;z-index:550;background:rgba(255,255,255,.95);color:#1a2a2b;border-radius:8px;padding:7px 9px;font-size:10px;box-shadow:0 1px 4px rgba(0,0,0,.25);pointer-events:none}
+.sl-enh-maplegend b{display:block;font-size:10.5px;margin-bottom:4px}
+.sl-enh-lgrow{display:flex;align-items:center;gap:5px;margin:2px 0}.sl-enh-lgrow i{width:11px;height:11px;border-radius:3px;display:inline-block;flex:none}
+</style><div class="sl-wrap">
       <div class="sl-left card">
         <div class="sl-sec">📐 모듈 규격</div>
         <div class="sl-seg" id="sl-seg-mod"><button data-m="kr" class="on">국산<small>현대 645W</small></button><button data-m="cn">중국산<small>AIKO 655W</small></button><button data-m="custom">직접입력</button></div>
@@ -5062,6 +5143,13 @@ const SL = (function(){
         <div class="sl-aznote">부지 형상에 맞춘 최적 방위가 자동 적용됩니다 · 조절바를 움직이면 수동<a id="sl-az-auto" title="자동 최적 방위로 되돌리기">⟳ 자동</a></div>
         <label class="sl-fld">열 간격(그림자 방지) <b id="sl-v-pitch">2.5 m</b><input type="range" id="sl-o-pitch" min="1" max="6" step="0.1" value="2.5"></label>
         <label class="sl-fld">음영각도(입사각) <b id="sl-v-inc">25°</b><input type="range" id="sl-o-inc" min="15" max="40" value="25"></label>
+        <div class="sl-enh-estcard">
+          <div class="sl-enh-esttitle">📐 면적 → 설비용량 즉시추정 <small>그리기 전 가늠</small></div>
+          <div class="sl-enh-formula"><div class="fx"><b id="sl-enh-area-v">부지 미지정</b><span>부지면적</span></div><div class="op">×</div><div class="fx"><b id="sl-enh-util-v2">75%</b><span>이용률</span></div><div class="op">÷</div><div class="fx"><b>13㎡</b><span>kW당(지상)</span></div><div class="op">=</div><div class="fx"><b id="sl-enh-kw">—</b><span>추정</span></div></div>
+          <label class="sl-fld">부지 면적(㎡)<input class="tinput" type="number" id="sl-enh-area" placeholder="배치 시 자동 입력" oninput="window.slEnh&&slEnh.area()"></label>
+          <label class="sl-fld">부지 이용률 <b id="sl-enh-util-v">75% · 유효 0㎡</b><input type="range" id="sl-enh-util" min="30" max="100" value="75" oninput="window.slEnh&&slEnh.est()"></label>
+          <div class="sl-enh-note">경계 이격·진입로·자투리를 뺀 배치 가능 비율. 실제 배치하면 ‘실측 용량’으로 대체됩니다.</div>
+        </div>
       </div>
       <div class="sl-center">
         <div class="sl-searchbar">
@@ -5085,6 +5173,8 @@ const SL = (function(){
       </div>
       <div class="sl-right card">
         <div class="sl-sec">📊 배치 결과</div>
+        <div id="sl-enh-verdict" class="sl-enh-badge" style="display:none"></div>
+        <div id="sl-enh-kpis" class="sl-enh-kpis" style="display:none"></div>
         <div class="sl-stat hero"><div class="k">설치 용량</div><div class="v"><span id="sl-r-kw">0</span><small>kWp</small></div></div>
         <div class="sl-stat"><div class="k">총 모듈 수</div><div class="v"><span id="sl-r-count">0</span><small>장</small></div></div>
         <div class="sl-grid2b">
@@ -5093,10 +5183,13 @@ const SL = (function(){
         </div>
         <div class="sl-stat green"><div class="k">연간 예상 발전량</div><div class="v"><span id="sl-r-gen">0</span><small>MWh</small></div></div>
         <div class="sl-stat"><div class="k">구조물(테이블) 수</div><div class="v"><span id="sl-r-tables">0</span><small>개</small></div></div>
+        <div id="sl-enh-chart" class="sl-enh-chart" style="display:none"></div>
+        <div id="sl-enh-issues" style="display:none;margin-top:10px"></div>
         <button class="btn primary sm" id="sl-to-quote" style="margin-top:12px;width:100%;justify-content:center">📄 이 배치로 견적서 작성 →</button>
         <button class="btn dark sm" id="sl-btn-sheet" style="margin-top:8px;width:100%;justify-content:center">📄 배치도 다운로드 (샘플형)</button>
         <button class="btn ghost sm" id="sl-btn-png" style="margin-top:8px;width:100%;justify-content:center">🖼️ 2D 이미지 저장</button>
         <button class="btn ghost sm" id="sl-btn-dxf" style="margin-top:8px;width:100%;justify-content:center">📐 캐드(DXF) 2D 평면</button>
+        <div id="sl-enh-src" class="sl-enh-src"></div>
         <div class="sl-sec" style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border)">💾 저장된 배치안 <small style="font-weight:600;color:var(--muted);margin-left:4px">최대 5개 · 비교용</small></div>
         <button class="btn sm sl-save-btn" id="sl-save-slot" style="width:100%;justify-content:center">💾 현재 배치 저장 (0/5)</button>
         <div id="sl-slots" class="sl-slots-list"></div>
@@ -5141,6 +5234,7 @@ const SL = (function(){
     let ok=false; try{ ok=await ensureMapLibs(); }catch(e){ ok=false; }
     if(!ok){ setStatus('⚠️ 지도 라이브러리를 불러오지 못했습니다 — 네트워크(인터넷 연결)를 확인하세요.'); return; }
     buildMap(); panelLayerM=L.layerGroup().addTo(map); wire();
+    try{ slEnhance(); }catch(e){}
     setTimeout(()=>{ slFitAndRedraw(); },120);
     if(!window.__slResizeBound){ window.__slResizeBound=1; window.addEventListener('resize', ()=>{ clearTimeout(window.__slRT); window.__slRT=setTimeout(slFitAndRedraw, 150); }); }
     const ho = (typeof window!=='undefined') ? window.__slHandoff : null;
@@ -9135,6 +9229,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-30', team:'영업', kind:'개선', title:'「모듈 가배치」 — 결과를 한눈에: 요약 카드·판정 배지·지도 말풍선·월별 발전량 그래프 추가', body:'배치 결과를 고객에게 <b>더 알아보기 쉽게</b> 보여주도록 화면을 보강했습니다. ① 결과 패널 맨 위에 <b>설치용량·연간 발전량·예상 수익·회수기간</b>을 큼직한 <b>요약 카드</b>로 표시(수익·회수기간은 <b>간이 추정치</b>). ② 설치 가능 여부를 <b>🟢충족·🟡확인필요·🔴제한</b> 색깔 <b>판정 배지</b>로 한 번에 표시. ③ 타당성검토를 거쳐 들어온 경우, 지도 위에 <b>항목별 판정 말풍선</b>(도로 이격·계통 여유 등)과 색 범례를 띄움. ④ 왼쪽 패널에 <b>부지 면적만 넣으면 대략 몇 kW 들어가는지</b> 바로 보여주는 계산 카드 추가. ⑤ <b>월별 예상 발전량 그래프</b>와 <b>확인이 필요한 문제 목록</b>, ⑥ 계산에 쓴 <b>데이터 출처</b> 안내를 추가했습니다. 기존 배치·저장·DXF 기능은 그대로입니다.', author:'개발'},
   {date:'2026-10-29', team:'영업', kind:'수정', title:'「모듈 가배치」 — 패널 스크롤해도 지도가 위로 밀려 헤더에 가려지던 문제 완전히 해결', body:'좌측 옵션 패널의 내용이 길어 화면을 <b>아래로 스크롤</b>하면, 가운데 <b>지도까지 함께 밀려 올라가 위쪽 제목·메뉴에 가려지던</b> 현상을 근본적으로 고쳤습니다. 이제 <b>좌·우 패널만 그 안에서 따로 스크롤</b>되고 <b>지도는 자리에 고정</b>되어, 어떤 상황에서도 가려지지 않습니다(실제 화면으로 재현·확인 완료). 함께, 설치방향을 고르는 화살표 표시가 <b>↕·↔ 두 모양이 섞여 있던 것을 ⇕·⇔로 통일</b>했습니다.', author:'개발'},
   {date:'2026-10-29', team:'공통', kind:'수정', title:'릴리즈노트 화면 — 제목이 위아래로 두 번 보이던 중복 표시 정리', body:'릴리즈노트를 열었을 때 <b>“릴리즈노트” 제목이 화면 위쪽에 두 번 겹쳐 보이던</b> 사소한 중복 표시를 정리했습니다. 이제 제목이 <b>한 번만</b> 깔끔하게 보입니다.', author:'개발'},
   {date:'2026-10-29', team:'영업', kind:'추가', title:'「모듈 가배치」 — 배치안을 최대 5개까지 저장해두고 비교(고객 미팅용)', body:'고객과 미팅하면서 <b>여러 배치안을 번갈아 보여주고 비교</b>할 수 있게, 배치 결과를 <b>최대 5개까지 저장</b>해두는 기능을 추가했습니다. ① 지도 옆 결과 패널에서 <b>현재 배치를 저장</b>하면 이름·설치용량·모듈 수·이용률·예상 발전량·방위·저장일이 담긴 <b>비교 카드</b>로 쌓입니다. ② 카드의 <b>“불러오기”</b>를 누르면 그 배치가 그대로 지도에 다시 그려지고, <b>삭제</b>도 가능합니다. ③ 이 저장 내용은 <b>이 컴퓨터(브라우저)에만</b> 보관되며, “초기화”를 눌러도 저장해둔 배치안은 지워지지 않습니다.', author:'개발'},

@@ -31,3 +31,11 @@ create policy fsnet_attachments_all on public.fsnet_attachments for all to anon,
 -- ============================================================
 -- [되돌리기]  drop table if exists public.fsnet_attachments cascade;
 -- ============================================================
+
+-- ──────────────────────────────────────────────────────────────
+-- Data API 접근 권한 (GRANT)
+-- Supabase가 2026-10-30부터 public 스키마 새 테이블에 자동 부여를 중단.
+-- 기존 자동권한과 동일 범위로 명시 유지(기존 테이블엔 no-op).
+-- 실제 행 보안은 RLS 정책이 담당하며 이 GRANT는 그 범위를 넓히지 않음.
+-- ──────────────────────────────────────────────────────────────
+grant all on public.fsnet_attachments to anon, authenticated, service_role;
