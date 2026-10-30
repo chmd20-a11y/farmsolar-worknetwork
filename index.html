@@ -4052,7 +4052,9 @@ async function analyzeFeasParcel(jibun){
 }
 function renderSalesFeasView(){
   const items = salesFeas.items||[], addOn = !!salesFeas.addMode;
-  const typeSeg = [['노지','🌾'],['지붕','🏠'],['수상','💧']].map(([t,ic])=>`<button type="button" class="sf-seg ${t===salesFeas.type?'on':''}" onclick="sfSetType('${t}',this)">${ic} ${t}형</button>`).join('');
+  // 부지유형 버튼: [화면키, 아이콘, 표시명, 진단엔진 유형] — 햇빛소득마을은 노지 기준으로 판정
+  const curSeg = salesFeas.seg || salesFeas.type;
+  const typeSeg = [['노지','🌾','노지형','노지'],['지붕','🏠','지붕형','지붕'],['햇빛','☀️','햇빛소득마을','노지']].map(([k,ic,lb,t])=>`<button type="button" class="sf-seg ${k===curSeg?'on':''}" onclick="sfSetType('${t}',this,'${k}')">${ic} ${lb}</button>`).join('');
   const chips = items.length ? `<div class="sl-parcels sf-parcels" style="display:flex">`+items.map((it,i)=>{
       const lbl=(it.res&&it.res.error)?(it.jibun+' · 실패'):((it.res&&it.res.parcel&&it.res.parcel.jibun)||it.jibun||('필지 '+(i+1)));
       return `<span class="sl-chip"><b>${i+1}</b> ${esc(lbl)}<button type="button" title="이 필지 제거" onclick="removeFeasItem(${i})">✕</button></span>`;
@@ -4122,7 +4124,7 @@ function renderSalesFeasView(){
     </div>
     ${body}</div>`;
 }
-function sfSetType(t,btn){ salesFeas.type=t; const h=document.getElementById('sf-type'); if(h) h.value=t; if(btn&&btn.parentNode) btn.parentNode.querySelectorAll('.sf-seg').forEach(b=>b.classList.toggle('on',b===btn)); }
+function sfSetType(t,btn,k){ salesFeas.type=t; salesFeas.seg=k||t; const h=document.getElementById('sf-type'); if(h) h.value=t; if(btn&&btn.parentNode) btn.parentNode.querySelectorAll('.sf-seg').forEach(b=>b.classList.toggle('on',b===btn)); }
 function rerenderSalesFeas(){ const el=document.getElementById('sub-s-feas'); if(el){ el.innerHTML=renderSalesFeasView(); const wh=el.querySelector('.wf-head'); if(wh) wh.style.display='none'; } }  // 제목은 상단으로 승격돼 있으므로 다시 그릴 때도 숨김
 function _feasFocus(){ if(salesFeas.addMode){ const el=document.getElementById('sf-jibun'); if(el){ try{ el.focus(); }catch(_){} } } }
 // 🔍 진단 실행 = 새 현장(기존 필지 비우고 1필지부터)
@@ -9338,6 +9340,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-30', team:'영업', kind:'변경', title:'「타당성검토」 부지 유형 버튼 — ‘수상형’을 ‘☀️ 햇빛소득마을’로 교체', body:'타당성검토 위쪽 부지 유형 버튼에서 <b>수상형</b>을 빼고 <b>☀️ 햇빛소득마을</b>을 넣었습니다. 햇빛소득마을을 고르면 <b>노지형과 같은 기준</b>(지목·경사도·용도지역·하천·규제·계통)으로 판정합니다.', author:'개발'},
   {date:'2026-10-30', team:'영업', kind:'개선', title:'「타당성검토」 화면 디자인 개편 — 큰 검색창·진단 항목 안내·결과 요약 카드', body:'영업 <b>「타당성검토」</b> 화면을 더 보기 쉽게 다듬었습니다(기능은 그대로). ① 위쪽에 <b>큰 검색창</b>과 <b>부지 유형 선택(노지·지붕·수상)</b> 버튼을 두었습니다. ② 진단 전에는 <b>무엇을 확인하는지(지목·경사, 용도지역, 태양광 규제 23종, 계통 여유, 일사량, 공시지가)</b>와 <b>사용 순서 3단계</b>가 보입니다. ③ 결과는 <b>종합 판정을 크게</b> 보여주고, <b>필지 수·합산 면적·항목별 판정 개수·데이터 출처</b>를 요약 카드로 정리했습니다. ④ 진단 중 표시와 「이 부지로 모듈 가배치 →」 안내를 정리했고, 다크모드에서 ‘조건부 가능’ 글자가 안 보이던 문제도 고쳤습니다. 휴대폰·태블릿 화면에서도 맞춰 보입니다.', author:'개발'},
   {date:'2026-10-30', team:'영업', kind:'수정', title:'「모듈 가배치」 — 지도 위 판정 말풍선에서 참고 정보가 ‘해당 없음’으로 잘못 보이던 문제 수정', body:'지도 위쪽 판정 말풍선에 <b>일사량·이격거리 안내·한전 담당 연락처</b> 같은 <b>참고 정보</b>가 회색 <b>“해당 없음”</b>으로 잘못 표시되던 것을 고쳤습니다. ① 지도 말풍선과 판정 배지에는 이제 <b>실제 판정(충족·확인 필요·저촉 가능)만</b> 표시됩니다(참고 정보는 오른쪽 결과 패널에서 확인). ② 회색의 뜻을 <b>“참고 정보”</b>로 바로잡아 범례도 함께 수정했습니다. ③ 긴 항목명이 <b>“일사량 약 1472 k”처럼 단위 중간에서 잘리던</b> 것을, 단어 단위로 자르고 “…”로 표시하도록 정리했습니다.', author:'개발'},
   {date:'2026-10-30', team:'영업', kind:'수정', title:'「모듈 가배치」 — 오른쪽에 스크롤바가 두 개 생기던 문제 + 같은 판정이 필지 수만큼 반복되던 문제 수정', body:'① 화면에 따라 <b>오른쪽 결과 패널 스크롤바 옆에 페이지 전체 스크롤바가 하나 더</b> 생기던 문제를 고쳤습니다. 지도 영역 높이를 제목줄이 다 그려진 뒤 기준으로 <b>자동으로 다시 맞추도록</b> 해, 이제 결과가 길어져도 <b>오른쪽 패널 안에서만</b> 스크롤됩니다. ② 여러 필지를 묶어 조회하면 <b>같은 판정(예: 태양광 규제 판정)이 필지 수만큼 반복</b>되어 보이던 것을 <b>한 번만</b> 보이도록 정리하고, 문제 목록에는 <b>“필지 3곳 공통”</b>처럼 몇 필지에 해당하는지 표시합니다.', author:'개발'},
