@@ -883,10 +883,6 @@ button{font-family:inherit;cursor:pointer}
 .sf-hero-t{font-size:21px;font-weight:800;letter-spacing:-.02em;line-height:1.3}
 .sf-hero-s{font-size:12.5px;color:rgba(255,255,255,.72);margin-top:5px}
 .sf-hero-s b{color:#fff}
-.sf-segs{display:inline-flex;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:3px}
-.sf-seg{border:0;background:transparent;color:rgba(255,255,255,.78);font:inherit;font-size:12.5px;font-weight:700;padding:6px 14px;border-radius:999px;cursor:pointer;transition:background .15s,color .15s}
-.sf-seg:hover{color:#fff}
-.sf-seg.on{background:#fff;color:var(--brand);box-shadow:0 1px 4px rgba(0,0,0,.18)}
 .sf-search{display:flex;align-items:center;gap:8px;background:var(--surface);border-radius:14px;padding:6px 6px 6px 16px;box-shadow:0 8px 24px rgba(0,0,0,.18);position:relative;z-index:1;border:2px solid transparent;transition:border-color .15s}
 .sf-search:focus-within{border-color:var(--accent)}
 .sf-search.add{border-color:#2e8b63}
@@ -4055,9 +4051,6 @@ async function analyzeFeasParcel(jibun){
 }
 function renderSalesFeasView(){
   const items = salesFeas.items||[], addOn = !!salesFeas.addMode;
-  // 부지유형 버튼: [화면키, 아이콘, 표시명, 진단엔진 유형] — 햇빛소득마을은 노지 기준으로 판정
-  const curSeg = salesFeas.seg || salesFeas.type;
-  const typeSeg = [['노지','🌾','노지형','노지'],['지붕','🏠','지붕형','지붕'],['햇빛','☀️','햇빛소득마을','노지']].map(([k,ic,lb,t])=>`<button type="button" class="sf-seg ${k===curSeg?'on':''}" onclick="sfSetType('${t}',this,'${k}')">${ic} ${lb}</button>`).join('');
   const chips = items.length ? `<div class="sl-parcels sf-parcels" style="display:flex">`+items.map((it,i)=>{
       const lbl=(it.res&&it.res.error)?(it.jibun+' · 실패'):((it.res&&it.res.parcel&&it.res.parcel.jibun)||it.jibun||('필지 '+(i+1)));
       return `<span class="sl-chip"><b>${i+1}</b> ${esc(lbl)}<button type="button" title="이 필지 제거" onclick="removeFeasItem(${i})">✕</button></span>`;
@@ -4072,7 +4065,7 @@ function renderSalesFeasView(){
       ['☀️','일사량','지역 일사량으로 예상 발전량 참고'],
       ['💰','개별공시지가','㎡당 공시지가와 최근 추이']
     ].map(([ic,t,d])=>`<div class="sf-check"><div class="sf-check-ic">${ic}</div><div><div class="sf-check-t">${t}</div><div class="sf-check-d">${d}</div></div></div>`).join('');
-    const steps=[['지번 입력','부지 유형을 고르고 지번·도로명을 넣습니다'],['자동 판정','🟢 가능 · 🟡 조건부 · 🔴 제한으로 종합 판정'],['가배치로 연결','결과 하단 버튼으로 모듈 가배치에 그대로 이어집니다']]
+    const steps=[['지번 입력','부지 지번 또는 도로명을 넣습니다'],['자동 판정','🟢 가능 · 🟡 조건부 · 🔴 제한으로 종합 판정'],['가배치로 연결','결과 하단 버튼으로 모듈 가배치에 그대로 이어집니다']]
       .map(([t,d],i)=>`<div class="sf-step"><span class="sf-step-n">${i+1}</span><div><div class="sf-step-t">${t}</div><div class="sf-step-d">${d}</div></div></div>`).join('<div class="sf-step-arrow">→</div>');
     body = `<div class="sf-block"><div class="sf-block-h">진단 항목 <span>지번 하나로 아래 6가지를 한 번에 확인합니다</span></div><div class="sf-checks">${checks}</div></div>
       <div class="sf-block"><div class="sf-block-h">사용 순서</div><div class="sf-steps">${steps}</div></div>`;
@@ -4113,7 +4106,6 @@ function renderSalesFeasView(){
       <div class="sf-hero-top">
         <div><div class="sf-eyebrow">부지 즉석 진단</div><div class="sf-hero-t">지번 하나로 설치 가능성을 바로 판정합니다</div>
         <div class="sf-hero-s">국토부·한전 실시간 데이터 · 한 현장이 여러 필지면 <b>➕ 필지 추가</b>로 묶어 합산 면적·종합 판정</div></div>
-        <div class="sf-segs" role="group" aria-label="부지 유형">${typeSeg}</div>
       </div>
       <input type="hidden" id="sf-type" value="${esc(salesFeas.type)}">
       <div class="sf-search ${addOn?'add':''}">
@@ -4127,7 +4119,6 @@ function renderSalesFeasView(){
     </div>
     ${body}</div>`;
 }
-function sfSetType(t,btn,k){ salesFeas.type=t; salesFeas.seg=k||t; const h=document.getElementById('sf-type'); if(h) h.value=t; if(btn&&btn.parentNode) btn.parentNode.querySelectorAll('.sf-seg').forEach(b=>b.classList.toggle('on',b===btn)); }
 function rerenderSalesFeas(){ const el=document.getElementById('sub-s-feas'); if(el){ el.innerHTML=renderSalesFeasView(); const wh=el.querySelector('.wf-head'); if(wh) wh.style.display='none'; } }  // 제목은 상단으로 승격돼 있으므로 다시 그릴 때도 숨김
 function _feasFocus(){ if(salesFeas.addMode){ const el=document.getElementById('sf-jibun'); if(el){ try{ el.focus(); }catch(_){} } } }
 // 🔍 진단 실행 = 새 현장(기존 필지 비우고 1필지부터)
@@ -9355,6 +9346,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-30', team:'영업', kind:'삭제', title:'「타당성검토」 부지 유형 선택 버튼(노지형·지붕형·햇빛소득마을) 삭제', body:'영업 타당성검토 위쪽의 <b>부지 유형 선택 버튼 3개를 없앴습니다</b>. 지번만 넣고 바로 진단하며, 판정은 <b>노지 기준</b>(지목·경사도·용도지역·하천·규제·계통)으로 합니다.', author:'개발'},
   {date:'2026-10-30', team:'설계', kind:'개선', title:'「타당성검토」(설계) 화면 디자인 개편 — 영업 타당성검토와 같은 모양으로 통일', body:'설계 <b>「타당성검토」</b>를 영업 화면과 같은 디자인으로 바꿨습니다(기능은 그대로). ① 현장마다 위쪽에 <b>현장명·용량·이관 담당자</b>와 <b>큰 지번 검색창</b>이 있습니다. ② 결과는 <b>종합 판정을 크게</b>, <b>설비 용량·부지 유형·항목별 판정 개수·데이터 출처</b>를 요약 카드로 보여줍니다. ③ 아래 <b>검토 결정</b> 칸에서 반려 사유 입력과 반려·가계약 이관을 그대로 합니다.', author:'개발'},
   {date:'2026-10-30', team:'영업', kind:'변경', title:'「타당성검토」 부지 유형 버튼 — ‘수상형’을 ‘☀️ 햇빛소득마을’로 교체', body:'타당성검토 위쪽 부지 유형 버튼에서 <b>수상형</b>을 빼고 <b>☀️ 햇빛소득마을</b>을 넣었습니다. 햇빛소득마을을 고르면 <b>노지형과 같은 기준</b>(지목·경사도·용도지역·하천·규제·계통)으로 판정합니다.', author:'개발'},
   {date:'2026-10-30', team:'영업', kind:'개선', title:'「타당성검토」 화면 디자인 개편 — 큰 검색창·진단 항목 안내·결과 요약 카드', body:'영업 <b>「타당성검토」</b> 화면을 더 보기 쉽게 다듬었습니다(기능은 그대로). ① 위쪽에 <b>큰 검색창</b>과 <b>부지 유형 선택(노지·지붕·수상)</b> 버튼을 두었습니다. ② 진단 전에는 <b>무엇을 확인하는지(지목·경사, 용도지역, 태양광 규제 23종, 계통 여유, 일사량, 공시지가)</b>와 <b>사용 순서 3단계</b>가 보입니다. ③ 결과는 <b>종합 판정을 크게</b> 보여주고, <b>필지 수·합산 면적·항목별 판정 개수·데이터 출처</b>를 요약 카드로 정리했습니다. ④ 진단 중 표시와 「이 부지로 모듈 가배치 →」 안내를 정리했고, 다크모드에서 ‘조건부 가능’ 글자가 안 보이던 문제도 고쳤습니다. 휴대폰·태블릿 화면에서도 맞춰 보입니다.', author:'개발'},
