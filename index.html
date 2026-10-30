@@ -7581,8 +7581,8 @@ function permitDocUpload(id,key,file){
   if(!isPdf&&!isImg){ toast('이미지 또는 PDF 파일만 업로드할 수 있습니다'); return; }
   if(file.size>10*1024*1024){ toast('파일이 너무 큽니다 (10MB 이하로 올려주세요)'); return; }
   const done=()=>{ persistDeal(d); toast(isPdf?'첨부했습니다 — 출력 시 “열기”로 PDF를 함께 제출하세요':'첨부했습니다 — 출력물 자리에 자동 삽입됩니다'); permitDocsRefresh();
-    if(key==='발전허가증'){ setTimeout(()=>{ try{ devPermitOcr(id,{auto:true}); }catch(_){} }, 200); }
-    if(key==='건축물대장'){ setTimeout(()=>{ try{ bldRegOcr(id,{auto:true}); }catch(_){} }, 200); } };   // 건축물대장 첨부 즉시 건축면적 자동 읽기   // 발전허가증 첨부 즉시 착공·준공일 자동 읽기
+    if(key==='발전허가증'){ setTimeout(()=>{ try{ devPermitOcr(id,{auto:true}); }catch(_){} }, 200); }   // 발전허가증 첨부 즉시 착공·준공일 자동 읽기
+    if(key==='건축물대장'){ setTimeout(()=>{ try{ bldRegOcr(id,{auto:true}); }catch(_){} }, 200); } };   // 건축물대장 첨부 즉시 건축면적 자동 읽기
   // 최종 blob(mime) 확정 → R2 가동 시 R2 업로드(url 저장), 미가동/실패 시 base64 저장(폴백)
   const finalize=(blob,mime)=>{ r2UploadFile(new File([blob],file.name,{type:mime}),{owner:id,part:'행정',docKey:key}).then(r2=>{
     if(r2){ p.docs[key]={attached:true, at:new Date().toLocaleString('ko-KR'), r2_key:r2.r2_key, url:r2.url, name:file.name, mime:mime, size:r2.size}; done(); return; }
