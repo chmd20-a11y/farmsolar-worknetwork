@@ -5,7 +5,8 @@
 //     BLDREG_OCR_DISABLED=1      → 기능 즉시 OFF(킬스위치)
 //     BLDREG_OCR_DAILY_CAP=200   → 하루 호출 상한(기본 200). 무료 한도보다 낮게 잡아 과금 선에 닿기 전에 차단
 // 입력: POST { name, mimeType, dataBase64 }  — 파일 1개(이미지/PDF, Vercel 요청 4.5MB 이하)
-// 출력: { bldArea: 숫자(㎡)|'', raw }   — 개발행위 사업계획서 「건축면적」 자동채움용
+// 출력: { bldArea: 숫자(㎡)|'', gubun, struct, use, mainUse, owners:[{name,addr}], raw }
+//   — 개발행위 사업계획서 「건축면적」·7번 건축물 면적 조서 자동채움용 (주민번호는 읽지 않음)
 const https = require('https');
 
 // 사용량 카운터 저장소 = 전용 테이블 public.ai_usage (민감정보 없음 → 공개 publishable 키로 읽기/증가 허용).
@@ -97,14 +98,16 @@ module.exports = async (req, res) => {
     if (!/^(application\/pdf|image\/(png|jpe?g|webp|gif))$/.test(mimeType)) { res.status(415).json({ error: 'unsupported', message: 'PDF 또는 이미지만 지원' }); return; }
     if (dataBase64.length > 5 * 1024 * 1024) { res.status(413).json({ error: 'too_large', message: '파일이 큽니다(약 4MB 초과)' }); return; }
 
-    const system = '당신은 한국의 건축물대장(일반건축물대장·집합건축물대장 표제부)에서 "건축면적"을 찾아내는 도우미입니다. 규칙: '
-      + '(1) 반드시 JSON 객체 하나만 출력합니다: {"bldArea":"숫자"} (단위 ㎡, 쉼표 없이, 소수점 그대로). '
-      + '(2) "건축면적" 칸의 값만 사용합니다. "대지면적"·"연면적"·"용적률산정용연면적"·"건폐율"·"동별 면적" 등 다른 면적은 절대 넣지 않습니다. '
-      + '(3) 건축면적이 보이지 않으면 {"bldArea":""}로 둡니다. '
-      + '(4) 추정·창작 금지 — 문서에 실제로 보이는 숫자만 사용합니다. '
-      + '(5) 설명·머리말·마크다운·코드펜스 없이 JSON 객체만 출력합니다.';
+    const system = '당신은 한국의 건축물대장(일반건축물대장·집합건축물대장 표제부)에서 값을 찾아내는 도우미입니다. 규칙: '
+      + '(1) 반드시 JSON 객체 하나만 출력합니다: {"bldArea":"숫자","gubun":"","struct":"","use":"","mainUse":"","owners":[{"name":"","addr":""}]}. '
+      + '(2) bldArea = "건축면적" 칸의 값(단위 ㎡, 쉼표 없이). "대지면적"·"연면적"·"용적률산정용연면적"·"건폐율" 등 다른 면적은 절대 넣지 않습니다. '
+      + '(3) "건축물 현황" 표의 첫 번째 줄에서 gubun = 구분(예: "주1"), struct = 구조(예: "철골조"), use = 용도의 맨 첫 번째 항목 하나만(예: "축사,퇴비사"이면 "축사"). '
+      + '(4) mainUse = 표제부 "주용도" 칸의 값(예: "동물 및 식물관련시설"). '
+      + '(5) owners = "소유자 현황"의 각 소유자 성명(명칭)과 주소(최대 3명, 위에서부터 순서대로). 주민(법인)등록번호·소유권 지분·변동일은 절대 넣지 않습니다. '
+      + '(6) 보이지 않는 값은 빈 문자열로 둡니다. 추정·창작 금지 — 문서에 실제로 보이는 글자만 사용합니다. '
+      + '(7) 설명·머리말·마크다운·코드펜스 없이 JSON 객체만 출력합니다.';
     const parts = [
-      { text: '다음 파일(' + name + ')에서 건축면적(㎡)을 찾아 JSON으로 답하세요:' },
+      { text: '다음 파일(' + name + ')에서 건축면적·건축물 현황 첫 줄·주용도·소유자(성명·주소)를 찾아 JSON으로 답하세요:' },
       { inlineData: { mimeType, data: dataBase64 } },
     ];
 
@@ -124,9 +127,16 @@ module.exports = async (req, res) => {
       const cand = j.candidates && j.candidates[0];
       raw = (cand && cand.content && cand.content.parts && cand.content.parts.map((p) => p.text || '').join('')) || '';
     } catch (e) { raw = ''; }
-    let bldArea = '';
-    try { bldArea = normArea(JSON.parse(raw).bldArea); } catch (e) { /* JSON이 아니면 빈 값 */ }
-    res.status(200).json({ bldArea, raw: String(raw || '').slice(0, 2000) });
+    let bldArea = '', gubun = '', struct = '', use = '', mainUse = '', owners = [];
+    const T = (v) => String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, 80);
+    try {
+      const o = JSON.parse(raw);
+      bldArea = normArea(o.bldArea); gubun = T(o.gubun); struct = T(o.struct); mainUse = T(o.mainUse);
+      use = T(o.use).split(/[,，·]/)[0].trim();
+      owners = (Array.isArray(o.owners) ? o.owners : []).map((w) => ({ name: T(w && w.name), addr: T(w && w.addr) }))
+        .filter((w) => w.name || w.addr).slice(0, 3);
+    } catch (e) { /* JSON이 아니면 빈 값 */ }
+    res.status(200).json({ bldArea, gubun, struct, use, mainUse, owners, raw: String(raw || '').slice(0, 2000) });
   } catch (e) {
     res.status(500).json({ error: 'fail', message: String((e && e.message) || e) });
   }

@@ -7703,6 +7703,9 @@ async function bldRegOcr(id,opt){ opt=opt||{};
     const jj=await resp.json(); const area=pNum(jj.bldArea);
     if(!(area>0)){ OCR_STATE[sk]='empty'; toast('건축면적을 찾지 못했습니다 — 사업계획 개요에서 직접 입력해 주세요'); return; }
     p.outline.bldArea=area;
+    // 7번 건축물 면적 조서용 — 건축물 현황 첫 줄·주용도·소유자(성명·주소). 주민번호는 읽지 않음
+    p.bldReg={ gubun:String(jj.gubun||''), struct:String(jj.struct||''), use:String(jj.use||''), mainUse:String(jj.mainUse||''),
+      owners:(Array.isArray(jj.owners)?jj.owners:[]).map(w=>({name:String((w&&w.name)||''), addr:String((w&&w.addr)||'')})) };
     OCR_STATE[sk]='done'; persistDeal(d); permitDocsRefresh();
     toast('건축물대장에서 건축면적 '+pArea(area)+'㎡를 읽어 채웠습니다 — 맞는지 확인하세요');
   }catch(e){ OCR_STATE[sk]='error'; toast('건축면적 읽기에 실패했습니다 — 사업계획 개요에서 직접 입력해 주세요'); }
@@ -8501,7 +8504,18 @@ function devPermitTokenMap(d){
     '§SAUP_ID§':'사업주 신분증 (영업 「실계약」 첨부본)',
     '§DAERIIN_ID§':(myDaeriinId()&&myDaeriinId().dataUrl)?'대리인 신분증 첨부됨 ✓':'대리인 신분증 미첨부',
     '§START§':fmtPeriod(per.start), '§END§':fmtPeriod(per.end),
-    '§LANDREG_ADDR§':landRegShort(p.landRegAddr),   // 6번 표 토지소재지 — 토지대장 첨부 시 자동 읽기(landRegOcr)
+    '§LANDREG_ADDR§':landRegShort(p.landRegAddr||String((p.lands&&p.lands[0]&&p.lands[0].addr)||'').replace(/\s*(산\s*)?\d+(-\d+)?\s*(번지)?\s*$/,'')),   // 6번 표 토지소재지 — 토지대장 판독값(landRegOcr) 우선, 없으면 토지명세서 주소(지번 제외)
+    ...(()=>{ // 6·7·8번 표 — 6번=토지명세서(lands), 7번=건축물대장 판독(bldReg)·없으면 건물명세서(builds), 8번=건축면적·모듈면적·총사업비
+      const Ls=p.lands||[], L=Ls[0]||{}, n=Ls.length, sumL=Ls.reduce((a,x)=>a+(pNum(x.area)||0),0);
+      const br=p.bldReg||{}, B=(p.builds&&p.builds[0])||{}, ow=(br.owners&&br.owners.length)?br.owners:(B.owner?[{name:B.owner,addr:''}]:[]);
+      const ba=pNum(p.outline.bldArea)||pNum(B.bldArea)||0, cost=pNum(p.outline.totalCost)||0, ua=pNum(p.outline.useArea)||0;
+      return {
+        '§T6_JIBUN§':S(L.jibun)+(n>1?' 외 '+(n-1)+'필지':''), '§T6_JIMOK§':S(L.jimok), '§T6_AREA§':pNum(L.area)>0?pArea(L.area):'',
+        '§T6_OADDR§':S(L.ownerAddr), '§T6_ONAME§':S(L.owner), '§T6_SUM§':sumL>0?pArea(sumL):'',
+        '§T7_GUBUN§':S(br.gubun), '§T7_STRUCT§':S(br.struct||B.struct), '§T7_USE§':S(br.use||B.use), '§T7_MAINUSE§':S(br.mainUse),
+        '§T7_AREA§':ba>0?pArea(ba):'', '§T7_SUM§':ba>0?pArea(ba):'',
+        '§T7_OADDR1§':S(ow[0]&&ow[0].addr), '§T7_OADDR2§':S(ow[1]&&ow[1].addr), '§T7_ONAME§':ow.map(w=>w.name).filter(Boolean).join(', '),
+        '§T8_BLDAREA§':ba>0?pArea(ba)+' ㎡':'', '§T8_MODAREA§':ua>0?pArea(ua)+' ㎡':'', '§T8_COST§':cost>0?pComma(cost):'' }; })(),
     '§ADDR§':S(p.applicant.addr), '§PHONE§':S(p.applicant.phone), '§DATE§':fmtKDate(permitApplyDate(d)),
     '§LOC§':loc, '§OFFICE§':officeFromAddr(loc)||officeFromAddr(p.biz.place)||S(p.office), '§JIMOK§':S(L.jimok), '§ZONE§':firstVal(L.zone), '§ZONE2§':firstVal(L.zone2),
     '§AREA_FAC§':pArea(p.outline.useArea), '§AREA_LAND§':pComma(p.outline.totalArea),
@@ -9478,6 +9492,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-30', team:'행정', kind:'추가', title:'개발행위 사업계획서 6·7·8번 표 자동 채움', body:'사업계획서 <b>6번 토지 조서</b>는 토지명세서(지번·지목·면적·토지주 주소·성명, 면적 합계)와 토지대장 판독값으로, <b>7번 건축물 면적 조서</b>는 <b>건축물대장 첨부 시 AI 판독</b>(구분·구조·용도(첫 번째)·주용도·건축면적·소유자 주소·성명, 주민번호는 읽지 않음)으로, <b>8번 자금소요액</b>은 건축면적·모듈면적·총사업비(천원)로 자동 채웁니다. 긴 주소는 칸 안에서 줄바꿈되도록 주소 칸을 넓혔습니다. 미리보기·PDF·한글(HWP) 모두 적용됩니다.'},
   {date:'2026-10-30', team:'행정', kind:'추가', title:'개발행위 사업계획서 6번 표 — 토지대장 첨부 시 토지소재지 자동 읽기', body:'행정서류함에 <b>토지(임야)대장</b>을 첨부하면 AI가 <b>토지 소재</b>를 바로 읽어, 사업계획서 <b>6번 표 ‘토지소재지’</b> 칸에 <b>시군구·읍면동(리)까지만</b>(예: 파주시 문발동, 지번 제외) 자동으로 넣습니다. 미리보기·PDF·한글(HWP) 모두 적용됩니다. 읽은 뒤 맞는지 한 번 확인해 주세요.'},
   {date:'2026-10-30', team:'행정', kind:'추가', title:'개발행위 사업계획서 — ‘6. 사업의 명칭’·‘7. 건축물 면적 조서’ 표 양식 추가', body:'사업계획서 <b>6번</b>에 <b>토지 조서 표</b>(토지소재지[시/군·구/면·동/리]·지번·지목·면적·소유자[주소·성명]·비고 + 계), <b>7번</b>에 <b>건축물 면적 조서 표</b>(구분·층별·구조·용도·주용도·면적·소유자[주소·성명]·비고 + 계)를 넣었습니다. 지금은 <b>빈 양식</b>이며, 들어갈 값은 이후 자동 채움으로 연결할 예정입니다. 8번 자금계획 표는 아래로 이동했습니다. 미리보기·PDF·한글(HWP) 모두 적용됩니다.'},
   {date:'2026-10-30', team:'행정', kind:'수정', title:'개발행위 사업계획서 — 경관 체크리스트 서명란 주민등록번호 자동 기입', body:'사업계획서 <b>경관 체크리스트</b> 아래 서명란의 <b>주민등록번호(법인등록번호)</b> 칸에 <b>사업주 주민등록번호</b>(법인은 법인등록번호)가 자동으로 들어갑니다. 신청인 정보(영업 실계약)의 값을 그대로 쓰며, 허가신청서 ‘생년월일(법인등록번호)’과 같은 값입니다. 미리보기·PDF·한글(HWP) 모두 적용됩니다.'},
