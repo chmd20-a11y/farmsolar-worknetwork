@@ -8431,7 +8431,14 @@ function devPermitTokenMap(d){
     '§ADDR§':S(p.applicant.addr), '§PHONE§':S(p.applicant.phone), '§DATE§':fmtKDate(permitApplyDate(d)),
     '§LOC§':loc, '§OFFICE§':officeFromAddr(loc)||officeFromAddr(p.biz.place)||S(p.office), '§JIMOK§':S(L.jimok), '§ZONE§':firstVal(L.zone), '§ZONE2§':firstVal(L.zone2),
     '§AREA_FAC§':pArea(p.outline.useArea), '§AREA_LAND§':pComma(p.outline.totalArea),
-    '§BLD_AREA§':pNum(p.outline.bldArea)>0?pArea(p.outline.bldArea):'',   // 건축면적 — 건축물대장 자동판독(bldRegOcr) 또는 직접 입력
+    '§BLD_AREA§':pNum(p.outline.bldArea)>0?pArea(p.outline.bldArea):'',
+    // 9. 발전설비의 개요 — 발전사업허가 사업계획서(permitTokenMap)와 같은 값을 그대로 사용(모듈·인버터 사양은 원가표 종류 연동)
+    ...(()=>{ const pm=permitTokenMap(d), o={};
+      ['§SP_MODW§','§SP_MODVOC§','§SP_MODISC§','§SP_MODVMP§','§SP_MODIMP§','§SP_MODWEIGHT§','§SP_MODQTY§','§SP_INSTAREA§','§SP_VINHI§','§SP_INVKW§','§SP_INVWEIGHT§','§SP_INVQTY§'].forEach(k=>{ o[k]=pm[k]||''; });
+      return o; })(),
+    '§DV_MODSIZE§':eq.modSize?S(eq.modSize)+' mm':'',
+    '§DV_VIN§':S(eq.invIn).split('~').map(v=>v.trim()?pComma(v):'').filter(Boolean).join('~'),
+    '§DV_INVEFF§':S(eq.invEff), '§DV_INVSIZE§':S(eq.invSize),   // 건축면적 — 건축물대장 자동판독(bldRegOcr) 또는 직접 입력
     '§MOD_QTY§':pComma(eq.modQty),
     // 무게(ton) = 모듈 1장 무게(kg) × 장수 ÷ 1,000 — 공사계획서 설치무게와 같은 계산·소수 1자리
     '§MOD_TON§':(()=>{ const t=(pNum(eq.modWeight)||0)*(pNum(eq.modQty)||0)/1000; return t?String(Math.round(t*10)/10):''; })(),
@@ -9391,6 +9398,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-30', team:'행정', kind:'수정', title:'개발행위 사업계획서 — ‘9. 발전설비의 개요’(모듈·인버터) 자동 기입 + 신청면적 겹침 수정', body:'① 사업계획서 <b>9. 발전설비의 개요</b>의 빈칸을 <b>발전사업 허가 사업계획서와 같은 값</b>으로 자동 채웁니다 — 태양광모듈: 정격출력·개방전압·단락전류·정격전압·정격전류·외형크기·모듈무게·총 설치 개수·설치면적 / 인버터: 최대입력전압·입력전압·출력·무게·총 설치대수(모듈·인버터 종류를 고르면 사양표 값이 따라옴). 값과 단위가 겹치지 않도록 칸을 넓혀 ‘58.92 V’처럼 붙여 표시합니다. 인버터 <b>효율·크기</b>는 사양표에 값이 없어 빈칸으로 둡니다. ② 피해방지계획서 등의 <b>‘신청면적’ 숫자가 ㎡ 글자와 겹치던 문제</b>(7,42㎡865)도 고쳤습니다. 미리보기·한글 양식 모두 적용.', author:'개발'},
   {date:'2026-10-30', team:'행정', kind:'수정', title:'개발행위 사업계획서 — ‘8. 시설물 관리운영 계획’을 표로 표시', body:'사업계획서의 <b>8. 시설물 관리운영 계획</b>(시설물·관리운영자 주소·성명·비고)이 테두리 없이 글자만 떠 있던 것을 <b>표(검은 실선)</b>로 바꿨습니다. 위쪽 ‘공작물 설치 계획’ 표와 같은 모양이며, 미리보기·한글(HWP) 양식 모두 같습니다.', author:'개발'},
   {date:'2026-10-30', team:'행정', kind:'수정', title:'개발행위 사업계획서 — ‘5. 사업의 착수 및 준공’ 날짜 자동 기입', body:'개발행위 사업계획서의 <b>착수·준공</b> 칸이 비어 있던 것을 고쳤습니다. 행정서류함에 <b>발전허가증</b>을 첨부하면 AI가 읽어 채우는 <b>착공일·준공일</b>(직접 수정한 값 포함)이 허가신청서 ‘사업기간’과 똑같이 <b>사업계획서 착수·준공</b>에도 자동으로 들어갑니다(미리보기·한글 양식 모두).', author:'개발'},
   {date:'2026-10-30', team:'행정', kind:'추가', title:'건축물대장 첨부하면 「건축면적」 자동 판독 → 개발행위 사업계획서에 자동 기입', body:'건물형(지붕) 현장에서 <b>행정서류함에 건축물대장(사진·PDF)을 올리면</b>, AI가 대장의 <b>건축면적(㎡)</b>만 골라 읽어 <b>사업계획 개요의 건축면적</b>에 채웁니다(대지면적·연면적과 헷갈리지 않도록 건축면적 칸만 읽음). 채워진 값은 <b>개발행위 사업계획서 ‘공작물 설치 계획’ 표의 건축면적</b> 칸에 자동으로 들어갑니다(미리보기·한글 양식 모두). 읽은 값이 틀리면 사업계획 개요에서 직접 고칠 수 있습니다. 노지형 현장은 빈칸으로 둡니다.', author:'개발'},
