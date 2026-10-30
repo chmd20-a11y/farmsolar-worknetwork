@@ -8364,6 +8364,16 @@ const DEVPERMIT_FORM_FILES=[
   {url:'forms/wiimjang.hml',      out:'2-2. 대리인 위임장.hml', label:'대리인 위임장'},
   {url:'forms/sinbunjeung.hml',   out:'2-3. 사업주 대리인 신분증.hml', label:'사업주/대리인 신분증'},
 ];
+// 주소 → 관할 관청(귀하 수신처): 군 → 군청, 특별·광역시의 자치구 → 구청, 일반 시 → 시청
+function officeFromAddr(a){
+  const t=String(a||'').trim().split(/\s+/);
+  const metro=/^(서울|부산|대구|인천|광주|대전|울산)/.test(t[0]||'');
+  for(const w of t){ if(/^[가-힣]+군$/.test(w)) return w+'청'; }
+  if(metro){ for(const w of t){ if(/^[가-힣]+구$/.test(w)) return w+'청'; } }
+  for(const w of t){ if(/^[가-힣]+시$/.test(w) && !/(특별|광역)/.test(w)) return w+'청'; }
+  if(/^세종/.test(t[0]||'')) return '세종특별자치시청';
+  return '';
+}
 function devPermitTokenMap(d){
   const p=resolvePermit(d), eq=p.equip||{};
   const L=(p.lands&&p.lands[0])||{};
@@ -8387,9 +8397,11 @@ function devPermitTokenMap(d){
     '§DAERIIN_ID§':(myDaeriinId()&&myDaeriinId().dataUrl)?'대리인 신분증 첨부됨 ✓':'대리인 신분증 미첨부',
     '§START§':fmtPeriod(per.start), '§END§':fmtPeriod(per.end),
     '§ADDR§':S(p.applicant.addr), '§PHONE§':S(p.applicant.phone), '§DATE§':fmtKDate(permitApplyDate(d)),
-    '§LOC§':loc, '§JIMOK§':S(L.jimok), '§ZONE§':firstVal(L.zone), '§ZONE2§':firstVal(L.zone2),
+    '§LOC§':loc, '§OFFICE§':officeFromAddr(loc)||officeFromAddr(p.biz.place)||S(p.office), '§JIMOK§':S(L.jimok), '§ZONE§':firstVal(L.zone), '§ZONE2§':firstVal(L.zone2),
     '§AREA_FAC§':pArea(p.outline.useArea), '§AREA_LAND§':pComma(p.outline.totalArea),
     '§MOD_QTY§':pComma(eq.modQty),
+    // 무게(ton) = 모듈 1장 무게(kg) × 장수 ÷ 1,000 — 공사계획서 설치무게와 같은 계산·소수 1자리
+    '§MOD_TON§':(()=>{ const t=(pNum(eq.modWeight)||0)*(pNum(eq.modQty)||0)/1000; return t?String(Math.round(t*10)/10):''; })(),
     '§LOCMAP_SAT_FMT§':satP.fmt, '§LOCMAP_SAT_SIZE§':String(satP.size), '§LOCMAP_SAT_B64§':satP.b64,
     '§LOCMAP_SITE_FMT§':siteP.fmt, '§LOCMAP_SITE_SIZE§':String(siteP.size), '§LOCMAP_SITE_B64§':siteP.b64,
   };
@@ -9346,6 +9358,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-30', team:'행정', kind:'수정', title:'개발행위 허가신청서 — ‘무게(ton)’와 수신처(○○시청 귀하) 자동 기입', body:'개발행위 허가신청서의 빈칸 두 곳이 자동으로 채워집니다. ① <b>무게</b> = 모듈 1장 무게 × 장수 ÷ 1,000 (ton, 소수 1자리 · 공사계획서 설치무게와 같은 계산). ② 맨 아래 <b>‘귀하’ 앞 수신처</b>는 <b>현장 주소로 관할 관청을 자동 판단</b>합니다(예: 파주시 → 파주시청, 강화군 → 강화군청, 서울 강남구 → 강남구청). 미리보기와 한글(HWP) 양식 모두 같습니다.', author:'개발'},
   {date:'2026-10-30', team:'행정', kind:'수정', title:'개발행위 허가신청서 — ‘신청면적’ 칸에 모듈 면적 자동 기입', body:'개발행위 허가신청서의 <b>신청면적</b> 칸이 비어 있던 것을 고쳤습니다. 이제 <b>모듈 면적(모듈 가로×세로×장수)</b>이 자동으로 들어갑니다(예: 54장 → 145.864㎡). 미리보기와 한글(HWP) 다운로드 양식 모두 같습니다.', author:'개발'},
   {date:'2026-10-30', team:'영업', kind:'삭제', title:'「타당성검토」 부지 유형 선택 버튼(노지형·지붕형·햇빛소득마을) 삭제', body:'영업 타당성검토 위쪽의 <b>부지 유형 선택 버튼 3개를 없앴습니다</b>. 지번만 넣고 바로 진단하며, 판정은 <b>노지 기준</b>(지목·경사도·용도지역·하천·규제·계통)으로 합니다.', author:'개발'},
   {date:'2026-10-30', team:'설계', kind:'개선', title:'「타당성검토」(설계) 화면 디자인 개편 — 영업 타당성검토와 같은 모양으로 통일', body:'설계 <b>「타당성검토」</b>를 영업 화면과 같은 디자인으로 바꿨습니다(기능은 그대로). ① 현장마다 위쪽에 <b>현장명·용량·이관 담당자</b>와 <b>큰 지번 검색창</b>이 있습니다. ② 결과는 <b>종합 판정을 크게</b>, <b>설비 용량·부지 유형·항목별 판정 개수·데이터 출처</b>를 요약 카드로 보여줍니다. ③ 아래 <b>검토 결정</b> 칸에서 반려 사유 입력과 반려·가계약 이관을 그대로 합니다.', author:'개발'},
