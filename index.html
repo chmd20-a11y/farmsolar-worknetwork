@@ -7588,7 +7588,8 @@ function permitDocUpload(id,key,file){
   if(file.size>10*1024*1024){ toast('파일이 너무 큽니다 (10MB 이하로 올려주세요)'); return; }
   const done=()=>{ persistDeal(d); toast(isPdf?'첨부했습니다 — 출력 시 “열기”로 PDF를 함께 제출하세요':'첨부했습니다 — 출력물 자리에 자동 삽입됩니다'); permitDocsRefresh();
     if(key==='발전허가증'){ setTimeout(()=>{ try{ devPermitOcr(id,{auto:true}); }catch(_){} }, 200); }   // 발전허가증 첨부 즉시 착공·준공일 자동 읽기
-    if(key==='건축물대장'){ setTimeout(()=>{ try{ bldRegOcr(id,{auto:true}); }catch(_){} }, 200); } };   // 건축물대장 첨부 즉시 건축면적 자동 읽기
+    if(key==='건축물대장'){ setTimeout(()=>{ try{ bldRegOcr(id,{auto:true}); }catch(_){} }, 200); }   // 건축물대장 첨부 즉시 건축면적 자동 읽기
+    if(key==='토지(임야)대장'){ setTimeout(()=>{ try{ landRegOcr(id,{auto:true}); }catch(_){} }, 200); } };   // 토지대장 첨부 즉시 토지소재지 자동 읽기
   // 최종 blob(mime) 확정 → R2 가동 시 R2 업로드(url 저장), 미가동/실패 시 base64 저장(폴백)
   const finalize=(blob,mime)=>{ r2UploadFile(new File([blob],file.name,{type:mime}),{owner:id,part:'행정',docKey:key}).then(r2=>{
     if(r2){ p.docs[key]={attached:true, at:new Date().toLocaleString('ko-KR'), r2_key:r2.r2_key, url:r2.url, name:file.name, mime:mime, size:r2.size}; done(); return; }
@@ -7706,6 +7707,39 @@ async function bldRegOcr(id,opt){ opt=opt||{};
     toast('건축물대장에서 건축면적 '+pArea(area)+'㎡를 읽어 채웠습니다 — 맞는지 확인하세요');
   }catch(e){ OCR_STATE[sk]='error'; toast('건축면적 읽기에 실패했습니다 — 사업계획 개요에서 직접 입력해 주세요'); }
 }
+// 토지(임야)대장 → 「토지 소재」(지번 제외) 자동 읽기 → p.landRegAddr. 개발행위 사업계획서 6번 표 토지소재지 칸.
+async function landRegOcr(id,opt){ opt=opt||{};
+  const d=DEALS.find(x=>x.id===id); if(!d) return; const p=getPermit(d);
+  const rec=p.docs&&p.docs['토지(임야)대장']; const src=rec&&docSrc(rec);
+  if(!src){ if(!opt.auto) toast('먼저 토지(임야)대장 파일을 첨부하세요'); return; }
+  const sk=id+':land'; if(OCR_STATE[sk]==='reading') return;
+  OCR_STATE[sk]='reading';
+  toast('토지대장에서 토지소재지를 읽는 중…');
+  try{
+    let dataUrl=rec.dataUrl||'';
+    if(!dataUrl&&rec.url){ try{ const r=await fetch(rec.url); const b=await r.blob(); dataUrl=await new Promise(rs=>{ const fr=new FileReader(); fr.onload=()=>rs(fr.result); fr.onerror=()=>rs(''); fr.readAsDataURL(b); }); }catch(_){} }
+    if(!dataUrl) throw new Error('파일을 읽지 못했습니다');
+    let mimeType=(dataUrl.match(/^data:([^;]+)/)||[])[1]||rec.mime||'';
+    let b64=dataUrl.split(',')[1]||'';
+    const isPdf=/pdf/i.test(mimeType)||/\.pdf$/i.test(rec.name||'');
+    if(isPdf && b64.length>3.4*1024*1024){   // 요청 4.5MB 제한 — 큰 PDF는 1페이지만 이미지로
+      const imgs=await sunPdfToImages(dataUrl);
+      if(imgs&&imgs[0]){ mimeType=(imgs[0].match(/^data:([^;]+)/)||[])[1]||'image/jpeg'; b64=imgs[0].split(',')[1]||''; }
+    }
+    const resp=await fetch('/api/landreg-ocr',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:rec.name||'토지대장',mimeType,dataBase64:b64})});
+    if(!resp.ok){
+      let em=''; try{ const ej=await resp.json(); em=(ej&&ej.message)||''; }catch(_){}
+      OCR_STATE[sk]='capped'; toast(em||'토지소재지 자동읽기를 할 수 없습니다'); return;
+    }
+    const jj=await resp.json(); const addr=String(jj.landAddr||'').trim();
+    if(!addr){ OCR_STATE[sk]='empty'; toast('토지대장에서 토지소재지를 찾지 못했습니다'); return; }
+    p.landRegAddr=addr;
+    OCR_STATE[sk]='done'; persistDeal(d); permitDocsRefresh();
+    toast('토지대장에서 토지소재지 “'+landRegShort(addr)+'”를 읽어 채웠습니다 — 맞는지 확인하세요');
+  }catch(e){ OCR_STATE[sk]='error'; toast('토지소재지 읽기에 실패했습니다'); }
+}
+// 표시용 — 시·도(경기도·서울특별시 등) 빼고 시군구·읍면동(리)까지만
+function landRegShort(a){ const s=String(a||'').trim(); const r=s.replace(/^\S+(도|특별시|광역시|특별자치도)\s+/,''); return r||s; }
 function renderPermitDocs(d){
   const p=getPermit(d), isBld=p.installType==='건물';
   const need = PERMIT_DOCS.filter(x=> isBld?x.bld:x.land);
@@ -8467,6 +8501,7 @@ function devPermitTokenMap(d){
     '§SAUP_ID§':'사업주 신분증 (영업 「실계약」 첨부본)',
     '§DAERIIN_ID§':(myDaeriinId()&&myDaeriinId().dataUrl)?'대리인 신분증 첨부됨 ✓':'대리인 신분증 미첨부',
     '§START§':fmtPeriod(per.start), '§END§':fmtPeriod(per.end),
+    '§LANDREG_ADDR§':landRegShort(p.landRegAddr),   // 6번 표 토지소재지 — 토지대장 첨부 시 자동 읽기(landRegOcr)
     '§ADDR§':S(p.applicant.addr), '§PHONE§':S(p.applicant.phone), '§DATE§':fmtKDate(permitApplyDate(d)),
     '§LOC§':loc, '§OFFICE§':officeFromAddr(loc)||officeFromAddr(p.biz.place)||S(p.office), '§JIMOK§':S(L.jimok), '§ZONE§':firstVal(L.zone), '§ZONE2§':firstVal(L.zone2),
     '§AREA_FAC§':pArea(p.outline.useArea), '§AREA_LAND§':pComma(p.outline.totalArea),
@@ -9443,6 +9478,7 @@ function wfSchedule(id){
    릴리즈노트 — 팀장님 지시로 갱신(코드 내 RELEASES 편집). 최신이 위로.
    ============================================================ */
 const RELEASES = [
+  {date:'2026-10-30', team:'행정', kind:'추가', title:'개발행위 사업계획서 6번 표 — 토지대장 첨부 시 토지소재지 자동 읽기', body:'행정서류함에 <b>토지(임야)대장</b>을 첨부하면 AI가 <b>토지 소재</b>를 바로 읽어, 사업계획서 <b>6번 표 ‘토지소재지’</b> 칸에 <b>시군구·읍면동(리)까지만</b>(예: 파주시 문발동, 지번 제외) 자동으로 넣습니다. 미리보기·PDF·한글(HWP) 모두 적용됩니다. 읽은 뒤 맞는지 한 번 확인해 주세요.'},
   {date:'2026-10-30', team:'행정', kind:'추가', title:'개발행위 사업계획서 — ‘6. 사업의 명칭’·‘7. 건축물 면적 조서’ 표 양식 추가', body:'사업계획서 <b>6번</b>에 <b>토지 조서 표</b>(토지소재지[시/군·구/면·동/리]·지번·지목·면적·소유자[주소·성명]·비고 + 계), <b>7번</b>에 <b>건축물 면적 조서 표</b>(구분·층별·구조·용도·주용도·면적·소유자[주소·성명]·비고 + 계)를 넣었습니다. 지금은 <b>빈 양식</b>이며, 들어갈 값은 이후 자동 채움으로 연결할 예정입니다. 8번 자금계획 표는 아래로 이동했습니다. 미리보기·PDF·한글(HWP) 모두 적용됩니다.'},
   {date:'2026-10-30', team:'행정', kind:'수정', title:'개발행위 사업계획서 — 경관 체크리스트 서명란 주민등록번호 자동 기입', body:'사업계획서 <b>경관 체크리스트</b> 아래 서명란의 <b>주민등록번호(법인등록번호)</b> 칸에 <b>사업주 주민등록번호</b>(법인은 법인등록번호)가 자동으로 들어갑니다. 신청인 정보(영업 실계약)의 값을 그대로 쓰며, 허가신청서 ‘생년월일(법인등록번호)’과 같은 값입니다. 미리보기·PDF·한글(HWP) 모두 적용됩니다.'},
   {date:'2026-10-30', team:'행정', kind:'수정', title:'개발행위 허가신청서 — 신청인 성명을 칸 가운데로 이동', body:'개발행위 허가신청서 <b>신청인 › 성명(법인명 및 대표자 성명)</b> 값이 칸 왼쪽 끝에 붙어 있던 것을 <b>제목 아래 가운데</b>로 옮겼습니다. 미리보기·PDF·한글(HWP) 모두 적용됩니다.'},
